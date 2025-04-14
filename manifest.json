@@ -1,0 +1,24 @@
+{
+  "short_name": "outpost",
+  "name": "outpost,to the world!",
+  "icons": [
+    
+    {
+      "src": "/images/lark192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/images/lark512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+ 
+  "start_url": "https://alexzhangmaker.github.io/outpost/index.html",
+  "background_color": "#3367D6",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#3367D6",
+  "description": "outpost to the moving world"
+}
