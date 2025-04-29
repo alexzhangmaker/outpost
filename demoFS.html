@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Firestore Add/Update/Delete Example</title>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <h1>Items</h1>
+  <ul id="dataList"></ul>
+
+  <h2>Add / Update Item</h2>
+  <input type="text" id="itemId" placeholder="Document ID (e.g. item1)">
+  <input type="text" id="itemName" placeholder="Item Name (e.g. Mango)">
+  <button onclick="addOrUpdateItem()">Add / Update</button>
+
+  <h2>Delete Item</h2>
+  <input type="text" id="deleteItemId" placeholder="Document ID to delete">
+  <button onclick="deleteItem()">Delete</button>
+
+  <script>
+    // TODO: Replace with your Firebase config
+    /*
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    */
+    const firebaseConfig = {
+        apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+        authDomain: "outpost-8d74e.firebaseapp.com",
+        databaseURL: "https://outpost-8d74e-default-rtdb.firebaseio.com",
+        projectId: "outpost-8d74e",
+        storageBucket: "outpost-8d74e.firebasestorage.app",
+        messagingSenderId: "724993324937",
+        appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+        measurementId: "G-QPHWRTH6BH"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const list = document.getElementById("dataList");
+
+    // Fetch and display items
+    function loadItems() {
+      db.collection("items").get().then((querySnapshot) => {
+        list.innerHTML = '';
+        querySnapshot.forEach((doc) => {
+          const li = document.createElement("li");
+          li.textContent = `${doc.id}: ${doc.data().name}`;
+          const deleteBtn = document.createElement("button");
+          deleteBtn.textContent = "Delete";
+          deleteBtn.onclick = () => deleteItem(doc.id);
+          li.appendChild(deleteBtn);
+          list.appendChild(li);
+        });
+      });
+    }
+
+    // Add or update an item
+    function addOrUpdateItem() {
+      const id = document.getElementById("itemId").value.trim();
+      const name = document.getElementById("itemName").value.trim();
+      if (!id || !name) {
+        alert("Please fill in both fields.");
+        return;
+      }
+
+      db.collection("items").doc(id).set({ name: name })
+        .then(() => {
+          alert("Item added or updated!");
+          loadItems();
+        })
+        .catch((error) => {
+          console.error("Error writing document: ", error);
+        });
+    }
+
+    // Delete an item
+    function deleteItem(itemId) {
+      db.collection("items").doc(itemId).delete()
+        .then(() => {
+          alert("Item deleted!");
+          loadItems();
+        })
+        .catch((error) => {
+          console.error("Error deleting document: ", error);
+        });
+    }
+
+    // Initial load
+    loadItems();
+  </script>
+</body>
+</html>
