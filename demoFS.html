@@ -18,6 +18,7 @@
   <h2>Delete Item</h2>
   <input type="text" id="deleteItemId" placeholder="Document ID to delete">
   <button onclick="deleteItem()">Delete</button>
+  <button onclick="storeLocal()">storeLocal</button>
 
   <script>
     // TODO: Replace with your Firebase config
@@ -98,26 +99,29 @@
     // Initial load
     loadItems();
 
-    let jsonContent = {
-        name:"alexszhang",
-        email:"alexszhang@gmail.com"
-    } ;
+    function storeLocal(){
+        let jsonContent = {
+            name:"alexszhang",
+            email:"alexszhang@gmail.com"
+        } ;
 
-    localforage.setItem('signpost', JSON.stringify(jsonContent)).then(function(value) {
-        // This code runs once the value has been loaded
-        // from the offline store.
-        console.log(value);
-        localforage.getItem('signpost').then(function(value) {
+        localforage.setItem('signpost', JSON.stringify(jsonContent)).then(function(value) {
             // This code runs once the value has been loaded
             // from the offline store.
             console.log(value);
-        }).catch(function(err) {
-            // This code runs if there were any errors
-            console.log(err);
+            localforage.getItem('signpost').then(function(value) {
+                // This code runs once the value has been loaded
+                // from the offline store.
+                console.log(value);
+            }).catch(function(err) {
+                // This code runs if there were any errors
+                console.log(err);
+            });
         });
-    });
 
-    //localStorage.setItem('outpost', JSON.stringify('value'));
+        //localStorage.setItem('outpost', JSON.stringify('value'));
+    }
+    
     
 
   </script>
