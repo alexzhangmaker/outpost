@@ -4,6 +4,7 @@
   <title>Firestore Add/Update/Delete Example</title>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <script src="./jsResource/localforage.min.js"></script>
 </head>
 <body>
   <h1>Items</h1>
@@ -96,6 +97,9 @@
 
     // Initial load
     loadItems();
+
+    localStorage.setItem('outpost', JSON.stringify('value'));
+
   </script>
 </body>
 </html>
