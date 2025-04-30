@@ -106,6 +106,12 @@
             email:"alexszhang@gmail.com"
         } ;
 
+        localforage.config({
+            name: 'myApp',
+            storeName: 'itemsCache',  // required
+            driver: localforage.INDEXEDDB
+        });
+
         localforage.setItem('signpost', JSON.stringify(jsonContent)).then(function(value) {
             // This code runs once the value has been loaded
             // from the offline store.
