@@ -98,7 +98,7 @@
     // Initial load
     loadItems();
 
-    //localStorage.setItem('outpost', JSON.stringify('value'));
+    localStorage.setItem('outpost', JSON.stringify('value'));
     localforage.getItem('outpost').then(function(value) {
         // This code runs once the value has been loaded
         // from the offline store.
