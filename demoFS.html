@@ -19,6 +19,7 @@
   <input type="text" id="deleteItemId" placeholder="Document ID to delete">
   <button onclick="deleteItem()">Delete</button>
   <button onclick="storeLocal()">storeLocal</button>
+  <button onclick="readLocal()">readLocal</button>
 
   <script>
     // TODO: Replace with your Firebase config
@@ -123,6 +124,16 @@
     }
     
     
+    function readLocal(){
+        localforage.getItem('signpost').then(function(value) {
+            // This code runs once the value has been loaded
+            // from the offline store.
+            console.log(value);
+        }).catch(function(err) {
+            // This code runs if there were any errors
+            console.log(err);
+        });
+    }
 
   </script>
 </body>
