@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Sheets & Drive</title>
+    <title>outpost.PWA</title>
     <link rel="manifest" href="/manifest.json">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
@@ -167,16 +167,14 @@ summary::-webkit-details-marker {
 
     <div class="content" id="scrollableContent">
         <div class="headerBar">
-            <h1>Google Sheets & Drive</h1>
-            <button onclick="readSheet()">Read Sheet</button>
-            <button onclick="fetchJSON()">fetch JSON</button>
-            <button onclick="fetchOutpostDB()">query outpostDB</button>
-            <button onclick="syncFireStore()">sync FireStore</button>
-            <button onclick="storeLocal()">storeLocal</button>
+            <h1>outpost</h1>
+            <button class="noShow" onclick="syncFireStore()">sync FireStore</button>
+            <button class="noShow" onclick="storeLocal()">storeLocal</button>
             <button onclick="readLocal()">readLocal</button>
           
         </div>
         <div class="memoContainer">
+            <!-----
             <details>
                 <summary>
                     <span style="font-size:10px;">demo</span>
@@ -185,6 +183,7 @@ summary::-webkit-details-marker {
                     <p>dsfdjsfbdsjkfbdsjfbdsjfbdjs</p>
                 </div>
             </details>
+            --->
         </div>
         <div id="editor">
             <p>Hello World!</p>
@@ -199,7 +198,7 @@ summary::-webkit-details-marker {
         <div class="nav-item"><i class="bi-house-fill outpostBTN"></i>Home</div>
         <div class="nav-item"><i class="bi-search outpostBTN"></i>Search</div>
         <div class="nav-item"><i class="bi-currency-exchange outpostBTN"></i>Money</div>
-        <div class="nav-item"><i class="bi-calendar-date outpostBTN"></i>Calendar</div>
+        <div class="nav-item"><i class="bi-cloud-arrow-down outpostBTN" id="idBTNSyncCloud"></i>Sync</div>
         <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN"></i>Settings</div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
@@ -209,81 +208,67 @@ summary::-webkit-details-marker {
     theme: 'snow'
   });
 
-        function renderMemo(tagContainer,jsonMemo){
-            let tagMemo = document.createElement('details') ;
-            tagMemo.innerHTML=`
-                <summary>
-                    <span style="font-size:10px;">${jsonMemo.title}</span>
-                </summary>
-                <div>
-                    <p>${jsonMemo.content}</p>
-                </div>
-            ` ;
-            tagContainer.prepend(tagMemo) ;
-        }
+    function renderMemo(tagContainer,jsonMemo){
+        let tagMemo = document.createElement('details') ;
+        tagMemo.innerHTML=`
+            <summary>
+                <span style="font-size:10px;">${jsonMemo.ttm}</span>
+            </summary>
+            <div>
+                <p>${jsonMemo.memo}</p>
+            </div>
+        ` ;
+        tagContainer.prepend(tagMemo) ;
+    }
 
-        async function readSheet() {
-            const apiUrl = "https://outpost.alexszhang.workers.dev/google/"; // Change this
-            const res = await fetch(apiUrl);
-            const data = await res.json();
-            document.getElementById("output").innerText = JSON.stringify(data, null, 2);
-        }
 
-        async function fetchJSON() {
-            const urlJSON = `https://outpost.alexszhang.workers.dev/json/appConfig.json` ;
-            const res = await fetch(urlJSON);
-            const data = await res.json();
-            document.getElementById("output").innerText = JSON.stringify(data, null, 2);
-        }
+    function IterateJSONLocal(){
+        localforage.config({
+            name: 'signpostPWA',
+            storeName: 'outpost',  // required
+            driver: localforage.INDEXEDDB
+        });
 
-        
-        async function fetchOutpostDB() {
-            const urlJSON = `https://outpost.alexszhang.workers.dev/outpostDB/` ;
-            const res = await fetch(urlJSON);
-            const jsonRecords = await res.json();
-            document.getElementById("output").innerText = JSON.stringify(jsonRecords, null, 2);
+        const allData = [];
+
+        localforage.iterate((value, key) => {
+            // Push each key-value pair as an object to the array
             let tagMemoContainer = document.querySelector('.memoContainer') ;
-            
-            for(let i=0;i<jsonRecords.length;i++){
-                let jsonMemo = {
-                    title:`memo-${i}`,
-                    content:JSON.stringify(jsonRecords[i],null,3)
-                } ;
-                renderMemo(tagMemoContainer,jsonMemo) ;
-            }
-        }
+            let jsonMemo = JSON.parse(value);
+            jsonMemo.key = key ;
+            renderMemo(tagMemoContainer,jsonMemo) ;
+            allData.push({ key, value });
 
-        async function writeOutpostDB() {
-            const urlJSON = `https://outpost.alexszhang.workers.dev/writeOutpostDB/` ;
-            const res = await fetch(urlJSON);
-            const data = await res.json();
-            document.getElementById("output").innerText = JSON.stringify(data, null, 2);
-        }
-        
-        async function writeSheet() {
-            await fetch(`${apiUrl}/write-sheet`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ values: [["Hello", "World"]] }),
+        }).then(() => {
+            console.log('All key-value pairs:', allData);
+            return allData ;
+        }).catch((err) => {
+            console.error('Error iterating:', err);
+        });
+    }
+
+
+    function writeJSONLocal(key,jsonContent){
+        localforage.config({
+            name: 'signpostPWA',
+            storeName: 'outpost',  // required
+            driver: localforage.INDEXEDDB
+        });
+
+        localforage.setItem(key, JSON.stringify(jsonContent)).then(function(value) {
+            // This code runs once the value has been loaded
+            // from the offline store.
+            console.log(value);
+            localforage.getItem(key).then(function(value) {
+                // This code runs once the value has been loaded
+                // from the offline store.
+                console.log(value);
+            }).catch(function(err) {
+                // This code runs if there were any errors
+                console.log(err);
             });
-        }
-
-        async function createFolder() {
-            const res = await fetch(`${apiUrl}/create-folder`, { method: "POST" });
-            const data = await res.json();
-            alert(`Folder ID: ${data.folderId}`);
-        }
-
-        async function uploadFile() {
-            const folderId = prompt("Enter Folder ID:");
-            const filePath = prompt("Enter File Path:");
-            await fetch(`${apiUrl}/upload-file`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ folderId, fileName: "test.txt", filePath }),
-            });
-        }
-
+        });    
+    }
 
     function storeLocal(){
         let jsonContent = {
@@ -316,7 +301,8 @@ summary::-webkit-details-marker {
     
     
     function readLocal(){
-        localforage.getItem('signpost').then(function(value) {
+        /*
+        localforage.getItem('outpost').then(function(value) {
             // This code runs once the value has been loaded
             // from the offline store.
             console.log(value);
@@ -324,6 +310,8 @@ summary::-webkit-details-marker {
             // This code runs if there were any errors
             console.log(err);
         });
+        */
+        IterateJSONLocal() ;
     }
 
 
@@ -343,22 +331,20 @@ summary::-webkit-details-marker {
     const db = firebase.firestore();
 
     async function syncFireStore(){
-        db.collection("items").get().then((querySnapshot) => {
+        db.collection("outpost").get().then((querySnapshot) => {
             //list.innerHTML = '';
             querySnapshot.forEach((doc) => {
-                console.log(`${doc.id}: ${doc.data().name}`) ;
-                /*
-                const li = document.createElement("li");
-                li.textContent = `${doc.id}: ${doc.data().name}`;
-                const deleteBtn = document.createElement("button");
-                deleteBtn.textContent = "Delete";
-                deleteBtn.onclick = () => deleteItem(doc.id);
-                li.appendChild(deleteBtn);
-                list.appendChild(li);
-                */
+                console.log(`${doc.id}: ${doc.data()}`) ;
+                console.log(doc.data()) ;
+                writeJSONLocal(doc.id,doc.data()) ;
             });
         });
     }
+    </script>
+    <script>
+        document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)=>{
+            await syncFireStore() ;
+        }) ;
     </script>
 
     <script>

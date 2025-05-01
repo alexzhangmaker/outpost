@@ -5,3 +5,7 @@
 .outpostBTN:hover{
     cursor: pointer;
 }
+
+.noShow{
+    display: none;
+}
