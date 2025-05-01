@@ -11,6 +11,9 @@
 
     <link rel="stylesheet" href="./css/style.css">
 
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <script src="./jsResource/localforage.min.js"></script>
     <script src="./js/outpost.js"></script>
     <style>
         body{
@@ -18,8 +21,6 @@
             overflow-x: hidden;
             background-color: cornflowerblue;
         }
-
-
     </style>
     <style>
         * {
@@ -170,6 +171,10 @@ summary::-webkit-details-marker {
             <button onclick="readSheet()">Read Sheet</button>
             <button onclick="fetchJSON()">fetch JSON</button>
             <button onclick="fetchOutpostDB()">query outpostDB</button>
+            <button onclick="syncFireStore()">sync FireStore</button>
+            <button onclick="storeLocal()">storeLocal</button>
+            <button onclick="readLocal()">readLocal</button>
+          
         </div>
         <div class="memoContainer">
             <details>
@@ -278,7 +283,84 @@ summary::-webkit-details-marker {
                 body: JSON.stringify({ folderId, fileName: "test.txt", filePath }),
             });
         }
+
+
+    function storeLocal(){
+        let jsonContent = {
+            name:"alexszhang",
+            email:"alexszhang@gmail.com"
+        } ;
+
+        localforage.config({
+            name: 'signpostPWA',
+            storeName: 'itemsCache',  // required
+            driver: localforage.INDEXEDDB
+        });
+
+        localforage.setItem('signpost', JSON.stringify(jsonContent)).then(function(value) {
+            // This code runs once the value has been loaded
+            // from the offline store.
+            console.log(value);
+            localforage.getItem('signpost').then(function(value) {
+                // This code runs once the value has been loaded
+                // from the offline store.
+                console.log(value);
+            }).catch(function(err) {
+                // This code runs if there were any errors
+                console.log(err);
+            });
+        });
+
+        //localStorage.setItem('outpost', JSON.stringify('value'));
+    }
+    
+    
+    function readLocal(){
+        localforage.getItem('signpost').then(function(value) {
+            // This code runs once the value has been loaded
+            // from the offline store.
+            console.log(value);
+        }).catch(function(err) {
+            // This code runs if there were any errors
+            console.log(err);
+        });
+    }
+
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+        authDomain: "outpost-8d74e.firebaseapp.com",
+        databaseURL: "https://outpost-8d74e-default-rtdb.firebaseio.com",
+        projectId: "outpost-8d74e",
+        storageBucket: "outpost-8d74e.firebasestorage.app",
+        messagingSenderId: "724993324937",
+        appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+        measurementId: "G-QPHWRTH6BH"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function syncFireStore(){
+        db.collection("items").get().then((querySnapshot) => {
+            //list.innerHTML = '';
+            querySnapshot.forEach((doc) => {
+                console.log(`${doc.id}: ${doc.data().name}`) ;
+                /*
+                const li = document.createElement("li");
+                li.textContent = `${doc.id}: ${doc.data().name}`;
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Delete";
+                deleteBtn.onclick = () => deleteItem(doc.id);
+                li.appendChild(deleteBtn);
+                list.appendChild(li);
+                */
+            });
+        });
+    }
     </script>
+
     <script>
         if ('serviceWorker' in navigator){
             navigator.serviceWorker.register('/service-worker.js').then(reg =>{ 
