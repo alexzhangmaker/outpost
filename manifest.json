@@ -4,12 +4,12 @@
   "icons": [
     
     {
-      "src": "/images/lark192.png",
+      "src": "/outpost/images/lark192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/images/lark512.png",
+      "src": "/outpost/images/lark512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
