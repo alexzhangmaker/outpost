@@ -76,6 +76,11 @@
         }
     </style>
     <style>
+        #editor{
+            height:100px;
+        }
+    </style>
+    <style>
 
 details {
     /*margin: 5px auto;*/
@@ -171,7 +176,16 @@ summary::-webkit-details-marker {
             <button class="noShow" onclick="syncFireStore()">sync FireStore</button>
             <button class="noShow" onclick="storeLocal()">storeLocal</button>
             <button onclick="readLocal()">readLocal</button>
-          
+
+        </div>
+        <div class="noShow" id="editor">
+            <p>Hello World!</p>
+            <p>Some initial <strong>bold</strong> text</p>
+            <p><br /></p>
+        </div>
+        <div class="editor">
+            <input type="text" id="idInputMemo" name="fname"><br><br>
+            <button onclick="submitMemo()">submitMemo</button>
         </div>
         <div class="memoContainer">
             <!-----
@@ -185,11 +199,7 @@ summary::-webkit-details-marker {
             </details>
             --->
         </div>
-        <div id="editor">
-            <p>Hello World!</p>
-            <p>Some initial <strong>bold</strong> text</p>
-            <p><br /></p>
-        </div>
+        
         <pre id="output"></pre>
 
     </div>
@@ -204,9 +214,11 @@ summary::-webkit-details-marker {
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
     <script>
+        /*
          const quill = new Quill('#editor', {
     theme: 'snow'
   });
+  */
 
     function renderMemo(tagContainer,jsonMemo){
         let tagMemo = document.createElement('details') ;
@@ -314,6 +326,22 @@ summary::-webkit-details-marker {
         IterateJSONLocal() ;
     }
 
+    function submitMemo(){
+        let cDate = new Date() ;
+        let tagMemoInput = document.querySelector('#idInputMemo');
+        let jsonMemo={
+            ttm:cDate.toLocaleString(),
+            memo:tagMemoInput.value
+        } ;
+
+        let memoID = `${cDate.getTime()}` ;
+        db.collection("outpost").doc(memoID).set(jsonMemo).then(() => {
+          //loadItems();
+          console.log(jsonMemo) ;
+        }).catch((error) => {
+          console.error("Error writing document: ", error);
+        });
+    }
 
     const firebaseConfig = {
         apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
