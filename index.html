@@ -274,7 +274,16 @@ function _storeWrite(collection,docID,jsonContent){
     });
 }
 
-function _syncFireStore(collection){
+
+async function _syncFireStore(collection){
+    let cloudData = await _dumpFireStore(collection) ;
+    console.log(cloudData) ;
+    cloudData.forEach(jsonData=>{
+        console.log(jsonData) ;
+        _writeJSONLocal(jsonData.id,jsonData) ;
+
+    }) ;
+    /*
     db.collection(collection).get().then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
             console.log(`${doc.id}: ${doc.data()}`) ;
@@ -282,6 +291,7 @@ function _syncFireStore(collection){
             _writeJSONLocal(doc.id,doc.data()) ;
         });
     });
+    */
 }
 
 function _writeJSONLocal(key,jsonContent){
@@ -300,6 +310,88 @@ async function _clearStoreLocal(){
         console.error('Error clearing store:', err);
     }
 }
+
+async function _dumpFireStore(collection){
+    try {
+        const querySnapshot = await db.collection(collection).get();
+        const data = [];
+        querySnapshot.forEach((doc) => {
+            data.push({ id: doc.id, ...doc.data() });
+        });
+        return data;
+    } catch (error) {
+        console.error("Error getting documents: ", error);
+        return null;
+    }
+}
+
+async function fetchDataFromCollection(collectionName) {
+    try {
+        const querySnapshot = await db.collection(collectionName).get();
+        const data = [];
+        querySnapshot.forEach((doc) => {
+            data.push({ id: doc.id, ...doc.data() });
+        });
+        return data;
+    } catch (error) {
+        console.error("Error getting documents: ", error);
+        return null; // Or handle the error as needed
+    }
+}
+
+
+async function fetchDocument(collectionName, documentId) {
+    try {
+        const docRef = doc(db, collectionName, documentId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            return { id: docSnap.id, ...docSnap.data() };
+        } else {
+            console.log("No such document!");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error getting document: ", error);
+        return null;
+    }
+}
+
+async function addDataToCollection(collectionName, data) {
+    try {
+        const docRef = await db.collection(collectionName).add(data);
+        console.log("Document written with ID: ", docRef.id);
+        return docRef; // You might want to return the new document reference
+    } catch (error) {
+        console.error("Error adding document: ", error);
+        return null;
+    }
+}
+
+async function updateDocumentData(collectionName, documentId, updatedData) {
+    try {
+        const docRef = db.collection(collectionName).doc(documentId);
+        await docRef.update(updatedData);
+        console.log("Document updated successfully!");
+        return true;
+    } catch (error) {
+        console.error("Error updating document: ", error);
+        return false;
+    }
+}
+
+async function deleteDocument(collectionName, documentId) {
+    try {
+        const docRef = db.collection(collectionName).doc(documentId);
+        await docRef.delete();
+        console.log("Document deleted successfully!");
+        return true;
+    } catch (error) {
+        console.error("Error deleting document: ", error);
+        return false;
+    }
+}
+
 
 </script>
 
@@ -332,8 +424,11 @@ function renderMemoV2(tagContainer,jsonMemo){
         </div>
     ` ;
     tagContainer.prepend(tagMemo) ;
-    tagMemo.querySelector('.bi-check2-circle').addEventListener('click',(event)=>{
-        tagMemo.classList.toggle('memoCheck') ;
+    tagMemo.dataset.docID = jsonMemo.id ;
+    tagMemo.querySelector('.bi-check2-circle').addEventListener('click',async (event)=>{
+        //tagMemo.classList.toggle('memoCheck') ;
+        await deleteDocument("outpost",tagMemo.dataset.docID) ;
+        tagMemo.remove() ;
     }) ;
 }
 
@@ -358,6 +453,8 @@ function sumbitMemoLocal(key,jsonMemo){
     jsonMemo.key = key ;
     renderMemoV2(tagMemoContainer,jsonMemo) ;
     _writeJSONLocal(key,jsonMemo) ;
+    let tagMemoInput = document.querySelector('#idInputMemo');
+    tagMemoInput.value='' ;
 }
 
 function onClickSubmitMemo(event){
@@ -396,9 +493,11 @@ Mousetrap.bind('@', (event)=>{
 
 document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)=>{
     await _clearStoreLocal() ;
-    await _syncFireStore("outpost") ;
+    //let cloudData = await _dumpFireStore("outpost") ;
     let tagMemoContainer = document.querySelector('.memoContainer') ;
     tagMemoContainer.innerHTML=`` ;
+    await _syncFireStore("outpost") ;
+
     renderLocalJSON() ;
 }) ;
 
