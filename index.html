@@ -175,41 +175,19 @@ summary::-webkit-details-marker {
         }
     </style>
 </head>
-<body>
-    
 
+<body>
     <div class="content" id="scrollableContent">
         <div class="headerBar">
             <h1>outpost</h1>
-            <button class="noShow" onclick="syncFireStore()">sync FireStore</button>
-            <button class="noShow" onclick="storeLocal()">storeLocal</button>
-            <button class="noShow" onclick="readLocal()">readLocal</button>
+        </div>
 
-        </div>
-        <div class="noShow" id="editor">
-            <p>Hello World!</p>
-            <p>Some initial <strong>bold</strong> text</p>
-            <p><br /></p>
-        </div>
         <div class="editor">
             <input type="text" id="idInputMemo" name="fname"><br><br>
-            <button onclick="submitMemo()">submitMemo</button>
-        </div>
-        <div class="memoContainer">
-            <!-----
-            <details>
-                <summary>
-                    <span style="font-size:10px;">demo</span>
-                </summary>
-                <div>
-                    <p>dsfdjsfbdsjkfbdsjfbdsjfbdjs</p>
-                </div>
-            </details>
-            --->
-        </div>
-        
-        <pre id="output"></pre>
+            <button onclick="onClickSubmitMemo()">submitMemo</button>
 
+        </div>
+        <div class="memoContainer"></div>
     </div>
     
     <div class="navbar">
@@ -219,226 +197,195 @@ summary::-webkit-details-marker {
         <div class="nav-item"><i class="bi-cloud-arrow-down outpostBTN" id="idBTNSyncCloud"></i>Sync</div>
         <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN"></i>Settings</div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
-    <script>
-        /*
-         const quill = new Quill('#editor', {
-    theme: 'snow'
-  });
-  */
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+    authDomain: "outpost-8d74e.firebaseapp.com",
+    databaseURL: "https://outpost-8d74e-default-rtdb.firebaseio.com",
+    projectId: "outpost-8d74e",
+    storageBucket: "outpost-8d74e.firebasestorage.app",
+    messagingSenderId: "724993324937",
+    appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+    measurementId: "G-QPHWRTH6BH"
+};
 
-    function renderMemo(tagContainer,jsonMemo){
-        let tagMemo = document.createElement('details') ;
-        tagMemo.innerHTML=`
-            <summary>
-                <span style="font-size:10px;">${jsonMemo.ttm}</span>
-            </summary>
-            <div>
-                <p>${jsonMemo.memo}</p>
-            </div>
-        ` ;
-        tagContainer.prepend(tagMemo) ;
-    }
+const localForageConfig={
+    name: 'signpostPWA',
+    storeName: 'outpost',  // required
+    driver: localforage.INDEXEDDB
+} ;
 
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-    function IterateJSONLocal(){
-        localforage.config({
-            name: 'signpostPWA',
-            storeName: 'outpost',  // required
-            driver: localforage.INDEXEDDB
+function _storeWrite(collection,docID,jsonContent){
+    db.collection(collection).doc(docID).set(jsonContent).then(() => {
+        //loadItems();
+        console.log(jsonContent) ;
+    }).catch((error) => {
+        console.error("Error writing document: ", error);
+    });
+}
+
+function _syncFireStore(collection){
+    db.collection(collection).get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            console.log(`${doc.id}: ${doc.data()}`) ;
+            console.log(doc.data()) ;
+            _writeJSONLocal(doc.id,doc.data()) ;
         });
+    });
+}
 
-        const allData = [];
+function _writeJSONLocal(key,jsonContent){
+    localforage.config(localForageConfig);
+    localforage.setItem(key, JSON.stringify(jsonContent)).then(function(value) {
+        console.log(value);
+    });    
+}
+</script>
 
-        localforage.iterate((value, key) => {
-            // Push each key-value pair as an object to the array
-            let tagMemoContainer = document.querySelector('.memoContainer') ;
-            let jsonMemo = JSON.parse(value);
-            jsonMemo.key = key ;
-            renderMemo(tagMemoContainer,jsonMemo) ;
-            allData.push({ key, value });
+<script>
+function renderMemo(tagContainer,jsonMemo){
+    let tagMemo = document.createElement('details') ;
+    tagMemo.innerHTML=`
+        <summary>
+            <span style="font-size:10px;">${jsonMemo.ttm}</span>
+        </summary>
+        <div>
+            <p>${jsonMemo.memo}</p>
+        </div>
+    ` ;
+    tagContainer.prepend(tagMemo) ;
+}
 
-        }).then(() => {
-            console.log('All key-value pairs:', allData);
-            return allData ;
-        }).catch((err) => {
-            console.error('Error iterating:', err);
-        });
-    }
-
-    function sumbitMemoLocal(key,jsonMemo){
+function renderLocalJSON(){
+    localforage.config(localForageConfig);
+    localforage.iterate((value, key) => {
+        // Push each key-value pair as an object to the array
         let tagMemoContainer = document.querySelector('.memoContainer') ;
-        //let jsonMemo = JSON.parse(value);
+        let jsonMemo = JSON.parse(value);
         jsonMemo.key = key ;
         renderMemo(tagMemoContainer,jsonMemo) ;
+    }).then(() => {
+        console.log('All key-value pairs:');
+    }).catch((err) => {
+        console.error('Error iterating:', err);
+    });
+}
 
-        writeJSONLocal(key,jsonMemo) ;
-    }
+function sumbitMemoLocal(key,jsonMemo){
+    let tagMemoContainer = document.querySelector('.memoContainer') ;
+    //let jsonMemo = JSON.parse(value);
+    jsonMemo.key = key ;
+    renderMemo(tagMemoContainer,jsonMemo) ;
 
-    function writeJSONLocal(key,jsonContent){
-        localforage.config({
-            name: 'signpostPWA',
-            storeName: 'outpost',  // required
-            driver: localforage.INDEXEDDB
-        });
+    _writeJSONLocal(key,jsonMemo) ;
+}
 
-        localforage.setItem(key, JSON.stringify(jsonContent)).then(function(value) {
-            // This code runs once the value has been loaded
-            // from the offline store.
-            console.log(value);
-            localforage.getItem(key).then(function(value) {
-                // This code runs once the value has been loaded
-                // from the offline store.
-                console.log(value);
-            }).catch(function(err) {
-                // This code runs if there were any errors
-                console.log(err);
-            });
-        });    
-    }
+function onClickSubmitMemo(event){
+    let tagMemoInput = document.querySelector('#idInputMemo');
+    let cDate = new Date() ;
+    let jsonMemo={
+        ttm:cDate.toLocaleString(),
+        memo:tagMemoInput.value
+    } ;
+    let memoID = `${cDate.getTime()}` ;
+    sumbitMemoLocal(memoID,jsonMemo) ;
+    _storeWrite("outpost",memoID,jsonMemo) ;
+}
 
-    function storeLocal(){
-        let jsonContent = {
-            name:"alexszhang",
-            email:"alexszhang@gmail.com"
-        } ;
-
-        localforage.config({
-            name: 'signpostPWA',
-            storeName: 'itemsCache',  // required
-            driver: localforage.INDEXEDDB
-        });
-
-        localforage.setItem('signpost', JSON.stringify(jsonContent)).then(function(value) {
-            // This code runs once the value has been loaded
-            // from the offline store.
-            console.log(value);
-            localforage.getItem('signpost').then(function(value) {
-                // This code runs once the value has been loaded
-                // from the offline store.
-                console.log(value);
-            }).catch(function(err) {
-                // This code runs if there were any errors
-                console.log(err);
-            });
-        });
-
-        //localStorage.setItem('outpost', JSON.stringify('value'));
-    }
-    
-    
-    function readLocal(){
-        /*
-        localforage.getItem('outpost').then(function(value) {
-            // This code runs once the value has been loaded
-            // from the offline store.
-            console.log(value);
-        }).catch(function(err) {
-            // This code runs if there were any errors
-            console.log(err);
-        });
-        */
-        IterateJSONLocal() ;
-    }
-
-    function submitMemo(){
+function _onKeyInputEnter(event){
+    if (event.key === 'Enter') {
+        let inputField = event.target ;
+        event.preventDefault(); // Prevents form submission if inside a form
+        const inputValue = inputField.value;
+        console.log('Input value:', inputValue);
+        let jsonMemo=_parseStringToJSON(inputValue) ;
+        
         let cDate = new Date() ;
-        let tagMemoInput = document.querySelector('#idInputMemo');
+        /*
         let jsonMemo={
             ttm:cDate.toLocaleString(),
-            memo:tagMemoInput.value
+            memo:inputValue
         } ;
+        */
         let memoID = `${cDate.getTime()}` ;
         sumbitMemoLocal(memoID,jsonMemo) ;
 
-        db.collection("outpost").doc(memoID).set(jsonMemo).then(() => {
-          //loadItems();
-          console.log(jsonMemo) ;
-        }).catch((error) => {
-          console.error("Error writing document: ", error);
-        });
-    }
+        _storeWrite("outpost",memoID,jsonMemo) ;
 
+    }
+}
+</script>
+<script>
+document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)=>{
+    await _syncFireStore() ;
+    let tagMemoContainer = document.querySelector('.memoContainer') ;
+    tagMemoContainer.innerHTML=`` ;
+    renderLocalJSON() ;
+}) ;
+
+document.addEventListener('DOMContentLoaded',(event)=>{
+    renderLocalJSON() ;
+}) ;
+
+document.querySelector('#idInputMemo').addEventListener('keydown',_onKeyInputEnter);
+</script>
+
+<script>
+function _parseStringToJSON(input) {
+    // Regular expression to match patterns with optional date and about
+    const regex = /^(?:@(\d{2})(\d{2})(\d{4})\s+)?(?:\+(\w+)\s+)?(.+)$/;
     
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
-        authDomain: "outpost-8d74e.firebaseapp.com",
-        databaseURL: "https://outpost-8d74e-default-rtdb.firebaseio.com",
-        projectId: "outpost-8d74e",
-        storageBucket: "outpost-8d74e.firebasestorage.app",
-        messagingSenderId: "724993324937",
-        appId: "1:724993324937:web:ce6c7e6b06489331c79358",
-        measurementId: "G-QPHWRTH6BH"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    async function syncFireStore(){
-        db.collection("outpost").get().then((querySnapshot) => {
-            //list.innerHTML = '';
-            querySnapshot.forEach((doc) => {
-                console.log(`${doc.id}: ${doc.data()}`) ;
-                console.log(doc.data()) ;
-                writeJSONLocal(doc.id,doc.data()) ;
-            });
-        });
+    // Match the input string
+    const match = input.match(regex);
+    
+    if (!match) {
+        throw new Error("Invalid input format");
     }
-    </script>
-    <script>
-        document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)=>{
-            await syncFireStore() ;
-            let tagMemoContainer = document.querySelector('.memoContainer') ;
-            tagMemoContainer.innerHTML=`` ;
-            IterateJSONLocal() ;
+    
+    // Extract components (month, day, year, about, memo)
+    const [, month, day, year, about, memo] = match;
+    
+    // Get current date if date parts are missing
+    const currentDate = new Date();
+    
+    // Construct JSON object
+    let jsonData={
+        date: {
+            month: month ? parseInt(month) : currentDate.getMonth() + 1,
+            day: day ? parseInt(day) : currentDate.getDate(),
+            year: year ? parseInt(year) : currentDate.getFullYear()
+        },
+        about: about ? about.toLowerCase() : "all",
+        memo: memo
+    };
+    let cDate = new Date(jsonData.date.year, jsonData.date.month, jsonData.date.day)
+    jsonData.ttm=`${cDate.getTime()}` ;
+    return jsonData ;
+}
 
-        }) ;
-
-        document.addEventListener('DOMContentLoaded',(event)=>{
-            IterateJSONLocal() ;
-        }) ;
-
-        document.querySelector('#idInputMemo').addEventListener('keydown', (event)=>{
-            if (event.key === 'Enter') {
-                let inputField = event.target ;
-                event.preventDefault(); // Prevents form submission if inside a form
-                // Your code to handle the Enter key press goes here
-                console.log('Enter key pressed!');
-                // For example, get the input value:
-                const inputValue = inputField.value;
-                console.log('Input value:', inputValue);
-                //alert(inputValue) ;
-                // Or trigger a function:
-                //myFunction(inputValue);
-                let cDate = new Date() ;
-                let jsonMemo={
-                    ttm:cDate.toLocaleString(),
-                    memo:inputValue
-                } ;
-                let memoID = `${cDate.getTime()}` ;
-                sumbitMemoLocal(memoID,jsonMemo) ;
-
-                db.collection("outpost").doc(memoID).set(jsonMemo).then(() => {
-                    //loadItems();
-                    console.log(jsonMemo) ;
-                }).catch((error) => {
-                    console.error("Error writing document: ", error);
-                });
-            }
-        });
-    </script>
-
-    <script>
-        if ('serviceWorker' in navigator){
-            navigator.serviceWorker.register('/outpost/service-worker.js').then(reg =>{ 
-                console.log('Service Worker registered', reg) ;
-            }).catch(err => {
-                console.error('Service Worker registration failed', err) ;
-            });
-        }
-    </script>
+// Example usage:
+try {
+    const result = _parseStringToJSON("@05032025 +All something to do");
+    console.log(result);
+    // Output: {"date":{"month":5,"day":3,"year":2025},"about":"all","memo":"something to do"}
+} catch (error) {
+    console.error(error.message);
+}
+</script>
+<script>
+if ('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/outpost/service-worker.js').then(reg =>{ 
+        console.log('Service Worker registered', reg) ;
+    }).catch(err => {
+        console.error('Service Worker registration failed', err) ;
+    });
+}
+</script>
 </body>
 </html>
