@@ -156,7 +156,8 @@ summary::-webkit-details-marker {
 }
 .memoContainer{
     flex-grow: 1;
-    padding-bottom: 2em;
+    padding-top: 20px;
+    padding-bottom: 20px;
 
     overflow-x: hidden;
     overflow-y: auto;
@@ -172,6 +173,49 @@ summary::-webkit-details-marker {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
+            padding-bottom: 1em;
+        }
+
+        #idInputMemo{
+            flex-grow: 1;
+        }
+
+        #idInputMemo:focus {
+            outline: none;
+            color:#333;
+            border: 1px solid black;*/
+            /*text-decoration: underline;
+            /*box-shadow: 0 1px 6px 0 rgba(0, 0, 0, 0.5);*/
+            border-radius: 2px;
+        }
+
+
+        #idBTNSubmit{
+            width:5em;
+            flex-grow: 0;
+        }
+    </style>
+    <style>
+        .liMemo{
+            list-style:none;
+            font-size: 18px;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .DIVMemo{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            min-height: 20px;
+            max-height: 100px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .memoCheck{
+            color:orchid;
+            text-decoration: line-through;
         }
     </style>
 </head>
@@ -184,7 +228,7 @@ summary::-webkit-details-marker {
 
         <div class="editor">
             <input type="text" id="idInputMemo" name="fname"><br><br>
-            <button onclick="onClickSubmitMemo()">submitMemo</button>
+            <button onclick="onClickSubmitMemo()" id="idBTNSubmit"><i class="bi-journal-text outpostBTN"></i></button>
 
         </div>
         <div class="memoContainer"></div>
@@ -246,6 +290,17 @@ function _writeJSONLocal(key,jsonContent){
         console.log(value);
     });    
 }
+
+async function _clearStoreLocal(){
+    try {
+        localforage.config(localForageConfig);
+        await localforage.clear();
+        console.log('Store cleared successfully!');
+    } catch (err) {
+        console.error('Error clearing store:', err);
+    }
+}
+
 </script>
 
 <script>
@@ -262,6 +317,26 @@ function renderMemo(tagContainer,jsonMemo){
     tagContainer.prepend(tagMemo) ;
 }
 
+function renderMemoV2(tagContainer,jsonMemo){
+    let tagMemo = document.createElement('li') ;
+    tagMemo.classList.add('liMemo') ;
+    tagMemo.innerHTML=`       
+        <div class="DIVMemo">
+            <div>
+                <span style="font-size:10px;">${jsonMemo.ttm}</span>
+                <span>${jsonMemo.memo}</span>
+            </div>
+            <div>
+                <i class="bi-check2-circle outpostBTN"></i>
+            </div>
+        </div>
+    ` ;
+    tagContainer.prepend(tagMemo) ;
+    tagMemo.querySelector('.bi-check2-circle').addEventListener('click',(event)=>{
+        tagMemo.classList.toggle('memoCheck') ;
+    }) ;
+}
+
 function renderLocalJSON(){
     localforage.config(localForageConfig);
     localforage.iterate((value, key) => {
@@ -269,7 +344,7 @@ function renderLocalJSON(){
         let tagMemoContainer = document.querySelector('.memoContainer') ;
         let jsonMemo = JSON.parse(value);
         jsonMemo.key = key ;
-        renderMemo(tagMemoContainer,jsonMemo) ;
+        renderMemoV2(tagMemoContainer,jsonMemo) ;
     }).then(() => {
         console.log('All key-value pairs:');
     }).catch((err) => {
@@ -281,8 +356,7 @@ function sumbitMemoLocal(key,jsonMemo){
     let tagMemoContainer = document.querySelector('.memoContainer') ;
     //let jsonMemo = JSON.parse(value);
     jsonMemo.key = key ;
-    renderMemo(tagMemoContainer,jsonMemo) ;
-
+    renderMemoV2(tagMemoContainer,jsonMemo) ;
     _writeJSONLocal(key,jsonMemo) ;
 }
 
@@ -305,25 +379,24 @@ function _onKeyInputEnter(event){
         const inputValue = inputField.value;
         console.log('Input value:', inputValue);
         let jsonMemo=_parseStringToJSON(inputValue) ;
-        
         let cDate = new Date() ;
-        /*
-        let jsonMemo={
-            ttm:cDate.toLocaleString(),
-            memo:inputValue
-        } ;
-        */
         let memoID = `${cDate.getTime()}` ;
         sumbitMemoLocal(memoID,jsonMemo) ;
-
         _storeWrite("outpost",memoID,jsonMemo) ;
-
     }
 }
 </script>
 <script>
+
+Mousetrap.bind('@', (event)=>{
+    //alert('this is Mousetrap for /') ;
+    let tagMemoInput = document.querySelector('#idInputMemo');
+    tagMemoInput.focus();
+});
+
 document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)=>{
-    await _syncFireStore() ;
+    await _clearStoreLocal() ;
+    await _syncFireStore("outpost") ;
     let tagMemoContainer = document.querySelector('.memoContainer') ;
     tagMemoContainer.innerHTML=`` ;
     renderLocalJSON() ;
