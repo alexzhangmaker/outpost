@@ -391,6 +391,10 @@ summary::-webkit-details-marker {
     <script>
         document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)=>{
             await syncFireStore() ;
+            let tagMemoContainer = document.querySelector('.memoContainer') ;
+            tagMemoContainer.innerHTML=`` ;
+            IterateJSONLocal() ;
+
         }) ;
 
         document.addEventListener('DOMContentLoaded',(event)=>{
