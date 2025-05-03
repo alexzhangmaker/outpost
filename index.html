@@ -208,7 +208,7 @@ summary::-webkit-details-marker {
 
         .DIVMemo{
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             justify-content: space-between;
             min-height: 20px;
             max-height: 100px;
@@ -221,12 +221,20 @@ summary::-webkit-details-marker {
             text-decoration: line-through;
         }
 
+        .memoHeader{
+            display: flex;
+            flex-direction: row;
+            justify-content:space-between;
+            align-items:baseline;
+        }
+
         .memoBody{
             display: flex;
             flex-direction: row;
             justify-content: flex-start;
             align-items:baseline;
         }
+
 
         .memoTTM{
             color:darkslategrey ;
@@ -457,21 +465,25 @@ function renderMemoV2(tagContainer,jsonMemo){
     let tagMemo = document.createElement('li') ;
     tagMemo.classList.add('liMemo') ;
 
-    let cDate = new Date(jsonMemo.date.year, jsonMemo.date.month, jsonMemo.date.day)
+    let cDate = new Date(jsonMemo.date.year, jsonMemo.date.month-1, jsonMemo.date.day)
     const formatter = new Intl.DateTimeFormat('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const formattedDate = formatter.format(cDate);
     console.log(formattedDate);
     tagMemo.innerHTML=`       
         <div class="DIVMemo">
-            <div class="memoBody">
-                <span class="memoTTM">${formattedDate}</span>
-                <span class="memoAbout">${jsonMemo.about}</span>
-                <span class="memoContent">${jsonMemo.memo}</span>
-            </div>
-            <div>
+            <div class="memoHeader">
+                <span>
+                    <span class="memoTTM">${formattedDate}</span>
+                    <span class="memoAbout">${jsonMemo.about}</span>
+                </span>
                 <i class="bi-check2-circle outpostBTN"></i>
             </div>
+            <div class="memoBody">
+                <span class="memoContent">${jsonMemo.memo}</span>
+                <br>
+            </div>
         </div>
+
     ` ;
     tagContainer.prepend(tagMemo) ;
     tagMemo.dataset.docID = jsonMemo.key ;
