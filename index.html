@@ -14,6 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
     <script src="./jsResource/localforage.min.js"></script>
+    <script src="./jsResource/mousetrap.min.js"></script>
     <script src="./js/outpost.js"></script>
     <style>
         body{
@@ -166,6 +167,13 @@ summary::-webkit-details-marker {
     overflow-y: auto;
 }
     </style>
+    <style>
+        .editor{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+    </style>
 </head>
 <body>
     
@@ -175,7 +183,7 @@ summary::-webkit-details-marker {
             <h1>outpost</h1>
             <button class="noShow" onclick="syncFireStore()">sync FireStore</button>
             <button class="noShow" onclick="storeLocal()">storeLocal</button>
-            <button onclick="readLocal()">readLocal</button>
+            <button class="noShow" onclick="readLocal()">readLocal</button>
 
         </div>
         <div class="noShow" id="editor">
@@ -259,6 +267,14 @@ summary::-webkit-details-marker {
         });
     }
 
+    function sumbitMemoLocal(key,jsonMemo){
+        let tagMemoContainer = document.querySelector('.memoContainer') ;
+        //let jsonMemo = JSON.parse(value);
+        jsonMemo.key = key ;
+        renderMemo(tagMemoContainer,jsonMemo) ;
+
+        writeJSONLocal(key,jsonMemo) ;
+    }
 
     function writeJSONLocal(key,jsonContent){
         localforage.config({
@@ -333,8 +349,9 @@ summary::-webkit-details-marker {
             ttm:cDate.toLocaleString(),
             memo:tagMemoInput.value
         } ;
-
         let memoID = `${cDate.getTime()}` ;
+        sumbitMemoLocal(memoID,jsonMemo) ;
+
         db.collection("outpost").doc(memoID).set(jsonMemo).then(() => {
           //loadItems();
           console.log(jsonMemo) ;
@@ -342,6 +359,8 @@ summary::-webkit-details-marker {
           console.error("Error writing document: ", error);
         });
     }
+
+    
 
     const firebaseConfig = {
         apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
@@ -373,6 +392,39 @@ summary::-webkit-details-marker {
         document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)=>{
             await syncFireStore() ;
         }) ;
+
+        document.addEventListener('DOMContentLoaded',(event)=>{
+            IterateJSONLocal() ;
+        }) ;
+
+        document.querySelector('#idInputMemo').addEventListener('keydown', (event)=>{
+            if (event.key === 'Enter') {
+                let inputField = event.target ;
+                event.preventDefault(); // Prevents form submission if inside a form
+                // Your code to handle the Enter key press goes here
+                console.log('Enter key pressed!');
+                // For example, get the input value:
+                const inputValue = inputField.value;
+                console.log('Input value:', inputValue);
+                //alert(inputValue) ;
+                // Or trigger a function:
+                //myFunction(inputValue);
+                let cDate = new Date() ;
+                let jsonMemo={
+                    ttm:cDate.toLocaleString(),
+                    memo:inputValue
+                } ;
+                let memoID = `${cDate.getTime()}` ;
+                sumbitMemoLocal(memoID,jsonMemo) ;
+
+                db.collection("outpost").doc(memoID).set(jsonMemo).then(() => {
+                    //loadItems();
+                    console.log(jsonMemo) ;
+                }).catch((error) => {
+                    console.error("Error writing document: ", error);
+                });
+            }
+        });
     </script>
 
     <script>
