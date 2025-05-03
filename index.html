@@ -8,6 +8,9 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="./css/style.css">
 
@@ -217,6 +220,47 @@ summary::-webkit-details-marker {
             color:orchid;
             text-decoration: line-through;
         }
+
+        .memoBody{
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items:baseline;
+        }
+
+        .memoTTM{
+            color:darkslategrey ;
+            width: 10ch;
+            font-size: 14px;
+            font-weight: 300;
+
+            font-family: "Oswald", sans-serif;
+            font-optical-sizing: auto;
+            font-style: normal;
+
+        } 
+        
+        .memoAbout{
+            color:dodgerblue;
+            text-decoration: underline;
+            /*width: 10em;*/
+            font-family: "Oswald", sans-serif;
+            font-optical-sizing: auto;
+            font-style: normal;
+            font-weight: 400;
+
+            padding-right: 5px;
+
+        } 
+        
+        .memoContent{
+            color:#333;
+
+            font-family: "Oswald", sans-serif;
+            font-optical-sizing: auto;
+            font-weight:400 ;
+            font-style: normal;
+        }
     </style>
 </head>
 
@@ -239,7 +283,7 @@ summary::-webkit-details-marker {
         <div class="nav-item"><i class="bi-search outpostBTN"></i>Search</div>
         <div class="nav-item"><i class="bi-currency-exchange outpostBTN"></i>Money</div>
         <div class="nav-item"><i class="bi-cloud-arrow-down outpostBTN" id="idBTNSyncCloud"></i>Sync</div>
-        <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN"></i>Settings</div>
+        <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN" id="idBTNSetting"></i>Settings</div>
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
@@ -281,17 +325,7 @@ async function _syncFireStore(collection){
     cloudData.forEach(jsonData=>{
         console.log(jsonData) ;
         _writeJSONLocal(jsonData.id,jsonData) ;
-
     }) ;
-    /*
-    db.collection(collection).get().then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-            console.log(`${doc.id}: ${doc.data()}`) ;
-            console.log(doc.data()) ;
-            _writeJSONLocal(doc.id,doc.data()) ;
-        });
-    });
-    */
 }
 
 function _writeJSONLocal(key,jsonContent){
@@ -299,6 +333,16 @@ function _writeJSONLocal(key,jsonContent){
     localforage.setItem(key, JSON.stringify(jsonContent)).then(function(value) {
         console.log(value);
     });    
+}
+
+async function removeKeyLocal(key) {
+    try {
+        localforage.config(localForageConfig);
+        await localforage.removeItem(key);
+        console.log(`Key "${key}" removed successfully!`);
+    } catch (err) {
+        console.error('Error removing key:', err);
+    }
 }
 
 async function _clearStoreLocal(){
@@ -412,11 +456,17 @@ function renderMemo(tagContainer,jsonMemo){
 function renderMemoV2(tagContainer,jsonMemo){
     let tagMemo = document.createElement('li') ;
     tagMemo.classList.add('liMemo') ;
+
+    let cDate = new Date(jsonMemo.date.year, jsonMemo.date.month, jsonMemo.date.day)
+    const formatter = new Intl.DateTimeFormat('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const formattedDate = formatter.format(cDate);
+    console.log(formattedDate);
     tagMemo.innerHTML=`       
         <div class="DIVMemo">
-            <div>
-                <span style="font-size:10px;">${jsonMemo.ttm}</span>
-                <span>${jsonMemo.memo}</span>
+            <div class="memoBody">
+                <span class="memoTTM">${formattedDate}</span>
+                <span class="memoAbout">${jsonMemo.about}</span>
+                <span class="memoContent">${jsonMemo.memo}</span>
             </div>
             <div>
                 <i class="bi-check2-circle outpostBTN"></i>
@@ -424,10 +474,12 @@ function renderMemoV2(tagContainer,jsonMemo){
         </div>
     ` ;
     tagContainer.prepend(tagMemo) ;
-    tagMemo.dataset.docID = jsonMemo.id ;
+    tagMemo.dataset.docID = jsonMemo.key ;
     tagMemo.querySelector('.bi-check2-circle').addEventListener('click',async (event)=>{
         //tagMemo.classList.toggle('memoCheck') ;
         await deleteDocument("outpost",tagMemo.dataset.docID) ;
+        await removeKeyLocal(tagMemo.dataset.docID) ;
+
         tagMemo.remove() ;
     }) ;
 }
@@ -511,8 +563,9 @@ document.querySelector('#idInputMemo').addEventListener('keydown',_onKeyInputEnt
 <script>
 function _parseStringToJSON(input) {
     // Regular expression to match patterns with optional date and about
-    const regex = /^(?:@(\d{2})(\d{2})(\d{4})\s+)?(?:\+(\w+)\s+)?(.+)$/;
-    
+    //const regex = /^(?:@(\d{2})(\d{2})(\d{4})\s+)?(?:\+(\w+)\s+)?(.+)$/;
+      const regex = /^(?:@(\d{2})(\d{2})(\d{4})\s+)?(?:\+([\w.]+)\s+)?(.+)$/;
+
     // Match the input string
     const match = input.match(regex);
     
@@ -541,14 +594,6 @@ function _parseStringToJSON(input) {
     return jsonData ;
 }
 
-// Example usage:
-try {
-    const result = _parseStringToJSON("@05032025 +All something to do");
-    console.log(result);
-    // Output: {"date":{"month":5,"day":3,"year":2025},"about":"all","memo":"something to do"}
-} catch (error) {
-    console.error(error.message);
-}
 </script>
 <script>
 if ('serviceWorker' in navigator){
