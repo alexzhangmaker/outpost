@@ -19,13 +19,8 @@
     <script src="./jsResource/localforage.min.js"></script>
     <script src="./jsResource/mousetrap.min.js"></script>
     <script src="./js/outpost.js"></script>
-    <style>
-        body{
-            overflow-y: hidden;
-            overflow-x: hidden;
-            background-color: cornflowerblue;
-        }
-    </style>
+
+
     <style>
         * {
             margin: 0;
@@ -34,6 +29,9 @@
         }
 
         body {
+            overflow-y: hidden;
+            overflow-x: hidden;
+            background-color: cornflowerblue;
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
@@ -45,7 +43,7 @@
         .content {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding-bottom: 20px;
             background: #f4f4f4;
 
             display: flex;
@@ -160,7 +158,7 @@ summary::-webkit-details-marker {
 .memoContainer{
     flex-grow: 1;
     padding-top: 20px;
-    padding-bottom: 20px;
+    padding-bottom: 40px;
 
     overflow-x: hidden;
     overflow-y: auto;
@@ -204,6 +202,11 @@ summary::-webkit-details-marker {
             font-size: 18px;
             padding-left: 20px;
             padding-right: 20px;
+        }
+
+        .liMemo:hover{
+            color:aqua;
+            background-color:grey;
         }
 
         .DIVMemo{
@@ -276,9 +279,7 @@ summary::-webkit-details-marker {
     <div class="content" id="scrollableContent">
         <div class="headerBar">
             <h1>outpost</h1>
-            <button onclick="onClickFetchKeys()" >fetch Keys</button>
-            <button onclick="onClickFetchPaginatedKeys()" >fetch Page Keys</button>
-            
+
         </div>
 
         <div class="editor">
@@ -290,9 +291,9 @@ summary::-webkit-details-marker {
     </div>
     
     <div class="navbar">
-        <div class="nav-item"><i class="bi-house-fill outpostBTN"></i>Home</div>
-        <div class="nav-item"><i class="bi-search outpostBTN"></i>Search</div>
-        <div class="nav-item"><i class="bi-currency-exchange outpostBTN"></i>Money</div>
+        <div class="nav-item"><i class="bi-house-fill outpostBTN"></i>Home.todo</div>
+        <div class="nav-item"><i class="bi-markdown outpostBTN"></i>memo</div>
+        <div class="nav-item"><i class="bi-currency-exchange outpostBTN"></i>Brambling</div>
         <div class="nav-item"><i class="bi-cloud-arrow-down outpostBTN" id="idBTNSyncCloud"></i>Sync</div>
         <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN" id="idBTNSetting"></i>Settings</div>
     </div>
@@ -609,6 +610,8 @@ function _onKeyInputEnter(event){
         _storeWrite("outpost",memoID,jsonMemo) ;
     }
 }
+
+
 </script>
 <script>
 
@@ -702,6 +705,21 @@ function flowType(element, options = {}) {
     adjustFontSize(); // initial run
 }
 
+/*
+make a contenteditable = true element to paste plain text only
+*/
+function handlePlainTextPaste(element) {
+    element.addEventListener('paste', (event) => {
+        // Prevent default paste behavior
+        event.preventDefault();
+        
+        // Get plain text from clipboard
+        const plainText = (event.clipboardData || window.clipboardData).getData('text/plain');
+        
+        // Set the plain text as innerText
+        element.innerText = plainText;
+    });
+}
 </script>
 </body>
 </html>
