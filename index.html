@@ -616,5 +616,29 @@ if ('serviceWorker' in navigator){
     });
 }
 </script>
+<script>
+function flowType(element, options = {}) {
+    const settings = {
+    minimum: options.minimum || 500,
+    maximum: options.maximum || 1200,
+    minFont: options.minFont || 16,
+    maxFont: options.maxFont || 40,
+    fontRatio: options.fontRatio || 35
+    };
+
+    function adjustFontSize() {
+        const width = element.offsetWidth;
+        let fontSize = width / settings.fontRatio;
+
+        fontSize = Math.max(settings.minFont, Math.min(fontSize, settings.maxFont));
+        element.style.fontSize = fontSize + 'px';
+    }
+
+    window.addEventListener('resize', adjustFontSize);
+    window.addEventListener('orientationchange', adjustFontSize);
+    adjustFontSize(); // initial run
+}
+
+</script>
 </body>
 </html>
