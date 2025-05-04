@@ -276,6 +276,9 @@ summary::-webkit-details-marker {
     <div class="content" id="scrollableContent">
         <div class="headerBar">
             <h1>outpost</h1>
+            <button onclick="onClickFetchKeys()" >fetch Keys</button>
+            <button onclick="onClickFetchPaginatedKeys()" >fetch Page Keys</button>
+            
         </div>
 
         <div class="editor">
@@ -445,6 +448,66 @@ async function deleteDocument(collectionName, documentId) {
 }
 
 
+// Fetch the document and get keys
+async function getDocumentKeys(collection) {
+    try {
+        const docSnap = await db.collection(collection).get();
+
+        const keys = [];
+        docSnap.forEach((doc) => {
+            keys.push(doc.id);
+        });
+        return keys ;
+    } catch (error) {
+        console.error("Error fetching document:", error);
+        return [];
+    }
+}
+
+// Function to fetch keys in batches
+async function fetchKeysPaginated(collectionName, pageSize = 100, lastDoc = null) {
+    try {
+        // Reference to the collection
+        let query = db.collection(collectionName)
+                        .orderBy(firebase.firestore.FieldPath.documentId()) // Order by document ID
+                        .limit(pageSize);
+
+        // If paginating, start after the last document
+        if (lastDoc) {
+            query = query.startAfter(lastDoc);
+        }
+
+        // Fetch documents
+        const querySnapshot = await query.get();
+        const keys = [];
+
+        // Extract keys from each document
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            keys.push(...Object.keys(data)); // Collect keys from document data
+        });
+
+        // Get the last document for the next page
+        const newLastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+        return { keys, lastDoc: newLastDoc, hasMore: querySnapshot.size === pageSize };
+    } catch (error) {
+        console.error("Error fetching keys:", error);
+        return { keys: [], lastDoc: null, hasMore: false };
+    }
+}
+</script>
+<script>
+
+async function onClickFetchKeys(event){
+    let keys = await getDocumentKeys("outpost") ;
+    console.log(keys) ;
+} 
+
+async function onClickFetchPaginatedKeys(event){
+    let keys = await fetchKeysPaginated("outpost",5) ;
+    console.log(keys) ;
+}
 </script>
 
 <script>
