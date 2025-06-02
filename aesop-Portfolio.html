@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Firebase Sheet Editor</title>
+  <meta charset="UTF-8" />
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+    th {
+      background: #f2f2f2;
+    }
+    button {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>Firebase Sheet Editor</h2>
+  <div id="table-container"></div>
+  <button onclick="updateFirebase()">Save to Firebase</button>
+
+  <script>
+    const firebaseUrl = "https://aesop-portfolio.asia-southeast1.firebasedatabase.app/holdingsTbl.json";
+
+    let data = [];
+
+    async function loadData() {
+      const res = await fetch(firebaseUrl);
+      data = await res.json();
+      renderTable(data);
+    }
+
+    function renderTable(dataArray) {
+      if (!Array.isArray(dataArray)) return;
+
+      const table = document.createElement("table");
+      const container = document.getElementById("table-container");
+      container.innerHTML = "";
+      container.appendChild(table);
+
+      const headers = Object.keys(dataArray[0] || {});
+      const thead = table.createTHead();
+      const headerRow = thead.insertRow();
+      headers.forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        headerRow.appendChild(th);
+      });
+
+      const tbody = table.createTBody();
+      dataArray.forEach((row, i) => {
+        const tr = tbody.insertRow();
+        headers.forEach(h => {
+          const td = tr.insertCell();
+          const input = document.createElement("input");
+          input.value = row[h] ?? "";
+          input.dataset.row = i;
+          input.dataset.key = h;
+          input.oninput = (e) => {
+            const { row, key } = e.target.dataset;
+            data[row][key] = e.target.value;
+          };
+          td.appendChild(input);
+        });
+      });
+    }
+
+    async function updateFirebase() {
+      const res = await fetch(firebaseUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      alert("Data updated in Firebase!");
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
