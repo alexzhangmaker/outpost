@@ -621,6 +621,37 @@ Mousetrap.bind('@', (event)=>{
     tagMemoInput.focus();
 });
 
+<<<<<<< HEAD
+//idBTNSchedule
+document.querySelector('#idBTNSchedule').addEventListener('click',async (event)=>{
+    const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/CMU2025.json";
+    let jsonCMUSchedule = [];
+    const res = await fetch(firebaseUrl);
+    jsonCMUSchedule = await res.json();
+    console.log(jsonCMUSchedule) ;
+    let tagWndContent = document.querySelector('#idWndContent') ;
+    renderSchedule(tagWndContent,jsonCMUSchedule);
+});
+
+function renderSchedule(tagWndContent,jsonCMUSchedule){
+    tagWndContent.innerHTML=`` ;
+    for(let i=0;i<jsonCMUSchedule.length;i++){
+        let tagEvent = document.createElement('details') ;
+        tagWndContent.appendChild(tagEvent) ;
+        tagEvent.innerHTML=`
+            <summary>${jsonCMUSchedule[i].workday}/${jsonCMUSchedule[i].Time}=>${jsonCMUSchedule[i].scheduled}</summary>
+            <div class="eventDetail">
+                <span>${jsonCMUSchedule[i].Location}</span>
+            </div>
+        ` ;
+    }
+}
+
+
+
+
+=======
+>>>>>>> parent of 46f5af5 (check in)
 document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)=>{
     await _clearStoreLocal() ;
     //let cloudData = await _dumpFireStore("outpost") ;
