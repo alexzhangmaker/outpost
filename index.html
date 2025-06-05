@@ -292,7 +292,7 @@ summary::-webkit-details-marker {
     </div>
     
     <div class="navbar">
-        <div class="nav-item"><i class="bi-house-fill outpostBTN"></i>Home.todo</div>
+        <div class="nav-item"><i class="bi-house-fill outpostBTN" id="idBTNHomeToDo"></i>Home.todo</div>
         <div class="nav-item"><i class="bi-calendar-day outpostBTN" id="idBTNCMUSchedule"></i>schedule</div>
         <div class="nav-item"><i class="bi-markdown outpostBTN"></i>memo</div>
         <div class="nav-item"><i class="bi-currency-exchange outpostBTN"></i>Brambling</div>
@@ -650,6 +650,20 @@ function renderSchedule(tagWndContent,jsonCMUSchedule){
 
 
 
+
+document.querySelector('#idBTNHomeToDo').addEventListener('click',async (event)=>{
+    //let cloudData = await _dumpFireStore("outpost") ;
+    let tagWndContent = document.querySelector('#idWndContent') ;
+    tagWndContent.innerHTML=`
+        <div class="editor">
+            <input type="text" id="idInputMemo" name="fname"><br><br>
+            <button onclick="onClickSubmitMemo()" id="idBTNSubmit"><i class="bi-journal-text outpostBTN"></i></button>
+
+        </div>
+        <div class="memoContainer"></div>
+    ` ;
+    renderLocalJSON() ;
+}) ;
 
 document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)=>{
     await _clearStoreLocal() ;
