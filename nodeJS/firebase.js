@@ -4,7 +4,7 @@ const serviceAccount = require('/Users/alexszhanggmail.com/github/GoogleSecrets/
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://aesop-portfolio.asia-southeast1.firebasedatabase.app/'  // replace with your actual URL
+  databaseURL: 'https://outpost-8d74e.asia-southeast1.firebasedatabase.app/CMU2025'  // replace with your actual URL
 });
 
 const db = admin.database();

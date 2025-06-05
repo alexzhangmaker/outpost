@@ -281,17 +281,19 @@ summary::-webkit-details-marker {
             <h1>outpost</h1>
         </div>
 
-        <div class="editor">
-            <input type="text" id="idInputMemo" name="fname"><br><br>
-            <button onclick="onClickSubmitMemo()" id="idBTNSubmit"><i class="bi-journal-text outpostBTN"></i></button>
+        <div id="idWndContent">
+            <div class="editor">
+                <input type="text" id="idInputMemo" name="fname"><br><br>
+                <button onclick="onClickSubmitMemo()" id="idBTNSubmit"><i class="bi-journal-text outpostBTN"></i></button>
 
+            </div>
+            <div class="memoContainer"></div>
         </div>
-        <div class="memoContainer"></div>
     </div>
     
     <div class="navbar">
         <div class="nav-item"><i class="bi-house-fill outpostBTN"></i>Home.todo</div>
-        <div class="nav-item"><i class="bi-calendar-day outpostBTN"></i>schedule</div>
+        <div class="nav-item"><i class="bi-calendar-day outpostBTN" id="idBTNCMUSchedule"></i>schedule</div>
         <div class="nav-item"><i class="bi-markdown outpostBTN"></i>memo</div>
         <div class="nav-item"><i class="bi-currency-exchange outpostBTN"></i>Brambling</div>
         <div class="nav-item"><i class="bi-cloud-arrow-down outpostBTN" id="idBTNSyncCloud"></i>Sync</div>
@@ -621,9 +623,8 @@ Mousetrap.bind('@', (event)=>{
     tagMemoInput.focus();
 });
 
-<<<<<<< HEAD
 //idBTNSchedule
-document.querySelector('#idBTNSchedule').addEventListener('click',async (event)=>{
+document.querySelector('#idBTNCMUSchedule').addEventListener('click',async (event)=>{
     const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/CMU2025.json";
     let jsonCMUSchedule = [];
     const res = await fetch(firebaseUrl);
@@ -650,8 +651,6 @@ function renderSchedule(tagWndContent,jsonCMUSchedule){
 
 
 
-=======
->>>>>>> parent of 46f5af5 (check in)
 document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)=>{
     await _clearStoreLocal() ;
     //let cloudData = await _dumpFireStore("outpost") ;
@@ -661,6 +660,21 @@ document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)
 
     renderLocalJSON() ;
 }) ;
+
+
+/*
+document.querySelector('#idBTNCMUSchedule').addEventListener('click',async (event)=>{
+    const firebaseUrl = "https://aesop-portfolio.asia-southeast1.firebasedatabase.app/holdingsTbl.json";
+
+    let jsonSchedule = [];
+
+    const res = await fetch(firebaseUrl);
+    jsonSchedule = await res.json();
+    console.log(jsonSchedule) ;
+
+    
+}) ;
+*/
 
 document.addEventListener('DOMContentLoaded',(event)=>{
     renderLocalJSON() ;
