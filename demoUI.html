@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Firestore Add/Update/Delete Example</title>
+  <link rel="stylesheet" href="./css/cssSchedule_V1.css">
+
+  <style>
+    @import url(https://fonts.googleapis.com/css?family=Open+Sans);
+    @import url(https://fonts.googleapis.com/css?family=Lobster);
+    @import url(https://fonts.googleapis.com/css?family=Oswald:400,700);
+
+    html {
+        background-color: rgb(14, 151, 167);
+    }
+    body{
+        overflow-y:hidden;
+        overflow-x: hidden;
+    }
+
+
+  </style>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <script src="./jsResource/localforage.min.js"></script>
+</head>
+<body>
+    <div class="rootCanvas"></div>
+    <!------
+    <div class="event-calendar" style="width:350px;">
+        <div class="head"><p class="top-line">Course TFL 2025</p></div>
+        <div class="spacer"></div>
+        <div class="event-list">
+            
+          <a href="#" class="eventV2">
+            <div class="event-containerV2">
+              <div class="date-containerV2">
+                    <p class="WeekV2">周二</p>
+                    <p class="dateV2"><span>Jun</span>-<span>11</span></p>
+              </div>
+              <div class="detail-containerV2">
+                    <p class="titleV2">Listening&Speaking Thai 3</p>
+                    <p ><span class="timeV2">08:00-09:30</span> <span class="locationV2">RB3302</span></p>
+                    <p class="descriptionV2">
+                        something to memo, teacher name, assignment...
+                    </p>
+                </div>
+            </div>
+          </a>
+          <div class="spacer"></div>
+          <a href="#" class="eventV2">
+
+            <div class="event-containerV2">
+              <div class="date-containerV2">
+                    <p class="WeekV2">周二</p>
+                    <p class="dateV2"><span>Jun</span>-<span>11</span></p>
+              </div>
+              <div class="detail-containerV2">
+                    <p class="titleV2">Listening&Speaking Thai 3</p>
+                    <p ><span class="timeV2">08:00-09:30</span> <span class="locationV2">RB3302</span></p>
+                    <p class="descriptionV2">
+                        something to memo, teacher name, assignment...
+                    </p>
+                </div>
+            </div>
+          </a>
+          <div class="spacer"></div>
+        
+        </div>
+      </div>
+    -->
+
+  <script>
+
+
+    function convertWeekdayToChinese(weekday) {
+        const weekdayMap = {
+            'Monday': '周一',
+            'Tuesday': '周二',
+            'Wednesday': '周三',
+            'Thursday': '周四',
+            'Friday': '周五',
+            'Saturday': '周六',
+            'Sunday': '周日'
+        };
+        
+        // Normalize input to match keys (case-sensitive)
+        const normalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1).toLowerCase();
+        return weekdayMap[normalizedWeekday] || 'Invalid weekday';
+    }
+
+    function formatTimeToTwoDigits(timeStr) {
+        // Split the time string into hours and minutes
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        
+        // Format hours and minutes to always have two digits
+        const formattedHours = hours < 10 ? `0${hours}` : `${hours}`;
+        const formattedMinutes = minutes < 10 ? `0${minutes}` : `${minutes}`;
+        
+        // Return the formatted time string
+        return `${formattedHours}:${formattedMinutes}`;
+    }
+
+    function renderEvent(tagEventList,jsonEvent){
+        jsonEvent.weekday = convertWeekdayToChinese(jsonEvent.weekday) ;
+        jsonEvent.from = formatTimeToTwoDigits(jsonEvent.from) ;
+        jsonEvent.to = formatTimeToTwoDigits(jsonEvent.to) ;
+
+        let tagEvent = document.createElement('a') ;
+        tagEventList.appendChild(tagEvent) ;
+        tagEvent.href='#' ;
+        tagEvent.classList.add('eventV2') ;
+        tagEvent.innerHTML=`
+            <div class="event-containerV2">
+                <div class="date-containerV2">
+                    <p class="WeekV2">${jsonEvent.weekday}</p>
+                    <p class="dateV2"><span>Jun</span>-<span>11</span></p>
+                </div>
+                <div class="detail-containerV2">
+                    <p class="titleV2">Listening&Speaking Thai 3</p>
+                    <p ><span class="timeV2">${jsonEvent.from}-${jsonEvent.to}</span> <span class="locationV2">${jsonEvent.location}</span></p>
+                    <p class="descriptionV2">${jsonEvent.memo}</p>
+                </div>
+            </div>
+        ` ;
+
+        let tagSpacer = document.createElement('div') ;
+        tagEventList.appendChild(tagSpacer) ;
+        tagSpacer.classList.add('spacer') ;
+    }
+
+    function switchScheduleMode(tagRootCanvas,modeTitle){
+        let cInnerHTML=`
+        <div class="event-calendar" style="width:350px;">
+            <div class="head"><p class="top-line">${modeTitle}</p></div>
+            <div class="spacer"></div>
+            <div class="event-list"></div>
+        </div>
+        ` ;
+        tagRootCanvas.innerHTML=cInnerHTML ;
+    }
+
+  </script>
+  <script>
+    let jsonEvent1 = {
+        weekday:"Wednesday",
+        from:"8:00",
+        to:"9:30",
+        courseID:"001223",
+        course:"English for Humanities and Mass Communication",
+        lecture:"TBA",
+        location:"TBA",
+        memo:""
+    } ;
+    let jsonEvent2 = {
+        weekday:"Friday",
+        from:"8:00",
+        to:"9:30",
+        courseID:"001223",
+        course:"English for Humanities and Mass Communication",
+        lecture:"TBA",
+        location:"TBA",
+        memo:""
+    } ;
+    let jsonEvent3 = {
+        weekday:"Friday",
+        from:"8:00",
+        to:"9:30",
+        courseID:"001223",
+        course:"English for Humanities and Mass Communication",
+        lecture:"TBA",
+        location:"TBA",
+        memo:""
+    } ;
+
+    switchScheduleMode(document.querySelector('.rootCanvas'),"Course TFL 2025") ;
+    renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
+    renderEvent(document.querySelector(".event-list"), jsonEvent2) ;
+    renderEvent(document.querySelector(".event-list"), jsonEvent3) ;
+
+    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
+    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
+
+  </script>
+</body>
+</html>

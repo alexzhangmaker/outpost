@@ -1,0 +1,136 @@
+
+.event-calendar {
+    font-size: 14px;
+    font-family: Open Sans;
+    overflow-y:auto;
+    white-space: nowrap;
+    margin-top:0em;/*-4em;*/
+    height:80vh ;
+  }
+  
+  .head {
+    margin-bottom: 0/*-3.2em*/;
+  }
+  
+  .top-line {
+    /*font-family: Lobster;*/
+    font-weight: 400;
+    font-size: 2.5em;
+    text-transform: capitalize;
+    /*
+    text-shadow:3px 3px #6D4C41;
+    color: rgb(253, 248, 228);
+    */
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  
+
+.event-list {
+    display: block;
+    border-right: 1px solid rgb(229, 229, 229);
+  }
+
+  .spacer {
+    border-bottom: 1px solid rgb(229, 229, 229);
+  }
+
+.eventV2 {
+    text-decoration: none;
+    width:800px ;
+    max-width: 1000px;
+}
+
+.eventV2:nth-child(odd) .event-containerV2 {
+    border-left-color: #6D4C41; /* brown */
+}
+
+.eventV2:nth-child(even) .event-containerV2 {
+    border-left-color: #FDD835; /*yellow*/
+}
+
+.event-containerV2 {
+    color: rgb(171, 171, 171);
+    transition: all 0.2s ease;
+    background: rgb(253, 248, 228);
+    border-left: 3px solid;
+    padding-top: 10px;
+    padding-bottom: 15px;
+}
+
+.event-containerV2:hover {
+    border-left-width: 7px;
+    background:#ECEFF1;
+}
+
+.event-containerV2 p{
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.date-containerV2 {
+    display:inline-block;
+    width:50px;
+    padding-left: 13px;
+    padding-right: 8px;
+    padding-bottom: 2px;
+    margin-right: 6px;
+    font-family: Oswald;
+    font-weight: 700;
+    color:#8D6E63;
+}
+
+.WeekV2{
+    font-size: 20px;
+}
+
+.dateV2 {
+    font-size: 1.0em;
+    text-transform:uppercase;
+}
+
+.monthV2 {
+    display:block;
+    font-size: .4em;
+    font-weight: 400;
+    margin-top:-.8em;
+    text-transform:uppercase;
+}
+
+.detail-containerV2 {
+    display:inline-block;
+    vertical-align:top;
+    padding-top:3px;
+}
+
+.detail-containerV2 p{
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.titleV2 {
+    text-transform:uppercase;
+    font-family:Oswald;
+    font-weight:500;
+    font-size:1.3em;
+    color:#8D6E63;
+}
+
+.timeV2{
+    font-size: 1.0em;
+    font-weight:500;
+    color: black;
+    text-transform:uppercase;
+}
+
+.locationV2{
+    font-size: 1.0em;
+    font-weight:500;
+    color: blue;
+    text-transform:uppercase;
+}
+.descriptionV2 {
+    display:block;
+    font-size:0.9em;
+    color:#091c1f;
+}

@@ -13,21 +13,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/cssSchedule_V1.css">
+
 
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
     <script src="./jsResource/localforage.min.js"></script>
     <script src="./jsResource/mousetrap.min.js"></script>
     <script src="./js/outpost.js"></script>
+    <script src="./js/scheduleAPI.js"></script>
 
 
     <style>
+        @import url(https://fonts.googleapis.com/css?family=Open+Sans);
+        @import url(https://fonts.googleapis.com/css?family=Lobster);
+        @import url(https://fonts.googleapis.com/css?family=Oswald:400,700);
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        html {
+        background-color: rgb(14, 151, 167);
+    }
+    body{
+        overflow-y:hidden;
+        overflow-x: hidden;
+    }
         body {
             overflow-y: hidden;
             overflow-x: hidden;
@@ -277,9 +290,7 @@ summary::-webkit-details-marker {
 
 <body>
     <div class="content" id="scrollableContent">
-        <div class="headerBar">
-            <h1>outpost</h1>
-        </div>
+     
 
         <div id="idWndContent">
             <div class="editor">
@@ -625,13 +636,21 @@ Mousetrap.bind('@', (event)=>{
 
 //idBTNSchedule
 document.querySelector('#idBTNCMUSchedule').addEventListener('click',async (event)=>{
-    const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/CMU2025.json";
+    const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/CourseSchedule2025.json";
     let jsonCMUSchedule = [];
     const res = await fetch(firebaseUrl);
     jsonCMUSchedule = await res.json();
     console.log(jsonCMUSchedule) ;
     let tagWndContent = document.querySelector('#idWndContent') ;
-    renderSchedule(tagWndContent,jsonCMUSchedule);
+
+    //renderSchedule(tagWndContent,jsonCMUSchedule);
+    switchScheduleMode(tagWndContent,"Course TFL 2025") ;
+    for(let i=0;i<jsonCMUSchedule.length;i++){
+        renderEvent(document.querySelector(".event-list"), jsonCMUSchedule[i]) ;
+    }
+    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
+    //renderEvent(document.querySelector(".event-list"), jsonEvent2) ;
+    
 });
 
 function renderSchedule(tagWndContent,jsonCMUSchedule){
@@ -780,5 +799,44 @@ function handlePlainTextPaste(element) {
     });
 }
 </script>
+
+<script>
+    let jsonEvent1 = {
+        weekday:"Wednesday",
+        from:"8:00",
+        to:"9:30",
+        courseID:"001223",
+        course:"English for Humanities and Mass Communication",
+        lecture:"TBA",
+        location:"TBA",
+        memo:""
+    } ;
+    let jsonEvent2 = {
+        weekday:"Friday",
+        from:"8:00",
+        to:"9:30",
+        courseID:"001223",
+        course:"English for Humanities and Mass Communication",
+        lecture:"TBA",
+        location:"TBA",
+        memo:""
+    } ;
+    let jsonEvent3 = {
+        weekday:"Friday",
+        from:"8:00",
+        to:"9:30",
+        courseID:"001223",
+        course:"English for Humanities and Mass Communication",
+        lecture:"TBA",
+        location:"TBA",
+        memo:""
+    } ;
+
+    
+
+    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
+    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
+
+  </script>
 </body>
 </html>
