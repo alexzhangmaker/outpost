@@ -1,5 +1,5 @@
 .truncate {
-  width: 300px; /* Set the desired width */
+  width: 95vw; /* Set the desired width */
   overflow: hidden; /* Hide overflow content */
   white-space: nowrap; /* Prevent text wrapping */
   text-overflow: ellipsis; /* Show "..." for truncated text */

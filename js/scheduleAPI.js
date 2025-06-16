@@ -42,7 +42,7 @@ function renderCourseEvent(tagEventList,jsonEvent){
                 <p class="dateV2"><span>Jun</span>-<span>11</span></p>
             </div>
             <div class="detail-containerV2">
-                <p class="titleV2">${jsonEvent.course}</p>
+                <p class="titleV2 truncate">${jsonEvent.course}</p>
                 <p ><span class="timeV2">${jsonEvent.from}-${jsonEvent.to}</span> <span class="locationV2">${jsonEvent.location}</span></p>
                 <p class="descriptionV2">${jsonEvent.memo}:${jsonEvent.courseID}</p>
             </div>
