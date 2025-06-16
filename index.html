@@ -720,20 +720,6 @@ document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)
 }) ;
 
 
-/*
-document.querySelector('#idBTNCMUSchedule').addEventListener('click',async (event)=>{
-    const firebaseUrl = "https://aesop-portfolio.asia-southeast1.firebasedatabase.app/holdingsTbl.json";
-
-    let jsonSchedule = [];
-
-    const res = await fetch(firebaseUrl);
-    jsonSchedule = await res.json();
-    console.log(jsonSchedule) ;
-
-    
-}) ;
-*/
-
 document.addEventListener('DOMContentLoaded',(event)=>{
     renderLocalJSON() ;
 }) ;
@@ -825,43 +811,5 @@ function handlePlainTextPaste(element) {
 }
 </script>
 
-<script>
-    let jsonEvent1 = {
-        weekday:"Wednesday",
-        from:"8:00",
-        to:"9:30",
-        courseID:"001223",
-        course:"English for Humanities and Mass Communication",
-        lecture:"TBA",
-        location:"TBA",
-        memo:""
-    } ;
-    let jsonEvent2 = {
-        weekday:"Friday",
-        from:"8:00",
-        to:"9:30",
-        courseID:"001223",
-        course:"English for Humanities and Mass Communication",
-        lecture:"TBA",
-        location:"TBA",
-        memo:""
-    } ;
-    let jsonEvent3 = {
-        weekday:"Friday",
-        from:"8:00",
-        to:"9:30",
-        courseID:"001223",
-        course:"English for Humanities and Mass Communication",
-        lecture:"TBA",
-        location:"TBA",
-        memo:""
-    } ;
-
-    
-
-    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
-    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
-
-  </script>
 </body>
 </html>

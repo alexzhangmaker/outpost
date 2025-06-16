@@ -42,9 +42,9 @@ function renderCourseEvent(tagEventList,jsonEvent){
                 <p class="dateV2"><span>Jun</span>-<span>11</span></p>
             </div>
             <div class="detail-containerV2">
-                <p class="titleV2">Listening&Speaking Thai 3</p>
+                <p class="titleV2">${jsonEvent.course}</p>
                 <p ><span class="timeV2">${jsonEvent.from}-${jsonEvent.to}</span> <span class="locationV2">${jsonEvent.location}</span></p>
-                <p class="descriptionV2">${jsonEvent.memo}</p>
+                <p class="descriptionV2">${jsonEvent.memo}:${jsonEvent.courseID}</p>
             </div>
         </div>
     ` ;
@@ -64,9 +64,10 @@ jsonEvent={
 }
 */
 function renderCMUCalendarEvent(tagEventList,jsonEvent){
-    jsonEvent.weekday = convertWeekdayToChinese(jsonEvent.weekday) ;
-    jsonEvent.from = formatTimeToTwoDigits(jsonEvent.from) ;
-    jsonEvent.to = formatTimeToTwoDigits(jsonEvent.to) ;
+    let from = new Date(jsonEvent.from) ;
+    let to = new Date(jsonEvent.to) ;
+    //jsonEvent.from = formatTimeToTwoDigits(jsonEvent.from) ;
+    //jsonEvent.to = formatTimeToTwoDigits(jsonEvent.to) ;
 
     let tagEvent = document.createElement('a') ;
     tagEventList.appendChild(tagEvent) ;
