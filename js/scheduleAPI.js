@@ -40,16 +40,30 @@ function formatTimeToTwoDigits(timeStr) {
 }
 
 function renderCourseEvent(tagEventList,jsonEvent){
-    let weekDay = getWeekday() ;
-    console.log(weekDay) ;
-    if(weekDay!=jsonEvent.weekday)return ;
+
+    //if(weekDay!=jsonEvent.weekday)return ;
+    
+    const weekdayClassMap = {
+        'Monday': 'scheduleMon',
+        'Tuesday': 'scheduleTue',
+        'Wednesday': 'scheduleWed',
+        'Thursday': 'scheduleThurs',
+        'Friday': 'scheduleFri',
+        'Saturday': 'scheduleSat',
+        'Sunday': 'scheduleSun'
+    };
+
+    let className = weekdayClassMap[jsonEvent.weekday] ;
+    let tagWeekdayContainer = tagEventList.querySelector(`.${className}`) ;
+    
     
     jsonEvent.weekday = convertWeekdayToChinese(jsonEvent.weekday) ;
     jsonEvent.from = formatTimeToTwoDigits(jsonEvent.from) ;
     jsonEvent.to = formatTimeToTwoDigits(jsonEvent.to) ;
 
     let tagEvent = document.createElement('a') ;
-    tagEventList.appendChild(tagEvent) ;
+    //tagEventList.appendChild(tagEvent) ;
+    tagWeekdayContainer.appendChild(tagEvent) ;
     tagEvent.href='#' ;
     tagEvent.classList.add('eventV2') ;
     tagEvent.innerHTML=`
@@ -85,9 +99,22 @@ function renderCMUCalendarEvent(tagEventList,jsonEvent){
     let to = new Date(jsonEvent.to) ;
     //jsonEvent.from = formatTimeToTwoDigits(jsonEvent.from) ;
     //jsonEvent.to = formatTimeToTwoDigits(jsonEvent.to) ;
+    //const className = ["scheduleSun","scheduleMon","scheduleTue","scheduleWed","scheduleThurs","scheduleFri","scheduleSat"]
+    const weekdayClassMap = {
+        'Monday': 'scheduleMon',
+        'Tuesday': 'scheduleTue',
+        'Wednesday': 'scheduleWed',
+        'Thursday': 'scheduleThurs',
+        'Friday': 'scheduleFri',
+        'Saturday': 'scheduleSat',
+        'Sunday': 'scheduleSun'
+    };
 
+    let className = weekdayClassMap[jsonEvent.weekday] ;
+    let tagWeekdayContainer = tagEventList.querySelector(`.${className}`) ;
     let tagEvent = document.createElement('a') ;
-    tagEventList.appendChild(tagEvent) ;
+    //tagEventList.appendChild(tagEvent) ;
+    tagWeekdayContainer.appendChild(tagEvent) ;
     tagEvent.href='#' ;
     tagEvent.classList.add('eventV2') ;
     tagEvent.innerHTML=`
@@ -114,7 +141,18 @@ function switchScheduleMode(tagRootCanvas,modeTitle){
     <div class="event-calendar" style="width:100%/*350px*/;">
         <div class="head"><p class="top-line">${modeTitle}</p></div>
         <div class="spacer"></div>
-        <div class="event-list"></div>
+        <div class="event-list">
+            <details class="scheduleMon weekday"><summary>Monday</summary></details>
+            <details class="scheduleTue weekday"><summary>Tuesday</summary></details>
+            <details class="scheduleWed weekday"><summary>Wednesday</summary></details>
+            <details class="scheduleThurs weekday"><summary>Thursday</summary></details>
+            <details class="scheduleFri weekday"><summary>Friday</summary></details>
+            <details class="scheduleSat weekday"><summary>Saturday</summary></details>
+            <details class="scheduleSun weekday"><summary>Sunday</summary></details>
+
+        </details>
+        </details>
+        </div>
     </div>
     ` ;
     tagRootCanvas.innerHTML=cInnerHTML ;
