@@ -14,6 +14,19 @@ function convertWeekdayToChinese(weekday) {
     return weekdayMap[normalizedWeekday] || 'Invalid weekday';
 }
 
+function getWeekday(){
+    const date = new Date(); // Current date
+    const dayOfWeek = date.getDay(); // Gets the day of the week as a number (0-6)
+    console.log(dayOfWeek);
+    
+    // To get the name of the weekday, you can create an array:
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const currentDayOfWeek = daysOfWeek[date.getDay()];
+    console.log(currentDayOfWeek);
+    return currentDayOfWeek ;
+}
+
+
 function formatTimeToTwoDigits(timeStr) {
     // Split the time string into hours and minutes
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -27,6 +40,10 @@ function formatTimeToTwoDigits(timeStr) {
 }
 
 function renderCourseEvent(tagEventList,jsonEvent){
+    let weekDay = getWeekday() ;
+    console.log(weekDay) ;
+    if(weekDay!=jsonEvent.weekday)return ;
+    
     jsonEvent.weekday = convertWeekdayToChinese(jsonEvent.weekday) ;
     jsonEvent.from = formatTimeToTwoDigits(jsonEvent.from) ;
     jsonEvent.to = formatTimeToTwoDigits(jsonEvent.to) ;
