@@ -285,6 +285,10 @@ summary::-webkit-details-marker {
             font-weight:400 ;
             font-style: normal;
         }
+
+        .noShow{
+            display: none;
+        }
     </style>
 </head>
 
@@ -305,7 +309,7 @@ summary::-webkit-details-marker {
     <div class="navbar">
         <div class="nav-item"><i class="bi-house-fill outpostBTN" id="idBTNHomeToDo"></i>Home.todo</div>
         <div class="nav-item"><i class="bi-calendar-day outpostBTN" id="idBTNCMUSchedule"></i>schedule</div>
-        <div class="nav-item"><i class="bi-markdown outpostBTN"></i>memo</div>
+        <div class="nav-item"><i class="bi-calendar-date outpostBTN" id="idBTNCMUCalendar"></i>CMU Calendar</div>
         <div class="nav-item"><i class="bi-currency-exchange outpostBTN"></i>Brambling</div>
         <div class="nav-item"><i class="bi-cloud-arrow-down outpostBTN" id="idBTNSyncCloud"></i>Sync</div>
         <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN" id="idBTNSetting"></i>Settings</div>
@@ -646,7 +650,28 @@ document.querySelector('#idBTNCMUSchedule').addEventListener('click',async (even
     //renderSchedule(tagWndContent,jsonCMUSchedule);
     switchScheduleMode(tagWndContent,"Course TFL 2025") ;
     for(let i=0;i<jsonCMUSchedule.length;i++){
-        renderEvent(document.querySelector(".event-list"), jsonCMUSchedule[i]) ;
+        renderCourseEvent(document.querySelector(".event-list"), jsonCMUSchedule[i]) ;
+    }
+    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
+    //renderEvent(document.querySelector(".event-list"), jsonEvent2) ;
+    
+});
+
+
+//idBTNCMUCalendar
+//idBTNSchedule
+document.querySelector('#idBTNCMUCalendar').addEventListener('click',async (event)=>{
+    const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/CMUSchedule2025.json";
+    let jsonCMUSchedule = [];
+    const res = await fetch(firebaseUrl);
+    jsonCMUCalendar = await res.json();
+    console.log(jsonCMUCalendar) ;
+    let tagWndContent = document.querySelector('#idWndContent') ;
+
+    //renderSchedule(tagWndContent,jsonCMUSchedule);
+    switchScheduleMode(tagWndContent,"CMU 2025") ;
+    for(let i=0;i<jsonCMUCalendar.length;i++){
+        renderCMUCalendarEvent(document.querySelector(".event-list"), jsonCMUCalendar[i]) ;
     }
     //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
     //renderEvent(document.querySelector(".event-list"), jsonEvent2) ;

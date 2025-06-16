@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JSON Editor</title>
+
+  <style>
+    @import url(https://fonts.googleapis.com/css?family=Open+Sans);
+    @import url(https://fonts.googleapis.com/css?family=Lobster);
+    @import url(https://fonts.googleapis.com/css?family=Oswald:400,700);
+
+    html {
+        background-color: rgb(14, 151, 167);
+    }
+    body{
+        overflow-y:hidden;
+        overflow-x: hidden;
+    }
+
+
+  </style>
+  
+</head>
+<body>
+    <div class="rootCanvas">
+        <div class="JSONRender">
+            <table>
+                <tr><th>Attribute Name</th><th>Attribute value</th></tr>
+                    <tr>
+                        <td>name</td>
+                        <td>alex</td>
+                    </tr>
+                    <tr>
+                        <td>studentID</td>
+                        <td>600001</td>
+                    </tr>
+                    <tr>
+                        <td>address</td>
+                        <td>China, GuangDong</td>
+                    </tr>
+                    <tr>
+                        <td>classmates</td>
+                        <td>dsadsad ???</td>
+                    </tr>
+                    
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let jsonSchema_Student={
+            name:"student",
+            attributes:[
+                {
+                    name:"studentID",
+                    data_type:"string"
+                },{
+                    name:"name",
+                    data_type:"string"
+                },{
+                    name:"classmates",
+                    data_type:"array",
+                    schema:"student"
+                },{
+                    name:"address",
+                    data_type:"object",
+                    schema:"address"
+                }
+            ]
+        }
+
+        let jsonSchema_Address={
+            name:"address",
+            attributes:[
+                {
+                    name:"country",
+                    data_type:"string"
+                },{
+                    name:"province",
+                    data_type:"string"
+                }
+            ]
+        };
+</script>
+<script>
+    let jsonToRender={
+        studentID:"61001",
+        name:"Ray Zhang",
+        address:{
+            country:"China",
+            province:"GuangDong"
+        },
+        classmates:[
+            {
+                studentID:"61002",
+                name:"Alex Zhang",
+                address:{
+                    country:"China",
+                    province:"SiChuan"
+                },
+                classmates:[]
+            }
+        ]
+    };
+
+    function renderJSON(tagCanvas,jsonObject,jsonSchema){
+
+    }
+
+    renderJSON(document.querySelector('.JSONRender'),jsonToRender,jsonSchema_Student);
+</script>
+
+    <script>
+
+
+    function convertWeekdayToChinese(weekday) {
+        const weekdayMap = {
+            'Monday': '周一',
+            'Tuesday': '周二',
+            'Wednesday': '周三',
+            'Thursday': '周四',
+            'Friday': '周五',
+            'Saturday': '周六',
+            'Sunday': '周日'
+        };
+        
+        // Normalize input to match keys (case-sensitive)
+        const normalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1).toLowerCase();
+        return weekdayMap[normalizedWeekday] || 'Invalid weekday';
+    }
+
+    function formatTimeToTwoDigits(timeStr) {
+        // Split the time string into hours and minutes
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        
+        // Format hours and minutes to always have two digits
+        const formattedHours = hours < 10 ? `0${hours}` : `${hours}`;
+        const formattedMinutes = minutes < 10 ? `0${minutes}` : `${minutes}`;
+        
+        // Return the formatted time string
+        return `${formattedHours}:${formattedMinutes}`;
+    }
+
+    function renderEvent(tagEventList,jsonEvent){
+        jsonEvent.weekday = convertWeekdayToChinese(jsonEvent.weekday) ;
+        jsonEvent.from = formatTimeToTwoDigits(jsonEvent.from) ;
+        jsonEvent.to = formatTimeToTwoDigits(jsonEvent.to) ;
+
+        let tagEvent = document.createElement('a') ;
+        tagEventList.appendChild(tagEvent) ;
+        tagEvent.href='#' ;
+        tagEvent.classList.add('eventV2') ;
+        tagEvent.innerHTML=`
+            <div class="event-containerV2">
+                <div class="date-containerV2">
+                    <p class="WeekV2">${jsonEvent.weekday}</p>
+                    <p class="dateV2"><span>Jun</span>-<span>11</span></p>
+                </div>
+                <div class="detail-containerV2">
+                    <p class="titleV2">Listening&Speaking Thai 3</p>
+                    <p ><span class="timeV2">${jsonEvent.from}-${jsonEvent.to}</span> <span class="locationV2">${jsonEvent.location}</span></p>
+                    <p class="descriptionV2">${jsonEvent.memo}</p>
+                </div>
+            </div>
+        ` ;
+
+        let tagSpacer = document.createElement('div') ;
+        tagEventList.appendChild(tagSpacer) ;
+        tagSpacer.classList.add('spacer') ;
+    }
+
+    function switchScheduleMode(tagRootCanvas,modeTitle){
+        let cInnerHTML=`
+        <div class="event-calendar" style="width:350px;">
+            <div class="head"><p class="top-line">${modeTitle}</p></div>
+            <div class="spacer"></div>
+            <div class="event-list"></div>
+        </div>
+        ` ;
+        tagRootCanvas.innerHTML=cInnerHTML ;
+    }
+
+    </script>
+    <script>
+    
+
+
+    </script>
+</body>
+</html>
