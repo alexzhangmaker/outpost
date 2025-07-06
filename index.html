@@ -309,7 +309,7 @@ summary::-webkit-details-marker {
         <div class="nav-item"><i class="bi-house-fill outpostBTN" id="idBTNHomeToDo"></i>Home.todo</div>
         <div class="nav-item"><i class="bi-calendar-day outpostBTN" id="idBTNCMUSchedule"></i>schedule</div>
         <div class="nav-item"><i class="bi-calendar-date outpostBTN" id="idBTNCMUCalendar"></i>CMU Calendar</div>
-        <div class="nav-item"><i class="bi-currency-exchange outpostBTN"></i>Brambling</div>
+        <div class="nav-item"><i class="bi-currency-exchange outpostBTN" id="idBTNDictAnywhere"></i>Dict.Anywhere</div>
         <div class="nav-item"><i class="bi-cloud-arrow-down outpostBTN" id="idBTNSyncCloud"></i>Sync</div>
         <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN" id="idBTNSetting"></i>Settings</div>
     </div>
@@ -326,6 +326,8 @@ const firebaseConfig = {
     appId: "1:724993324937:web:ce6c7e6b06489331c79358",
     measurementId: "G-QPHWRTH6BH"
 };
+
+
 
 const localForageConfig={
     name: 'signpostPWA',
@@ -741,7 +743,7 @@ document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)
 
 
 document.addEventListener('DOMContentLoaded',(event)=>{
-    renderLocalJSON() ;
+    //renderLocalJSON() ;
 }) ;
 
 document.querySelector('#idInputMemo').addEventListener('keydown',_onKeyInputEnter);
