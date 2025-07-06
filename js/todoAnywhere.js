@@ -1,4 +1,3 @@
-
 async function _onClick_SyncCloud(event){
     await _clearStoreLocal() ;
     //let cloudData = await _dumpFireStore("outpost") ;

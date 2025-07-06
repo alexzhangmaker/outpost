@@ -7,7 +7,14 @@ function _renderDictMode(tagWndContent){
         <div id="idOutputGoogle"></div>
     ` ;
     tagWndContent.querySelector('#idBTNGoogle').addEventListener('click',_onClickGoogleTranslate) ;
-
+    let tagText2Google = tagWndContent.querySelector("#idInputText2Google") ;
+    //handlePlainTextPaste(tagText2Google) ;
+    tagText2Google.addEventListener('keyup',(event)=>{
+        if (event.key === "Enter") {
+            event.preventDefault() ;
+            _onClickGoogleTranslate(event) ;
+        }
+    }) ;
 }
 
 
@@ -43,5 +50,15 @@ async function _onClickGoogleTranslate(event){
     let tagOutput = document.createElement('li') ;
     tagOutput.innerHTML=`${text}/${meaning}` ;
     tagGoogleOutput.appendChild(tagOutput) ;
+
+    let cDate = new Date() ;
+    let jsonGoogleDict={
+        textTh:text,
+        meaningEn:meaning,
+        timeStamp:cDate.getTime()
+    } ;
+    let url_gSheetWebApp = `https://script.google.com/macros/s/AKfycbw9aEabZmGlfwVI_CbaMbLf3do3EH4guUAQtsX_lVQNeum6uWRM1F7Eplz7GInbSdn1/exec` ;
+
+    _sendMessage2Worker(jsonGoogleDict,url_gSheetWebApp) ;
     return meaning ;
 }

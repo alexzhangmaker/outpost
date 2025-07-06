@@ -187,8 +187,41 @@ async function _onDOMContentLoad(event){
 
 <script>
     // Create a Web Worker
-    const worker = new Worker("webWorker.js");
+    const gWebWorker = new Worker("webWorker.js");
 
+    // Listen for messages from Web Worker
+    gWebWorker.onmessage = (event) => {
+        console.log(event.data) ;
+        /*
+        const statusDiv = document.getElementById('status');
+        if (event.data.status === 'success') {
+            statusDiv.textContent = 'Data saved successfully!';
+        } else {
+            statusDiv.textContent = `Error: ${event.data.message}`;
+        }
+        */
+    };
+
+    // Handle worker errors
+    gWebWorker.onerror = (error) => {
+        /*
+      const statusDiv = document.getElementById('status');
+      statusDiv.textContent = `Worker error: ${error.message}`;
+      */
+        console.log(`${error}`) ;
+    };
+
+    //Common API for other modules to send Message to WebWorker Thread
+    async function _sendMessage2Worker(jsonMessage,url2Go){
+        gWebWorker.postMessage({
+            action: 'sendPost',
+            url: url2Go, // Replace with your Google Apps Script Web App URL
+            data: jsonMessage
+        });
+    }
+
+
+    /*
     // Handle form submission
     document.getElementById('dataForm').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -219,22 +252,9 @@ async function _onDOMContentLoad(event){
         data: formData
       });
     });
+    */
 
-    // Listen for messages from Web Worker
-    worker.onmessage = (event) => {
-      const statusDiv = document.getElementById('status');
-      if (event.data.status === 'success') {
-        statusDiv.textContent = 'Data saved successfully!';
-      } else {
-        statusDiv.textContent = `Error: ${event.data.message}`;
-      }
-    };
 
-    // Handle worker errors
-    worker.onerror = (error) => {
-      const statusDiv = document.getElementById('status');
-      statusDiv.textContent = `Worker error: ${error.message}`;
-    };
 </script>
 
 
