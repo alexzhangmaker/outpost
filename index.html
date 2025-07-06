@@ -13,17 +13,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="./css/style.css">
+
     <link rel="stylesheet" href="./css/signpostToolkits.css">
     <link rel="stylesheet" href="./css/cssSchedule_V1.css">
+    <link rel="stylesheet" href="./css/outpostCommon.css">
+    <link rel="stylesheet" href="./css/componentOutpost.css">
 
 
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
     <script src="./jsResource/localforage.min.js"></script>
     <script src="./jsResource/mousetrap.min.js"></script>
-    <script src="./js/outpost.js"></script>
-    <script src="./js/scheduleAPI.js"></script>
     <script src="./js/flowType.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
 
     <style>
@@ -31,616 +33,49 @@
         @import url(https://fonts.googleapis.com/css?family=Lobster);
         @import url(https://fonts.googleapis.com/css?family=Oswald:400,700);
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html {
-            background-color: rgb(14, 151, 167);
-        }
-
-        body {
-            overflow-y: hidden;
-            overflow-x: hidden;
-            background-color: cornflowerblue;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow-y: hidden;
-            overflow-x: hidden;
-        }
-
-        .content {
-            flex: 1;
-            overflow-y: auto;
-            padding-bottom: 20px;
-            background: #f4f4f4;
-
-            display: flex;
-            flex-direction: column;
-
-            overflow-x: hidden;
-            overflow-y: auto;
-
-        }
-
-        .navbar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: #333;
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-        }
-
-        .nav-item {
-            color: white;
-            text-align: center;
-            flex-grow: 1;
-        }
-
-        .nav-item i {
-            display: block;
-            font-size: 20px;
-            margin-bottom: 4px;
-        }
     </style>
-    <style>
-        #editor{
-            height:100px;
-        }
-    </style>
-    <style>
-
-details {
-    /*margin: 5px auto;*/
-    margin-bottom: 5px !important;
-    padding: 0 1rem;
-    width: 100%;
-    /*max-width: calc(100% - 2rem);*/
-    position: relative;
-    border: 1px solid #78909C;
-    border-radius: 6px;
-    background-color: #ECEFF1;
-    color: #263238;
-    transition: background-color 0.15s;
-}
-details > :last-child {
-    margin-bottom: 0.1rem;
-}
-details::before {
-    width: 100%;
-    height: 100%;
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    border-radius: inherit;
-    opacity: 0.15;
-    box-shadow: 0 0.25em 0.5em #263238;
-    pointer-events: none;
-    transition: opacity 0.2s;
-    z-index: -1;
-}
-details[open] {
-    background-color: #FFF;
-}
-details[open]::before {
-    opacity: 0.6;
-}
-
-summary {
-    padding: 0.2rem 2em 0.2rem 0;
-    display: block;
-    position: relative;
-    font-size: 1.33em;
-    font-weight: bold;
-    cursor: pointer;
-}
-summary::before, summary::after {
-    width: 0.75em;
-    height: 2px;
-    position: absolute;
-    top: 50%;
-    right: 0;
-    content: "";
-    background-color: currentColor;
-    text-align: right;
-    transform: translateY(-50%);
-    transition: transform 0.2s ease-in-out;
-}
-summary::after {
-    transform: translateY(-50%) rotate(90deg);
-}
-[open] summary::after {
-    transform: translateY(-50%) rotate(180deg);
-}
-summary::-webkit-details-marker {
-    display: none;
-}
-
-.headerBar{
-    flex-grow:0 ;
-    flex-shrink: 0;
-}
-.memoContainer{
-    flex-grow: 1;
-    padding-top: 20px;
-    padding-bottom: 60px;
-
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-
-#output{
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-    </style>
-    <style>
-        .editor{
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            padding-bottom: 1em;
-        }
-
-        #idInputMemo{
-            flex-grow: 1;
-        }
-
-        #idInputMemo:focus {
-            outline: none;
-            color:#333;
-            border: 1px solid black;*/
-            /*text-decoration: underline;
-            /*box-shadow: 0 1px 6px 0 rgba(0, 0, 0, 0.5);*/
-            border-radius: 2px;
-        }
-
-
-        #idBTNSubmit{
-            width:5em;
-            flex-grow: 0;
-        }
-    </style>
-    <style>
-        .liMemo{
-            list-style:none;
-            font-size: 18px;
-            padding-left: 20px;
-            padding-right: 20px;
-        }
-
-        .liMemo:hover{
-            color:aqua;
-            background-color:grey;
-        }
-
-        .DIVMemo{
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 20px;
-            max-height: 100px;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-
-        .memoCheck{
-            color:orchid;
-            text-decoration: line-through;
-        }
-
-        .memoHeader{
-            display: flex;
-            flex-direction: row;
-            justify-content:space-between;
-            align-items:baseline;
-        }
-
-        .memoBody{
-            display: flex;
-            flex-direction: row;
-            justify-content: flex-start;
-            align-items:baseline;
-        }
-
-
-        .memoTTM{
-            color:darkslategrey ;
-            width: 10ch;
-            font-size: 14px;
-            font-weight: 300;
-
-            font-family: "Oswald", sans-serif;
-            font-optical-sizing: auto;
-            font-style: normal;
-
-        } 
-        
-        .memoAbout{
-            color:dodgerblue;
-            text-decoration: underline;
-            /*width: 10em;*/
-            font-family: "Oswald", sans-serif;
-            font-optical-sizing: auto;
-            font-style: normal;
-            font-weight: 400;
-
-            padding-right: 5px;
-
-        } 
-        
-        .memoContent{
-            color:#333;
-
-            font-family: "Oswald", sans-serif;
-            font-optical-sizing: auto;
-            font-weight:400 ;
-            font-style: normal;
-        }
-
-        .noShow{
-            display: none;
-        }
-    </style>
+    
 </head>
 
 <body>
     <div class="content" id="scrollableContent">
-     
-
         <div id="idWndContent">
+            <!-----
             <div class="editor">
                 <input type="text" id="idInputMemo" name="fname"><br><br>
                 <button onclick="onClickSubmitMemo()" id="idBTNSubmit"><i class="bi-journal-text outpostBTN"></i></button>
-
             </div>
             <div class="memoContainer"></div>
+        -->
         </div>
     </div>
     
     <div class="navbar">
-        <div class="nav-item"><i class="bi-house-fill outpostBTN" id="idBTNHomeToDo"></i>Home.todo</div>
+        <div class="nav-item"><i class="bi-list-task outpostBTN" id="idBTNToDo"></i>Home.todo</div>
         <div class="nav-item"><i class="bi-calendar-day outpostBTN" id="idBTNCMUSchedule"></i>schedule</div>
-        <div class="nav-item"><i class="bi-calendar-date outpostBTN" id="idBTNCMUCalendar"></i>CMU Calendar</div>
-        <div class="nav-item"><i class="bi-currency-exchange outpostBTN" id="idBTNDictAnywhere"></i>Dict.Anywhere</div>
+        <div class="nav-item"><i class="bi-envelope outpostBTN" id="idBTNMessage"></i>message</div>
+        <div class="nav-item"><i class="bi-translate outpostBTN" id="idBTNDictAnywhere"></i>Dict.Anywhere</div>
+        <!------
         <div class="nav-item"><i class="bi-cloud-arrow-down outpostBTN" id="idBTNSyncCloud"></i>Sync</div>
+        ---->
         <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN" id="idBTNSetting"></i>Settings</div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-<script>
-const firebaseConfig = {
-    apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
-    authDomain: "outpost-8d74e.firebaseapp.com",
-    databaseURL: "https://outpost-8d74e-default-rtdb.firebaseio.com",
-    projectId: "outpost-8d74e",
-    storageBucket: "outpost-8d74e.firebasestorage.app",
-    messagingSenderId: "724993324937",
-    appId: "1:724993324937:web:ce6c7e6b06489331c79358",
-    measurementId: "G-QPHWRTH6BH"
-};
+<script src="./js/outpost.js"></script>
+<script src="./js/scheduleAPI.js"></script>
+<script src="./js/firebaseAPI.js"></script>
+<script src="./js/dictAnywhere.js"></script>
+<script src="./js/todoAnywhere.js"></script>
 
 
 
-const localForageConfig={
-    name: 'signpostPWA',
-    storeName: 'outpost',  // required
-    driver: localforage.INDEXEDDB
-} ;
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-function _storeWrite(collection,docID,jsonContent){
-    db.collection(collection).doc(docID).set(jsonContent).then(() => {
-        //loadItems();
-        console.log(jsonContent) ;
-    }).catch((error) => {
-        console.error("Error writing document: ", error);
-    });
-}
-
-
-async function _syncFireStore(collection){
-    let cloudData = await _dumpFireStore(collection) ;
-    console.log(cloudData) ;
-    cloudData.forEach(jsonData=>{
-        console.log(jsonData) ;
-        _writeJSONLocal(jsonData.id,jsonData) ;
-    }) ;
-}
-
-function _writeJSONLocal(key,jsonContent){
-    localforage.config(localForageConfig);
-    localforage.setItem(key, JSON.stringify(jsonContent)).then(function(value) {
-        console.log(value);
-    });    
-}
-
-async function removeKeyLocal(key) {
-    try {
-        localforage.config(localForageConfig);
-        await localforage.removeItem(key);
-        console.log(`Key "${key}" removed successfully!`);
-    } catch (err) {
-        console.error('Error removing key:', err);
-    }
-}
-
-async function _clearStoreLocal(){
-    try {
-        localforage.config(localForageConfig);
-        await localforage.clear();
-        console.log('Store cleared successfully!');
-    } catch (err) {
-        console.error('Error clearing store:', err);
-    }
-}
-
-async function _dumpFireStore(collection){
-    try {
-        const querySnapshot = await db.collection(collection).get();
-        const data = [];
-        querySnapshot.forEach((doc) => {
-            data.push({ id: doc.id, ...doc.data() });
-        });
-        return data;
-    } catch (error) {
-        console.error("Error getting documents: ", error);
-        return null;
-    }
-}
-
-async function fetchDataFromCollection(collectionName) {
-    try {
-        const querySnapshot = await db.collection(collectionName).get();
-        const data = [];
-        querySnapshot.forEach((doc) => {
-            data.push({ id: doc.id, ...doc.data() });
-        });
-        return data;
-    } catch (error) {
-        console.error("Error getting documents: ", error);
-        return null; // Or handle the error as needed
-    }
-}
-
-
-async function fetchDocument(collectionName, documentId) {
-    try {
-        const docRef = doc(db, collectionName, documentId);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() };
-        } else {
-            console.log("No such document!");
-            return null;
-        }
-    } catch (error) {
-        console.error("Error getting document: ", error);
-        return null;
-    }
-}
-
-async function addDataToCollection(collectionName, data) {
-    try {
-        const docRef = await db.collection(collectionName).add(data);
-        console.log("Document written with ID: ", docRef.id);
-        return docRef; // You might want to return the new document reference
-    } catch (error) {
-        console.error("Error adding document: ", error);
-        return null;
-    }
-}
-
-async function updateDocumentData(collectionName, documentId, updatedData) {
-    try {
-        const docRef = db.collection(collectionName).doc(documentId);
-        await docRef.update(updatedData);
-        console.log("Document updated successfully!");
-        return true;
-    } catch (error) {
-        console.error("Error updating document: ", error);
-        return false;
-    }
-}
-
-async function deleteDocument(collectionName, documentId) {
-    try {
-        const docRef = db.collection(collectionName).doc(documentId);
-        await docRef.delete();
-        console.log("Document deleted successfully!");
-        return true;
-    } catch (error) {
-        console.error("Error deleting document: ", error);
-        return false;
-    }
-}
-
-
-// Fetch the document and get keys
-async function getDocumentKeys(collection) {
-    try {
-        const docSnap = await db.collection(collection).get();
-
-        const keys = [];
-        docSnap.forEach((doc) => {
-            keys.push(doc.id);
-        });
-        return keys ;
-    } catch (error) {
-        console.error("Error fetching document:", error);
-        return [];
-    }
-}
-
-// Function to fetch keys in batches
-async function fetchKeysPaginated(collectionName, pageSize = 100, lastDoc = null) {
-    try {
-        // Reference to the collection
-        let query = db.collection(collectionName)
-                        .orderBy(firebase.firestore.FieldPath.documentId()) // Order by document ID
-                        .limit(pageSize);
-
-        // If paginating, start after the last document
-        if (lastDoc) {
-            query = query.startAfter(lastDoc);
-        }
-
-        // Fetch documents
-        const querySnapshot = await query.get();
-        const keys = [];
-
-        // Extract keys from each document
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            keys.push(...Object.keys(data)); // Collect keys from document data
-        });
-
-        // Get the last document for the next page
-        const newLastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-
-        return { keys, lastDoc: newLastDoc, hasMore: querySnapshot.size === pageSize };
-    } catch (error) {
-        console.error("Error fetching keys:", error);
-        return { keys: [], lastDoc: null, hasMore: false };
-    }
-}
-</script>
 <script>
 
-async function onClickFetchKeys(event){
-    let keys = await getDocumentKeys("outpost") ;
-    console.log(keys) ;
-} 
-
-async function onClickFetchPaginatedKeys(event){
-    let keys = await fetchKeysPaginated("outpost",5) ;
-    console.log(keys) ;
-}
-</script>
-
-<script>
-function renderMemo(tagContainer,jsonMemo){
-    let tagMemo = document.createElement('details') ;
-    tagMemo.innerHTML=`
-        <summary>
-            <span style="font-size:10px;">${jsonMemo.ttm}</span>
-        </summary>
-        <div>
-            <p>${jsonMemo.memo}</p>
-        </div>
-    ` ;
-    tagContainer.prepend(tagMemo) ;
-}
-
-function renderMemoV2(tagContainer,jsonMemo){
-    let tagMemo = document.createElement('li') ;
-    tagMemo.classList.add('liMemo') ;
-
-    let cDate = new Date(jsonMemo.date.year, jsonMemo.date.month-1, jsonMemo.date.day)
-    const formatter = new Intl.DateTimeFormat('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const formattedDate = formatter.format(cDate);
-    console.log(formattedDate);
-    tagMemo.innerHTML=`       
-        <div class="DIVMemo">
-            <div class="memoHeader">
-                <span>
-                    <span class="memoTTM">${formattedDate}</span>
-                    <span class="memoAbout">${jsonMemo.about}</span>
-                </span>
-                <i class="bi-check2-circle outpostBTN"></i>
-            </div>
-            <div class="memoBody">
-                <span class="memoContent">${jsonMemo.memo}</span>
-                <br>
-            </div>
-        </div>
-
-    ` ;
-    tagContainer.prepend(tagMemo) ;
-    tagMemo.dataset.docID = jsonMemo.key ;
-    tagMemo.querySelector('.bi-check2-circle').addEventListener('click',async (event)=>{
-        //tagMemo.classList.toggle('memoCheck') ;
-        await deleteDocument("outpost",tagMemo.dataset.docID) ;
-        await removeKeyLocal(tagMemo.dataset.docID) ;
-
-        tagMemo.remove() ;
-    }) ;
-}
-
-function renderLocalJSON(){
-    localforage.config(localForageConfig);
-    localforage.iterate((value, key) => {
-        // Push each key-value pair as an object to the array
-        let tagMemoContainer = document.querySelector('.memoContainer') ;
-        let jsonMemo = JSON.parse(value);
-        jsonMemo.key = key ;
-        renderMemoV2(tagMemoContainer,jsonMemo) ;
-    }).then(() => {
-        console.log('All key-value pairs:');
-    }).catch((err) => {
-        console.error('Error iterating:', err);
-    });
-}
-
-function sumbitMemoLocal(key,jsonMemo){
-    let tagMemoContainer = document.querySelector('.memoContainer') ;
-    //let jsonMemo = JSON.parse(value);
-    jsonMemo.key = key ;
-    renderMemoV2(tagMemoContainer,jsonMemo) ;
-    _writeJSONLocal(key,jsonMemo) ;
-    let tagMemoInput = document.querySelector('#idInputMemo');
-    tagMemoInput.value='' ;
-}
-
-function onClickSubmitMemo(event){
-    let tagMemoInput = document.querySelector('#idInputMemo');
-    let cDate = new Date() ;
-    let jsonMemo={
-        ttm:cDate.toLocaleString(),
-        memo:tagMemoInput.value
-    } ;
-    let memoID = `${cDate.getTime()}` ;
-    sumbitMemoLocal(memoID,jsonMemo) ;
-    _storeWrite("outpost",memoID,jsonMemo) ;
-}
-
-function _onKeyInputEnter(event){
-    if (event.key === 'Enter') {
-        let inputField = event.target ;
-        event.preventDefault(); // Prevents form submission if inside a form
-        const inputValue = inputField.value;
-        console.log('Input value:', inputValue);
-        let jsonMemo=_parseStringToJSON(inputValue) ;
-        let cDate = new Date() ;
-        let memoID = `${cDate.getTime()}` ;
-        sumbitMemoLocal(memoID,jsonMemo) ;
-        _storeWrite("outpost",memoID,jsonMemo) ;
-    }
-}
 
 
-</script>
-<script>
 
-Mousetrap.bind('@', (event)=>{
-    //alert('this is Mousetrap for /') ;
-    let tagMemoInput = document.querySelector('#idInputMemo');
-    tagMemoInput.focus();
-});
 
-//idBTNSchedule
-document.querySelector('#idBTNCMUSchedule').addEventListener('click',async (event)=>{
+async function _onClick_CMUSchedule(event){
     const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/CourseSchedule2025.json";
     let jsonCMUSchedule = [];
     const res = await fetch(firebaseUrl);
@@ -677,12 +112,11 @@ document.querySelector('#idBTNCMUSchedule').addEventListener('click',async (even
     //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
     //renderEvent(document.querySelector(".event-list"), jsonEvent2) ;
     
-});
+}
 
 
-//idBTNCMUCalendar
-//idBTNSchedule
-document.querySelector('#idBTNCMUCalendar').addEventListener('click',async (event)=>{
+async function _onClick_Message(event){
+    /*
     const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/CMUSchedule2025.json";
     let jsonCMUSchedule = [];
     const res = await fetch(firebaseUrl);
@@ -697,27 +131,42 @@ document.querySelector('#idBTNCMUCalendar').addEventListener('click',async (even
     }
     //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
     //renderEvent(document.querySelector(".event-list"), jsonEvent2) ;
-    
-});
+    */
+    let tagWndContent = document.querySelector('#idWndContent') ;
+    tagWndContent.innerHTML=`
+        <h2>message</h2>
+    ` ;
 
-function renderSchedule(tagWndContent,jsonCMUSchedule){
-    tagWndContent.innerHTML=`` ;
-    for(let i=0;i<jsonCMUSchedule.length;i++){
-        let tagEvent = document.createElement('details') ;
-        tagWndContent.appendChild(tagEvent) ;
-        tagEvent.innerHTML=`
-            <summary>${jsonCMUSchedule[i].workday}/${jsonCMUSchedule[i].Time}=>${jsonCMUSchedule[i].scheduled}</summary>
-            <div class="eventDetail">
-                <span>${jsonCMUSchedule[i].Location}</span>
-            </div>
-        ` ;
-    }
 }
 
 
 
 
-document.querySelector('#idBTNHomeToDo').addEventListener('click',async (event)=>{
+async function _onClick_DictAnywhere(event){
+    /*
+    const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/CMUSchedule2025.json";
+    let jsonCMUSchedule = [];
+    const res = await fetch(firebaseUrl);
+    jsonCMUCalendar = await res.json();
+    console.log(jsonCMUCalendar) ;
+    let tagWndContent = document.querySelector('#idWndContent') ;
+
+    //renderSchedule(tagWndContent,jsonCMUSchedule);
+    switchScheduleMode(tagWndContent,"CMU 2025") ;
+    for(let i=0;i<jsonCMUCalendar.length;i++){
+        renderCMUCalendarEvent(document.querySelector(".event-list"), jsonCMUCalendar[i]) ;
+    }
+    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
+    //renderEvent(document.querySelector(".event-list"), jsonEvent2) ;
+    */
+    let tagWndContent = document.querySelector('#idWndContent') ;
+    tagWndContent.innerHTML=`
+        <h2>Dict.Anywhere</h2>
+    ` ;
+
+}
+
+async function _onClick_ToDo(event){
     //let cloudData = await _dumpFireStore("outpost") ;
     let tagWndContent = document.querySelector('#idWndContent') ;
     tagWndContent.innerHTML=`
@@ -728,25 +177,19 @@ document.querySelector('#idBTNHomeToDo').addEventListener('click',async (event)=
         </div>
         <div class="memoContainer"></div>
     ` ;
+    tagWndContent.querySelector('#idInputMemo').addEventListener('keydown',_onKeyInputEnter);
     renderLocalJSON() ;
-}) ;
-
-document.querySelector('#idBTNSyncCloud').addEventListener('click',async (event)=>{
-    await _clearStoreLocal() ;
-    //let cloudData = await _dumpFireStore("outpost") ;
-    let tagMemoContainer = document.querySelector('.memoContainer') ;
-    tagMemoContainer.innerHTML=`` ;
-    await _syncFireStore("outpost") ;
-
-    renderLocalJSON() ;
-}) ;
+}
 
 
-document.addEventListener('DOMContentLoaded',(event)=>{
-    //renderLocalJSON() ;
-}) ;
 
-document.querySelector('#idInputMemo').addEventListener('keydown',_onKeyInputEnter);
+
+
+
+async function _onDOMContentLoad(event){
+    console.log('_onDOMContentLoad_') ;
+}
+
 </script>
 
 <script>
@@ -833,5 +276,14 @@ function handlePlainTextPaste(element) {
 }
 </script>
 
+<script>
+
+    document.addEventListener('DOMContentLoaded',_onDOMContentLoad) ;
+    document.querySelector('#idBTNCMUSchedule').addEventListener('click',_onClick_CMUSchedule) ;
+    document.querySelector('#idBTNMessage').addEventListener('click',_onClick_Message) ;
+    document.querySelector('#idBTNToDo').addEventListener('click',_onClick_ToDo) ;
+    document.querySelector('#idBTNDictAnywhere').addEventListener('click',_onClick_DictAnywhere) ;
+    
+    </script>
 </body>
 </html>
