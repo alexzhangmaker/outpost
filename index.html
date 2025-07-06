@@ -26,7 +26,7 @@
     <script src="./jsResource/mousetrap.min.js"></script>
     <script src="./js/flowType.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
 
     <style>
         @import url(https://fonts.googleapis.com/css?family=Open+Sans);
@@ -46,7 +46,14 @@
                 <button onclick="onClickSubmitMemo()" id="idBTNSubmit"><i class="bi-journal-text outpostBTN"></i></button>
             </div>
             <div class="memoContainer"></div>
-        -->
+            -->
+            <form id="dataForm" class="noShow">
+                <input type="text" name="name" placeholder="Name" required>
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="number" name="age" placeholder="Age" required>
+                <button type="submit">Submit</button>
+            </form>
+            <div id="status" class="noShow">Ready</div>
         </div>
     </div>
     
@@ -55,13 +62,11 @@
         <div class="nav-item"><i class="bi-calendar-day outpostBTN" id="idBTNCMUSchedule"></i>schedule</div>
         <div class="nav-item"><i class="bi-envelope outpostBTN" id="idBTNMessage"></i>message</div>
         <div class="nav-item"><i class="bi-translate outpostBTN" id="idBTNDictAnywhere"></i>Dict.Anywhere</div>
-        <!------
-        <div class="nav-item"><i class="bi-cloud-arrow-down outpostBTN" id="idBTNSyncCloud"></i>Sync</div>
-        ---->
+        <div class="nav-item"><i class="bi-safe outpostBTN" id="idBTNCloudSafe"></i>Storage</div>
         <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN" id="idBTNSetting"></i>Settings</div>
     </div>
 
-<script src="./js/outpost.js"></script>
+<script src="./js/outpostCommon.js"></script>
 <script src="./js/scheduleAPI.js"></script>
 <script src="./js/firebaseAPI.js"></script>
 <script src="./js/dictAnywhere.js"></script>
@@ -143,27 +148,8 @@ async function _onClick_Message(event){
 
 
 async function _onClick_DictAnywhere(event){
-    /*
-    const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/CMUSchedule2025.json";
-    let jsonCMUSchedule = [];
-    const res = await fetch(firebaseUrl);
-    jsonCMUCalendar = await res.json();
-    console.log(jsonCMUCalendar) ;
     let tagWndContent = document.querySelector('#idWndContent') ;
-
-    //renderSchedule(tagWndContent,jsonCMUSchedule);
-    switchScheduleMode(tagWndContent,"CMU 2025") ;
-    for(let i=0;i<jsonCMUCalendar.length;i++){
-        renderCMUCalendarEvent(document.querySelector(".event-list"), jsonCMUCalendar[i]) ;
-    }
-    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
-    //renderEvent(document.querySelector(".event-list"), jsonEvent2) ;
-    */
-    let tagWndContent = document.querySelector('#idWndContent') ;
-    tagWndContent.innerHTML=`
-        <h2>Dict.Anywhere</h2>
-    ` ;
-
+    _renderDictMode(tagWndContent) ;
 }
 
 async function _onClick_ToDo(event){
@@ -182,108 +168,84 @@ async function _onClick_ToDo(event){
 }
 
 
-
-
-
-
 async function _onDOMContentLoad(event){
     console.log('_onDOMContentLoad_') ;
 }
 
 </script>
 
-<script>
-function _parseStringToJSON(input) {
-    // Regular expression to match patterns with optional date and about
-    //const regex = /^(?:@(\d{2})(\d{2})(\d{4})\s+)?(?:\+(\w+)\s+)?(.+)$/;
-      const regex = /^(?:@(\d{2})(\d{2})(\d{4})\s+)?(?:\+([\w.]+)\s+)?(.+)$/;
 
-    // Match the input string
-    const match = input.match(regex);
-    
-    if (!match) {
-        throw new Error("Invalid input format");
+<script>
+    if ('serviceWorker' in navigator){
+        navigator.serviceWorker.register('/outpost/service-worker.js').then(reg =>{ 
+            console.log('Service Worker registered', reg) ;
+        }).catch(err => {
+            console.error('Service Worker registration failed', err) ;
+        });
     }
-    
-    // Extract components (month, day, year, about, memo)
-    const [, month, day, year, about, memo] = match;
-    
-    // Get current date if date parts are missing
-    const currentDate = new Date();
-    
-    // Construct JSON object
-    let jsonData={
-        date: {
-            month: month ? parseInt(month) : currentDate.getMonth() + 1,
-            day: day ? parseInt(day) : currentDate.getDate(),
-            year: year ? parseInt(year) : currentDate.getFullYear()
-        },
-        about: about ? about.toLowerCase() : "all",
-        memo: memo
-    };
-    let cDate = new Date(jsonData.date.year, jsonData.date.month, jsonData.date.day)
-    jsonData.ttm=`${cDate.getTime()}` ;
-    return jsonData ;
-}
-
 </script>
+
 <script>
-if ('serviceWorker' in navigator){
-    navigator.serviceWorker.register('/outpost/service-worker.js').then(reg =>{ 
-        console.log('Service Worker registered', reg) ;
-    }).catch(err => {
-        console.error('Service Worker registration failed', err) ;
+    // Create a Web Worker
+    const worker = new Worker("webWorker.js");
+
+    // Handle form submission
+    document.getElementById('dataForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const statusDiv = document.getElementById('status');
+      statusDiv.textContent = 'Submitting...';
+
+      // Collect form data
+      const formData = {
+        name: e.target.name.value,
+        email: e.target.email.value,
+        age: Number(e.target.age.value)
+      };
+
+      // Send data to Web Worker
+      //https://docs.google.com/spreadsheets/d/1kjywGY4dyxOCkEfAh_ynwgc2HUWA7lFXV8xU7lOYI2o/edit?gid=0#gid=0
+      //sheetID = 1kjywGY4dyxOCkEfAh_ynwgc2HUWA7lFXV8xU7lOYI2o
+      //google JSON2Sheet webAPP:
+      //https://script.google.com/macros/s/AKfycbyjdTvx2NRFwwgQISNFnJE20m2C4-5kVwvoJK0ywUqLQOHxYuKVf45crOy_KbkYva2o/exec
+      //https://script.google.com/macros/s/AKfycbyjdTvx2NRFwwgQISNFnJE20m2C4-5kVwvoJK0ywUqLQOHxYuKVf45crOy_KbkYva2o/exec
+      //https://script.google.com/macros/library/d/1fzZG7YB-j5xvx3HnX1FPjWORoVzanBkknhRckRaAlxxgC_eioLScElum/1
+      //test
+      //curl -X POST -H "Content-Type: application/json" -d '{"name":"John Doe","email":"john@example.com","age":30}' "https://script.google.com/macros/s/AKfycbw9aEabZmGlfwVI_CbaMbLf3do3EH4guUAQtsX_lVQNeum6uWRM1F7Eplz7GInbSdn1/exec"
+      //curl -L -X POST -H "Content-Type: application/json" -d '{"name":"John Doe","email":"john@example.com","age":30}' "https://script.google.com/macros/s/AKfycbw9aEabZmGlfwVI_CbaMbLf3do3EH4guUAQtsX_lVQNeum6uWRM1F7Eplz7GInbSdn1/exec"
+      let url_gSheetWebApp = `https://script.google.com/macros/s/AKfycbw9aEabZmGlfwVI_CbaMbLf3do3EH4guUAQtsX_lVQNeum6uWRM1F7Eplz7GInbSdn1/exec` ;
+      worker.postMessage({
+        action: 'sendPost',
+        url: url_gSheetWebApp, // Replace with your Google Apps Script Web App URL
+        data: formData
+      });
     });
-}
-</script>
-<script>
-function flowType(element, options = {}) {
-    const settings = {
-    minimum: options.minimum || 500,
-    maximum: options.maximum || 1200,
-    minFont: options.minFont || 16,
-    maxFont: options.maxFont || 40,
-    fontRatio: options.fontRatio || 35
+
+    // Listen for messages from Web Worker
+    worker.onmessage = (event) => {
+      const statusDiv = document.getElementById('status');
+      if (event.data.status === 'success') {
+        statusDiv.textContent = 'Data saved successfully!';
+      } else {
+        statusDiv.textContent = `Error: ${event.data.message}`;
+      }
     };
 
-    function adjustFontSize() {
-        const width = element.offsetWidth;
-        let fontSize = width / settings.fontRatio;
-
-        fontSize = Math.max(settings.minFont, Math.min(fontSize, settings.maxFont));
-        element.style.fontSize = fontSize + 'px';
-    }
-
-    window.addEventListener('resize', adjustFontSize);
-    window.addEventListener('orientationchange', adjustFontSize);
-    adjustFontSize(); // initial run
-}
-
-/*
-make a contenteditable = true element to paste plain text only
-*/
-function handlePlainTextPaste(element) {
-    element.addEventListener('paste', (event) => {
-        // Prevent default paste behavior
-        event.preventDefault();
-        
-        // Get plain text from clipboard
-        const plainText = (event.clipboardData || window.clipboardData).getData('text/plain');
-        
-        // Set the plain text as innerText
-        element.innerText = plainText;
-    });
-}
+    // Handle worker errors
+    worker.onerror = (error) => {
+      const statusDiv = document.getElementById('status');
+      statusDiv.textContent = `Worker error: ${error.message}`;
+    };
 </script>
+
 
 <script>
 
-    document.addEventListener('DOMContentLoaded',_onDOMContentLoad) ;
-    document.querySelector('#idBTNCMUSchedule').addEventListener('click',_onClick_CMUSchedule) ;
-    document.querySelector('#idBTNMessage').addEventListener('click',_onClick_Message) ;
-    document.querySelector('#idBTNToDo').addEventListener('click',_onClick_ToDo) ;
-    document.querySelector('#idBTNDictAnywhere').addEventListener('click',_onClick_DictAnywhere) ;
-    
-    </script>
+document.addEventListener('DOMContentLoaded',_onDOMContentLoad) ;
+document.querySelector('#idBTNCMUSchedule').addEventListener('click',_onClick_CMUSchedule) ;
+document.querySelector('#idBTNMessage').addEventListener('click',_onClick_Message) ;
+document.querySelector('#idBTNToDo').addEventListener('click',_onClick_ToDo) ;
+document.querySelector('#idBTNDictAnywhere').addEventListener('click',_onClick_DictAnywhere) ;
+
+</script>
 </body>
 </html>

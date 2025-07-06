@@ -101,3 +101,36 @@ Mousetrap.bind('@', (event)=>{
     let tagMemoInput = document.querySelector('#idInputMemo');
     tagMemoInput.focus();
 });
+
+function _parseStringToJSON(input) {
+    // Regular expression to match patterns with optional date and about
+    //const regex = /^(?:@(\d{2})(\d{2})(\d{4})\s+)?(?:\+(\w+)\s+)?(.+)$/;
+      const regex = /^(?:@(\d{2})(\d{2})(\d{4})\s+)?(?:\+([\w.]+)\s+)?(.+)$/;
+
+    // Match the input string
+    const match = input.match(regex);
+    
+    if (!match) {
+        throw new Error("Invalid input format");
+    }
+    
+    // Extract components (month, day, year, about, memo)
+    const [, month, day, year, about, memo] = match;
+    
+    // Get current date if date parts are missing
+    const currentDate = new Date();
+    
+    // Construct JSON object
+    let jsonData={
+        date: {
+            month: month ? parseInt(month) : currentDate.getMonth() + 1,
+            day: day ? parseInt(day) : currentDate.getDate(),
+            year: year ? parseInt(year) : currentDate.getFullYear()
+        },
+        about: about ? about.toLowerCase() : "all",
+        memo: memo
+    };
+    let cDate = new Date(jsonData.date.year, jsonData.date.month, jsonData.date.day)
+    jsonData.ttm=`${cDate.getTime()}` ;
+    return jsonData ;
+}
