@@ -58,12 +58,12 @@
     </div>
     
     <div class="navbar">
-        <div class="nav-item"><i class="bi-list-task outpostBTN" id="idBTNToDo"></i>Home.todo</div>
-        <div class="nav-item"><i class="bi-calendar-day outpostBTN" id="idBTNCMUSchedule"></i>schedule</div>
-        <div class="nav-item"><i class="bi-envelope outpostBTN" id="idBTNMessage"></i>message</div>
-        <div class="nav-item"><i class="bi-translate outpostBTN" id="idBTNDictAnywhere"></i>Dict.Anywhere</div>
-        <div class="nav-item"><i class="bi-safe outpostBTN" id="idBTNCloudSafe"></i>Storage</div>
-        <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN" id="idBTNSetting"></i>Settings</div>
+        <div class="nav-item"><i class="bi-list-task outpostBTN" id="idBTNToDo"></i>事项</div>
+        <div class="nav-item"><i class="bi-calendar-day outpostBTN" id="idBTNCMUSchedule"></i>日程</div>
+        <div class="nav-item"><i class="bi-envelope outpostBTN" id="idBTNMessage"></i>通知</div>
+        <div class="nav-item"><i class="bi-translate outpostBTN" id="idBTNDictAnywhere"></i>字典</div>
+        <div class="nav-item"><i class="bi-safe outpostBTN" id="idBTNCloudSafe"></i>文件柜</div>
+        <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN" id="idBTNSetting"></i>设置</div>
     </div>
 
 <script src="./js/outpostCommon.js"></script>
@@ -157,14 +157,13 @@ async function _onClick_ToDo(event){
     let tagWndContent = document.querySelector('#idWndContent') ;
     tagWndContent.innerHTML=`
         <div class="editor">
-            <input type="text" id="idInputMemo" name="fname"><br><br>
+            <input type="text" id="idInputMemo" name="fname" onfocus="this.value=''" placeholder="@mmddyyyy +about something to do"><br><br>
             <button onclick="onClickSubmitMemo()" id="idBTNSubmit"><i class="bi-journal-text outpostBTN"></i></button>
-
         </div>
         <div class="memoContainer"></div>
     ` ;
     tagWndContent.querySelector('#idInputMemo').addEventListener('keydown',_onKeyInputEnter);
-    renderLocalJSON() ;
+    await renderTasks(tagWndContent.querySelector('.memoContainer')) ;
 }
 
 
