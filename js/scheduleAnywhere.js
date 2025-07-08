@@ -158,6 +158,95 @@ jsonEvent={
     memo:"ssss"
 }
 */
+
+function _getWeekStatus(inputDate) {
+    // Convert input to Date object if it's not already
+    const date = new Date(inputDate);
+    const today = new Date();
+    
+    // Set start of week to Monday (adjust to Sunday if preferred by changing to 0)
+    const getStartOfWeek = (d) => {
+        const day = d.getDay();
+        const diff = (day === 0 ? -6 : 1 - day); // Adjust for Monday start
+        const start = new Date(d);
+        start.setDate(d.getDate() + diff);
+        start.setHours(0, 0, 0, 0);
+        return start;
+    };
+    
+    // Get start of current, previous, and next weeks
+    const currentWeekStart = getStartOfWeek(today);
+    const previousWeekStart = new Date(currentWeekStart);
+    previousWeekStart.setDate(currentWeekStart.getDate() - 7);
+    const nextWeekStart = new Date(currentWeekStart);
+    nextWeekStart.setDate(currentWeekStart.getDate() + 7);
+    
+    // Get start of input date's week
+    const inputWeekStart = getStartOfWeek(date);
+    
+    // Compare week starts
+    if (inputWeekStart.getTime() === currentWeekStart.getTime()) {
+        return 'currentWeek';
+    } else if (inputWeekStart.getTime() === previousWeekStart.getTime()) {
+        return 'previousWeek';
+    } else if (inputWeekStart.getTime() === nextWeekStart.getTime()) {
+        return 'nextWeek';
+    } else {
+        return 'none';
+    }
+}
+
+function _checkWeekRangeOverlap(from, to) {
+    // Convert inputs to Date objects
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+    const today = new Date();
+    
+    // Validate input dates
+    if (isNaN(fromDate) || isNaN(toDate) || fromDate > toDate) {
+        return false;
+    }
+    
+    // Set start of week to Monday
+    const getStartOfWeek = (d) => {
+        const day = d.getDay();
+        const diff = (day === 0 ? -6 : 1 - day); // Adjust for Monday start
+        const start = new Date(d);
+        start.setDate(d.getDate() + diff);
+        start.setHours(0, 0, 0, 0);
+        return start;
+    };
+    
+    // Get start of previous week and end of next week
+    const currentWeekStart = getStartOfWeek(today);
+    const previousWeekStart = new Date(currentWeekStart);
+    previousWeekStart.setDate(currentWeekStart.getDate() - 7);
+    const nextWeekEnd = new Date(currentWeekStart);
+    nextWeekEnd.setDate(currentWeekStart.getDate() + 13); // End of next week (Sunday)
+    nextWeekEnd.setHours(23, 59, 59, 999);
+    
+    // Check for overlap
+    // Overlap occurs if: fromDate <= nextWeekEnd AND toDate >= previousWeekStart
+    return fromDate <= nextWeekEnd && toDate >= previousWeekStart;
+}
+
+
+function _isSameDay(date1, date2) {
+    // Convert inputs to Date objects
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    
+    // Validate inputs
+    if (isNaN(d1) || isNaN(d2)) {
+        return false;
+    }
+    
+    // Compare year, month, and day
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getDate() === d2.getDate();
+}
+
 async function _renderAnnualSchedule(tagAnnualSchedule){
     tagAnnualSchedule.innerHTML=`` ;
 
@@ -167,12 +256,25 @@ async function _renderAnnualSchedule(tagAnnualSchedule){
     jsonCMUSchedule = await res.json();
     console.log(jsonCMUSchedule) ;
 
+    let today = new Date() ;
     const formatter = new Intl.DateTimeFormat('en-US', {month: '2-digit',day: '2-digit',year: 'numeric'});
     for(let i=0;i<jsonCMUSchedule.length;i++){
         let tagEvent = document.createElement('details') ;
         tagAnnualSchedule.appendChild(tagEvent) ;
         let fromDate = new Date(jsonCMUSchedule[i].from) ;
         let toDate = new Date(jsonCMUSchedule[i].to) ;
+        if(_isSameDay(fromDate,toDate)){
+            let inWeeksRange = _getWeekStatus(fromDate) ;
+            if('none' == inWeeksRange){
+                tagEvent.classList.add('noShow') ;
+                continue ;
+            }
+        }else{
+            if(_checkWeekRangeOverlap(fromDate,toDate)!=true){
+                tagEvent.classList.add('noShow') ;
+                continue ;
+            }
+        }
         tagEvent.innerHTML=`
             <summary>
                 <div>
