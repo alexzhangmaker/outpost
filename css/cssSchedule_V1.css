@@ -5,7 +5,7 @@
     overflow-y:auto;
     white-space: nowrap;
     margin-top:0em;/*-4em;*/
-    height:80vh ;
+    /*height:80vh ;*/
   }
   
   .head {
@@ -133,4 +133,16 @@
     display:block;
     font-size:0.9em;
     color:#091c1f;
+}
+
+
+.CourseSchedule{
+    height: auto;
+    font-family: Open Sans;
+
+}
+
+.AnnualSchedule{
+    height: auto;
+    font-family: Open Sans;
 }

@@ -61,7 +61,7 @@
     </div>
 
 <script src="./js/outpostCommon.js"></script>
-<script src="./js/scheduleAPI.js"></script>
+<script src="./js/scheduleAnywhere.js"></script>
 <script src="./js/firebaseAPI.js"></script>
 <script src="./js/dictAnywhere.js"></script>
 <script src="./js/todoAnywhere.js"></script>
@@ -75,42 +75,8 @@
 
 
 async function _onClick_CMUSchedule(event){
-    const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/CourseSchedule2025.json";
-    let jsonCMUSchedule = [];
-    const res = await fetch(firebaseUrl);
-    jsonCMUSchedule = await res.json();
-    console.log(jsonCMUSchedule) ;
     let tagWndContent = document.querySelector('#idWndContent') ;
-
-    //renderSchedule(tagWndContent,jsonCMUSchedule);
-    switchScheduleMode(tagWndContent,"Course TFL 2025") ;
-    for(let i=0;i<jsonCMUSchedule.length;i++){
-        renderCourseEvent(document.querySelector(".event-list"), jsonCMUSchedule[i]) ;
-    }
-    let weekday = getWeekday() ;
-    const weekdayClassMap = {
-        'Monday': 'scheduleMon',
-        'Tuesday': 'scheduleTue',
-        'Wednesday': 'scheduleWed',
-        'Thursday': 'scheduleThurs',
-        'Friday': 'scheduleFri',
-        'Saturday': 'scheduleSat',
-        'Sunday': 'scheduleSun'
-    };
-    let className = weekdayClassMap[weekday] ;
-    let tagEventList = document.querySelector(".event-list") ;
-    let tagWeekdayContainer = tagEventList.querySelector(`.${className}`) ;
-    tagWeekdayContainer.open = true; 
-    let tagWeekdays = tagEventList.querySelectorAll('.weekday');
-    tagWeekdays.forEach(tagWeekday=>{
-        if(tagWeekday.querySelectorAll('.eventV2').length==0){
-            tagWeekday.classList.add('noShow') ;
-        }
-    }) ;
-    //weekday
-    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
-    //renderEvent(document.querySelector(".event-list"), jsonEvent2) ;
-    
+    await _renderScheduleMode(tagWndContent) ;
 }
 
 
