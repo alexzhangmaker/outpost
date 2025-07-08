@@ -30,6 +30,7 @@ async function _renderDictMode(tagWndContent){
 
     tagWndContent.querySelector('#idBTNGoogle').addEventListener('click',_onClickGoogleTranslate) ;
     let tagText2Google = tagWndContent.querySelector("#idInputText2Google") ;
+    tagText2Google.focus();
     //handlePlainTextPaste(tagText2Google) ;
     tagText2Google.addEventListener('keyup',(event)=>{
         if (event.key === "Enter") {
@@ -37,6 +38,8 @@ async function _renderDictMode(tagWndContent){
             _onClickGoogleTranslate(event) ;
         }
     }) ;
+
+
 
 
 }

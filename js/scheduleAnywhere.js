@@ -19,12 +19,17 @@ async function _renderScheduleMode(tagWndContent){
             </div>
         </div>
         <div class="AnnualSchedule"></div>
+        <div class="PersonalSchedule"></div>
+        <div class="CourseArrangements"></div>
+
         ` ;
     tagWndContent.innerHTML=cInnerHTML ;
 
     await _renderCourseSchedule(tagWndContent.querySelector('.CourseSchedule')) ;
     await _renderAnnualSchedule(tagWndContent.querySelector('.AnnualSchedule')) ;
-    
+    await _renderPersonalSchedule(tagWndContent.querySelector('.PersonalSchedule')) ;
+    await _renderCourseArrangements(tagWndContent.querySelector('.CourseArrangements')) ;
+
 }
 
 async function _renderCourseSchedule(tagCourseSchedule){
@@ -290,5 +295,180 @@ async function _renderAnnualSchedule(tagAnnualSchedule){
 }
 
 
+async function _renderPersonalSchedule(tagPersonalSchedule){
+    tagPersonalSchedule.innerHTML=`` ;
+    //https://outpost-8d74e.asia-southeast1.firebasedatabase.app/Personal
+    const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/Personal.json";
+    let jsonPersonalchedule = [];
+    const res = await fetch(firebaseUrl);
+    jsonPersonalchedule = await res.json();
+    console.log(jsonPersonalchedule) ;
+
+    let today = new Date() ;
+    const formatter = new Intl.DateTimeFormat('en-US', {month: '2-digit',day: '2-digit',year: 'numeric'});
+    for(let i=0;i<jsonPersonalchedule.length;i++){
+        let tagEvent = document.createElement('details') ;
+        tagPersonalSchedule.appendChild(tagEvent) ;
+        let fromDate = new Date(jsonPersonalchedule[i].from) ;
+        let toDate = new Date(jsonPersonalchedule[i].to) ;
+        if(_isSameDay(fromDate,toDate)){
+            let inWeeksRange = _getWeekStatus(fromDate) ;
+            if('none' == inWeeksRange){
+                tagEvent.classList.add('noShow') ;
+                continue ;
+            }
+        }else{
+            if(_checkWeekRangeOverlap(fromDate,toDate)!=true){
+                tagEvent.classList.add('noShow') ;
+                continue ;
+            }
+        }
+        tagEvent.innerHTML=`
+            <summary>
+                <div>
+                    <span style="font-size:12px;">${formatter.format(fromDate)}/${formatter.format(toDate)}}</span>
+                    <span class="truncate" style="font-size:16px;">${jsonPersonalchedule[i].event}</span>
+                </div>
+            </summary>
+            <div class="eventDetail">
+                ${jsonPersonalchedule[i].memo}
+            </div>
+        ` ;
+    }
+}
+
+//https://outpost-8d74e.asia-southeast1.firebasedatabase.app/Thai3_LS
+//_renderCourseArrangements
+/*
+{
+    Date:'',
+    Milestone:'' or "Important",
+    Course:""
+}
+*/
+
+async function _renderCourseAlerting(course,courseURL,tagSchedule){
+    let jsonCourseSchedule = [];
+    const res = await fetch(courseURL);
+    jsonCourseSchedule = await res.json();
+    console.log(jsonCourseSchedule) ;
+
+    const formatter = new Intl.DateTimeFormat('en-US', {month: '2-digit',day: '2-digit',year: 'numeric'});
+
+    for(let i=0;i<jsonCourseSchedule.length;i++){
+        if(jsonCourseSchedule[i].Milestone!="Important")continue ;
+
+        let cDate = new Date(jsonCourseSchedule[i].Date) ;
+        if(isDateInWorkdayRange(cDate)!=true)continue ;
+
+        let tagEvent = document.createElement('details') ;
+        tagSchedule.appendChild(tagEvent) ;
+        tagEvent.innerHTML=`
+            <summary>
+                <div>
+                    <span style="font-size:12px;">${formatter.format(cDate)}}</span>
+                    <span class="truncate" style="font-size:16px;">${course}</span>
+                </div>
+            </summary>
+            <div class="eventDetail">
+                ${jsonCourseSchedule[i].Course}
+            </div>
+        ` ;
+    }
+}
+async function _renderCourseArrangements(tagSchedule){
+    tagSchedule.innerHTML=`` ;
 
 
+    let courseName="Thai3 Listen&Speak" ;
+    let courseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/Thai3_LS.json";
+    await _renderCourseAlerting(courseName,courseUrl,tagSchedule) ;
+
+    courseName="Thai3" ;//https://outpost-8d74e.asia-southeast1.firebasedatabase.app/Thai_3
+    courseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/Thai_3.json";
+    await _renderCourseAlerting(courseName,courseUrl,tagSchedule) ;
+
+    courseName="English" ;//https://outpost-8d74e.asia-southeast1.firebasedatabase.app/Thai_3
+    courseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/English.json";
+    await _renderCourseAlerting(courseName,courseUrl,tagSchedule) ;
+
+    courseName="Oral" ;//https://outpost-8d74e.asia-southeast1.firebasedatabase.app/Thai_3
+    courseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/Oral.json";
+    await _renderCourseAlerting(courseName,courseUrl,tagSchedule) ;
+
+    courseName="Document" ;//https://outpost-8d74e.asia-southeast1.firebasedatabase.app/Thai_3
+    courseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/Document.json";
+    await _renderCourseAlerting(courseName,courseUrl,tagSchedule) ;
+    
+}
+
+
+function isDateInWorkdayRange(inputDate) {
+  // Convert input to Date object
+  const input = new Date(inputDate);
+  if (isNaN(input)) {
+    throw new Error('Invalid input date');
+  }
+
+  // Get today's date
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalize to midnight for comparison
+  input.setHours(0, 0, 0, 0); // Normalize input date
+
+  // Helper function to check if a date is a workday (Monday to Friday)
+  function isWorkday(date) {
+    const day = date.getDay();
+    return day >= 1 && day <= 5; // Monday (1) to Friday (5)
+  }
+
+  // Helper function to get the date of the previous Wednesday
+  function getLastWednesday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const daysToSubtract = (day === 0 ? 4 : day === 6 ? 3 : day - 3); // Adjust to last Wednesday
+    d.setDate(d.getDate() - daysToSubtract);
+    return d;
+  }
+
+  // Helper function to get the date of the next Wednesday
+  function getNextWednesday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const daysToAdd = (day === 0 ? 3 : day === 6 ? 4 : 10 - day); // Adjust to next Wednesday
+    d.setDate(d.getDate() + daysToAdd);
+    return d;
+  }
+
+  // Helper function to get the date N workdays before/after
+  function getWorkdayOffset(date, workdays) {
+    const result = new Date(date);
+    let count = Math.abs(workdays);
+    const direction = workdays >= 0 ? 1 : -1;
+
+    while (count > 0) {
+      result.setDate(result.getDate() + direction);
+      if (isWorkday(result)) {
+        count--;
+      }
+    }
+    return result;
+  }
+
+  // Determine if today is a weekend (Saturday or Sunday)
+  const isWeekend = today.getDay() === 0 || today.getDay() === 6;
+
+  let startDate, endDate;
+
+  if (isWeekend) {
+    // Weekend: Range is last Wednesday to next Wednesday
+    startDate = getLastWednesday(today);
+    endDate = getNextWednesday(today);
+  } else {
+    // Weekday: Range is 3 workdays before and after today
+    startDate = getWorkdayOffset(today, -3);
+    endDate = getWorkdayOffset(today, 3);
+  }
+
+  // Check if input date is within the range (inclusive)
+  return input >= startDate && input <= endDate;
+}
