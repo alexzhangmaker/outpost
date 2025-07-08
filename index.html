@@ -16,6 +16,8 @@
 
     <link rel="stylesheet" href="./css/signpostToolkits.css">
     <link rel="stylesheet" href="./css/cssSchedule_V1.css">
+    <link rel="stylesheet" href="./css/cssDictAnywhere.css">
+
     <link rel="stylesheet" href="./css/outpostCommon.css">
     <link rel="stylesheet" href="./css/componentOutpost.css">
 
@@ -32,29 +34,21 @@
         @import url(https://fonts.googleapis.com/css?family=Open+Sans);
         @import url(https://fonts.googleapis.com/css?family=Lobster);
         @import url(https://fonts.googleapis.com/css?family=Oswald:400,700);
-
     </style>
-    
+    <style>
+        #idWndContent{
+            width:100% ;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        
+    </style>
 </head>
 
 <body>
     <div class="content" id="scrollableContent">
-        <div id="idWndContent">
-            <!-----
-            <div class="editor">
-                <input type="text" id="idInputMemo" name="fname"><br><br>
-                <button onclick="onClickSubmitMemo()" id="idBTNSubmit"><i class="bi-journal-text outpostBTN"></i></button>
-            </div>
-            <div class="memoContainer"></div>
-            -->
-            <form id="dataForm" class="noShow">
-                <input type="text" name="name" placeholder="Name" required>
-                <input type="email" name="email" placeholder="Email" required>
-                <input type="number" name="age" placeholder="Age" required>
-                <button type="submit">Submit</button>
-            </form>
-            <div id="status" class="noShow">Ready</div>
-        </div>
+        <div id="idWndContent"></div>
     </div>
     
     <div class="navbar">
@@ -220,38 +214,6 @@ async function _onDOMContentLoad(event){
     }
 
 
-    /*
-    // Handle form submission
-    document.getElementById('dataForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const statusDiv = document.getElementById('status');
-      statusDiv.textContent = 'Submitting...';
-
-      // Collect form data
-      const formData = {
-        name: e.target.name.value,
-        email: e.target.email.value,
-        age: Number(e.target.age.value)
-      };
-
-      // Send data to Web Worker
-      //https://docs.google.com/spreadsheets/d/1kjywGY4dyxOCkEfAh_ynwgc2HUWA7lFXV8xU7lOYI2o/edit?gid=0#gid=0
-      //sheetID = 1kjywGY4dyxOCkEfAh_ynwgc2HUWA7lFXV8xU7lOYI2o
-      //google JSON2Sheet webAPP:
-      //https://script.google.com/macros/s/AKfycbyjdTvx2NRFwwgQISNFnJE20m2C4-5kVwvoJK0ywUqLQOHxYuKVf45crOy_KbkYva2o/exec
-      //https://script.google.com/macros/s/AKfycbyjdTvx2NRFwwgQISNFnJE20m2C4-5kVwvoJK0ywUqLQOHxYuKVf45crOy_KbkYva2o/exec
-      //https://script.google.com/macros/library/d/1fzZG7YB-j5xvx3HnX1FPjWORoVzanBkknhRckRaAlxxgC_eioLScElum/1
-      //test
-      //curl -X POST -H "Content-Type: application/json" -d '{"name":"John Doe","email":"john@example.com","age":30}' "https://script.google.com/macros/s/AKfycbw9aEabZmGlfwVI_CbaMbLf3do3EH4guUAQtsX_lVQNeum6uWRM1F7Eplz7GInbSdn1/exec"
-      //curl -L -X POST -H "Content-Type: application/json" -d '{"name":"John Doe","email":"john@example.com","age":30}' "https://script.google.com/macros/s/AKfycbw9aEabZmGlfwVI_CbaMbLf3do3EH4guUAQtsX_lVQNeum6uWRM1F7Eplz7GInbSdn1/exec"
-      let url_gSheetWebApp = `https://script.google.com/macros/s/AKfycbw9aEabZmGlfwVI_CbaMbLf3do3EH4guUAQtsX_lVQNeum6uWRM1F7Eplz7GInbSdn1/exec` ;
-      worker.postMessage({
-        action: 'sendPost',
-        url: url_gSheetWebApp, // Replace with your Google Apps Script Web App URL
-        data: formData
-      });
-    });
-    */
 
 
 </script>

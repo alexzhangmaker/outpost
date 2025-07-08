@@ -2,9 +2,11 @@
 function _renderDictMode(tagWndContent){
     tagWndContent.innerHTML=`
         <h2>Dict.Anywhere</h2>
-        <input type="text" id="idInputText2Google" onfocus="this.value=''">
-        <button id="idBTNGoogle">try Google</button>
-        <div id="idOutputGoogle"></div>
+        <div class="dictMainWnd">
+            <input type="text" id="idInputText2Google" onfocus="this.value=''">
+            <button id="idBTNGoogle">Google it!</button>
+            <div id="idOutputGoogle"></div>
+        </div>
     ` ;
     tagWndContent.querySelector('#idBTNGoogle').addEventListener('click',_onClickGoogleTranslate) ;
     let tagText2Google = tagWndContent.querySelector("#idInputText2Google") ;
