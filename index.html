@@ -146,7 +146,7 @@ async function _onDOMContentLoad(event){
 
 <script>
     // Create a Web Worker
-    const gWebWorker = new Worker("webWorker.js");
+    const gWebWorker = new Worker("./webWorker.js");
 
     // Listen for messages from Web Worker
     gWebWorker.onmessage = (event) => {
@@ -171,11 +171,10 @@ async function _onDOMContentLoad(event){
     };
 
     //Common API for other modules to send Message to WebWorker Thread
-    async function _sendMessage2Worker(jsonMessage,url2Go){
+    async function _sendMessage2Worker(operation,opContent){
         gWebWorker.postMessage({
-            action: 'sendPost',
-            url: url2Go, // Replace with your Google Apps Script Web App URL
-            data: jsonMessage
+            action: operation,
+            data: opContent
         });
     }
 

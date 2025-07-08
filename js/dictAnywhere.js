@@ -1,5 +1,14 @@
+let gGoogleDicts=[] ;
 
-function _renderDictMode(tagWndContent){
+async function _loadGoogleDicts(){
+    gGoogleDicts=[] ;
+    const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/GoogleDicts.json";
+    const res = await fetch(firebaseUrl);
+    gGoogleDicts = await res.json();
+    console.log(gGoogleDicts) ;
+}
+
+async function _renderDictMode(tagWndContent){
     tagWndContent.innerHTML=`
         <h2>Dict.Anywhere</h2>
         <div class="dictMainWnd">
@@ -8,6 +17,17 @@ function _renderDictMode(tagWndContent){
             <div id="idOutputGoogle"></div>
         </div>
     ` ;
+
+    await _loadGoogleDicts() ;
+    let tagGoogleOutput = tagWndContent.querySelector('#idOutputGoogle') ;
+    for(let i=0;i<gGoogleDicts.length;i++){
+        let tagOutput = document.createElement('li') ;
+        let cDate = new Date(gGoogleDicts[i].timeStamp) ;
+        console.log(cDate.toLocaleString()) ;
+        tagOutput.innerHTML=`${gGoogleDicts[i].textTh}/${gGoogleDicts[i].meaningEn}` ;
+        tagGoogleOutput.appendChild(tagOutput) ;
+    }
+
     tagWndContent.querySelector('#idBTNGoogle').addEventListener('click',_onClickGoogleTranslate) ;
     let tagText2Google = tagWndContent.querySelector("#idInputText2Google") ;
     //handlePlainTextPaste(tagText2Google) ;
@@ -17,6 +37,8 @@ function _renderDictMode(tagWndContent){
             _onClickGoogleTranslate(event) ;
         }
     }) ;
+
+
 }
 
 
@@ -61,6 +83,33 @@ async function _onClickGoogleTranslate(event){
     } ;
     let url_gSheetWebApp = `https://script.google.com/macros/s/AKfycbw9aEabZmGlfwVI_CbaMbLf3do3EH4guUAQtsX_lVQNeum6uWRM1F7Eplz7GInbSdn1/exec` ;
 
-    _sendMessage2Worker(jsonGoogleDict,url_gSheetWebApp) ;
+    _sendMessage2Worker('GoogleDict',jsonGoogleDict) ;
+    gGoogleDicts.push(jsonGoogleDict) ;
+    sync2Firebase(gGoogleDicts) ;
     return meaning ;
+}
+
+
+async function sync2Firebase(GoogleDicts) {
+    let url=`https://outpost-8d74e.asia-southeast1.firebasedatabase.app/GoogleDicts.json` ;
+    try {
+       // Write back the updated array using PUT
+
+       const putResponse = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(GoogleDicts)
+        });
+
+        if (!putResponse.ok) {
+            throw new Error(`Failed to sync todos: ${putResponse.statusText}`);
+        }
+
+        console.log("synced successfully!");
+        //localCache.length = 0; // Clear local cache after sync
+    } catch (error) {
+        console.error("Error syncing todos:", error.message);
+    }
 }
