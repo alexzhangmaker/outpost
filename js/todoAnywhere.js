@@ -22,17 +22,6 @@ async function renderTasks(tagWndContent){
     for(let i=0;i<jsonOutpostTasks.length;i++){
         renderMemoV2(tagWndContent,jsonOutpostTasks[i]) ;
     }
-    /*
-    let tagWndContent = document.querySelector('#idWndContent') ;
-
-    //renderSchedule(tagWndContent,jsonCMUSchedule);
-    switchScheduleMode(tagWndContent,"CMU 2025") ;
-    for(let i=0;i<jsonCMUCalendar.length;i++){
-        renderCMUCalendarEvent(document.querySelector(".event-list"), jsonCMUCalendar[i]) ;
-    }
-    //renderEvent(document.querySelector(".event-list"), jsonEvent1) ;
-    //renderEvent(document.querySelector(".event-list"), jsonEvent2) ;
-    */
 }
 
 
@@ -61,44 +50,23 @@ function renderMemoV2(tagContainer,jsonMemo){
 
     ` ;
     tagContainer.prepend(tagMemo) ;
-    /*
-    tagMemo.dataset.docID = jsonMemo.key ;
+    
+    tagMemo.dataset.memoID = jsonMemo.ttm ;
     tagMemo.querySelector('.bi-check2-circle').addEventListener('click',async (event)=>{
         //tagMemo.classList.toggle('memoCheck') ;
-        await deleteDocument("outpost",tagMemo.dataset.docID) ;
-        await removeKeyLocal(tagMemo.dataset.docID) ;
-
+        for(let i=0;i<jsonOutpostTasks.length;i++){
+            if(jsonOutpostTasks[i].ttm == parseInt(tagMemo.dataset.memoID)){
+                jsonOutpostTasks.splice(i,1) ;
+                break ;
+            }
+        }
         tagMemo.remove() ;
+        await syncTodos2Firebase() ;
     }) ;
-    */
+    
 }
 
-/*
-function renderLocalJSON(){
-    localforage.config(localForageConfig);
-    localforage.iterate((value, key) => {
-        // Push each key-value pair as an object to the array
-        let tagMemoContainer = document.querySelector('.memoContainer') ;
-        let jsonMemo = JSON.parse(value);
-        jsonMemo.key = key ;
-        renderMemoV2(tagMemoContainer,jsonMemo) ;
-    }).then(() => {
-        console.log('All key-value pairs:');
-    }).catch((err) => {
-        console.error('Error iterating:', err);
-    });
-}
 
-function sumbitMemoLocal(key,jsonMemo){
-    let tagMemoContainer = document.querySelector('.memoContainer') ;
-    //let jsonMemo = JSON.parse(value);
-    jsonMemo.key = key ;
-    renderMemoV2(tagMemoContainer,jsonMemo) ;
-    _writeJSONLocal(key,jsonMemo) ;
-    let tagMemoInput = document.querySelector('#idInputMemo');
-    tagMemoInput.value='' ;
-}
-*/
 function onClickSubmitMemo(event){
     let tagMemoInput = document.querySelector('#idInputMemo');
     let jsonMemo=_parseTodoString(inputValue) ;
@@ -176,26 +144,6 @@ async function syncTodos2Firebase() {
     }
 
     try {
-        /*
-        for (let i=0; i<jsonOutpostTasks.length;i++) {
-            const jsonTask = jsonOutpostTasks[i];
-
-            const response = await fetch(firebaseUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(jsonTask)
-            });
-
-            if (!response.ok) {
-                throw new Error(`Failed to upload todo: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            console.log(`Todo uploaded with key: ${result.name}`);
-        }
-        */
        // Write back the updated array using PUT
        const putResponse = await fetch(firebaseUrl, {
             method: 'PUT',

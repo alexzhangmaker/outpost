@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="./css/signpostToolkits.css">
     <link rel="stylesheet" href="./css/cssSchedule_V1.css">
     <link rel="stylesheet" href="./css/cssDictAnywhere.css">
+    <link rel="stylesheet" href="./css/cssDictationAnywhere.css">
 
     <link rel="stylesheet" href="./css/outpostCommon.css">
     <link rel="stylesheet" href="./css/componentOutpost.css">
@@ -55,7 +56,8 @@
         <div class="navbar">
             <div class="nav-item"><i class="bi-list-task outpostBTN" id="idBTNToDo"></i>事项</div>
             <div class="nav-item"><i class="bi-calendar-day outpostBTN" id="idBTNCMUSchedule"></i>日程</div>
-            <div class="nav-item"><i class="bi-envelope outpostBTN" id="idBTNMessage"></i>通知</div>
+            <div class="nav-item"><i class="bi-envelope outpostBTN" id="idBTNDictationTh"></i>听写</div>
+            <div class="nav-item noShow"><i class="bi-envelope outpostBTN" id="idBTNMessage"></i>通知</div>
             <div class="nav-item"><i class="bi-translate outpostBTN" id="idBTNDictAnywhere"></i>字典</div>
             <div class="nav-item"><i class="bi-safe outpostBTN" id="idBTNCloudSafe"></i>文件柜</div>
             <div class="nav-item"><i class="bi-gear-wide-connected outpostBTN" id="idBTNSetting"></i>设置</div>
@@ -67,6 +69,7 @@
 <script src="./js/firebaseAPI.js"></script>
 <script src="./js/dictAnywhere.js"></script>
 <script src="./js/todoAnywhere.js"></script>
+<script src="./js/dictationAnywhere.js"></script>
 
 
 
@@ -112,6 +115,11 @@ async function _onClick_Message(event){
 async function _onClick_DictAnywhere(event){
     let tagWndContent = document.querySelector('#idWndContent') ;
     _renderDictMode(tagWndContent) ;
+}
+
+async function _onClick_Dictation(event){
+    let tagWndContent = document.querySelector('#idWndContent') ;
+    await _renderDictationMode(tagWndContent) ;
 }
 
 async function _onClick_ToDo(event){
@@ -193,6 +201,8 @@ document.querySelector('#idBTNCMUSchedule').addEventListener('click',_onClick_CM
 document.querySelector('#idBTNMessage').addEventListener('click',_onClick_Message) ;
 document.querySelector('#idBTNToDo').addEventListener('click',_onClick_ToDo) ;
 document.querySelector('#idBTNDictAnywhere').addEventListener('click',_onClick_DictAnywhere) ;
+document.querySelector('#idBTNDictationTh').addEventListener('click',_onClick_Dictation) ;
+
 
 </script>
 </body>

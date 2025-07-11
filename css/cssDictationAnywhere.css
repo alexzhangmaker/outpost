@@ -1,0 +1,27 @@
+.dictationMain{
+    
+
+    font-size: 18px;
+    font-family: Open Sans;
+
+    padding-top: 5em;
+}
+
+.challengWnd{
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+    justify-content: center;
+    align-items: center;
+}
+
+.challengWord{
+    font-size: 2.0rem;
+}
+
+.dictationTools{
+    display: flex;
+    flex-direction: row;
+    gap: 5em;
+    justify-content: center;
+}

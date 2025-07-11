@@ -38,19 +38,22 @@ async function _renderDictMode(tagWndContent){
             _onClickGoogleTranslate(event) ;
         }
     }) ;
-
-
-
-
 }
 
+
+/*
+case translate: turn left
+url: https://translate.google.com/?hl=zh-CN&tab=TT&sl=en&tl=th&text=turn%20left&op=translate
+*/
 
 async function _larkGoogleTranslate(text,sourceLang,targetLang){
     console.log("_larkGoogleTranslate==============>>>>>>>>>>>>>>");
     console.log(text);
     let textPre = text.replace(/( )/ig, "%20") ;
-    let encodedText = encodeURI(textPre) ;
-    var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="+ sourceLang + "&tl=" + targetLang + "&dt=t&q=" + encodedText;
+    //let encodedText = encodeURI(textPre) ;
+    //var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="+ sourceLang + "&tl=" + targetLang + "&dt=t&q=" + encodedText;
+    var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="+ sourceLang + "&tl=" + targetLang + "&dt=t&q=" + textPre;
+    
     console.log(url);
     console.log("<<<<<<<<<<<================");
 
@@ -68,8 +71,20 @@ async function _onClickGoogleTranslate(event){
     let tagMainWnd = event.target.closest('#idWndContent') ;
     let tagText2Google = tagMainWnd.querySelector("#idInputText2Google") ;
     const text = tagText2Google.value;//'ประมาท' ;
-    const sourceLang = 'th' ;
-    const targetLang = 'en' ;
+
+    let sourceLang = 'th' ;
+    let targetLang = 'en' ;
+    if(isChineseOnly(text)){
+        sourceLang = 'zh' ;
+        targetLang = 'th' ;
+    }else if(isThaiLettersPunctuationNumbers(text)){
+        sourceLang = 'th' ;
+        targetLang = 'en' ;
+    }else{
+        sourceLang = 'en' ;
+        targetLang = 'th' ;
+    }
+    
     let meaning = await _larkGoogleTranslate(text,sourceLang,targetLang) ;
     console.log(meaning) ;
 
@@ -116,3 +131,38 @@ async function sync2Firebase(GoogleDicts) {
         console.error("Error syncing todos:", error.message);
     }
 }
+
+
+function isThaiLettersPunctuationNumbers(str) {
+    // Regular expression for Thai letters and punctuation (U+0E00 to U+0E7F)
+    // and numbers (Thai digits U+0E50 to U+0E59 or Arabic digits 0-9)
+    const thaiRegex = /^[\u0E00-\u0E7F0-9]*$/;
+    
+    // Check if the string is non-empty and matches the regex
+    return typeof str === 'string' && str.length > 0 && thaiRegex.test(str);
+}
+
+// Example usage:
+// console.log(isThaiLettersPunctuationNumbers("สวัสดี123")); // true
+// console.log(isThaiLettersPunctuationNumbers("สวัสดี๑๒๓")); // true
+// console.log(isThaiLettersPunctuationNumbers("สวัสดี!๑๒๓")); // true
+// console.log(isThaiLettersPunctuationNumbers("สวัสดี abc")); // false
+// console.log(isThaiLettersPunctuationNumbers("")); // false
+// console.log(isThaiLettersPunctuationNumbers("hello")); // false
+
+
+
+function isChineseOnly(str) {
+    // Regular expression for Chinese characters (CJK Unified Ideographs U+4E00 to U+9FFF)
+    const chineseRegex = /^[\u4E00-\u9FFF]*$/;
+    
+    // Check if the string is non-empty and matches the regex
+    return typeof str === 'string' && str.length > 0 && chineseRegex.test(str);
+}
+
+// Example usage:
+// console.log(isChineseOnly("你好世界")); // true
+// console.log(isChineseOnly("你好123")); // false
+// console.log(isChineseOnly("你好 world")); // false
+// console.log(isChineseOnly("")); // false
+// console.log(isChineseOnly("hello")); // false

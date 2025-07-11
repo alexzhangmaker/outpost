@@ -1,24 +1,24 @@
 .dictMainWnd{
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 
-            font-size: 18px;
-            font-family: Open Sans;
-        }
+    font-size: 18px;
+    font-family: Open Sans;
+}
 
-        #idInputText2Google{
-            height:2.5em ;
-            font-family: Open Sans;
-        }
+#idInputText2Google{
+    height:2.5em ;
+    font-family: Open Sans;
+}
 
-        #idOutputGoogle{
-            font-family: Open Sans;
+#idOutputGoogle{
+    font-family: Open Sans;
 
-        }
+}
 
-        #idBTNGoogle{
-            font-family: Open Sans;
-            height:2.5em ;
+#idBTNGoogle{
+    font-family: Open Sans;
+    height:2.5em ;
 
-        }
+}
