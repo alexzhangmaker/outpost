@@ -1,4 +1,48 @@
 
+/*
+// Track cumulative swipe distance
+let deltaX = 0;
+let deltaY = 0;
+
+///
+const swipeArea = document.getElementById('.challengWnd');
+//const square = document.querySelector('.square');
+
+// Initialize Hammer.js with swipe recognizer
+const manager = new Hammer.Manager(swipeArea);
+const swipe = new Hammer.Swipe({ direction: Hammer.DIRECTION_ALL }); // Enable all swipe directions
+manager.add(swipe);
+// Handle swipe events
+manager.on('swipe', function (e) {
+    // Update cumulative position
+    deltaX += e.deltaX;
+    deltaY += e.deltaY;
+
+    // Determine swipe direction
+    let directionText = '';
+    if (e.direction === Hammer.DIRECTION_LEFT) {
+        directionText = 'Swiped Left!';
+    } else if (e.direction === Hammer.DIRECTION_RIGHT) {
+        directionText = 'Swiped Right!';
+    } else if (e.direction === Hammer.DIRECTION_UP) {
+        directionText = 'Swiped Up!';
+    } else if (e.direction === Hammer.DIRECTION_DOWN) {
+        directionText = 'Swiped Down!';
+    }
+
+    // Update UI
+    swipeArea.textContent = directionText;
+    square.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+    // Reset text after 1 second
+    setTimeout(() => {
+        swipeArea.textContent = 'Swipe here!';
+    }, 1000);
+});
+//
+*/
+
+
 async function _renderDictationMode(tagWndContent){
     let storageKey = `outpostDictation` ;
     try {
@@ -15,6 +59,7 @@ async function _renderDictationMode(tagWndContent){
             await localforage.setItem(storageKey,jsonDictTble);
         }
 
+        
         let currentIndex=-1 ;
         _renderNextChallenge(tagWndContent,jsonDictTble,currentIndex) ;
     } catch (err) {

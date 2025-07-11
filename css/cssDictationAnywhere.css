@@ -16,7 +16,14 @@
 }
 
 .challengWord{
+    font-size: 4.0rem;
+}
+
+.challengMeaning{
     font-size: 2.0rem;
+}
+.challengExample{
+    font-size: 1.8rem;
 }
 
 .dictationTools{
