@@ -25,7 +25,7 @@ async function _renderDictMode(tagWndContent){
         let cDate = new Date(gGoogleDicts[i].timeStamp) ;
         console.log(cDate.toLocaleString()) ;
         tagOutput.innerHTML=`${gGoogleDicts[i].textTh}/${gGoogleDicts[i].meaningEn}` ;
-        tagGoogleOutput.appendChild(tagOutput) ;
+        tagGoogleOutput.prepend(tagOutput) ;
     }
 
     tagWndContent.querySelector('#idBTNGoogle').addEventListener('click',_onClickGoogleTranslate) ;
