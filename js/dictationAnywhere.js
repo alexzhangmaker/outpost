@@ -43,7 +43,104 @@ manager.on('swipe', function (e) {
 */
 
 
+/*
+let jsonDictationRecord={
+    key:'dictation_07112025',
+    lastRecordsKey:["dictation_06232025"],//key of last n records,n is system parameter 
+    indexBegin:1,
+    indexEnd:20,
+    failedIDs:[]
+} ;
+*/
+
+let gDictation={
+    key:'TBD',
+    lastRecordsKey:[],//key of last n records,n is system parameter 
+    indexBegin:-1,
+    indexEnd:-1,
+    dictIDs:[],
+    failedIDs:[]
+} ;
+
+let gDictMan={
+    nextIndexBegin:-1,
+    mostRecentRecord:'',
+    lastRecordsKey:[],
+    nDictPerDay:20
+} ;
+
+async function _initDictationEnv(dictTble){
+    const urlDictMan = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/outpostDictation/dictMan.json";
+    const res = await fetch(urlDictMan);
+    let jsonDictMan = await res.json();
+    if(jsonDictMan!=null){
+        if(jsonDictMan.nextIndexBegin!=0){
+            gDictMan.nextIndexBegin = jsonDictMan.nextIndexBegin ;
+            gDictMan.mostRecentRecord=jsonDictMan.mostRecentRecord ;
+            gDictMan.lastRecordsKey=jsonDictMan.lastRecordsKey ;
+            gDictMan.nDictPerDay = jsonDictMan.nDictPerDay ;
+        }
+    }
+
+
+    let cDate = new Date() ;
+    let cMonth = (cDate.getMonth()+1)<10?`0${cDate.getMonth()+1}`:`${cDate.getMonth()+1}` ;
+    let strDate = cDate.getDate()<10?`0${cDate.getDate()}`:`${cDate.getDate()}` ;
+
+    gDictation.key = `${cMonth}${strDate}${cDate.getFullYear()}` ;
+    gDictation.indexBegin = gDictMan.nextIndexBegin+1 ;
+    gDictation.indexEnd = gDictMan.nextIndexBegin + gDictMan.nDictPerDay ;
+    gDictation.lastRecordsKey=gDictMan.lastRecordsKey ;
+
+    //collect failedIDs from last n Records
+
+    //add new dict items
+    for(let i=gDictation.indexBegin;i<gDictation.indexEnd;i++){
+        if(i>=dictTble.length)break ;
+        gDictation.dictIDs.push(i) ;
+    }
+    //end initializing gDictation
+    console.log(gDictation) ;
+}
+
+
+async function _finishDict4Today(){
+    console.log(gDictation) ;
+    const urlDict = `https://outpost-8d74e.asia-southeast1.firebasedatabase.app/outpostDictation/${gDictation.key}.json`;
+    let putResponse = await fetch(urlDict, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(gDictation)
+    });
+    if (!putResponse.ok) {
+        console.log(`Failed to _finishDict4Today : ${putResponse.statusText}`);
+    }
+    console.log("_finishDict4Today successfully!");
+
+    const urlDictMan = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/outpostDictation/dictMan.json";
+    gDictMan.nextIndexBegin = gDictation.indexEnd ;
+    gDictMan.nDictPerDay = 20 ;
+    gDictMan.mostRecentRecord = gDictation.key ;
+    gDictMan.lastRecordsKey.push(gDictation.key) ;
+    putResponse = await fetch(urlDictMan, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(gDictMan)
+    });
+    if (!putResponse.ok) {
+        console.log(`Failed to _finishDict4Today2 : ${putResponse.statusText}`);
+    }
+    console.log("_finishDict4Today2 successfully!");
+}
+
+
 async function _renderDictationMode(tagWndContent){
+
+
     let storageKey = `outpostDictation` ;
     try {
         let jsonDictTble = await localforage.getItem(storageKey);
@@ -59,7 +156,7 @@ async function _renderDictationMode(tagWndContent){
             await localforage.setItem(storageKey,jsonDictTble);
         }
 
-        
+        await _initDictationEnv(jsonDictTble) ;
         let currentIndex=-1 ;
         _renderNextChallenge(tagWndContent,jsonDictTble,currentIndex) ;
     } catch (err) {
@@ -68,10 +165,19 @@ async function _renderDictationMode(tagWndContent){
     }
 }
 
-function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
+async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
     let nextIndex = currentIndex+1 ;
-    nextIndex = nextIndex>dictTbl.length?0:nextIndex ;
-    let jsonChallenge = dictTbl[nextIndex] ;
+
+    //code line below may cause repeat
+    if(nextIndex>=gDictation.dictIDs.length){
+        alert('done for today') ;
+        await _finishDict4Today() ;
+        return ;
+    }
+    nextIndex = nextIndex>gDictation.dictIDs.length?0:nextIndex ;
+    //end comment
+
+    let jsonChallenge = dictTbl[gDictation.dictIDs[nextIndex]] ;
     tagWndContent.innerHTML=`
         <div class="dictationMain">
             <div class="challengWnd">
@@ -80,13 +186,16 @@ function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
                 <div class="challengExample">${jsonChallenge["Example Sentence"]}</div>
             </div>
             <div class="dictationTools">
-                <i class="bi-arrow-left-square" id="idBTNPrevious" style="font-size:24px;"></i>
+                <i class="bi-arrow-left-square noShow" id="idBTNPrevious" style="font-size:24px;"></i>
                 <i class="bi-check-square" id="idBTNCheckRight" style="font-size:24px;"></i>
                 <i class="bi-x-square" id="idBTNCheckWrong" style="font-size:24px;"></i>
-                <i class="bi-arrow-right-square" id="idBTNNext" style="font-size:24px;"></i>
+                <i class="bi-arrow-right-square noShow" id="idBTNNext" style="font-size:24px;"></i>
             </div>
         </div>
     ` ;
+    tagWndContent.querySelector('.dictationMain').dataset.dictIndex = nextIndex ;
+    tagWndContent.querySelector('.dictationMain').dataset.dictID = gDictation.dictIDs[nextIndex] ;
+
     tagWndContent.querySelector('#idBTNNext').addEventListener('click',(event)=>{
         _renderNextChallenge(tagWndContent,dictTbl,nextIndex) ;
     }) ;
@@ -94,7 +203,10 @@ function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
         _renderNextChallenge(tagWndContent,dictTbl,nextIndex) ;
     }) ;
     tagWndContent.querySelector('#idBTNCheckWrong').addEventListener('click',(event)=>{
+        let failedID = parseInt(tagWndContent.querySelector('.dictationMain').dataset.dictID) ;
+        gDictation.failedIDs.push(failedID) ;
         _renderNextChallenge(tagWndContent,dictTbl,nextIndex) ;
+
     }) ;
 
 }
