@@ -53,6 +53,7 @@ let jsonDictationRecord={
 } ;
 */
 
+const nDictPerDay = 40 ;
 let gDictation={
     key:'TBD',
     lastRecordsKey:[],//key of last n records,n is system parameter 
@@ -66,7 +67,7 @@ let gDictMan={
     nextIndexBegin:-1,
     mostRecentRecord:'',
     lastRecordsKey:[],
-    nDictPerDay:20
+    nDictPerDay:nDictPerDay
 } ;
 
 async function _initDictationEnv(dictTble){
@@ -78,7 +79,7 @@ async function _initDictationEnv(dictTble){
             gDictMan.nextIndexBegin = jsonDictMan.nextIndexBegin ;
             gDictMan.mostRecentRecord=jsonDictMan.mostRecentRecord ;
             gDictMan.lastRecordsKey=jsonDictMan.lastRecordsKey ;
-            gDictMan.nDictPerDay = jsonDictMan.nDictPerDay ;
+            gDictMan.nDictPerDay = nDictPerDay;//jsonDictMan.nDictPerDay ;
         }
     }
 
@@ -121,7 +122,7 @@ async function _finishDict4Today(){
 
     const urlDictMan = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/outpostDictation/dictMan.json";
     gDictMan.nextIndexBegin = gDictation.indexEnd ;
-    gDictMan.nDictPerDay = 20 ;
+    gDictMan.nDictPerDay = nDictPerDay ;
     gDictMan.mostRecentRecord = gDictation.key ;
     gDictMan.lastRecordsKey.push(gDictation.key) ;
     putResponse = await fetch(urlDictMan, {
