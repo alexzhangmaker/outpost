@@ -21,6 +21,7 @@ async function _renderScheduleMode(tagWndContent){
         <div class="AnnualSchedule"></div>
         <div class="PersonalSchedule"></div>
         <div class="CourseArrangements"></div>
+        <div class="RepeatedSchedule"></div>
 
         ` ;
     tagWndContent.innerHTML=cInnerHTML ;
@@ -29,7 +30,7 @@ async function _renderScheduleMode(tagWndContent){
     await _renderAnnualSchedule(tagWndContent.querySelector('.AnnualSchedule')) ;
     await _renderPersonalSchedule(tagWndContent.querySelector('.PersonalSchedule')) ;
     await _renderCourseArrangements(tagWndContent.querySelector('.CourseArrangements')) ;
-
+    await _renderRepeatedSchedule(tagWndContent.querySelector('.RepeatedSchedule')) ;
 }
 
 async function _renderCourseSchedule(tagCourseSchedule){
@@ -472,3 +473,157 @@ function isDateInWorkdayRange(inputDate) {
   // Check if input date is within the range (inclusive)
   return input >= startDate && input <= endDate;
 }
+
+
+
+async function _renderRepeatedSchedule(tagRepeatedSchedule){
+
+    function _renderRepeatTask_(tagRepeatedSchedule,jsonRepeatSchedule){
+        let tagEvent = document.createElement('details') ;
+        tagRepeatedSchedule.appendChild(tagEvent) ;
+        tagEvent.innerHTML=`
+            <summary>
+                <div>
+                    <span style="font-size:12px;">Every ${jsonRepeatSchedule.repeatStartOn}</span>
+                    <span class="truncate" style="font-size:16px;">${jsonRepeatSchedule.about}</span>
+                </div>
+            </summary>
+            <div class="eventDetail">
+                ${jsonRepeatSchedule.memo}
+            </div>
+        ` ;
+        console.log(jsonRepeatSchedule) ;
+    }
+    tagRepeatedSchedule.innerHTML=`` ;
+    //https://outpost-8d74e.asia-southeast1.firebasedatabase.app/RepeatTask
+    const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/RepeatTask.json";
+    let jsonRepeatSchedule = [];
+    const res = await fetch(firebaseUrl);
+    jsonRepeatSchedule = await res.json();
+    console.log(jsonRepeatSchedule) ;
+
+    let today = new Date() ;
+    const formatter = new Intl.DateTimeFormat('en-US', {month: '2-digit',day: '2-digit',year: 'numeric'});
+
+    //repeatStartOn about repeatAs memo
+    for(let i=0;i<jsonRepeatSchedule.length;i++){
+        switch(jsonRepeatSchedule[i].repeatAs){
+            case "Weekly":
+                const weekdays=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"] ;
+                if(jsonRepeatSchedule[i].repeatStartOn != weekdays[today.getDay()])continue ;
+                _renderRepeatTask_(tagRepeatedSchedule,jsonRepeatSchedule[i]) ;
+                break ;
+            case "Monthly":
+                if(isMonthlyJobDate(jsonRepeatSchedule[i].repeatStartOn)==false)continue ;
+                _renderRepeatTask_(tagRepeatedSchedule,jsonRepeatSchedule[i]) ;
+                break ;
+            case "Quarterly":
+                if(isQuarterlyJobDate(jsonRepeatSchedule[i].repeatStartOn)==false)continue ;
+                _renderRepeatTask_(tagRepeatedSchedule,jsonRepeatSchedule[i]) ;
+                break;
+            case "Yearly":
+                //isYearlyJobDate
+                if(isYearlyJobDate(jsonRepeatSchedule[i].repeatStartOn)==false)continue ;
+                _renderRepeatTask_(tagRepeatedSchedule,jsonRepeatSchedule[i]) ;
+                break;
+            default:
+                break;
+        }
+
+        
+    }
+}
+
+function isMonthlyJobDate(startDateStr, currentDate = new Date()) {
+    try {
+        // Parse the start date (expected format: MM/DD/YYYY)
+        const startDate = new Date(startDateStr);
+        if (isNaN(startDate)) {
+            throw new Error('Invalid start date format. Use MM/DD/YYYY.');
+        }
+
+        // Get the day of the month from the start date
+        const jobDay = startDate.getDate();
+
+        // Get the day of the month for the current date
+        const todayDay = currentDate.getDate();
+
+        // Check if today is the same day of the month as the job's start date
+        return todayDay === jobDay;
+    } catch (error) {
+        console.error('Error:', error.message);
+        return false;
+    }
+}
+
+
+// Example usage:
+// const startDate = '08/23/2024';
+// const today = new Date('2025-07-11T06:02:00+07:00'); // Example: July 11, 2025
+// console.log(isMonthlyJobDate(startDate, today)); // Output: false
+// console.log(isMonthlyJobDate('08/23/2024', new Date('2025-07-23'))); // Output: true
+
+function isQuarterlyJobDate(startDateStr, checkDate = new Date()) {
+    try {
+        // Parse the start date (expected format: MM/DD/YYYY)
+        const startDate = new Date(startDateStr);
+        if (isNaN(startDate)) {
+            throw new Error('Invalid start date format. Use MM/DD/YYYY.');
+        }
+
+        // Get the day of the month from the start date
+        const jobDay = startDate.getDate();
+
+        // Get the day and month of the check date
+        const checkDay = checkDate.getDate();
+        const startMonth = startDate.getMonth();
+        const checkMonth = checkDate.getMonth();
+
+        // Calculate the month difference
+        const monthDiff = (checkDate.getFullYear() - startDate.getFullYear()) * 12 + (checkMonth - startMonth);
+
+        // Check if the day matches and the month difference is a multiple of 3
+        return checkDay === jobDay && monthDiff % 3 === 0;
+    } catch (error) {
+        console.error('Error:', error.message);
+        return false;
+    }
+}
+
+// Example usage:
+// const startDate = '08/23/2024';
+// const today = new Date('2025-07-11'); // July 11, 2025
+// console.log(isQuarterlyJobDate(startDate, today)); // Output: false
+// console.log(isQuarterlyJobDate(startDate, new Date('2025-08-23'))); // Output: true
+// console.log(isQuarterlyJobDate(startDate, new Date('2025-11-23'))); // Output: true
+
+function isYearlyJobDate(startDateStr, checkDate = new Date()) {
+    try {
+        // Parse the start date (expected format: MM/DD/YYYY)
+        const startDate = new Date(startDateStr);
+        if (isNaN(startDate)) {
+            throw new Error('Invalid start date format. Use MM/DD/YYYY.');
+        }
+
+        // Get the day and month from the start date
+        const jobDay = startDate.getDate();
+        const jobMonth = startDate.getMonth();
+
+        // Get the day and month of the check date
+        const checkDay = checkDate.getDate();
+        const checkMonth = checkDate.getMonth();
+
+        // Check if the day and month match
+        return checkDay === jobDay && checkMonth === jobMonth;
+    } catch (error) {
+        console.error('Error:', error.message);
+        return false;
+    }
+}
+
+// Example usage:
+// const startDate = '08/23/2024';
+// const today = new Date('2025-07-11'); // July 11, 2025
+// console.log(isYearlyJobDate(startDate, today)); // Output: false
+// console.log(isYearlyJobDate(startDate, new Date('2025-08-23'))); // Output: true
+// console.log(isYearlyJobDate(startDate, new Date('2026-08-23'))); // Output: true

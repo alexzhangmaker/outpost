@@ -164,3 +164,8 @@
 .eventDetail{
     font-size: 16px;
 }
+
+.RepeatedSchedule{
+    height: auto;
+    font-family: Open Sans;
+}
