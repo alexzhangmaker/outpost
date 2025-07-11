@@ -80,14 +80,23 @@ function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
                 <div class="challengExample">${jsonChallenge["Example Sentence"]}</div>
             </div>
             <div class="dictationTools">
-                <i class="bi-arrow-left-square" id="idBTNPrevious"></i>
-                <i class="bi-arrow-right-square" id="idBTNNext"></i>
+                <i class="bi-arrow-left-square" id="idBTNPrevious" style="font-size:24px;"></i>
+                <i class="bi-check-square" id="idBTNCheckRight" style="font-size:24px;"></i>
+                <i class="bi-x-square" id="idBTNCheckWrong" style="font-size:24px;"></i>
+                <i class="bi-arrow-right-square" id="idBTNNext" style="font-size:24px;"></i>
             </div>
         </div>
     ` ;
     tagWndContent.querySelector('#idBTNNext').addEventListener('click',(event)=>{
         _renderNextChallenge(tagWndContent,dictTbl,nextIndex) ;
     }) ;
+    tagWndContent.querySelector('#idBTNCheckRight').addEventListener('click',(event)=>{
+        _renderNextChallenge(tagWndContent,dictTbl,nextIndex) ;
+    }) ;
+    tagWndContent.querySelector('#idBTNCheckWrong').addEventListener('click',(event)=>{
+        _renderNextChallenge(tagWndContent,dictTbl,nextIndex) ;
+    }) ;
+
 }
 
 /*

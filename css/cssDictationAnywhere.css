@@ -1,10 +1,14 @@
 .dictationMain{
     
-
     font-size: 18px;
     font-family: Open Sans;
 
+    height:100% ;
     padding-top: 5em;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .challengWnd{
@@ -13,6 +17,8 @@
     justify-items: center;
     justify-content: center;
     align-items: center;
+
+    height:80% ;
 }
 
 .challengWord{
@@ -31,4 +37,6 @@
     flex-direction: row;
     gap: 5em;
     justify-content: center;
+
+    flex-grow: 1;
 }

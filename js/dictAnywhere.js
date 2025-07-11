@@ -91,7 +91,8 @@ async function _onClickGoogleTranslate(event){
     let tagGoogleOutput = tagMainWnd.querySelector('#idOutputGoogle') ;
     let tagOutput = document.createElement('li') ;
     tagOutput.innerHTML=`${text}/${meaning}` ;
-    tagGoogleOutput.appendChild(tagOutput) ;
+    //tagGoogleOutput.appendChild(tagOutput) ;
+    tagGoogleOutput.prepend(tagOutput) ;
 
     let cDate = new Date() ;
     let jsonGoogleDict={
