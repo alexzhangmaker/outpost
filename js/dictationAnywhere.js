@@ -53,7 +53,7 @@ let jsonDictationRecord={
 } ;
 */
 
-const nDictPerDay = 40 ;
+const nDictPerDay = 20 ;
 let gDictation={
     key:'TBD',
     lastRecordsKey:[],//key of last n records,n is system parameter 
@@ -72,7 +72,7 @@ let gDictMan={
 
 async function _initDictationEnv(dictTble){
     const urlDictMan = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/outpostDictation/dictMan.json";
-    const res = await fetch(urlDictMan);
+    let res = await fetch(urlDictMan);
     let jsonDictMan = await res.json();
     if(jsonDictMan!=null){
         if(jsonDictMan.nextIndexBegin!=0){
@@ -84,11 +84,27 @@ async function _initDictationEnv(dictTble){
     }
 
 
+
     let cDate = new Date() ;
     let cMonth = (cDate.getMonth()+1)<10?`0${cDate.getMonth()+1}`:`${cDate.getMonth()+1}` ;
     let strDate = cDate.getDate()<10?`0${cDate.getDate()}`:`${cDate.getDate()}` ;
+    let key4Today = `${cMonth}${strDate}${cDate.getFullYear()}` ;
+    //https://outpost-8d74e.asia-southeast1.firebasedatabase.app/outpostDictation/07122025.json
+    const urlDict = `https://outpost-8d74e.asia-southeast1.firebasedatabase.app/outpostDictation/${key4Today}.json`;
+    res = await fetch(urlDict);
+    let jsonDict = await res.json();
+    if(jsonDict!=null){
+        console.log(jsonDict) ;
+        gDictation.key = key4Today ;
+        gDictation.indexBegin = -1;//gDictMan.nextIndexBegin+1 ;
+        gDictation.indexEnd = -1 ;//gDictMan.nextIndexBegin + gDictMan.nDictPerDay ;
+        gDictation.lastRecordsKey=[];//gDictMan.lastRecordsKey ;
+        gDictation.dictIDs = jsonDict.failedIDs;
+        return ;
+    }
 
-    gDictation.key = `${cMonth}${strDate}${cDate.getFullYear()}` ;
+
+    gDictation.key = key4Today ;
     gDictation.indexBegin = gDictMan.nextIndexBegin+1 ;
     gDictation.indexEnd = gDictMan.nextIndexBegin + gDictMan.nDictPerDay ;
     gDictation.lastRecordsKey=gDictMan.lastRecordsKey ;
@@ -172,6 +188,8 @@ async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
     //code line below may cause repeat
     if(nextIndex>=gDictation.dictIDs.length){
         alert('done for today') ;
+        if(gDictation.indexBegin==-1 && gDictation.indexEnd==-1)return ;
+        
         await _finishDict4Today() ;
         return ;
     }
