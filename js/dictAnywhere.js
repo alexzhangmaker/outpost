@@ -1,5 +1,23 @@
 let gGoogleDicts=[] ;
 
+function isIOS() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+  
+function isMobile() {
+    // Check for iOS or other mobile indicators
+    return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+  
+// Usage
+if (isIOS()) {
+    console.log("This is an iOS device (iPhone, iPad, or iPod).");
+}else if (isMobile()) {
+    console.log("This is a mobile device (non-iOS).");
+} else {
+    console.log("This is likely a desktop browser.");
+}
+
 async function _loadGoogleDicts(){
     gGoogleDicts=[] ;
     const firebaseUrl = "https://outpost-8d74e.asia-southeast1.firebasedatabase.app/GoogleDicts.json";
@@ -22,10 +40,44 @@ async function _renderDictMode(tagWndContent){
     let tagGoogleOutput = tagWndContent.querySelector('#idOutputGoogle') ;
     for(let i=0;i<gGoogleDicts.length;i++){
         let tagOutput = document.createElement('li') ;
+        tagOutput.classList.add('dictAnywhereItem') ;
         let cDate = new Date(gGoogleDicts[i].timeStamp) ;
         console.log(cDate.toLocaleString()) ;
-        tagOutput.innerHTML=`${gGoogleDicts[i].textTh}/${gGoogleDicts[i].meaningEn}` ;
+        tagOutput.innerHTML=`
+            <div class="dictAnywhereItemContent">
+                <span>${gGoogleDicts[i].textTh}/${gGoogleDicts[i].meaningEn}</span>
+                <div class="dictAnywhereItemTools noShow">
+                    <i class="bi-recycle flashBTN" id="idBTNDelete"></i>
+                    <i class="bi-file flashBTN" id="idBTN2Check"></i>
+                    <i class="bi-file-check flashBTN noShow" id="idBTNChecked"></i>
+                </div>
+            </div>
+        ` ;
         tagGoogleOutput.prepend(tagOutput) ;
+        tagOutput.dataset.dictIndex = i ;
+        if(isMobile()!=true){
+            tagOutput.querySelector('.dictAnywhereItemTools').classList.remove('noShow') ;
+        }
+
+        tagOutput.querySelector('#idBTN2Check').addEventListener('click',(event)=>{
+            event.target.classList.add('noShow') ;
+            tagOutput.querySelector('#idBTNChecked').classList.remove('noShow');            
+        }) ;
+
+        tagOutput.querySelector('#idBTNChecked').addEventListener('click',(event)=>{
+            event.target.classList.add('noShow') ;
+            tagOutput.querySelector('#idBTN2Check').classList.remove('noShow');
+        }) ;
+
+        tagOutput.querySelector('#idBTNDelete').addEventListener('click',(event)=>{
+            tagOutput.remove();
+            let dictIndex = parseInt(tagOutput.dataset.dictIndex) ;
+            gGoogleDicts.splice(dictIndex,1) ;
+            sync2Firebase(gGoogleDicts) ;
+
+        }) ;
+
+
     }
 
     tagWndContent.querySelector('#idBTNGoogle').addEventListener('click',_onClickGoogleTranslate) ;
@@ -71,6 +123,7 @@ async function _onClickGoogleTranslate(event){
     let tagMainWnd = event.target.closest('#idWndContent') ;
     let tagText2Google = tagMainWnd.querySelector("#idInputText2Google") ;
     const text = tagText2Google.value;//'ประมาท' ;
+    if(text.length<=1)return ;
 
     let sourceLang = 'th' ;
     let targetLang = 'en' ;

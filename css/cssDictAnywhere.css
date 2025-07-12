@@ -22,3 +22,28 @@
     height:2.5em ;
 
 }
+
+.dictAnywhereItem{
+    list-style-type:none;
+}
+
+.dictAnywhereItem :hover{
+    background-color:cadetblue;
+    font-size: 18px;
+}
+
+.dictAnywhereItemContent{
+    display: flex;
+    flex-direction: row;
+    justify-content:flex-start ;/*space-between*/
+    gap: 20px;
+
+}
+
+.flashBTN{
+    font-size: 18px;
+}
+
+.flashBTN:hover{
+    cursor: pointer;
+}
