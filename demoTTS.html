@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <input type="text" id="text" value="สวัสดีครับ">
+  <button onclick="speakThai()">Speak Thai</button>
+
+  <script>
+    function speakThai() {
+        const text = document.getElementById("text").value;
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = "th-TH";
+
+        // Optional: Choose a specific Thai voice
+        const voices = speechSynthesis.getVoices();
+        utter.voice = voices.find(v => v.lang === "th-TH") || null;
+
+        speechSynthesis.speak(utter);
+    }
+
+    // Load voices (required on some platforms)
+    speechSynthesis.onvoiceschanged = () => {};
+  </script>
+</body>
+</html>

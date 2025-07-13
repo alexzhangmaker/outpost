@@ -26,6 +26,63 @@ async function _loadGoogleDicts(){
     console.log(gGoogleDicts) ;
 }
 
+async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex){
+    let tagOutput = document.createElement('li') ;
+    tagOutput.classList.add('dictAnywhereItem') ;
+    let cDate = new Date(jsonDict.timeStamp) ;
+    console.log(cDate.toLocaleString()) ;
+    tagOutput.innerHTML=`
+        <div class="dictAnywhereItemContent">
+            <span>${jsonDict.textTh}/${jsonDict.meaningEn}</span>
+            <div class="dictAnywhereItemTools noShow">
+                <i class="bi-play-circle flashBTN" id="idBTNPlayAudio"></i>
+                <i class="bi-recycle flashBTN" id="idBTNDelete"></i>
+                <i class="bi-file flashBTN" id="idBTN2Check"></i>
+                <i class="bi-file-check flashBTN noShow" id="idBTNChecked"></i>
+            </div>
+        </div>
+    ` ;
+    tagOutputContainer.prepend(tagOutput) ;
+    tagOutput.dataset.dictIndex = dictIndex ;
+    if(isMobile()!=true){
+        tagOutput.querySelector('.dictAnywhereItemTools').classList.remove('noShow') ;
+    }
+
+    tagOutput.querySelector('#idBTN2Check').addEventListener('click',(event)=>{
+        event.target.classList.add('noShow') ;
+        tagOutput.querySelector('#idBTNChecked').classList.remove('noShow');            
+    }) ;
+
+    tagOutput.querySelector('#idBTNChecked').addEventListener('click',(event)=>{
+        event.target.classList.add('noShow') ;
+        tagOutput.querySelector('#idBTN2Check').classList.remove('noShow');
+    }) ;
+
+    tagOutput.querySelector('#idBTNDelete').addEventListener('click',(event)=>{
+        tagOutput.remove();
+        let dictIndex = parseInt(tagOutput.dataset.dictIndex) ;
+        gGoogleDicts.splice(dictIndex,1) ;
+        sync2Firebase(gGoogleDicts) ;
+    }) ;
+    //idBTNPlayAudio
+    tagOutput.querySelector('#idBTNPlayAudio').addEventListener('click',(event)=>{
+        const text = jsonDict.textTh;//tagOutput.querySelector("text").value;
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = "th-TH";
+    
+        // Optional: Choose a specific Thai voice
+        const voices = speechSynthesis.getVoices();
+        utter.voice = voices.find(v => v.lang === "th-TH") || null;
+    
+        speechSynthesis.speak(utter);
+    });
+
+}
+
+
+// Load voices (required on some platforms)
+speechSynthesis.onvoiceschanged = () => {};
+
 async function _renderDictMode(tagWndContent){
     tagWndContent.innerHTML=`
         <h2>Dict.Anywhere</h2>
@@ -39,44 +96,7 @@ async function _renderDictMode(tagWndContent){
     await _loadGoogleDicts() ;
     let tagGoogleOutput = tagWndContent.querySelector('#idOutputGoogle') ;
     for(let i=0;i<gGoogleDicts.length;i++){
-        let tagOutput = document.createElement('li') ;
-        tagOutput.classList.add('dictAnywhereItem') ;
-        let cDate = new Date(gGoogleDicts[i].timeStamp) ;
-        console.log(cDate.toLocaleString()) ;
-        tagOutput.innerHTML=`
-            <div class="dictAnywhereItemContent">
-                <span>${gGoogleDicts[i].textTh}/${gGoogleDicts[i].meaningEn}</span>
-                <div class="dictAnywhereItemTools noShow">
-                    <i class="bi-recycle flashBTN" id="idBTNDelete"></i>
-                    <i class="bi-file flashBTN" id="idBTN2Check"></i>
-                    <i class="bi-file-check flashBTN noShow" id="idBTNChecked"></i>
-                </div>
-            </div>
-        ` ;
-        tagGoogleOutput.prepend(tagOutput) ;
-        tagOutput.dataset.dictIndex = i ;
-        if(isMobile()!=true){
-            tagOutput.querySelector('.dictAnywhereItemTools').classList.remove('noShow') ;
-        }
-
-        tagOutput.querySelector('#idBTN2Check').addEventListener('click',(event)=>{
-            event.target.classList.add('noShow') ;
-            tagOutput.querySelector('#idBTNChecked').classList.remove('noShow');            
-        }) ;
-
-        tagOutput.querySelector('#idBTNChecked').addEventListener('click',(event)=>{
-            event.target.classList.add('noShow') ;
-            tagOutput.querySelector('#idBTN2Check').classList.remove('noShow');
-        }) ;
-
-        tagOutput.querySelector('#idBTNDelete').addEventListener('click',(event)=>{
-            tagOutput.remove();
-            let dictIndex = parseInt(tagOutput.dataset.dictIndex) ;
-            gGoogleDicts.splice(dictIndex,1) ;
-            sync2Firebase(gGoogleDicts) ;
-
-        }) ;
-
+        await renderDictOutput(tagGoogleOutput,gGoogleDicts[i],i) ;
 
     }
 
