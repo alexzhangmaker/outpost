@@ -53,7 +53,7 @@ let jsonDictationRecord={
 } ;
 */
 
-const nDictPerDay = 20 ;
+const nDictPerDay = 40 ;
 let gDictation={
     key:'TBD',
     lastRecordsKey:[],//key of last n records,n is system parameter 
