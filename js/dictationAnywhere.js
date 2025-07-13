@@ -116,6 +116,19 @@ async function _initDictationEnv(dictTble){
         if(i>=dictTble.length)break ;
         gDictation.dictIDs.push(i) ;
     }
+    if(gDictation.key !=gDictMan.mostRecentRecord){
+        if(gDictMan.mostRecentRecord=='') return ;
+
+        //https://outpost-8d74e.asia-southeast1.firebasedatabase.app/outpostDictation/07112025
+        let urlLastDict = `https://outpost-8d74e.asia-southeast1.firebasedatabase.app/outpostDictation/${gDictMan.mostRecentRecord}.json`;
+        res = await fetch(urlLastDict);
+        let jsonDictLastDict = await res.json();
+        if(jsonDictLastDict==null)return ;
+
+        for(i=0;i<jsonDictLastDict.failedIDs.length;i++){
+            gDictation.dictIDs.push(jsonDictLastDict.failedIDs[i]) ;
+        }
+    }
     //end initializing gDictation
     console.log(gDictation) ;
 }
@@ -189,7 +202,7 @@ async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
     if(nextIndex>=gDictation.dictIDs.length){
         alert('done for today') ;
         if(gDictation.indexBegin==-1 && gDictation.indexEnd==-1)return ;
-        
+
         await _finishDict4Today() ;
         return ;
     }

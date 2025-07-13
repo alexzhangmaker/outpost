@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Supabase ToDo App</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 2rem; }
+    input { padding: 0.5rem; width: 80%; }
+    button { padding: 0.5rem 1rem; }
+    li { margin: 0.5rem 0; }
+  </style>
+</head>
+<body>
+  <h1>📝 My ToDo List</h1>
+
+  <input id="task-input" placeholder="Enter a task" />
+  <button id="add-btn">Add Task</button>
+
+  <ul id="todo-list"></ul>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+  <script type="module">
+    //import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+    //import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";//'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const supabaseUrl = 'https://yfftwweuxxkrzlvqilvc.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmZnR3d2V1eHhrcnpsdnFpbHZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMjYxMTEsImV4cCI6MjA2NzkwMjExMX0.7rcV3RBrH5kY3KLqD-NHLMhMyc62wIxxYG9VfW-i1tk'
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    const input = document.getElementById('task-input')
+    const list = document.getElementById('todo-list')
+    const addBtn = document.getElementById('add-btn')
+
+    async function loadTodos() {
+      //const { data: notes, error } = await supabase.from('notes').select('*').order('title', { ascending: false })
+      const { data: notes, error } = await supabase.from('notes').select('*');//.order('title', { ascending: false })
+      if (error) {
+        console.error(error)
+        return
+      }
+      list.innerHTML = ''
+      notes.forEach(note => {
+        const li = document.createElement('li')
+        li.textContent = note.title
+        li.style.cursor = 'pointer'
+        li.onclick = async () => {
+          await supabase.from('notes').delete().eq('id', note.id)
+          loadTodos()
+        }
+        list.appendChild(li)
+      })
+    }
+
+    addBtn.onclick = async () => {
+      const task = input.value.trim()
+      if (task.length === 0) return
+      await supabase.from('notes').insert({ title:task,content:'demo content' })
+      input.value = ''
+      loadTodos()
+    }
+
+    loadTodos()
+  </script>
+</body>
+</html>
