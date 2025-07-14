@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Thai TTS via Google</title>
+</head>
+<body>
+  <h2>🔊 Thai TTS (Google)</h2>
+  <input id="text" value="สวัสดีครับ" size="30">
+  <button onclick="speak()">Speak</button>
+
+  <script>
+    async function speak() {
+      const text = document.getElementById("text").value;
+      let url = `https://us-central1-outpost-8d74e.cloudfunctions.net/ttsProxy/speak` ;
+      const response = await fetch(url/*'https://us-central1-your-project.cloudfunctions.net/ttsProxy/speak'*/, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+
+      if (!response.ok) {
+        alert("TTS failed");
+        return;
+      }
+
+      const blob = await response.blob();
+      const audioURL = URL.createObjectURL(blob);
+      const audio = new Audio(audioURL);
+      audio.play();
+    }
+
+    /*
+curl -X POST http://127.0.0.1:5001/outpost-8d74e/us-central1/ttsProxy/speak -H "Content-Type: application/json" -d '{"text":"สวัสดีครับ"}' --output output.mp3
+curl -X POST https://us-central1-outpost-8d74e.cloudfunctions.net/ttsProxy/speak -H "Content-Type: application/json" -d '{"text":"สวัสดีครับ"}' --output output.mp3
+
+*/
+  </script>
+</body>
+</html>

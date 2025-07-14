@@ -5,7 +5,8 @@
   <button onclick="speakThai()">Speak Thai</button>
 
   <script>
-    function speakThai() {
+    async function speakThai() {
+      /*
         const text = document.getElementById("text").value;
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = "th-TH";
@@ -15,10 +16,45 @@
         utter.voice = voices.find(v => v.lang === "th-TH") || null;
 
         speechSynthesis.speak(utter);
+        */
+        await getTTS() ;
     }
 
     // Load voices (required on some platforms)
-    speechSynthesis.onvoiceschanged = () => {};
+    //speechSynthesis.onvoiceschanged = () => {};
+
+  </script>
+<script>
+
+//http://127.0.0.1:5001/outpost-8d74e/us-central1/outpost/Speak?th=%E0%B8%AD%E0%B8%B8%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4%E0%B9%80%E0%B8%AB%E0%B8%95%E0%B8%B8
+async function getTTS(word){
+  try {
+    word = 'อุบัติเหตุ' ;
+    let urlGoogleProxy = 'http://127.0.0.1:5001/outpost-8d74e/us-central1/outpost/Speak?text=' + encodeURIComponent(word) ;
+    // For production: https://us-central1-outpost-8d74e.cloudfunctions.net/APIGoogleTTS?text=...
+    const response = await fetch(urlGoogleProxy);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    // Get the response as a Blob
+    const audioBlob = await response.blob();
+    // Create a URL for the Blob
+    const audioUrl = URL.createObjectURL(audioBlob);
+    
+    // Play the audio
+    const audio = new Audio(audioUrl);
+    audio.play();
+    
+    // Clean up the object URL after playback
+    audio.onended = () => URL.revokeObjectURL(audioUrl);
+  } catch (error) {
+    console.error('Failed to fetch TTS:', error);
+  }
+}
+
+// Example usage
+//getTTS('สวัสดี');
   </script>
 </body>
 </html>

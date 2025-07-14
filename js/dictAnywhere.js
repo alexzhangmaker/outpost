@@ -83,16 +83,35 @@ async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex){
 // Load voices (required on some platforms)
 speechSynthesis.onvoiceschanged = () => {};
 
+//https://drive.google.com/file/d/1IvvsTxog36wqo6kfgxO15rBpy58bClxz/view?usp=sharing
+//https://drive.google.com/file/d/1IvvsTxog36wqo6kfgxO15rBpy58bClxz/view?usp=sharing
+//https://docs.google.com/uc?export=download&id=1IvvsTxog36wqo6kfgxO15rBpy58bClxz
+
+///Users/alexszhanggmail.com/github/signpost.Dictionary/public/mp3
 async function _renderDictMode(tagWndContent){
     tagWndContent.innerHTML=`
+   
         <h2>Dict.Anywhere</h2>
         <div class="dictMainWnd">
             <input type="text" id="idInputText2Google" onfocus="this.value=''">
             <button id="idBTNGoogle">Google it!</button>
+            <!---
+            <button id="idBTNPlay">Play it!</button>
+            --->
+
             <div id="idOutputGoogle"></div>
         </div>
+        
     ` ;
-
+    /*
+    tagWndContent.querySelector('#idBTNPlay').addEventListener('click',(event)=>{
+        //tagWndContent.querySelector('#idAudioPlayer').play() ;
+        const fileId = "1IvvsTxog36wqo6kfgxO15rBpy58bClxz";
+        const audio = new Audio(`https://docs.google.com/uc?export=download&id=${fileId}`);
+        audio.load() ;
+        audio.play();
+    }) ;
+    */
     await _loadGoogleDicts() ;
     let tagGoogleOutput = tagWndContent.querySelector('#idOutputGoogle') ;
     for(let i=0;i<gGoogleDicts.length;i++){

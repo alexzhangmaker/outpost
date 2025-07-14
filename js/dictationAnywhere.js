@@ -53,6 +53,8 @@ let jsonDictationRecord={
 } ;
 */
 
+//demo https://drive.google.com/file/d/1IvvsTxog36wqo6kfgxO15rBpy58bClxz/view?usp=sharing
+
 const nDictPerDay = 40 ;
 let gDictation={
     key:'TBD',
