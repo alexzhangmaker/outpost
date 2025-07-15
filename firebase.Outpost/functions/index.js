@@ -8,12 +8,15 @@ const admin = require('firebase-admin');
 // Initialize Firebase Admin SDK
 admin.initializeApp();
 
+//2025-07-15 07:33 commented to figure out why functions failed to start
+/*
 // Initialize Storage
 const storage = new Storage();
 
 // Get the default bucket; use environment variable or fallback
 const bucketName = process.env.FIREBASE_STORAGE_BUCKET || functions.config().firebase?.storageBucket || 'outpost-8d74e.appspot.com';
 const bucket = storage.bucket(bucketName);
+*/
 
 // Initialize Express app for existing API
 const app = express();
@@ -104,11 +107,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Listen on PORT environment variable and 0.0.0.0
+/*
+// THIS BLOCK IS REQUIRED FOR CLOUD FUNCTIONS (2ND GEN) HTTP FUNCTIONS
+// Cloud Run (which 2nd Gen functions use) expects your app to listen on the PORT environment variable.
 const PORT = process.env.PORT || 8080;
-app.listen(PORT,() => {
+app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
+*/
 
 // Export the existing Express app as a Cloud Function
 exports.outpost = functions.https.onRequest(app);

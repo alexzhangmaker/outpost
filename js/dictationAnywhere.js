@@ -188,16 +188,18 @@ async function _renderDictationMode(tagWndContent){
             await localforage.setItem(storageKey,jsonDictTble);
         }
 
+        let flagGoogleTTS = await isURLReachable('http://localhost:3010/ttsAvailable') ;
+
         await _initDictationEnv(jsonDictTble) ;
         let currentIndex=-1 ;
-        _renderNextChallenge(tagWndContent,jsonDictTble,currentIndex) ;
+        _renderNextChallenge(tagWndContent,jsonDictTble,currentIndex,flagGoogleTTS) ;
     } catch (err) {
         // This code runs if there were any errors.
         console.log(err);
     }
 }
 
-async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
+async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex,GoogleTTSAvailable){
     let nextIndex = currentIndex+1 ;
 
     //code line below may cause repeat
@@ -211,6 +213,9 @@ async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
     nextIndex = nextIndex>gDictation.dictIDs.length?0:nextIndex ;
     //end comment
 
+    let showHidePlay=GoogleTTSAvailable?'showPlay':'noShow' ;
+
+
     let jsonChallenge = dictTbl[gDictation.dictIDs[nextIndex]] ;
     tagWndContent.innerHTML=`
         <div class="dictationMain">
@@ -222,6 +227,8 @@ async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
             <div class="dictationTools">
                 <i class="bi-arrow-left-square noShow" id="idBTNPrevious" style="font-size:24px;"></i>
                 <i class="bi-check-square" id="idBTNCheckRight" style="font-size:24px;"></i>
+                <i class="bi-play-circle flashBTN ${showHidePlay}" id="idBTNPlayAudio"></i>
+
                 <i class="bi-x-square" id="idBTNCheckWrong" style="font-size:24px;"></i>
                 <i class="bi-arrow-right-square noShow" id="idBTNNext" style="font-size:24px;"></i>
             </div>
@@ -229,6 +236,7 @@ async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
     ` ;
     tagWndContent.querySelector('.dictationMain').dataset.dictIndex = nextIndex ;
     tagWndContent.querySelector('.dictationMain').dataset.dictID = gDictation.dictIDs[nextIndex] ;
+    tagWndContent.querySelector('.dictationMain').dataset.challengWord = jsonChallenge.Word ;
 
     tagWndContent.querySelector('#idBTNNext').addEventListener('click',(event)=>{
         _renderNextChallenge(tagWndContent,dictTbl,nextIndex) ;
@@ -242,6 +250,15 @@ async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex){
         _renderNextChallenge(tagWndContent,dictTbl,nextIndex) ;
 
     }) ;
+
+    tagWndContent.querySelector('#idBTNPlayAudio').addEventListener('click',(event)=>{
+
+        const text = tagWndContent.querySelector('.dictationMain').dataset.challengWord;//tagOutput.querySelector("text").value;
+       
+        const urlGoogleTTSProxy = `http://localhost:3010/tts?q=${text}` ;
+        const audio = new Audio(urlGoogleTTSProxy);
+        audio.play();
+    });
 
 }
 

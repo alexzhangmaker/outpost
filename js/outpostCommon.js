@@ -35,3 +35,15 @@ function handlePlainTextPaste(element) {
         element.innerText = plainText;
     });
 }
+
+
+const urlGoogleTTSProxy = `http://localhost:3010/ttsAvailable` ;
+
+async function isURLReachable(url) {
+    try {
+        const response = await fetch(url, { method: 'HEAD' });
+        return response.ok; // true if status 200-299
+    } catch (err) {
+        return false;
+    }
+}

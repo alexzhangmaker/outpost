@@ -1,23 +1,46 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <style>
+      .noShow{
+        display: none;
+      }
+    </style>
+  </head>
 <body>
   <input type="text" id="text" value="สวัสดีครับ">
-  <button onclick="speakThai()">Speak Thai</button>
+  <button id="idBTNPlay" class="noShow" onclick="speakThai()">Speak Thai</button>
+
+  <script src="./userAgents.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
   <script>
+
+    isURLReachable('http://localhost:3010/ttsAvailable').then(reachable => {
+        console.log('Reachable:', reachable);
+        document.querySelector('#idBTNPlay').classList.remove('noShow') ;
+    });
+    async function isURLReachable(url) {
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        return response.ok; // true if status 200-299
+      } catch (err) {
+        return false;
+      }
+    }
+
+
     async function speakThai() {
-      /*
+      
         const text = document.getElementById("text").value;
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = "th-TH";
+      
 
-        // Optional: Choose a specific Thai voice
-        const voices = speechSynthesis.getVoices();
-        utter.voice = voices.find(v => v.lang === "th-TH") || null;
 
-        speechSynthesis.speak(utter);
-        */
-        await getTTS() ;
+        const urlGoogleTTSProxy = `http://localhost:3010/tts?q=${text}` ;
+        const audio = new Audio(urlGoogleTTSProxy);
+        audio.play();
     }
 
     // Load voices (required on some platforms)
@@ -55,6 +78,58 @@ async function getTTS(word){
 
 // Example usage
 //getTTS('สวัสดี');
+  </script>
+  <script>
+
+
+//original url: https://translate.google.com/?hl=zh-CN&tab=TT&sl=th&tl=en&text=ฉันประมาทไปหน่อย เมื่อคืนทำอาหารแล้วไม่ระวังให้ดี ๆ ค่ะ&op=translate
+//encoded url:  https://translate.google.com/?hl=zh-CN&tab=TT&sl=th&tl=en&text=%E0%B8%89%E0%B8%B1%E0%B8%99%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A1%E0%B8%B2%E0%B8%97%E0%B9%84%E0%B8%9B%E0%B8%AB%E0%B8%99%E0%B9%88%E0%B8%AD%E0%B8%A2%20%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%84%E0%B8%B7%E0%B8%99%E0%B8%97%E0%B8%B3%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B9%81%E0%B8%A5%E0%B9%89%E0%B8%A7%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%A3%E0%B8%B0%E0%B8%A7%E0%B8%B1%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B9%89%E0%B8%94%E0%B8%B5%20%E0%B9%86%20%E0%B8%84%E0%B9%88%E0%B8%B0&op=translate
+
+async function _larkGoogleTTS(text, lang/*, file = "./audio-google-tts-js.mp3"*/){
+  if(!text) throw new Error('Provide the text!')
+  if(!lang) throw new Error('Provide language codes! e.g Indonesian = ID, English = EN. This is used for the sound type.')
+  if(lang.length > 2) throw new Error('Invalid Language codes (must 2 string length). All Language Codes: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes')
+  //if(file.endsWith(".mp3") === false) throw new Error('File must ends with ".mp3" format!')
+
+  let cURL = 'https://translate.google.com/translate_tts?ie=UTF-8&q=ภาษาไทย&tl=th&total=1&idx=0&textlen=24&client=tw-ob&prev=input&ttsspeed=1' ;
+  let cURL2 = `https://translate.google.com/translate_tts?ie=UTF-8&q=${text.replace(/( )/ig, "%20").replace(/(\n)/ig, "%0A")}&tl=${lang}&total=1&idx=0&textlen=24&client=tw-ob&prev=input&ttsspeed=1` ;
+  let cHost = 'https://translate.google.com/' ;
+  //modify in 2025-02-10
+  //let cPath = `translate_tts?ie=UTF-8&q=${text.replace(/( )/ig, "%20").replace(/(\n)/ig, "%0A")}&tl=${lang}&total=1&idx=0&textlen=24&client=tw-ob&prev=input&ttsspeed=1` ;
+  let cPath = `translate_tts?ie=UTF-8&q=${text.replace(/(\n)/ig, "%0A")}&tl=${lang}&total=1&idx=0&textlen=24&client=tw-ob&prev=input&ttsspeed=1` ;
+  //let cPath = `https://translate.google.com/?hl=zh-CN&tab=TT&sl=th&tl=en&text=${text}&op=translate` ;
+  //end modify in 2025-02-10
+
+  let encodedPath = encodeURI(cPath);
+  let cURLEncoded = `${cHost}${encodedPath}` ;
+  //let cURLEncoded = ' https://translate.google.com/translate_tts?ie=UTF-8&q=%E0%B8%A0%E0%B8%B2%E0%B8%A9%E0%B8%B2%E0%B9%84%E0%B8%97%E0%B8%A2&tl=th&total=1&idx=0&textlen=24&client=tw-ob&prev=input&ttsspeed=1' ;
+  //                    https://translate.google.com/?hl=zh-CN&tab=TT&sl=th&tl=en&text=%E0%B8%89%E0%B8%B1%E0%B8%99%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A1%E0%B8%B2%E0%B8%97%E0%B9%84%E0%B8%9B%E0%B8%AB%E0%B8%99%E0%B9%88%E0%B8%AD%E0%B8%A2%20%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%84%E0%B8%B7%E0%B8%99%E0%B8%97%E0%B8%B3%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B9%81%E0%B8%A5%E0%B9%89%E0%B8%A7%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%A3%E0%B8%B0%E0%B8%A7%E0%B8%B1%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B9%89%E0%B8%94%E0%B8%B5%20%E0%B9%86%20%E0%B8%84%E0%B9%88%E0%B8%B0&op=translate
+  //console.log('==========>');
+  //console.log(text);
+  //console.log(cPath) ;
+  //console.log(encodedPath) ;
+  //console.log(cURLEncoded) ;
+  //console.log('==========<<<<<<<<<<>>>>>>>>>>>');
+
+  const data = await axios(cURLEncoded, {
+      method: "get",
+      headers: {"User-Agent": userAgents[Math.floor(Math.random() * userAgents.length)]},
+      responseType: 'stream'
+  }) ;
+
+  return data ;
+  /*
+  const write = fs.createWriteStream(file);
+  await data.data.pipe(write);
+
+  const res = {
+      "success": true,
+      "message": `Saved audio in ${file}`
+  }
+
+  return res ;
+  */
+}
   </script>
 </body>
 </html>

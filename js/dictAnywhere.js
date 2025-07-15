@@ -26,16 +26,18 @@ async function _loadGoogleDicts(){
     console.log(gGoogleDicts) ;
 }
 
-async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex){
+async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex,GoogleTTSAvailable){
     let tagOutput = document.createElement('li') ;
     tagOutput.classList.add('dictAnywhereItem') ;
     let cDate = new Date(jsonDict.timeStamp) ;
     console.log(cDate.toLocaleString()) ;
+
+    let showHidePlay=GoogleTTSAvailable?'showPlay':'noShow' ;
     tagOutput.innerHTML=`
         <div class="dictAnywhereItemContent">
             <span>${jsonDict.textTh}/${jsonDict.meaningEn}</span>
             <div class="dictAnywhereItemTools noShow">
-                <i class="bi-play-circle flashBTN" id="idBTNPlayAudio"></i>
+                <i class="bi-play-circle flashBTN ${showHidePlay}" id="idBTNPlayAudio"></i>
                 <i class="bi-recycle flashBTN" id="idBTNDelete"></i>
                 <i class="bi-file flashBTN" id="idBTN2Check"></i>
                 <i class="bi-file-check flashBTN noShow" id="idBTNChecked"></i>
@@ -66,7 +68,10 @@ async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex){
     }) ;
     //idBTNPlayAudio
     tagOutput.querySelector('#idBTNPlayAudio').addEventListener('click',(event)=>{
+
+        
         const text = jsonDict.textTh;//tagOutput.querySelector("text").value;
+        /*
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = "th-TH";
     
@@ -75,6 +80,12 @@ async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex){
         utter.voice = voices.find(v => v.lang === "th-TH") || null;
     
         speechSynthesis.speak(utter);
+        */
+
+        const urlGoogleTTSProxy = `http://localhost:3010/tts?q=${text}` ;
+        const audio = new Audio(urlGoogleTTSProxy);
+        audio.play();
+    
     });
 
 }
@@ -112,10 +123,11 @@ async function _renderDictMode(tagWndContent){
         audio.play();
     }) ;
     */
+    let flagGoogleTTS = await isURLReachable('http://localhost:3010/ttsAvailable') ;
     await _loadGoogleDicts() ;
     let tagGoogleOutput = tagWndContent.querySelector('#idOutputGoogle') ;
     for(let i=0;i<gGoogleDicts.length;i++){
-        await renderDictOutput(tagGoogleOutput,gGoogleDicts[i],i) ;
+        await renderDictOutput(tagGoogleOutput,gGoogleDicts[i],i,flagGoogleTTS) ;
 
     }
 
@@ -259,3 +271,10 @@ function isChineseOnly(str) {
 // console.log(isChineseOnly("你好 world")); // false
 // console.log(isChineseOnly("")); // false
 // console.log(isChineseOnly("hello")); // false
+
+
+
+//sort json object array in Thai Dictionary Order
+function sortThaiJson(array, key = 'thWord') {
+    return array.sort((a, b) => a[key].localeCompare(b[key], 'th-TH'));
+}
