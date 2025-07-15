@@ -188,7 +188,7 @@ async function _renderDictationMode(tagWndContent){
             await localforage.setItem(storageKey,jsonDictTble);
         }
 
-        let flagGoogleTTS = await isURLReachable('http://localhost:3010/ttsAvailable') ;
+        let flagGoogleTTS = await isURLReachable(urlGoogleTTSProxyAvail) ;
 
         await _initDictationEnv(jsonDictTble) ;
         let currentIndex=-1 ;

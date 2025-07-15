@@ -82,7 +82,7 @@ async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex,GoogleTTSA
         speechSynthesis.speak(utter);
         */
 
-        const urlGoogleTTSProxy = `http://localhost:3010/tts?q=${text}` ;
+        const urlGoogleTTSProxy = `http://192.168.1.188:3010/tts?q=${text}` ;
         const audio = new Audio(urlGoogleTTSProxy);
         audio.play();
     
@@ -123,7 +123,7 @@ async function _renderDictMode(tagWndContent){
         audio.play();
     }) ;
     */
-    let flagGoogleTTS = await isURLReachable('http://localhost:3010/ttsAvailable') ;
+    let flagGoogleTTS = await isURLReachable(urlGoogleTTSProxyAvail) ;
     await _loadGoogleDicts() ;
     let tagGoogleOutput = tagWndContent.querySelector('#idOutputGoogle') ;
     for(let i=0;i<gGoogleDicts.length;i++){

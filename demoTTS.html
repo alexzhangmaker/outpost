@@ -20,6 +20,7 @@
         console.log('Reachable:', reachable);
         document.querySelector('#idBTNPlay').classList.remove('noShow') ;
     });
+    
     async function isURLReachable(url) {
       try {
         const response = await fetch(url, { method: 'HEAD' });

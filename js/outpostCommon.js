@@ -37,7 +37,7 @@ function handlePlainTextPaste(element) {
 }
 
 
-const urlGoogleTTSProxy = `http://localhost:3010/ttsAvailable` ;
+const urlGoogleTTSProxyAvail = `http://192.168.1.188:3010/ttsAvailable` ;
 
 async function isURLReachable(url) {
     try {
