@@ -38,8 +38,15 @@
         utter.lang = "th-TH";
       
 
-
+        /*
         const urlGoogleTTSProxy = `http://localhost:3010/tts?q=${text}` ;
+        const audio = new Audio(urlGoogleTTSProxy);
+        audio.play();
+        */
+
+        //https://us-central1-outpost-8d74e.cloudfunctions.net/GoogleAPI?text=
+        //https://googleapi-w56agazoha-uc.a.run.app/?text=
+        const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${text}` ;
         const audio = new Audio(urlGoogleTTSProxy);
         audio.play();
     }

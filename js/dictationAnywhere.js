@@ -213,7 +213,7 @@ async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex,GoogleTTS
     nextIndex = nextIndex>gDictation.dictIDs.length?0:nextIndex ;
     //end comment
 
-    let showHidePlay=GoogleTTSAvailable?'showPlay':'noShow' ;
+    let showHidePlay='showPlay';//GoogleTTSAvailable?'showPlay':'noShow' ;
 
 
     let jsonChallenge = dictTbl[gDictation.dictIDs[nextIndex]] ;
@@ -255,7 +255,9 @@ async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex,GoogleTTS
 
         const text = tagWndContent.querySelector('.dictationMain').dataset.challengWord;//tagOutput.querySelector("text").value;
        
-        const urlGoogleTTSProxy = `http://localhost:3010/tts?q=${text}` ;
+        //const urlGoogleTTSProxy = `http://localhost:3010/tts?q=${text}` ;
+        const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${text}` ;
+
         const audio = new Audio(urlGoogleTTSProxy);
         audio.play();
     });

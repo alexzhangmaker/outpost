@@ -3,11 +3,12 @@ const express = require('express');
 const cors = require('cors');
 const textToSpeech = require('@google-cloud/text-to-speech');
 const { Storage } = require('@google-cloud/storage');
+/*
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
-
+*/
 //2025-07-15 07:33 commented to figure out why functions failed to start
 /*
 // Initialize Storage
@@ -61,7 +62,7 @@ app.post('/API', (req, res) => {
   }
 });
 
-
+/*
 // GET endpoint: /api
 //http://127.0.0.1:5001/outpost-8d74e/us-central1/outpost/Speak?th=อุบัติเหตุ
 app.get('/Speak', async (req, res) => {
@@ -100,7 +101,7 @@ app.get('/Speak', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate audio' });
   }
 });
-
+*/
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);

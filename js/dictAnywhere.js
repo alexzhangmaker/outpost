@@ -32,7 +32,7 @@ async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex,GoogleTTSA
     let cDate = new Date(jsonDict.timeStamp) ;
     console.log(cDate.toLocaleString()) ;
 
-    let showHidePlay=GoogleTTSAvailable?'showPlay':'noShow' ;
+    let showHidePlay='showPlay';//GoogleTTSAvailable?'showPlay':'noShow' ;
     tagOutput.innerHTML=`
         <div class="dictAnywhereItemContent">
             <span>${jsonDict.textTh}/${jsonDict.meaningEn}</span>
@@ -82,7 +82,9 @@ async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex,GoogleTTSA
         speechSynthesis.speak(utter);
         */
 
-        const urlGoogleTTSProxy = `http://192.168.1.188:3010/tts?q=${text}` ;
+        //const urlGoogleTTSProxy = `http://192.168.1.188:3010/tts?q=${text}` ;
+        const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${text}` ;
+
         const audio = new Audio(urlGoogleTTSProxy);
         audio.play();
     
