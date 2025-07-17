@@ -137,6 +137,14 @@ async function _onClick_CloudSafe(event){
 }
 
 
+async function _onClick_AnkiAnywhere(event){
+    let tagWndContent = document.querySelector('#idWndContent') ;
+    //await _renderDictationMode(tagWndContent) ;
+    window.open("https://alexzhangmaker.github.io/outpost/ankiAnywhere.html", "_blank");
+
+}
+
+
 async function _onClick_ToDo(event){
     //let cloudData = await _dumpFireStore("outpost") ;
     let tagWndContent = document.querySelector('#idWndContent') ;
@@ -218,6 +226,7 @@ document.querySelector('#idBTNToDo').addEventListener('click',_onClick_ToDo) ;
 document.querySelector('#idBTNDictAnywhere').addEventListener('click',_onClick_DictAnywhere) ;
 document.querySelector('#idBTNDictationTh').addEventListener('click',_onClick_Dictation) ;
 document.querySelector('#idBTNCloudSafe').addEventListener('click',_onClick_CloudSafe) ;
+document.querySelector('#idBTNSetting').addEventListener('click',_onClick_AnkiAnywhere) ;
 
 
 
