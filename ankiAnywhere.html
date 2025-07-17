@@ -1,127 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <meta charset="UTF-8">
-         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-         <title>Card Flip Test</title>
-         <style>
-             body {
-                 margin: 0;
-                 display: flex;
-                 justify-content: center;
-                 align-items: center;
-                 height: 100vh;
-                 background-color: #f0f2f5;
-                 -webkit-tap-highlight-color: transparent;
-             }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Flip Test</title>
+    <link rel="stylesheet" type="text/css" href="./css/cssAnkiAnywhere.css">
 
-             #flashcardContainer{
-                width:95% ;
-             }
-             .flashcard {
-                 width: 100%/*300px*/;
-                 height: 200px;
-                 perspective: 1000px;
-                 cursor: pointer;
-                 user-select: none;
-             }
-             .card-inner {
-                 position: relative;
-                 width: 100%;
-                 height: 100%;
-                 transition: transform 0.6s ease;
-                 -webkit-transition: -webkit-transform 0.6s ease;
-                 transform-style: preserve-3d;
-                 -webkit-transform-style: preserve-3d;
-                 border-radius: 10px;
-                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-                 will-change: transform;
-                 transform: translate3d(0, 0, 0);
-             }
-             .flipped .card-inner {
-                 transform: rotateY(180deg);
-                 -webkit-transform: rotateY(180deg);
-                 border: 2px solid red; /* Debug cue */
-             }
-             .card-front, .card-back {
-                 position: absolute;
-                 width: 100%;
-                 height: 100%;
-                 backface-visibility: hidden;
-                 -webkit-backface-visibility: hidden;
-                 display: flex;
-                 align-items: center;
-                 justify-content: center;
-                 font-size: 4.5em;
-                 border-radius: 10px;
-                 background-color: white;
-                 color: #333;
-                 box-sizing: border-box;
-                 padding: 10px;
-             }
-             .card-back {
-                 /*transform: rotateY(180deg);
-                 -webkit-transform: rotateY(180deg);*/
-                 color: black;
-                 font-size: 3.5em;
+    <style>
+    </style>
 
-                 background-color: #e6f3ff;
-             }
-
-             .nav-buttons {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            /*max-width: 350px;*/
-            margin: 10px 0;
-        }
-        .nav-buttons button {
-            padding: 8px 16px;
-            font-size: 1em;
-            border: none;
-            border-radius: 8px;
-            background-color: #007aff;
-            color: white;
-            -webkit-appearance: none;
-        }
-        .nav-buttons button:disabled {
-            background-color: #cccccc;
-        }
-        .auth-container {
-            text-align: center;
-            padding: 15px;
-        }
-        .auth-container button {
-            padding: 8px 16px;
-            font-size: 1em;
-            border: none;
-            border-radius: 8px;
-            background-color: #007aff;
-            color: white;
-            margin: 5px;
-        }
-        .status {
-            font-size: 0.9em;
-            margin: 10px 0;
-            color: #333;
-        }
-        /*
-        @media (max-width: 600px) {
-            .flashcard {
-                width: 95%;
-                height: 45vh;
-            }
-            .card-front, .card-back {
-                font-size: 1.8em;
-            }
-        }
-        */
-         </style>
-         <style>
-            .noShow{
-                display: none;
-            }
-         </style>
 </head>
 <body>
     <!-----
@@ -139,12 +26,16 @@
             </div>
         </div>
         <div class="nav-buttons">
-            <button id="prevButton">Previous</button>
-            <button id="nextButton">Next</button>
+            <button id="prevButton" class="noShow">Previous</button>
+            <button id="nextButton" class="noShow">Next</button>
+            <button id="idBTNWrong">wrong</button>
+            <button id="idBTNRight">right</button>
         </div>
     </div>
+    <script src="./jsResource/localforage.min.js"></script>
+
     <script>
-        /*
+        /* 
         // Firebase configuration (Replace with your Firebase project config)
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
@@ -194,7 +85,11 @@
 
         // Flashcard logic
         let flashcards = [];
+        let failedcards = [] ;
         let currentIndex = 0;
+        const localKeyFailed='ankiAnywhereFailed.Outpost' ;
+        const localKeyMeta = 'ankiAnywhereMeta.Outpost' ;
+
         document.addEventListener("DOMContentLoaded", async (event) => { 
             const flashcard = document.getElementById('flashcard');
             flashcard.addEventListener('click', () => {
@@ -202,17 +97,12 @@
                 //card-front card-back
                 cardInner.querySelector('.card-front').classList.toggle('noShow');
                 cardInner.querySelector('.card-back').classList.toggle('noShow');
-
-                //cardInner.classList.toggle('flipped');
-                //console.log('Click flip toggled. Is flipped:', cardInner.classList.contains('flipped'));
             });
             flashcard.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 const cardInner = document.querySelector('.card-inner');
                 cardInner.querySelector('.card-front').classList.toggle('noShow');
                 cardInner.querySelector('.card-back').classList.toggle('noShow');
-                //cardInner.classList.toggle('flipped');
-                //console.log('Touch flip toggled. Is flipped:', cardInner.classList.contains('flipped'));
             });
 
             await loadFlashcards() ;
@@ -220,40 +110,39 @@
         }) ;
 
 
-        /*
-        function loadFlashcards(userId) {
-            const dbRef = database.ref(`users/${userId}/flashcards`);
-            dbRef.once('value', snapshot => {
-                const data = snapshot.val();
-                if (data) {
-                    flashcards = Object.values(data);
-                } else {
-                    const defaultData = `
-                        เป็น - is
-                        ไป - go
-                        มา - come
-                        ทำ - do, make
-                        ว่า - say
-                        ซื้อ - buy
-                        ขาย - sell
-                        กิน - eat
-                    `;
-                    flashcards = parseThaiEnglish(defaultData);
-                    dbRef.set(flashcards);
-                }
-                displayFlashcard();
-            });
-        }
-        */
+        //await localforage.setItem(localKeyFailed,JSON.stringify(failedcards));
+
         async function loadFlashcards(userId) {
-            
+            let localMetaData = await localforage.getItem(localKeyMeta) ;
+            let jsonLocalMeta = {} ;
+            if(localMetaData!=null){
+                jsonLocalMeta = JSON.parse(localMetaData) ;
+                if(jsonLocalMeta.finished=='true'){
+
+                    let localFailedData = await localforage.getItem(localKeyFailed) ;
+                    if(localFailedData!=null){
+                        failedcards = JSON.parse(localFailedData)  ;
+                        if(failedcards.length>0){
+                            flashcards=failedcards ;
+                            //currentIndex = jsonLocalMeta.currentIndex ;
+                            currentIndex = 0 ;//jsonLocalMeta.currentIndex ;
+
+                            displayFlashcard();
+                            return ;
+                        }
+                    }
+                }else{
+                    currentIndex = jsonLocalMeta.currentIndex ;
+                }
+            }else{
+                currentIndex = 0 ;//jsonLocalMeta.currentIndex ;
+            }
+
             let urlWordSet = `https://outpost-8d74e-14018.firebaseio.com/wordSets/100CommonNouns.json` ;
             let response = await fetch(urlWordSet) ;
             flashcards = await response.json() ;
             console.log(flashcards) ;
-            //flashcards
             displayFlashcard();
-
         }
 
         function displayFlashcard() {
@@ -275,12 +164,6 @@
             document.getElementById('nextButton').disabled = currentIndex === flashcards.length - 1;
         }
 
-        /*
-        document.getElementById('flashcard').addEventListener('click', () => {
-            document.querySelector('.card-inner').classList.toggle('flipped');
-        });
-        */
-
         document.getElementById('prevButton').addEventListener('click', () => {
             if (currentIndex > 0) {
                 currentIndex--;
@@ -294,6 +177,49 @@
                 displayFlashcard();
             }
         });
+
+         
+        document.getElementById('idBTNRight').addEventListener('click', async (event) => {
+            let finished = (currentIndex < flashcards.length - 1)?false:true ;
+            await writeAnkiLog(currentIndex,finished,true);
+
+            if (currentIndex < flashcards.length - 1) {
+                currentIndex++;
+                displayFlashcard();
+            }else{
+                alert('done') ;
+            }
+        });
+
+        async function writeAnkiLog(currentIndex,finished,isRight){
+            //localKeyMeta
+            let jsonMeta = {
+                currentIndex:currentIndex,
+                finished:finished?'true':'false'
+            };
+
+            await localforage.setItem(localKeyMeta,JSON.stringify(jsonMeta));
+
+            if(isRight != true){
+                let jsonWordWrong = flashcards[currentIndex] ;
+                failedcards.push(jsonWordWrong);
+                //localKeyFailed
+                await localforage.setItem(localKeyFailed,JSON.stringify(failedcards));
+            }
+        }
+
+        document.getElementById('idBTNWrong').addEventListener('click', async (event) => {
+            //flashcards
+            let finished = (currentIndex < flashcards.length - 1)?false:true ;
+            await writeAnkiLog(currentIndex,finished,false);
+            if (currentIndex < flashcards.length - 1) {
+                currentIndex++;
+                displayFlashcard();
+            }else{
+                alert('done') ;
+            }
+        });
+
 
         // Prevent pinch-to-zoom on iOS
         document.addEventListener('gesturestart', e => e.preventDefault());
