@@ -207,8 +207,10 @@
             flashcard.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 const cardInner = document.querySelector('.card-inner');
-                cardInner.classList.toggle('flipped');
-                console.log('Touch flip toggled. Is flipped:', cardInner.classList.contains('flipped'));
+                cardInner.querySelector('.card-front').classList.toggle('noShow');
+                cardInner.querySelector('.card-back').classList.toggle('noShow');
+                //cardInner.classList.toggle('flipped');
+                //console.log('Touch flip toggled. Is flipped:', cardInner.classList.contains('flipped'));
             });
 
             await loadFlashcards() ;
