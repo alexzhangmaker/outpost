@@ -11,6 +11,12 @@
   <input type="text" id="text" value="สวัสดีครับ">
   <button id="idBTNPlay" class="noShow" onclick="speakThai()">Speak Thai</button>
 
+  <button id="idBTNReadGoogleSheet">ReadButton</button>
+  <button id="idBTNAppendGoogleSheet">AppendButton</button>
+
+  <button id="idBTNHandleWords">HandleWords</button>
+
+
   <script src="./userAgents.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
@@ -56,6 +62,12 @@
 
   </script>
 <script>
+
+//https://script.google.com/macros/s/AKfycby6kSOzIpexF8mIFsZ_XMYCN4IfQ9NXMo6j6AykG0B1yTLM9IcsO69ZAFD_7tPSIET4ag/exec?action=read&sheetName=contacts
+//AKfycby6kSOzIpexF8mIFsZ_XMYCN4IfQ9NXMo6j6AykG0B1yTLM9IcsO69ZAFD_7tPSIET4ag
+
+//contacts
+
 
 //http://127.0.0.1:5001/outpost-8d74e/us-central1/outpost/Speak?th=%E0%B8%AD%E0%B8%B8%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4%E0%B9%80%E0%B8%AB%E0%B8%95%E0%B8%B8
 async function getTTS(word){
@@ -139,5 +151,732 @@ async function _larkGoogleTTS(text, lang/*, file = "./audio-google-tts-js.mp3"*/
   */
 }
   </script>
+  <script>
+
+//const DeploymentID='AKfycby6kSOzIpexF8mIFsZ_XMYCN4IfQ9NXMo6j6AykG0B1yTLM9IcsO69ZAFD_7tPSIET4ag';
+//const sheetName = `contacts`;
+//let urlAppReadSheet   = `https://script.google.com/macros/s/${DeploymentID}/exec?action=read&sheetName=${sheetName}`;
+//let urlAppAppendSheet = `https://script.google.com/macros/s/${DeploymentID}/exec?action=append&sheetName=${sheetName}`;
+
+
+// Replace with your Google Apps Script web app URL
+//https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiT-XzG4K1n9-TN9LxhKbdvB21fE61SYDknzPX5kKveLH2YIowlStgtzDMqxcqViZjcto0ACi_PNRgRj0gMmPzN4N9sr7u0yHGCu03GmgI6Gmwo9zcHDcPG-2sRSLO6OZGlyGinghKKXyBag102_psBF1RBFk8wi0af5reSVPVuf5uOzGmh-_Fjm_zpqkuAd4r4vAhFiGrP9LKhJFB2QJOa3Hx1wV6k1b-OBbLVykhirjaGmme30Px-me2jCNSM30IbcT0ve9dU0DhsH_RcQxzWyW9TruZaSzHK6y5TOtP7X6v38sIJPIjUV5vu3apXC7d2imKsJvBVM6aljOs&lib=Mv9OsMBwmKN-KTOjWMJlbAoSV_WU4if8p
+//const WEB_APP_URL = 'https://script.google.com/macros/s/xxx/exec';
+
+// Read API: Fetch data from a specific sheet
+async function readSheetData(sheetName) {
+  try {
+    const DeploymentID='AKfycby6kSOzIpexF8mIFsZ_XMYCN4IfQ9NXMo6j6AykG0B1yTLM9IcsO69ZAFD_7tPSIET4ag';
+    let urlAppReadSheet   = `https://script.google.com/macros/s/${DeploymentID}/exec?action=read&sheetName=${sheetName}`;
+    console.log(urlAppReadSheet) ;
+    const response = await fetch(urlAppReadSheet,{
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
+    console.log('Read data:', data);
+    return data;
+  } catch (error) {
+    console.error('Error reading data:', error);
+  }
+}
+
+// Append API: Append JSON array to a specific sheet
+async function appendSheetData(sheetName, data) {
+  try {
+    const DeploymentID='AKfycby6kSOzIpexF8mIFsZ_XMYCN4IfQ9NXMo6j6AykG0B1yTLM9IcsO69ZAFD_7tPSIET4ag';
+    let urlAppAppendSheet = `https://script.google.com/macros/s/${DeploymentID}/exec?action=append&sheetName=${sheetName}`;
+    console.log(urlAppAppendSheet) ;
+
+    const response = await fetch(urlAppAppendSheet, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    console.log('Append result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error appending data:', error);
+  }
+}
+
+// Example usage
+// Read data from "Sheet1"
+//readSheetData('Sheet1');
+
+// Append data to "Sheet1"
+
+document.querySelector('#idBTNReadGoogleSheet').addEventListener('click',async (event)=>{
+  //readSheetData('Sheet1');
+  let url="https://us-central1-outpost-8d74e.cloudfunctions.net/GoogleSheetAPI?sheet=contacts" ;
+  let response = await fetch(url) ;
+  let jsonData = await response.json() ;
+  console.log(jsonData) ;
+}) ;
+
+ 
+ document.querySelector('#idBTNAppendGoogleSheet').addEventListener('click',async (event)=>{
+  //readSheetData('Sheet1');
+  const dataToAppend = [
+    { Column1: 'Value1', Column2: 'Value2' },
+    { Column1: 'Value3', Column2: 'Value4' },
+  ];
+  appendSheetData('Sheet1', dataToAppend);
+}) ;
+  </script>
+<script>
+const thaiWords=`
+เป็น (pen) - is
+ไป (pai) - go
+มา (maa) - come
+ทำ (tham) - do, make
+ว่า (waa) - say
+ซื้อ (sue) - buy
+ขาย (khaai) - sell
+กิน (gin) - eat
+ดื่ม (duem) - drink
+นอน (non) - sleep
+นั่ง (nang) - sit
+ยืน (yeun) - stand
+วิ่ง (wing) - run
+เดิน (dein) - walk
+อ่าน (aan) - read
+เขียน (kian) - write
+พูด (pood) - speak
+ฟัง (fang) - listen
+ร้อง (raong) - sing
+ยิ้ม (yim) - smile
+ร้องไห้ (raong hai) - cry
+หัวเราะ (hua rao) - laugh
+เรียน (rian) - study, learn
+สอน (son) - teach
+ทำงาน (tham ngan) - work
+พัก (phak) - rest
+เล่น (len) - play
+หา (haa) - find, look for
+ดู (du) - see, watch
+ชอบ (chop) - like
+รัก (rak) - love
+เกลียด (gliat) - hate
+ต้องการ (tong kan) - need, want
+ให้ (hai) - give
+รับ (rap) - receive
+เข้า (kao) - enter
+ออก (ok) - exit
+ช่วย (chuay) - help
+ใช้ (chai) - use
+เปิด (bpert) - open
+ปิด (bpit) - close
+ทราบ (saap) - know, be aware of
+ลืม (leum) - forget
+เริ่ม (roem) - start
+จบ (jop) - finish
+มี (mee) - have
+ถือ (tue) - hold
+สร้าง (sang) - build
+ทำลาย (tam lai) - destroy
+เลี้ยง (liang) - raise
+จำ (jam) - remember
+ถาม (tam) - ask
+ตอบ (dtorb) - answer
+ขับ (khap) - drive
+ขี่ (khee) - ride
+จัดการ (jat kan) - manage
+สู้ (soo) - fight
+หยุด (yoot) - stop
+เดินทาง (dein thaang) - travel
+บิน (bin) - fly
+แปล (plae) - translate
+ส่ง (song) - send
+ยก (yok) - lift
+ฉีด (cheed) - inject
+ขโมย (khomoi) - steal
+สอบ (sorp) - examine, test
+คิด (khit) - think
+สาธารณสุข (sa-tha-ran-su-k) - public health
+ศึกษา (sueksa) - study
+ตาย (dtai) - die
+กลับ (glap) - return
+ขัด (kat) - scrub
+ฝึก (fuek) - train
+ซ่อม (som) - repair
+ชัก (chak) - pull
+ดัน (dan) - push
+ทิ้ง (ting) - throw
+ตัด (dtat) - cut
+ซัก (sak) - wash
+เสริม (serm) - enhance
+ตรวจ (dtrooat) - inspect, examine
+ฝนตก (fon dtok) - rain
+ร้อน (ron) - be hot
+เย็น (yen) - be cold
+อ่อน (on) - weaken
+แข็ง (kaeng) - harden
+ปล่อย (ploy) - release
+บีบ (beep) - squeeze
+ครุ่นคิด (khroon khit) - worry
+ท้อ (toh) - give up
+สู้ศึก (soo suek) - go to war
+อยู่ (yoo) - stay, be at
+พบ (pop) - meet
+นำ (nam) - lead
+ตาม (dtarm) - follow
+ชน (chon) - collide
+เต้น (dten) - dance
+นวด (nuat) - massage
+เที่ยว (tiew) - travel, take a trip
+ปรากฏ (prakot) - appear
+https://the-unl.com/100-most-common-verbs-in-thai-204
+
+
+
+คน (khon) - person
+นาย (nai) - mister
+ผู้หญิง (phu ying) - woman
+ผู้ชาย (phu chai) - man
+เด็ก (dek) - child
+ครอบครัว (krop khrua) - family
+เพื่อน (pheuan) - friend
+แม่ (mae) - mother
+พ่อ (phor) - father
+สัตว์ (sat) - animal
+แมว (maew) - cat
+สุนัข (sunakh) - dog
+หนังสือ (nang sue) - book
+สถานี (sathanee) - station
+โรงเรียน (roong rian) - school
+อาหาร (aahaan) - food
+น้ำ (naam) - water
+กาแฟ (gaa-fae) - coffee
+นม (nom) - milk
+อากาศ (aakaat) - air, weather
+สวน (suan) - garden, park
+ทะเล (tale) - sea
+ภูเขา (phu khao) - mountain
+รถ (rot) - car
+จักรยาน (jakrayan) - bicycle
+เรือ (ruea) - boat
+ดิน (din) - earth, soil
+อินเทอร์เน็ต (internet) - internet
+ข่าว (kaao) - news
+ดาว (dao) - star
+ดินสอ (dinsor) - pencil
+ปากกา (pak kaa) - pen
+โทรศัพท์ (thorasap) - telephone
+คอมพิวเตอร์ (kompueo) - computer
+กล้องถ่ายรูป (klong tai roop) - camera
+ห้อง (hong) - room
+บ้าน (baan) - house
+หมู่บ้าน (mooban) - village
+โรงพยาบาล (roong phayaban) - hospital
+หมอ (mor) - doctor
+ประเทศ (prathet) - country
+วิทยาลัย (witthayalai) - college
+มหาวิทยาลัย (mahawitthayalai) - university
+ครู (khru) - teacher
+นักเรียน (nak rian) - student
+ภาษา (phasaa) - language
+การบ้าน (ganbaan) - homework
+ดนตรี (dontri) - music
+แดนซ์ (dans) - dance
+ภาพยนตร์ (phapynon) - movie
+ทีวี (tiwi) - TV
+ละคร (lakhon) - drama
+การ์ตูน (kartun) - cartoon
+เกมส์ (games) - game
+ของเล่น (khong len) - toy
+ศิลปะ (silpa) - art
+พิพิธภัณฑ์ (pipitphan) - museum
+ศาสนา (satsana) - religion
+วัด (wat) - temple
+คริสตจักร (christajak) - church
+มัสยิด (masjid) - mosque
+เทศกาล (thetsakan) - festival
+สวนสนุก (suan sanuk) - amusement park
+โรงแรม (rongraem) - hotel
+ตลาด (talat) - market
+ร้านค้า (ran kha) - shop
+งาน (ngan) - job, work
+บริษัท (borisat) - company
+สนามบิน (sanambin) - airport
+โรงภาพยนตร์ (rong phapynon) - cinema
+ธนาคาร (thanakhan) - bank
+จดหมาย (jodmai) - letter
+หนังสือพิมพ์ (nang su pim) - newspaper
+วิทยุ (witiyu) - radio
+แว่นตา (waenta) - glasses
+ยา (yaa) - medicine
+เสื้อผ้า (seua pha) - clothes
+อาหารเช้า (aahaan chao) - breakfast
+อาหารกลางวัน (aahaan klang wan) - lunch
+อาหารเย็น (aahaan yen) - dinner
+เครื่องปรุง (khreung prung) - seasoning
+ภาพวาด (phap waad) - painting
+เครื่องดนตรี (khreung dontri) - musical instrument
+หนัง (nang) - film
+ฟุตบอล (futbon) - football
+แบดมินตัน (badminton) - badminton
+กีฬา (kila) - sports
+รางวัล (rangwan) - award
+สงคราม (sangkhram) - war
+ความรัก (khwam rak) - love
+ความสุข (khwam suk) - happiness
+ปัญหา (panyaha) - problem
+ทรัพยากร (sapayaakon) - resource
+ธรรมชาติ (thammachat) - nature
+ต้นไม้ (tonmai) - tree
+ฤดูกาล (ruedookaan) - season
+พระอาทิตย์ (phraathity) - sun
+พระจันทร์ (phrachanthr) - moon
+ป่า (paa) - forest
+น้ำตก (namtok) - waterfall
+https://the-unl.com/100-most-common-nouns-in-thai-203
+
+ดี (dee) - good
+ไม่ดี (mai dee) - bad
+ใหญ่ (yai) - big
+เล็ก (lek) - small
+ยาว (yao) - long
+สั้น (san) - short
+สูง (soong) - tall
+ต่ำ (tam) - low
+หนา (naa) - thick
+บาง (baang) - thin
+มาก (maak) - much, many
+น้อย (noi) - little, few
+สวย (suay) - beautiful
+น่ารัก (naa rak) - cute
+ดำ (dam) - black
+ขาว (kao) - white
+แดง (daeng) - red
+เขียว (kiew) - green
+สีฟ้า (see faa) - blue
+เหลือง (leuang) - yellow
+หรู (roo) - luxurious
+ง่าย (ngai) - easy
+ยาก (yaak) - hard, difficult
+ร้อน (ron) - hot
+เย็น (yen) - cold
+แข็ง (kaeng) - hard, solid
+อ่อน (on) - soft
+รวดเร็ว (ruad reo) - fast
+ช้า (cha) - slow
+เก่า (gao) - old
+ใหม่ (mai) - new
+จริง (jing) - true
+เท็จ (tech) - false
+ฉลาด (chalaat) - smart
+โง่ (ngo) - stupid
+มืด (mued) - dark
+สว่าง (sa wang) - bright
+ลึก (luek) - deep
+ตื้น (teun) - shallow
+หนัก (nak) - heavy
+เบา (bao) - light
+แน่น (naen) - tight
+หลวม (luam) - loose
+โก่ง (going) - loud
+เงียบ (ngiab) - quiet
+แห้ง (haeng) - dry
+เปียก (piak) - wet
+สะอาด (sa aat) - clean
+สกปรก (sok prok) - dirty
+คม (kom) - sharp
+ทื่อ (tue) - blunt
+ร้อน (ron) - hot
+หนาว (nao) - cold
+แฉะ (chae) - soggy
+ไกล (glai) - far
+ใกล้ (glai) - near
+หวาน (wan) - sweet
+เค็ม (kem) - salty
+เปรี้ยว (priao) - sour
+จืด (jeud) - bland
+เผ็ด (phet) - spicy
+กรอบ (krop) - crispy
+นุ่ม (num) - soft
+เหนียว (niew) - sticky
+นิ่ม (nim) - smooth
+หยาบ (yab) - rough
+กลม (glom) - round
+แบน (baen) - flat
+เรียบ (riab) - smooth
+มีรส (mee rot) - tasty
+ไม่มีรส (mai mee rot) - tasteless
+แปลก (plaek) - strange
+ธรรมดา (thammada) - normal
+พร้อม (prom) - ready
+ว่าง (wang) - free, available
+ยุ่ง (yung) - busy
+สุขภาพดี (sukhaphap dee) - healthy
+ป่วย (puay) - sick
+เหนื่อย (nueai) - tired
+มั่นคง (man khong) - stable
+ไม่แน่นอน (mai nae non) - uncertain
+รวย (ruay) - rich
+จน (jon) - poor
+เศร้า (sao) - sad
+มีความสุข (mee khwam suk) - happy
+ปลอดภัย (plod phai) - safe
+อันตราย (antray) - dangerous
+สำคัญ (samkhan) - important
+ไม่สำคัญ (mai samkhan) - unimportant
+ภาคภูมิใจ (pakphum jai) - proud
+อับชับ (apchap) - humble
+ใส่ใจ (sai jai) - caring
+หยิ่ง (ying) - arrogant
+จริงใจ (jing jai) - sincere
+เที่ยงตรง (thiang trong) - honest
+คิดถึง (khid teung) - missing, longing
+ตื่นเต้น (teun ten) - excited
+หงุดหงิด (ngud ngid) - annoyed
+น่าสงสาร (na songsaan) - pitiful
+แข็งแกร่ง (kaeng kraeng) - strong
+https://the-unl.com/100-most-common-adjectives-in-thai-205
+
+มาก (maak) - very
+น้อย (noi) - a little
+ช้าๆ (chaa-chaa) - slowly
+รวดเร็ว (ruat reo) - quickly
+บ่อย (boi) - often
+เล็กน้อย (lek noi) - slightly
+ซะที (sa tee) - immediately
+เสมอ (sa muhr) - always
+อย่างไร (yang rai) - how
+ที่ไหน (tee nai) - where
+เมื่อไหร่ (muea rai) - when
+ทำไม (tam mai) - why
+เท่าไร (tao rai) - how much/many
+อย่างนี้ (yang nee) - like this
+อย่างนั้น (yang nan) - like that
+ก็ตามนั้น (gor dtam nan) - accordingly
+จริงๆ (jing jing) - really, actually
+ค่อยๆ (koi koi) - gradually
+เร็วๆ (reo reo) - soon
+สักหน่อย (sak noi) - a bit
+บ้าง (baang) - sometimes
+เฉพาะ (chepoa) - especially
+อย่างเดียว (yang diao) - only
+ทันที (tan tee) - immediately
+เป็นที่สุด (pen tee soot) - the most
+เรื่อยๆ (rueai rueai) - continuously
+ปกติ (pok tee) - normally
+เป็นประจำ (pen prajam) - regularly
+โดยปกติ (doy pok tee) - usually
+หาก (haak) - if
+แต่ (tae) - but
+ถ้าว่า (ta wa) - if
+แล้ว (laew) - then
+หรือ (rue) - or
+ทุกที่ (took tee) - everywhere
+ทุกครั้ง (took krang) - everytime
+ทุกวัน (took wan) - everyday
+ทุกคน (took kon) - everyone
+นิดหน่อย (nid noi) - a little
+จำนวนมาก (jamnuan maak) - a lot
+เสมอมา (sa muea ma) - always
+พอควร (por khuan) - enough
+โดยเฉพาะ (doy chepua) - particularly
+อย่างจริงจัง (yang jing jang) - seriously
+ภายใน (payai nai) - inside
+ภายนอก (payai nok) - outside
+ก่อน (gaun) - before
+หลังจากนั้น (lang jak nan) - after
+โดยรวม (doy ruam) - generally
+ด้วย (duay) - too, also
+บางครั้ง (baang krang) - sometimes
+ทันท่วงที (tan twang tee) - immediately
+ในที่สุด (nai tee soot) - finally
+บางที (baang tee) - sometimes
+ค่อนข้าง (kon khaang) - rather
+แทบ (taeb) - almost
+อย่างแรง (yang raeng) - fiercely
+โดยตรง (doy trong) - directly
+เป็นพิเศษ (pen piset) - especially
+อย่างแน่นอน (yang nae non) - certainly
+กันและกัน (gan lae gan) - mutually
+เกือบ (gueap) - nearly
+แค่ (kae) - just
+ก่อนหน้านี้ (gaun naa nee) - previously
+เมื่อไม่นานมานี้ (muea mai naan ma nee) - recently
+โดยภายใน (doy payai nai) - internally
+อย่างเต็มที่ (yang tem tee) - fully
+อย่างยิ่ง (yang ying) - greatly
+อย่างเป็นทางการ (yang pen taang gaan) - formally
+อย่างรวดเร็ว (yang ruat reo) - rapidly
+เสมอภาค (sa muea phaak) - impartially
+เฉยๆ (choey choey) - casually
+อย่างน้อย (yang noi) - at least
+อย่างสูงสุด (yang soong soot) - at most
+เฉพาะกิจ (che poa kit) - specifically
+เฉพาะเจาะจง (che poa jor jong) - specifically
+ส่วนใหญ่ (suan yai) - mostly
+อย่างสม่ำเสมอ (yang samam samoe) - evenly
+ประมาณ (pramaan) - approximately
+โดยส่วนใหญ่ (doy suan yai) - mostly
+อย่างแปลกประหลาด (yang plaek pralard) - strangely
+โดยเฉลี่ย (doy chalia) - on average
+อย่างร่วมกัน (yang ruam gan) - together
+ไป (bpai) - to go
+มา (maa) - to come
+ขึ้น (kheun) - up
+ลง (long) - down
+เข้า (khao) - in
+ออก (awk) - out
+ดีๆ (dee dee) - very well
+เสียดาย (sia dai) - unfortunately
+อย่างมากๆ (yang maak maak) - very much
+ไกลๆ (glai glai) - far away
+ใกล้ๆ (glai glai) - nearby
+อย่างมีชีวิตชีวา (yang mee cheewit cheewa) - lively
+อย่างช้าๆ (yang chaa chaa) - slowly
+อย่างรวดเร็วมากๆ (yang ruat reo maak maak) - very fast
+เป็นปกติ (pen pok tee) - normally
+สุดๆ (sut sut) - extremely
+อย่างรอบคอบ (yang roop kawp) - carefully
+https://the-unl.com/100-most-common-adverbs-in-thai-206
+
+
+ฉัน (chan) - I/me
+เธอ (ter) - You
+เขา (kao) - He/She
+มัน (man) - It
+เรา (rao) - We
+คุณ (kun) - You (polite)
+พวกเขา (puak kao) - They
+ครอบครัว (khrong khrua) - Family
+เพื่อน (puean) - Friend
+รัก (rak) - Love
+สวัสดี (sawatdi) - Hello
+ลาก่อน (la-kon) - Goodbye
+ขอบคุณ (khop khun) - Thank you
+โทษ (thot) - Sorry
+สบายดีไหม (sabai dee mai) - How are you?
+ชื่อ (cheu) - Name
+อาหาร (aahaan) - Food
+น้ำ (nam) - Water
+อากาศ (a-gard) - Weather
+วัน (wan) - Day
+คืน (kheun) - Night
+กิน (gin) - Eat
+ดื่ม (duem) - Drink
+นอน (non) - Sleep
+ไป (pai) - Go
+มา (maa) - Come
+ดู (du) - See
+ฟัง (fang) - Listen
+พูด (pood) - Speak
+อ่าน (aan) - Read
+เขียน (khian) - Write
+ทำ (tham) - Do/Make
+รู้ (ru) - Know
+สนุก (sanook) - Fun
+งาน (ngan) - Work
+เรียน (rian) - Study
+เล่น (len) - Play
+ซื้อ (sue) - Buy
+ขาย (khai) - Sell
+ราคา (ra-kaa) - Price
+ตลาด (talaad) - Market
+สินค้า (sin-kha) - Goods
+ตึก (teuk) - Building
+ห้อง (hong) - Room
+รถ (rot) - Car
+จักรยาน (jak-ka-yaan) - Bicycle
+เรือ (ruea) - Boat
+อากาศยาน (a-gaht-yaan) - Airplane
+สถานี (sataanii) - Station
+สนามบิน (sanaam bin) - Airport
+โรงพยาบาล (roong payabaal) - Hospital
+โรงเรียน (roong rian) - School
+มหาวิทยาลัย (mahawittayalai) - University
+ครู (khru) - Teacher
+นักเรียน (nak rian) - Student
+หนังสือ (nang-sue) - Book
+ดินสอ (din-saw) - Pencil
+คอมพิวเตอร์ (kom-pi-oot) - Computer
+โทรศัพท์ (tho-ra-sap) - Telephone
+อินเทอร์เน็ต (in-thoe-net) - Internet
+ทีวี (ti-wii) - TV
+ข่าว (kaao) - News
+ภาพยนตร์ (paap-ya-nont) - Movie
+ดนตรี (don-tri) - Music
+เพลง (pleng) - Song
+กีฬา (ki-laa) - Sport
+เกม (gaem) - Game
+สี (see) - Color
+แดง (daeng) - Red
+ฟ้า (faa) - Blue
+เขียว (kiew) - Green
+ดำ (dam) - Black
+ขาว (kaow) - White
+เหลือง (leuang) - Yellow
+ส้ม (som) - Orange
+ม่วง (muang) - Purple
+สีชมพู (see chom-pu) - Pink
+ดอกไม้ (dok mai) - Flower
+ต้นไม้ (ton-mai) - Tree
+ทะเล (tha-le) - Sea
+ภูเขา (poo khao) - Mountain
+แม่น้ำ (mae nam) - River
+ดาว (dao) - Star
+พระจันทร์ (pra jan) - Moon
+พระอาทิตย์ (pra a-tit) - Sun
+ฤดูกาล (ruedoo kaan) - Season
+ยามว่าง (yam waang) - Free time
+วันหยุด (wan yut) - Holiday
+เทศกาล (thet-sa-gaan) - Festival
+เพื่อนฝูง (puean fuung) - Peers
+สุขภาพ (suk-kha-paap) - Health
+วัยรุ่น (wai roon) - Teenager
+ผู้ใหญ่ (poo yai) - Adult
+ความคิดเห็น (khwam kit hen) - Opinion
+สัตว์ (sat) - Animal
+ทรัพยากร (sra-pa-ya-kon) - Resource
+สิ่งแวดล้อม (sing waed lom) - Environment
+ปัญหา (pan-haa) - Problem
+อนาคต (a-na-kot) - Future
+ความหวัง (khwam wang) - Hope
+https://the-unl.com/100-most-common-words-in-thai-202
+
+https://www.thaipod101.com/blog/2021/01/18/thai-numeric-classifiers/
+https://www.bananathaischool.com/blog/thai-classifiers/
+` ;
+
+function parseThaiEnglish(input) {
+  const lines = input.trim().split('\n');
+  const result = lines.map(line => {
+    const match = line.match(/^(.+?)\s*\(.+?\)\s*-\s*(.+)$/);
+    if (match) {
+      return {
+        Word: match[1].trim(),
+        English: match[2].trim()
+      };
+    }
+    return null;
+  }).filter(item => item !== null);
+  return result;
+}
+
+let jsonWords=[
+    {
+        "Word":"เป็น",
+        "English":"is"
+    }
+]
+
+document.querySelector('#idBTNHandleWords').addEventListener('click',(event)=>{
+  let _100Verbs=`ฉัน (chan) - I/me
+เธอ (ter) - You
+เขา (kao) - He/She
+มัน (man) - It
+เรา (rao) - We
+คุณ (kun) - You (polite)
+พวกเขา (puak kao) - They
+ครอบครัว (khrong khrua) - Family
+เพื่อน (puean) - Friend
+รัก (rak) - Love
+สวัสดี (sawatdi) - Hello
+ลาก่อน (la-kon) - Goodbye
+ขอบคุณ (khop khun) - Thank you
+โทษ (thot) - Sorry
+สบายดีไหม (sabai dee mai) - How are you?
+ชื่อ (cheu) - Name
+อาหาร (aahaan) - Food
+น้ำ (nam) - Water
+อากาศ (a-gard) - Weather
+วัน (wan) - Day
+คืน (kheun) - Night
+กิน (gin) - Eat
+ดื่ม (duem) - Drink
+นอน (non) - Sleep
+ไป (pai) - Go
+มา (maa) - Come
+ดู (du) - See
+ฟัง (fang) - Listen
+พูด (pood) - Speak
+อ่าน (aan) - Read
+เขียน (khian) - Write
+ทำ (tham) - Do/Make
+รู้ (ru) - Know
+สนุก (sanook) - Fun
+งาน (ngan) - Work
+เรียน (rian) - Study
+เล่น (len) - Play
+ซื้อ (sue) - Buy
+ขาย (khai) - Sell
+ราคา (ra-kaa) - Price
+ตลาด (talaad) - Market
+สินค้า (sin-kha) - Goods
+ตึก (teuk) - Building
+ห้อง (hong) - Room
+รถ (rot) - Car
+จักรยาน (jak-ka-yaan) - Bicycle
+เรือ (ruea) - Boat
+อากาศยาน (a-gaht-yaan) - Airplane
+สถานี (sataanii) - Station
+สนามบิน (sanaam bin) - Airport
+โรงพยาบาล (roong payabaal) - Hospital
+โรงเรียน (roong rian) - School
+มหาวิทยาลัย (mahawittayalai) - University
+ครู (khru) - Teacher
+นักเรียน (nak rian) - Student
+หนังสือ (nang-sue) - Book
+ดินสอ (din-saw) - Pencil
+คอมพิวเตอร์ (kom-pi-oot) - Computer
+โทรศัพท์ (tho-ra-sap) - Telephone
+อินเทอร์เน็ต (in-thoe-net) - Internet
+ทีวี (ti-wii) - TV
+ข่าว (kaao) - News
+ภาพยนตร์ (paap-ya-nont) - Movie
+ดนตรี (don-tri) - Music
+เพลง (pleng) - Song
+กีฬา (ki-laa) - Sport
+เกม (gaem) - Game
+สี (see) - Color
+แดง (daeng) - Red
+ฟ้า (faa) - Blue
+เขียว (kiew) - Green
+ดำ (dam) - Black
+ขาว (kaow) - White
+เหลือง (leuang) - Yellow
+ส้ม (som) - Orange
+ม่วง (muang) - Purple
+สีชมพู (see chom-pu) - Pink
+ดอกไม้ (dok mai) - Flower
+ต้นไม้ (ton-mai) - Tree
+ทะเล (tha-le) - Sea
+ภูเขา (poo khao) - Mountain
+แม่น้ำ (mae nam) - River
+ดาว (dao) - Star
+พระจันทร์ (pra jan) - Moon
+พระอาทิตย์ (pra a-tit) - Sun
+ฤดูกาล (ruedoo kaan) - Season
+ยามว่าง (yam waang) - Free time
+วันหยุด (wan yut) - Holiday
+เทศกาล (thet-sa-gaan) - Festival
+เพื่อนฝูง (puean fuung) - Peers
+สุขภาพ (suk-kha-paap) - Health
+วัยรุ่น (wai roon) - Teenager
+ผู้ใหญ่ (poo yai) - Adult
+ความคิดเห็น (khwam kit hen) - Opinion
+สัตว์ (sat) - Animal
+ทรัพยากร (sra-pa-ya-kon) - Resource
+สิ่งแวดล้อม (sing waed lom) - Environment
+ปัญหา (pan-haa) - Problem
+อนาคต (a-na-kot) - Future
+ความหวัง (khwam wang) - Hope`;
+
+  let jsonWords = parseThaiEnglish(_100Verbs) ;
+  console.log(jsonWords) ;
+  console.log(JSON.stringify(jsonWords,null,3));
+}) ;
+
+</script>
 </body>
 </html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Thai Flashcards</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+        .flashcard {
+            width: 90%;
+            max-width: 350px;
+            height: 50vh;
+            max-height: 350px;
+            perspective: 1000px;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+        }
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            border-radius: 12px;
+            background-color: white;
+        }
+        .card-back {
+            transform: rotateY(180deg);
+            background-color: #e6f3ff;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 350px;
+            margin: 10px 0;
+        }
+        .nav-buttons button {
+            padding: 8px 16px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            background-color: #007aff;
+            color: white;
+            -webkit-appearance: none;
+        }
+        .nav-buttons button:disabled {
+            background-color: #cccccc;
+        }
+        .auth-container {
+            text-align: center;
+            padding: 15px;
+        }
+        .auth-container button {
+            padding: 8px 16px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            background-color: #007aff;
+            color: white;
+            margin: 5px;
+        }
+        .status {
+            font-size: 0.9em;
+            margin: 10px 0;
+            color: #333;
+        }
+        @media (max-width: 600px) {
+            .flashcard {
+                width: 95%;
+                height: 45vh;
+            }
+            .card-front, .card-back {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+    <!-----
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js"></script>
+    -->
+</head>
+<body>
+    <!-----
+    <div class="auth-container" id="authContainer">
+        <button id="signInButton">Sign In with Google</button>
+        <button id="signOutButton" style="display: none;">Sign Out</button>
+        <div class="status" id="authStatus">Please sign in to access flashcards.</div>
+    </div>
+    -->
+    <div class="container" id="flashcardContainer">
+        <div class="flashcard" id="flashcard">
+            <div class="card-inner">
+                <div class="card-front"></div>
+                <div class="card-back"></div>
+            </div>
+        </div>
+        <div class="nav-buttons">
+            <button id="prevButton">Previous</button>
+            <button id="nextButton">Next</button>
+        </div>
+    </div>
+    <script>
+        /*
+        // Firebase configuration (Replace with your Firebase project config)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // Authentication
+        const signInButton = document.getElementById('signInButton');
+        const signOutButton = document.getElementById('signOutButton');
+        const authStatus = document.getElementById('authStatus');
+        const flashcardContainer = document.getElementById('flashcardContainer');
+
+        signInButton.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(error => {
+                authStatus.textContent = `Error: ${error.message}`;
+            });
+        });
+
+        signOutButton.addEventListener('click', () => auth.signOut());
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                signInButton.style.display = 'none';
+                signOutButton.style.display = 'inline-block';
+                authStatus.textContent = `Welcome, ${user.displayName}`;
+                flashcardContainer.style.display = 'flex';
+                loadFlashcards(user.uid);
+            } else {
+                signInButton.style.display = 'inline-block';
+                signOutButton.style.display = 'none';
+                authStatus.textContent = 'Please sign in to access flashcards.';
+                flashcardContainer.style.display = 'none';
+            }
+        });
+        */
+
+        // Flashcard logic
+        let flashcards = [];
+        let currentIndex = 0;
+        document.addEventListener("DOMContentLoaded", async (event) => { 
+            await loadFlashcards() ;
+
+        }) ;
+
+
+        /*
+        function loadFlashcards(userId) {
+            const dbRef = database.ref(`users/${userId}/flashcards`);
+            dbRef.once('value', snapshot => {
+                const data = snapshot.val();
+                if (data) {
+                    flashcards = Object.values(data);
+                } else {
+                    const defaultData = `
+                        เป็น - is
+                        ไป - go
+                        มา - come
+                        ทำ - do, make
+                        ว่า - say
+                        ซื้อ - buy
+                        ขาย - sell
+                        กิน - eat
+                    `;
+                    flashcards = parseThaiEnglish(defaultData);
+                    dbRef.set(flashcards);
+                }
+                displayFlashcard();
+            });
+        }
+        */
+        async function loadFlashcards(userId) {
+            
+            let urlWordSet = `https://outpost-8d74e-14018.firebaseio.com/wordSets/100CommonNouns.json` ;
+            let response = await fetch(urlWordSet) ;
+            flashcards = await response.json() ;
+            console.log(flashcards) ;
+            //flashcards
+            displayFlashcard();
+
+        }
+
+        function displayFlashcard() {
+            if (!flashcards.length) return;
+            document.querySelector('.card-front').textContent = flashcards[currentIndex].Word;
+            document.querySelector('.card-back').textContent = flashcards[currentIndex].English;
+            document.querySelector('.card-inner').classList.remove('flipped');
+            updateButtons();
+        }
+
+        function updateButtons() {
+            document.getElementById('prevButton').disabled = currentIndex === 0;
+            document.getElementById('nextButton').disabled = currentIndex === flashcards.length - 1;
+        }
+
+        document.getElementById('flashcard').addEventListener('click', () => {
+            document.querySelector('.card-inner').classList.toggle('flipped');
+        });
+
+        document.getElementById('prevButton').addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                displayFlashcard();
+            }
+        });
+
+        document.getElementById('nextButton').addEventListener('click', () => {
+            if (currentIndex < flashcards.length - 1) {
+                currentIndex++;
+                displayFlashcard();
+            }
+        });
+
+        // Prevent pinch-to-zoom on iOS
+        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('gesturechange', e => e.preventDefault());
+        document.addEventListener('gestureend', e => e.preventDefault());
+    </script>
+</body>
+</html>
