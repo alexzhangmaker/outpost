@@ -259,6 +259,12 @@
             document.querySelector('.card-front').textContent = flashcards[currentIndex].Word;
             document.querySelector('.card-back').textContent = flashcards[currentIndex].English;
             //document.querySelector('.card-inner').classList.remove('flipped');
+            const cardInner = document.querySelector('.card-inner');
+
+            let tagCardFront = document.querySelector('.card-front') ;
+            let tagCardBack = document.querySelector('.card-back') ;
+            if(tagCardFront.classList.contains('noShow'))tagCardFront.classList.remove('noShow') ;
+            if(tagCardBack.classList.contains('noShow')!=true)tagCardBack.classList.add('noShow') ;
             updateButtons();
         }
 
