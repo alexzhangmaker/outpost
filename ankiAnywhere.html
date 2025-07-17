@@ -14,8 +14,12 @@
                  background-color: #f0f2f5;
                  -webkit-tap-highlight-color: transparent;
              }
+
+             #flashcardContainer{
+                width:95% ;
+             }
              .flashcard {
-                 width: 300px;
+                 width: 100%/*300px*/;
                  height: 200px;
                  perspective: 1000px;
                  cursor: pointer;
@@ -65,8 +69,8 @@
              .nav-buttons {
             display: flex;
             justify-content: space-between;
-            width: 90%;
-            max-width: 350px;
+            width: 100%;
+            /*max-width: 350px;*/
             margin: 10px 0;
         }
         .nav-buttons button {
@@ -99,6 +103,7 @@
             margin: 10px 0;
             color: #333;
         }
+        /*
         @media (max-width: 600px) {
             .flashcard {
                 width: 95%;
@@ -108,6 +113,7 @@
                 font-size: 1.8em;
             }
         }
+        */
          </style>
          <style>
             .noShow{
