@@ -28,12 +28,28 @@
         body { 
             font-family: "Roboto",sans-serif; 
             padding: 1em; 
+
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: hidden;
+            overflow-x: hidden;
         }
 
-        trix-editor { 
-            min-height: 200px; 
-            margin-bottom: 1em; 
+        
+    </style>
+    <style>
+        .memoAnywhereHeader{
+            height:10vh;
+            font-size: 24px;
         }
+    </style>
+    <style>
+        .memoAnywhereEditor{
+            height:50vh;
+            min-height: 400px;
+        }
+
 
         input[type="text"] { 
             width: 100%; 
@@ -74,22 +90,59 @@
             font-family: "Mulish", sans-serif;
 
         }
+
+
     </style>
+    <style>
+        .memoAnywhereList{
+            flex-grow: 1;
+            flex-shrink: 1;
+        }
+    </style>
+    <style>
+        /* Style the trix-editor element */
+        trix-editor {
+          max-height: 25vh; /* Set maximum height */
+          overflow-y: auto; /* Enable vertical scrollbar when content exceeds max-height */
+          border: 1px solid #ccc; /* Optional: Add a border for visibility */
+          padding: 10px; /* Optional: Add padding for better appearance */
+          box-sizing: border-box; /* Ensure padding doesn't affect max-height */
+        }
+
+        trix-editor { 
+            min-height: 200px; 
+            margin-bottom: 1em; 
+        }
+    
+        /* Optional: Ensure the toolbar doesn't interfere with the layout */
+        trix-toolbar {
+          margin-bottom: 10px;
+        }
+    
+        /* Optional: Style the container for better control */
+        .trix-container {
+          width: 100%;
+          max-width: 600px; /* Adjust as needed */
+          margin: 20px auto;
+        }
+      </style>
 </head>
 <body>
+    <div class="memoAnywhereHeader">
+        <h2>📝 memoAnywhere</h2>
+    </div>
+    <div class="memoAnywhereEditor">
+        <input id="noteTitle" type="text" onfocus="this.value=''" placeholder="Enter note title" />
+        <input id="editorInput" type="hidden" name="content">
+        <trix-editor input="editorInput"></trix-editor>
 
-  <h2>📝 memoAnywhere</h2>
-
-  <input id="noteTitle" type="text" onfocus="this.value=''" placeholder="Enter note title" />
-  <input id="editorInput" type="hidden" name="content">
-  <trix-editor input="editorInput"></trix-editor>
-
-  <button onclick="saveNote()">💾 Save</button>
-  <button onclick="listNotes()">📋 List</button>
-
-  <input id="searchBox" type="text" placeholder="🔍 Search notes..." oninput="filterNotes()" />
-
-  <div id="notesList"><strong>Saved Notes:</strong><ul id="noteItems"></ul></div>
+        <button onclick="saveNote()">💾 Save</button>
+        <button onclick="listNotes()">📋 List</button>
+    </div>
+    <div class="memoAnywhereList">
+        <input id="searchBox" type="text" placeholder="🔍 Search notes..." oninput="filterNotes()" />
+        <div id="notesList"><strong>Saved Notes:</strong><ul id="noteItems"></ul></div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/trix/2.0.0/trix.umd.min.js"></script>
     <script>
