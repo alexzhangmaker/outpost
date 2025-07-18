@@ -68,26 +68,11 @@ async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex,GoogleTTSA
     }) ;
     //idBTNPlayAudio
     tagOutput.querySelector('#idBTNPlayAudio').addEventListener('click',(event)=>{
-
-        
         const text = jsonDict.textTh;//tagOutput.querySelector("text").value;
-        /*
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = "th-TH";
-    
-        // Optional: Choose a specific Thai voice
-        const voices = speechSynthesis.getVoices();
-        utter.voice = voices.find(v => v.lang === "th-TH") || null;
-    
-        speechSynthesis.speak(utter);
-        */
-
         //const urlGoogleTTSProxy = `http://192.168.1.188:3010/tts?q=${text}` ;
         const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${text}` ;
-
         const audio = new Audio(urlGoogleTTSProxy);
-        audio.play();
-    
+        audio.play();    
     });
 
 }
@@ -114,17 +99,8 @@ async function _renderDictMode(tagWndContent){
 
             <div id="idOutputGoogle"></div>
         </div>
-        
     ` ;
-    /*
-    tagWndContent.querySelector('#idBTNPlay').addEventListener('click',(event)=>{
-        //tagWndContent.querySelector('#idAudioPlayer').play() ;
-        const fileId = "1IvvsTxog36wqo6kfgxO15rBpy58bClxz";
-        const audio = new Audio(`https://docs.google.com/uc?export=download&id=${fileId}`);
-        audio.load() ;
-        audio.play();
-    }) ;
-    */
+
     let flagGoogleTTS = await isURLReachable(urlGoogleTTSProxyAvail) ;
     await _loadGoogleDicts() ;
     let tagGoogleOutput = tagWndContent.querySelector('#idOutputGoogle') ;
@@ -146,10 +122,6 @@ async function _renderDictMode(tagWndContent){
 }
 
 
-/*
-case translate: turn left
-url: https://translate.google.com/?hl=zh-CN&tab=TT&sl=en&tl=th&text=turn%20left&op=translate
-*/
 
 async function _larkGoogleTranslate(text,sourceLang,targetLang){
     console.log("_larkGoogleTranslate==============>>>>>>>>>>>>>>");

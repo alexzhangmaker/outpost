@@ -222,15 +222,16 @@ async function _renderNextChallenge(tagWndContent,dictTbl,currentIndex,GoogleTTS
             <div class="challengWnd">
                 <h2 class="challengWord">${jsonChallenge.Word}</h2>
                 <h4 class="challengMeaning">${jsonChallenge.English}</h4>
+                <hr>
                 <div class="challengExample">${jsonChallenge["Example Sentence"]}</div>
             </div>
             <div class="dictationTools">
-                <i class="bi-arrow-left-square noShow" id="idBTNPrevious" style="font-size:24px;"></i>
-                <i class="bi-check-square" id="idBTNCheckRight" style="font-size:24px;"></i>
-                <i class="bi-play-circle flashBTN ${showHidePlay}" id="idBTNPlayAudio"></i>
+                <i class="bi-arrow-left-square noShow" id="idBTNPrevious" style="font-size:48px;"></i>
+                <i class="bi-check-square" id="idBTNCheckRight" style="font-size:48px;"></i>
+                <i class="bi-play-circle flashBTN ${showHidePlay}" style="font-size:48px;" id="idBTNPlayAudio"></i>
 
-                <i class="bi-x-square" id="idBTNCheckWrong" style="font-size:24px;"></i>
-                <i class="bi-arrow-right-square noShow" id="idBTNNext" style="font-size:24px;"></i>
+                <i class="bi-x-square" id="idBTNCheckWrong" style="font-size:48px;"></i>
+                <i class="bi-arrow-right-square noShow" id="idBTNNext" style="font-size:48px;"></i>
             </div>
         </div>
     ` ;

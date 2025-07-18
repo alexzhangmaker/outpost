@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Flip Test</title>
+    <title>ankiAnywhere</title>
     <link rel="stylesheet" type="text/css" href="./css/cssAnkiAnywhere.css">
 
     <style>
@@ -29,6 +29,8 @@
             <button id="prevButton" class="noShow">Previous</button>
             <button id="nextButton" class="noShow">Next</button>
             <button id="idBTNWrong">wrong</button>
+            <button id="idBTNPlayAudio">Play</button>
+
             <button id="idBTNRight">right</button>
         </div>
     </div>
@@ -178,6 +180,14 @@
             }
         });
 
+        
+        document.getElementById('idBTNPlayAudio').addEventListener('click', async (event) => {
+            let text = flashcards[currentIndex].Word;     
+            //const urlGoogleTTSProxy = `http://localhost:3010/tts?q=${text}` ;
+            const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${text}` ;
+            const audio = new Audio(urlGoogleTTSProxy);
+            audio.play();
+        });
          
         document.getElementById('idBTNRight').addEventListener('click', async (event) => {
             let finished = (currentIndex < flashcards.length - 1)?false:true ;

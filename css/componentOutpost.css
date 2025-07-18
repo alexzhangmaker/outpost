@@ -195,3 +195,20 @@ summary::-webkit-details-marker {
 .noShow{
     display: none;
 }
+
+
+.outpostBTN{
+    font-size: 24px;
+}
+
+.outpostBTN:hover{
+    cursor: pointer;
+}
+
+.flashBTN{
+    font-size: 18px;
+}
+
+.flashBTN:hover{
+    cursor: pointer;
+}
