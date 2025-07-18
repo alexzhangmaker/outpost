@@ -93,15 +93,12 @@ async function _renderDictMode(tagWndContent){
         <div class="dictMainWnd">
             <input type="text" id="idInputText2Google" onfocus="this.value=''">
             <button id="idBTNGoogle">Google it!</button>
-            <!---
-            <button id="idBTNPlay">Play it!</button>
-            --->
-
+            <hr>
             <div id="idOutputGoogle"></div>
         </div>
     ` ;
 
-    let flagGoogleTTS = await isURLReachable(urlGoogleTTSProxyAvail) ;
+    let flagGoogleTTS = true ;//await isURLReachable(urlGoogleTTSProxyAvail) ;
     await _loadGoogleDicts() ;
     let tagGoogleOutput = tagWndContent.querySelector('#idOutputGoogle') ;
     for(let i=0;i<gGoogleDicts.length;i++){
