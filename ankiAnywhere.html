@@ -7,6 +7,18 @@
     <link rel="stylesheet" type="text/css" href="./css/cssAnkiAnywhere.css">
 
     <style>
+        .fixedToolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            
+            width: auto;
+            height: auto;
+            background-color: lightblue;
+            z-index: 1000;
+
+            padding: 5px;
+        }
     </style>
 
 </head>
@@ -18,6 +30,13 @@
         <div class="status" id="authStatus">Please sign in to access flashcards.</div>
     </div>
     -->
+    <div class="fixedToolbar">
+
+        <button id="idBTNSetWordSet1">025233Verbs</button>
+        <button id="idBTNSetWordSet2">025233Adj</button>
+        <button id="idBTNSetWordSet3">025233Nouns</button>
+
+    </div>
     <div class="container" id="flashcardContainer">
         <div class="flashcard" id="flashcard">
             <div class="card-inner">
@@ -30,7 +49,6 @@
             <button id="nextButton" class="noShow">Next</button>
             <button id="idBTNWrong">wrong</button>
             <button id="idBTNPlayAudio">Play</button>
-
             <button id="idBTNRight">right</button>
         </div>
     </div>
@@ -120,27 +138,36 @@
             if(localMetaData!=null){
                 jsonLocalMeta = JSON.parse(localMetaData) ;
                 if(jsonLocalMeta.finished=='true'){
-
                     let localFailedData = await localforage.getItem(localKeyFailed) ;
                     if(localFailedData!=null){
                         failedcards = JSON.parse(localFailedData)  ;
                         if(failedcards.length>0){
                             flashcards=failedcards ;
-                            //currentIndex = jsonLocalMeta.currentIndex ;
                             currentIndex = 0 ;//jsonLocalMeta.currentIndex ;
-
                             displayFlashcard();
                             return ;
                         }
+                    }else{
+                        console.log('done and no failed left');
+                        alert('done and no failed left') ;
+                        return ;
                     }
                 }else{
+                    if(jsonLocalMeta.hasOwnProperty('wordSet')!=true){
+                        jsonLocalMeta.wordSet = '100CommonNouns' ;
+                        await localforage.setItem(localKeyMeta,JSON.stringify(jsonLocalMeta)) ;
+                    }
                     currentIndex = jsonLocalMeta.currentIndex ;
                 }
             }else{
                 currentIndex = 0 ;//jsonLocalMeta.currentIndex ;
+                jsonLocalMeta.currentIndex = 0 ;
+                jsonLocalMeta.finished = 'false' ;
+                jsonLocalMeta.wordSet = '100CommonNouns' ;
+                await localforage.setItem(localKeyMeta,JSON.stringify(jsonLocalMeta)) ;
             }
 
-            let urlWordSet = `https://outpost-8d74e-14018.firebaseio.com/wordSets/100CommonNouns.json` ;
+            let urlWordSet = `https://outpost-8d74e-14018.firebaseio.com/wordSets/${jsonLocalMeta.wordSet}.json` ;
             let response = await fetch(urlWordSet) ;
             flashcards = await response.json() ;
             console.log(flashcards) ;
@@ -202,11 +229,17 @@
         });
 
         async function writeAnkiLog(currentIndex,finished,isRight){
+            let jsonMetaData = await localforage.getItem(localKeyMeta) ;
+            let jsonMeta = JSON.parse(jsonMetaData) ;
+            jsonMeta.currentIndex = currentIndex ;
+            if(jsonMeta.finished != 'true')jsonMeta.finished=finished?'true':'false' ;
+            /*
             //localKeyMeta
             let jsonMeta = {
                 currentIndex:currentIndex,
                 finished:finished?'true':'false'
             };
+            */
 
             await localforage.setItem(localKeyMeta,JSON.stringify(jsonMeta));
 
@@ -230,6 +263,29 @@
             }
         });
 
+        document.querySelector('#idBTNSetWordSet1').addEventListener('click',async (event)=>{
+            //
+            await changeWordSet('025233T2Verbs') ;
+        }) ;
+        document.querySelector('#idBTNSetWordSet2').addEventListener('click',async (event)=>{
+            //
+            await changeWordSet('025233T2Adj') ;
+        }) ;
+        document.querySelector('#idBTNSetWordSet3').addEventListener('click',async (event)=>{
+            //
+            await changeWordSet('025233T2Nouns') ;
+        }) ;
+
+        async function changeWordSet(wordSetName){
+            let jsonMetaData = await localforage.getItem(localKeyMeta) ;
+            let jsonMeta = JSON.parse(jsonMetaData) ;
+            jsonMeta.wordSet = wordSetName ;
+            jsonMeta.currentIndex = 0 ;
+
+            await localforage.setItem(localKeyMeta,JSON.stringify(jsonMeta)) ;
+            await localforage.setItem(localKeyFailed,JSON.stringify([]));
+
+        }
 
         // Prevent pinch-to-zoom on iOS
         document.addEventListener('gesturestart', e => e.preventDefault());
