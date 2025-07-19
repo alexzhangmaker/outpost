@@ -19,6 +19,11 @@
 
             padding: 5px;
         }
+
+        .fixedToolbar select {
+            width: auto; /* Full width of parent div */
+            padding: 5px;
+        }
     </style>
 
 </head>
@@ -31,10 +36,15 @@
     </div>
     -->
     <div class="fixedToolbar">
-
-        <button id="idBTNSetWordSet1">025233Verbs</button>
-        <button id="idBTNSetWordSet2">025233Adj</button>
-        <button id="idBTNSetWordSet3">025233Nouns</button>
+        <select id="idWordSetSelect" onchange="handleSelection()">
+            <!-----
+            <option value="" disabled selected>Select an option</option>
+            <option value="option1">Option 1</option>
+            <option value="option2">Option 2</option>
+            <option value="option3">Option 3</option>
+            -->
+        </select>
+        <button id="idBTNReloadWordSet">reload</button>
 
     </div>
     <div class="container" id="flashcardContainer">
@@ -125,6 +135,7 @@
                 cardInner.querySelector('.card-back').classList.toggle('noShow');
             });
 
+            await populateSelect() ;
             await loadFlashcards() ;
 
         }) ;
@@ -133,6 +144,7 @@
         //await localforage.setItem(localKeyFailed,JSON.stringify(failedcards));
 
         async function loadFlashcards(userId) {
+
             let localMetaData = await localforage.getItem(localKeyMeta) ;
             let jsonLocalMeta = {} ;
             if(localMetaData!=null){
@@ -263,6 +275,7 @@
             }
         });
 
+        /*
         document.querySelector('#idBTNSetWordSet1').addEventListener('click',async (event)=>{
             //
             await changeWordSet('025233T2Verbs') ;
@@ -275,18 +288,63 @@
             //
             await changeWordSet('025233T2Nouns') ;
         }) ;
+        */
+        //idBTNReloadWordSet
+        document.querySelector('#idBTNReloadWordSet').addEventListener('click',async (event)=>{
+            //
+            //await changeWordSet('025233T2Nouns') ;
+            await loadFlashcards('tbd') ;
+        }) ;
 
         async function changeWordSet(wordSetName){
             let jsonMetaData = await localforage.getItem(localKeyMeta) ;
             let jsonMeta = JSON.parse(jsonMetaData) ;
             jsonMeta.wordSet = wordSetName ;
             jsonMeta.currentIndex = 0 ;
+            jsonMeta.finished='false' ;
 
             await localforage.setItem(localKeyMeta,JSON.stringify(jsonMeta)) ;
             await localforage.setItem(localKeyFailed,JSON.stringify([]));
 
         }
 
+        async function handleSelection() {
+            const selectElement = document.getElementById('idWordSetSelect');
+            const selectedValue = selectElement.value;
+            if (selectedValue) {
+                console.log('Selected option:', selectedValue);
+                // Add custom logic here, e.g., update UI, trigger actions, etc.
+                // Example: alert(`You selected: ${selectedValue}`);
+                await changeWordSet(selectedValue) ;
+            }
+        }
+
+        // Function to populate the select element
+        async function populateSelect() {
+
+            let urlWordSet = `https://outpost-8d74e-14018.firebaseio.com/meta.json` ;
+            let response = await fetch(urlWordSet) ;
+            optionsData = await response.json() ;
+            console.log(optionsData) ;
+
+            const selectElement = document.getElementById('idWordSetSelect');
+            
+            // Add default disabled option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.text = 'Select an option';
+            defaultOption.disabled = true;
+            defaultOption.selected = true;
+            selectElement.appendChild(defaultOption);
+
+            // Add options from JSON array
+            optionsData.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option.name;
+                opt.text = option.title;
+                selectElement.appendChild(opt);
+            });
+        }
         // Prevent pinch-to-zoom on iOS
         document.addEventListener('gesturestart', e => e.preventDefault());
         document.addEventListener('gesturechange', e => e.preventDefault());
