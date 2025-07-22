@@ -25,6 +25,16 @@
             padding: 5px;
         }
     </style>
+    <style>
+        .text-container {
+            /*width: 200px;*/ /* Fixed width */
+            overflow: hidden;
+            white-space: nowrap; /* Ensure single line */
+            border: 1px solid #ccc; /* For visibility */
+            padding: 5px;
+            font-size: 80px; /* Initial font size */
+        }
+    </style>
 
 </head>
 <body>
@@ -50,8 +60,8 @@
     <div class="container" id="flashcardContainer">
         <div class="flashcard" id="flashcard">
             <div class="card-inner">
-                <div class="card-front"></div>
-                <div class="card-back noShow"></div> 
+                <div class="card-front text-container"></div>
+                <div class="card-back noShow text-container"></div> 
             </div>
         </div>
         <div class="nav-buttons">
@@ -64,6 +74,56 @@
     </div>
     <script src="./jsResource/localforage.min.js"></script>
 
+    <script>
+        function fitTextToWidth(element/*elementId*/) {
+            /*
+            const element = document.getElementById(elementId);
+            */
+            if (!element) {
+                console.error('Element not found:', elementId);
+                return;
+            }
+
+            const containerWidth = element.offsetWidth;
+            let fontSize = parseFloat(window.getComputedStyle(element).fontSize) || 16;
+            const minFontSize = 8; // Minimum font size to ensure legibility
+            const step = 0.5; // Font size adjustment step
+
+            // Create a temporary span to measure text width
+            const tempSpan = document.createElement('span');
+            tempSpan.style.visibility = 'hidden';
+            tempSpan.style.position = 'absolute';
+            tempSpan.style.whiteSpace = 'nowrap';
+            tempSpan.style.fontFamily = window.getComputedStyle(element).fontFamily;
+            tempSpan.style.fontSize = `${fontSize}px`;
+            tempSpan.textContent = element.textContent;
+            document.body.appendChild(tempSpan);
+
+            // Function to measure text width at a given font size
+            function getTextWidth(fontSizePx) {
+                tempSpan.style.fontSize = `${fontSizePx}px`;
+                return tempSpan.offsetWidth;
+            }
+
+            // Check if initial font size causes overflow
+            let currentWidth = getTextWidth(fontSize);
+            if (currentWidth > containerWidth) {
+                // Text is too wide, reduce font size
+                while (currentWidth > containerWidth && fontSize > minFontSize) {
+                    fontSize -= step;
+                    currentWidth = getTextWidth(fontSize);
+                }
+                // Apply the adjusted font size
+                element.style.fontSize = `${fontSize}px`;
+            } else {
+                // No overflow, keep initial font size
+                element.style.fontSize = `${fontSize}px`;
+            }
+
+            // Clean up
+            tempSpan.remove();
+        }
+    </script>
     <script>
         /* 
         // Firebase configuration (Replace with your Firebase project config)
@@ -188,14 +248,25 @@
 
         function displayFlashcard() {
             if (!flashcards.length) return;
-            document.querySelector('.card-front').textContent = flashcards[currentIndex].Word;
-            document.querySelector('.card-back').textContent = flashcards[currentIndex].English;
+
+
+            let tagCardFace = document.querySelector('.card-front') ;
+            //font-size: 80px;
+            tagCardFace.style.fontSize="80px" ;
+            tagCardFace.textContent = flashcards[currentIndex].Word;
+            fitTextToWidth(tagCardFace) ;
+
+            let tagCardBack = document.querySelector('.card-back') ;
+            tagCardBack.style.fontSize="80px" ;
+            tagCardBack.textContent = flashcards[currentIndex].English;
+            fitTextToWidth(tagCardBack) ;
+
             //document.querySelector('.card-inner').classList.remove('flipped');
             const cardInner = document.querySelector('.card-inner');
 
-            let tagCardFront = document.querySelector('.card-front') ;
-            let tagCardBack = document.querySelector('.card-back') ;
-            if(tagCardFront.classList.contains('noShow'))tagCardFront.classList.remove('noShow') ;
+            //let tagCardFront = document.querySelector('.card-front') ;
+            //let tagCardBack = document.querySelector('.card-back') ;
+            if(tagCardFace.classList.contains('noShow'))tagCardFront.classList.remove('noShow') ;
             if(tagCardBack.classList.contains('noShow')!=true)tagCardBack.classList.add('noShow') ;
             updateButtons();
         }
@@ -260,7 +331,11 @@
                 failedcards.push(jsonWordWrong);
                 //localKeyFailed
                 await localforage.setItem(localKeyFailed,JSON.stringify(failedcards));
-            }
+            }/*else{
+                if(jsonMeta.finished == 'true'){
+
+                }
+            }*/
         }
 
         document.getElementById('idBTNWrong').addEventListener('click', async (event) => {

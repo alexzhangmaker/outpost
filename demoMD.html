@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Editor with Grid.js and LaTeX</title>
+  <!-- Toast UI Editor CSS -->
+  <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
+  <!-- Grid.js CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css">
+  <!-- Tailwind CSS for modal styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- MathJax for LaTeX rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  <style>
+    /* Custom styles for modal */
+    #tableModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #tableModal.show {
+      display: flex;
+    }
+    #gridContainer {
+      width: 80%;
+      max-width: 800px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Markdown Editor with Grid.js and LaTeX</h1>
+    <!-- Toast UI Editor container -->
+    <div id="editor"></div>
+  </div>
+
+  <!-- Modal for Grid.js table editor -->
+  <div id="tableModal">
+    <div id="gridContainer">
+      <div id="grid"></div>
+      <div class="mt-4 flex justify-end space-x-2">
+        <button id="saveTable" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Save Table</button>
+        <button id="closeModal" class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast UI Editor JS -->
+  <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+  <!-- Grid.js JS -->
+  <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+  <script>
+    // Initialize Toast UI Editor
+    const { Editor } = toastui;
+    const editor = new Editor({
+      el: document.querySelector('#editor'),
+      height: '500px',
+      initialEditType: 'markdown',
+      previewStyle: 'vertical',
+      initialValue: '# Welcome to the Markdown Editor\n\nType `$E=mc^2$` for LaTeX formulas.\n\nClick the table button to create/edit tables with Grid.js.',
+      addons: ['math'], // Enable MathJax for LaTeX
+      toolbarItems: [
+        ['heading', 'bold', 'italic', 'strike'],
+        ['hr', 'quote'],
+        ['ul', 'ol', 'task', 'indent', 'outdent'],
+        ['table', 'image', 'link'],
+        ['code', 'codeblock'],
+        [{
+          name: 'gridTable',
+          tooltip: 'Insert/Edit Table with Grid.js',
+          command: 'openGridJsTable',
+          text: '📊',
+          className: 'grid-table-button'
+        }]
+      ],
+      customHTMLRenderer: {
+        // Ensure MathJax renders LaTeX in preview
+        math: (node) => {
+          return {
+            type: 'html',
+            content: `<span class="math">${node.literal}</span>`
+          };
+        }
+      }
+    });
+
+    // Initialize Grid.js in modal
+    let grid;
+    function initializeGrid(data = [
+      ['Header 1', 'Header 2', 'Header 3'],
+      ['Row 1 Col 1', 'Row 1 Col 2', 'Row 1 Col 3'],
+      ['Row 2 Col 1', 'Row 2 Col 2', 'Row 2 Col 3']
+    ]) {
+      grid = new gridjs.Grid({
+        columns: data[0].map((header, index) => ({
+          name: header,
+          attributes: { contenteditable: true }
+        })),
+        data: data.slice(1),
+        style: {
+          table: { width: '100%' },
+          th: { padding: '8px', textAlign: 'left' },
+          td: { padding: '8px' }
+        }
+      }).render(document.getElementById('grid'));
+    }
+
+    // Convert Grid.js data to Markdown table
+    function gridToMarkdownTable(gridData) {
+      const headers = gridData[0];
+      const rows = gridData.slice(1);
+      let markdown = `| ${headers.join(' | ')} |\n`;
+      markdown += `| ${headers.map(() => '---').join(' | ')} |\n`;
+      rows.forEach(row => {
+        markdown += `| ${row.join(' | ')} |\n`;
+      });
+      return markdown;
+    }
+
+    // Open Grid.js table editor in modal
+    editor.addCommand('markdown', 'openGridJsTable', () => {
+      document.getElementById('tableModal').classList.add('show');
+      initializeGrid(); // Initialize with default data
+    });
+
+    // Save table to editor
+    document.getElementById('saveTable').addEventListener('click', () => {
+      const gridData = [
+        grid.config.columns.map(col => col.name), // Headers
+        ...grid.config.data // Rows
+      ];
+      const markdownTable = gridToMarkdownTable(gridData);
+      editor.insertText(markdownTable); // Insert Markdown table into editor
+      document.getElementById('tableModal').classList.remove('show');
+      grid.destroy(); // Clean up Grid.js instance
+    });
+
+    // Close modal without saving
+    document.getElementById('closeModal').addEventListener('click', () => {
+      document.getElementById('tableModal').classList.remove('show');
+      grid.destroy(); // Clean up Grid.js instance
+    });
+
+    // Re-render MathJax on preview update
+    editor.getHtml = () => {
+      const html = editor.getHTML();
+      setTimeout(() => MathJax.Hub.Queue(['Typeset', MathJax.Hub]), 0);
+      return html;
+    };
+  </script>
+</body>
+</html>

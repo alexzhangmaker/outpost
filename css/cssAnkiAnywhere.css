@@ -45,7 +45,10 @@ body {
                  display: flex;
                  align-items: center;
                  justify-content: center;
-                 font-size: 4.5em;
+
+                 /*
+                 font-size: 3.5em;
+                 */
                  border-radius: 10px;
                  background-color: white;
                  color: #333;
@@ -56,7 +59,7 @@ body {
                  /*transform: rotateY(180deg);
                  -webkit-transform: rotateY(180deg);*/
                  color: black;
-                 font-size: 3.5em;
+                 font-size: 2.5em;
 
                  background-color: #e6f3ff;
              }
