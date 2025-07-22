@@ -61,7 +61,7 @@
         <div class="flashcard" id="flashcard">
             <div class="card-inner">
                 <div class="card-front text-container"></div>
-                <div class="card-back noShow text-container"></div> 
+                <div class="card-back text-container"></div> 
             </div>
         </div>
         <div class="nav-buttons">
@@ -251,22 +251,21 @@
 
 
             let tagCardFace = document.querySelector('.card-front') ;
-            //font-size: 80px;
+            if(tagCardFace.classList.contains('noShow'))tagCardFace.classList.remove('noShow') ;
             tagCardFace.style.fontSize="80px" ;
             tagCardFace.textContent = flashcards[currentIndex].Word;
             fitTextToWidth(tagCardFace) ;
 
             let tagCardBack = document.querySelector('.card-back') ;
             tagCardBack.style.fontSize="80px" ;
+            if(tagCardBack.classList.contains('noShow'))tagCardBack.classList.remove('noShow') ;
             tagCardBack.textContent = flashcards[currentIndex].English;
             fitTextToWidth(tagCardBack) ;
 
             //document.querySelector('.card-inner').classList.remove('flipped');
             const cardInner = document.querySelector('.card-inner');
 
-            //let tagCardFront = document.querySelector('.card-front') ;
-            //let tagCardBack = document.querySelector('.card-back') ;
-            if(tagCardFace.classList.contains('noShow'))tagCardFront.classList.remove('noShow') ;
+            if(tagCardFace.classList.contains('noShow'))tagCardFace.classList.remove('noShow') ;
             if(tagCardBack.classList.contains('noShow')!=true)tagCardBack.classList.add('noShow') ;
             updateButtons();
         }
