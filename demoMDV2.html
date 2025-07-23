@@ -84,16 +84,25 @@
   <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
   <!-- Grid.js JS -->
   <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-
   <script>
-    // Initialize Supabase client (replace with your project details)
-    const supabaseProjectID=`yfftwweuxxkrzlvqilvc` ;
-    const supabaseUrl = 'https://yfftwweuxxkrzlvqilvc.supabase.co';
+    // Supabase configuration
+    const supabaseUrl = 'https://yfftwweuxxkrzlvqilvc.supabase.co'; // Replace with your Supabase project URL
     const supabaseAnonKey=`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmZnR3d2V1eHhrcnpsdnFpbHZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMjYxMTEsImV4cCI6MjA2NzkwMjExMX0.7rcV3RBrH5kY3KLqD-NHLMhMyc62wIxxYG9VfW-i1tk` ;
-    const supabase = Supabase.createClient(supabaseUrl, supabaseAnonKey);    
-    
+    let accessToken = localStorage.getItem('supabase_access_token') || null;
+    let userId = localStorage.getItem('supabase_user_id') || null;
+
+    // Supabase API headers
+    const getHeaders = (includeToken = false) => {
+      const headers = {
+        'apikey': supabaseAnonKey,
+        'Content-Type': 'application/json'
+      };
+      if (includeToken && accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+      return headers;
+    };
+
     // Initialize Toast UI Editor
     const { Editor } = toastui;
     const editor = new Editor({
@@ -200,14 +209,47 @@
     const loadButton = document.getElementById('loadButton');
 
     async function updateAuthUI() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        loginForm.classList.add('hidden');
-        userSection.classList.remove('hidden');
-        userEmail.textContent = user.email;
-        saveButton.disabled = false;
-        loadButton.disabled = false;
-      } else {
+      if (!accessToken) {
+        loginForm.classList.remove('hidden');
+        userSection.classList.add('hidden');
+        saveButton.disabled = true;
+        loadButton.disabled = true;
+        return;
+      }
+
+      try {
+        const response = await fetch(`${supabaseUrl}/auth/v1/me`, {
+          method: 'GET',
+          headers: getHeaders(true)
+        });
+        const data = await response.json();
+        if (response.ok && data.email) {
+          loginForm.classList.add('hidden');
+          userSection.classList.remove('hidden');
+          userEmail.textContent = data.email;
+          userId = data.id;
+          localStorage.setItem('supabase_user_id', userId);
+          saveButton.disabled = false;
+          loadButton.disabled = false;
+        } else {
+          console.error('Error fetching user:', data.error || 'Unknown error');
+          alert('Error fetching user: ' + (data.error || 'Unknown error'));
+          accessToken = null;
+          userId = null;
+          localStorage.removeItem('supabase_access_token');
+          localStorage.removeItem('supabase_user_id');
+          loginForm.classList.remove('hidden');
+          userSection.classList.add('hidden');
+          saveButton.disabled = true;
+          loadButton.disabled = true;
+        }
+      } catch (error) {
+        console.error('Network error fetching user:', error.message);
+        alert('Network error: ' + error.message);
+        accessToken = null;
+        userId = null;
+        localStorage.removeItem('supabase_access_token');
+        localStorage.removeItem('supabase_user_id');
         loginForm.classList.remove('hidden');
         userSection.classList.add('hidden');
         saveButton.disabled = true;
@@ -218,69 +260,118 @@
     loginButton.addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        alert('Login failed: ' + error.message);
-      } else {
-        updateAuthUI();
+
+      try {
+        const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        if (response.ok && data.access_token) {
+          accessToken = data.access_token;
+          localStorage.setItem('supabase_access_token', accessToken);
+          await updateAuthUI();
+        } else {
+          alert('Login failed: ' + (data.error_description || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Network error: ' + error.message);
       }
     });
 
     signupButton.addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        alert('Sign up failed: ' + error.message);
-      } else {
-        alert('Sign up successful! Please check your email to confirm.');
+
+      try {
+        const response = await fetch(`${supabaseUrl}/auth/v1/signup`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          alert('Sign up successful! Please check your email to confirm.');
+        } else {
+          alert('Sign up failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Network error: ' + error.message);
       }
     });
 
     logoutButton.addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      updateAuthUI();
+      try {
+        const response = await fetch(`${supabaseUrl}/auth/v1/logout`, {
+          method: 'POST',
+          headers: getHeaders(true)
+        });
+        if (response.ok) {
+          accessToken = null;
+          userId = null;
+          localStorage.removeItem('supabase_access_token');
+          localStorage.removeItem('supabase_user_id');
+          await updateAuthUI();
+        } else {
+          const data = await response.json();
+          alert('Logout failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Network error: ' + error.message);
+      }
     });
 
     // Save document to Supabase
     saveButton.addEventListener('click', async () => {
-      const title = document.getElementById('docTitle').value || 'Untitled';
-      const content = editor.getMarkdown();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!accessToken || !userId) {
         alert('Please log in to save documents.');
         return;
       }
-      const { error } = await supabase
-        .from('documents')
-        .insert([{ title, content, user_id: user.id }]);
-      if (error) {
-        alert('Error saving document: ' + error.message);
-      } else {
-        alert('Document saved successfully!');
+
+      const title = document.getElementById('docTitle').value || 'Untitled';
+      const content = editor.getMarkdown();
+
+      try {
+        const response = await fetch(`${supabaseUrl}/rest/v1/documents`, {
+          method: 'POST',
+          headers: getHeaders(true),
+          body: JSON.stringify([{ title, content, user_id: userId }])
+        });
+        if (response.ok) {
+          alert('Document saved successfully!');
+        } else {
+          const data = await response.json();
+          alert('Error saving document: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Network error: ' + error.message);
       }
     });
 
     // Load latest document from Supabase
     loadButton.addEventListener('click', async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!accessToken || !userId) {
         alert('Please log in to load documents.');
         return;
       }
-      const { data, error } = await supabase
-        .from('documents')
-        .select('title, content')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      if (error) {
-        alert('Error loading document: ' + error.message);
-      } else if (data.length) {
-        document.getElementById('docTitle').value = data[0].title;
-        editor.setMarkdown(data[0].content);
-      } else {
-        alert('No documents found.');
+
+      try {
+        const response = await fetch(`${supabaseUrl}/rest/v1/documents?select=title,content&user_id=eq.${userId}&order=created_at.desc&limit=1`, {
+          method: 'GET',
+          headers: getHeaders(true)
+        });
+        const data = await response.json();
+        if (response.ok && data.length) {
+          document.getElementById('docTitle').value = data[0].title;
+          editor.setMarkdown(data[0].content);
+        } else if (response.ok) {
+          alert('No documents found.');
+        } else {
+          alert('Error loading document: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Network error: ' + error.message);
       }
     });
 

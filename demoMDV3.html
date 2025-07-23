@@ -46,7 +46,7 @@
 <body class="bg-gray-100">
   <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold mb-4">Markdown Editor with Grid.js, LaTeX, and Supabase</h1>
-    <!-- Authentication controls -->
+    <!-- Authentication controls --
     <div id="authSection" class="mb-4 flex items-center space-x-4">
       <div id="loginForm" class="flex space-x-2">
         <input id="email" type="email" placeholder="Email" class="border p-2 rounded">
@@ -59,11 +59,13 @@
         <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 ml-4">Logout</button>
       </div>
     </div>
+
+    -->
     <!-- Document controls -->
     <div class="mb-4 flex space-x-2">
       <input id="docTitle" type="text" placeholder="Document Title" class="border p-2 rounded flex-grow">
-      <button id="saveButton" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600" disabled>Save</button>
-      <button id="loadButton" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" disabled>Load Latest</button>
+      <button id="saveButton" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Save</button>
+      <button id="loadButton" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Load Latest</button>
     </div>
     <!-- Toast UI Editor container -->
     <div id="editor"></div>
@@ -84,16 +86,25 @@
   <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
   <!-- Grid.js JS -->
   <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-
   <script>
-    // Initialize Supabase client (replace with your project details)
-    const supabaseProjectID=`yfftwweuxxkrzlvqilvc` ;
-    const supabaseUrl = 'https://yfftwweuxxkrzlvqilvc.supabase.co';
+    // Supabase configuration
+    const supabaseUrl = 'https://yfftwweuxxkrzlvqilvc.supabase.co'; // Replace with your Supabase project URL
     const supabaseAnonKey=`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmZnR3d2V1eHhrcnpsdnFpbHZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMjYxMTEsImV4cCI6MjA2NzkwMjExMX0.7rcV3RBrH5kY3KLqD-NHLMhMyc62wIxxYG9VfW-i1tk` ;
-    const supabase = Supabase.createClient(supabaseUrl, supabaseAnonKey);    
-    
+    let accessToken = localStorage.getItem('supabase_access_token') || null;
+    let userId = localStorage.getItem('supabase_user_id') || null;
+
+    // Supabase API headers
+    const getHeaders = (includeToken = false) => {
+      const headers = {
+        'apikey': supabaseAnonKey,
+        'Content-Type': 'application/json'
+      };
+      if (includeToken && accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+      return headers;
+    };
+
     // Initialize Toast UI Editor
     const { Editor } = toastui;
     const editor = new Editor({
@@ -190,102 +201,114 @@
     });
 
     // Authentication handling
-    const loginForm = document.getElementById('loginForm');
-    const userSection = document.getElementById('userSection');
-    const userEmail = document.getElementById('userEmail');
-    const loginButton = document.getElementById('loginButton');
-    const signupButton = document.getElementById('signupButton');
-    const logoutButton = document.getElementById('logoutButton');
     const saveButton = document.getElementById('saveButton');
     const loadButton = document.getElementById('loadButton');
 
-    async function updateAuthUI() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        loginForm.classList.add('hidden');
-        userSection.classList.remove('hidden');
-        userEmail.textContent = user.email;
-        saveButton.disabled = false;
-        loadButton.disabled = false;
-      } else {
-        loginForm.classList.remove('hidden');
-        userSection.classList.add('hidden');
-        saveButton.disabled = true;
-        loadButton.disabled = true;
-      }
+    
+
+    
+
+    const SUPABASE_URL = 'https://yfftwweuxxkrzlvqilvc.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmZnR3d2V1eHhrcnpsdnFpbHZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMjYxMTEsImV4cCI6MjA2NzkwMjExMX0.7rcV3RBrH5kY3KLqD-NHLMhMyc62wIxxYG9VfW-i1tk';
+    const SUPABASE_TABLE = 'documents';
+
+    async function API_PlusMDMemo(title,Content){
+        console.log(title) ;
+        console.log(Content) ;
+
+        let jsonMemo={
+            title:title, 
+            content:Content,
+            user_id:"alexszhang@gmail.com"
+        } ;
+        let cURL = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}` ;
+        const response = await fetch(cURL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Prefer': 'resolution=merge-duplicates,return=representation'
+            },
+            body: JSON.stringify(jsonMemo)
+        });
+        //  body: JSON.stringify([{ title, content, user_id: userId }])
+
+        const result = await response.json();
+        if (response.ok) {
+            alert('Document saved successfully!');
+        }else{
+            const data = await response.json();
+          alert('Error saving document: ' + (data.error || 'Unknown error'));
+        }
     }
-
-    loginButton.addEventListener('click', async () => {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        alert('Login failed: ' + error.message);
-      } else {
-        updateAuthUI();
-      }
-    });
-
-    signupButton.addEventListener('click', async () => {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        alert('Sign up failed: ' + error.message);
-      } else {
-        alert('Sign up successful! Please check your email to confirm.');
-      }
-    });
-
-    logoutButton.addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      updateAuthUI();
-    });
 
     // Save document to Supabase
     saveButton.addEventListener('click', async () => {
-      const title = document.getElementById('docTitle').value || 'Untitled';
-      const content = editor.getMarkdown();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert('Please log in to save documents.');
-        return;
-      }
-      const { error } = await supabase
-        .from('documents')
-        .insert([{ title, content, user_id: user.id }]);
-      if (error) {
-        alert('Error saving document: ' + error.message);
-      } else {
-        alert('Document saved successfully!');
-      }
+
+        const title = document.getElementById('docTitle').value || 'Untitled';
+        const content = editor.getMarkdown();
+        await API_PlusMDMemo(title,content) ;
+        /*
+        try {
+            const response = await fetch(`${supabaseUrl}/rest/v1/documents`, {
+            method: 'POST',
+            headers: getHeaders(true),
+            body: JSON.stringify([{ title, content, user_id: userId }])
+            });
+            if (response.ok) {
+            alert('Document saved successfully!');
+            } else {
+            const data = await response.json();
+            alert('Error saving document: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Network error: ' + error.message);
+        }
+        */
     });
+
+    async function API_FetchMemos(){
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=title,content`, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        allNotes = await response.json();
+        console.log(allNotes) ;
+        return allNotes ;
+    }
 
     // Load latest document from Supabase
     loadButton.addEventListener('click', async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert('Please log in to load documents.');
-        return;
+        let allMemos = await API_FetchMemos() ;
+        console.log(allMemos) ;
+        /*
+        try {
+        const response = await fetch(`${supabaseUrl}/rest/v1/documents?select=title,content&user_id=eq.${userId}&order=created_at.desc&limit=1`, {
+          method: 'GET',
+          headers: getHeaders(true)
+        });
+        const data = await response.json();
+        if (response.ok && data.length) {
+          document.getElementById('docTitle').value = data[0].title;
+          editor.setMarkdown(data[0].content);
+        } else if (response.ok) {
+          alert('No documents found.');
+        } else {
+          alert('Error loading document: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Network error: ' + error.message);
       }
-      const { data, error } = await supabase
-        .from('documents')
-        .select('title, content')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      if (error) {
-        alert('Error loading document: ' + error.message);
-      } else if (data.length) {
-        document.getElementById('docTitle').value = data[0].title;
-        editor.setMarkdown(data[0].content);
-      } else {
-        alert('No documents found.');
-      }
+      */
     });
 
     // Initialize auth UI
-    updateAuthUI();
   </script>
 </body>
 </html>
