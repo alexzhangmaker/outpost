@@ -1,0 +1,77 @@
+body{
+    display: flex;
+    flex-direction: row;
+    width:100vw;
+    height: 100vh;
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+
+
+.leftPanel{
+    width:300px ;
+    height: 100vh;
+    background-color: yellowgreen;
+
+}
+
+.rightPanel{
+    /*width:80%;*/
+    height: 100vh;
+    background-color: beige;
+    flex-grow: 1;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.rightHeaderBar{
+    width: 100%;
+    height:60px;
+    background-color:azure;
+}
+.rightPanelMain{
+    width: 100%;
+    flex-grow: 1;
+    background-color: cadetblue;
+
+    display: flex;
+    flex-direction: row;
+}
+
+.workingSpace{
+    /*width: 80% ;*/
+    height: 100%;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    flex-grow: 1;
+
+    background-color: coral;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.workingFocus{
+    background-color: aliceblue;
+    width:98%;
+    height: 100%;
+    padding-top: 0px;
+    padding-bottom: 0px;
+
+}
+.workingAside{
+    width: 300px ;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex-grow: 0;
+
+    background-color: darkcyan;
+}
+
+.noShow{
+    display: none;
+}
