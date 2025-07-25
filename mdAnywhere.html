@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
 
+   <!-- Google Fonts: Roboto -->
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+
   <link rel="stylesheet" href="./css/outpostFW.css">
   <link rel="stylesheet" href="./css/cssMarkdown.css">
 
@@ -30,7 +33,15 @@
       CommonHTML: { linebreaks: { automatic: true } }
     });
   </script>
-
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+    .montserrat-Font-300 {
+      font-family: "Montserrat", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 300;
+      font-style: normal;
+    }
+  </style>
   <style>
 
 
@@ -43,6 +54,22 @@
     #idMemoList{
       width: 100%;
       height:100%;
+
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .memoListItem{
+      font-family: "Montserrat", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 400;
+      font-style: normal;
+
+      font-size: 16px;
+    }
+
+    .memoListItem:hover{
+      cursor: pointer;;
     }
   </style>
 </head>
@@ -51,7 +78,7 @@
   <div class="leftPanel"></div>
   <div class="rightPanel">
     <div class="rightHeaderBar">
-        <i class="bi-list" id="idBTNCollapseSidebar"></i>
+        <i class="bi-list outpostBTN" id="idBTNCollapseSidebar"></i>
     </div>
 
     <div class="rightPanelMain mdEditorContainer">
@@ -59,18 +86,23 @@
       <!---html code for Markdown Editor-->
       <div class="workingSpace">
         <div class="workingFocus">
-          <div>
+          <div class="mdEditorToolbar">
             <input id="docTitle" type="text" placeholder="Document Title" class="border p-2 rounded flex-grow">
-            <button id="saveButton" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Save</button>
-            <button id="PlusButton" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Plus Memo</button>
+            <div>
+              <i class="bi-hdd outpostBTN" id="saveButton"></i>
+            </div>
           </div>
         
           <div id="editor"></div>
         </div>
       </div>
       <div class="workingAside">
-        <button id="RemoveButton" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Remove Memo</button>
-        <button id="loadButton" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Load Latest</button>
+        <div class="workingAsideToolbar">
+          <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
+
+          <i class="bi-trash outpostBTN" id="RemoveButton"></i>
+          <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
+        </div>
 
         <div id="idMemoList">
 
@@ -111,6 +143,9 @@
     function hideSidebar(){
         document.querySelector('.leftPanel').classList.toggle('noShow') ;
     }
+  </script>
+  <script>
+    
   </script>
 </body>
 </html>

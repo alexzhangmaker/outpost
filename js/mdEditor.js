@@ -17,7 +17,7 @@ const initialMDContent = '# Welcome to the Markdown Editor\n\nType `$E=mc^2$` fo
 const { Editor } = toastui;
 const editor = new Editor({
   el: document.querySelector('#editor'),
-  height: '100%',
+  height: '90%',
   initialEditType: 'markdown',
   previewStyle: 'vertical',
   initialValue: initialMDContent,
@@ -107,10 +107,14 @@ function renderMemoList(memoArray){
   //idMemoList
   let tagMemoList = document.querySelector('#idMemoList');
   memoArray.forEach(jsonMemo=>{
-    let tagMemoItem = document.createElement('li') ;
+    let tagMemoItem = document.createElement('div') ;
+    tagMemoItem.classList.add('memoListItem') ;
     tagMemoList.appendChild(tagMemoItem) ;
     tagMemoItem.innerHTML=`
-      <div>${jsonMemo.title}</div>
+      <div>
+        <span>${jsonMemo.title}</span>
+        <i class="bi-trash outpostBTN" id="idBTNRemoveMemo"></i>
+    </div>
     ` ;
     tagMemoItem.dataset.memoID = jsonMemo.id ;
     tagMemoItem.addEventListener('click',async (event)=>{
@@ -209,6 +213,7 @@ async function API_LoadLatestMemo_Supabase() {
     );
     const data = await response.json();
     console.log(data) ;
+
     if (response.ok && data.length) {
       document.getElementById('docTitle').value = data[0].title;
       editor.setMarkdown(data[0].content);
@@ -345,3 +350,10 @@ document.getElementById('RemoveButton').addEventListener('click', async () => {
 
     await API_DeleteMDMemo(activeMemoID);
 });
+
+
+function changeHTMLTitle(csTitle){
+    document.title = csTitle;
+}
+
+changeHTMLTitle('new outpost') ;

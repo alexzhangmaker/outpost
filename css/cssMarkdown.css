@@ -26,4 +26,126 @@
 
 #editor {
   margin-top: 1rem;
+
+  flex-grow: 1;
+}
+
+
+.mdEditorToolbar{
+  height: 60px;
+  flex-grow: 0;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-left: 10px;
+  padding-right: 10px;
+  gap: 20px;
+  align-items: center;
+}
+
+
+
+/*
+#tableModal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+#tableModal.show {
+  display: flex;
+}
+
+#gridContainer {
+  width: 80%;
+  max-width: 800px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+#editor {
+  margin-top: 1rem;
+}
+*/
+.toastui-editor-contents .math {
+  font-style: normal;
+}
+/* Apply Google Font to Toast UI Editor */
+.toastui-editor-main-container,
+.toastui-editor-md-container,
+.toastui-editor-ww-container,
+.toastui-editor-contents {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  line-height: 1.5;
+}
+/* Ensure Markdown editor input area uses Roboto */
+.toastui-editor-md-container .toastui-editor-md-tab,
+.toastui-editor-md-container .CodeMirror {
+  font-family: 'Roboto', sans-serif !important;
+  /*font-family: "Montserrat", sans-serif !important;*/
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+/* Ensure preview pane uses Roboto, excluding MathJax elements */
+.toastui-editor-contents p,
+.toastui-editor-contents h1,
+.toastui-editor-contents h2,
+.toastui-editor-contents h3,
+.toastui-editor-contents h4,
+.toastui-editor-contents h5,
+.toastui-editor-contents h6,
+.toastui-editor-contents li,
+.toastui-editor-contents table,
+.toastui-editor-contents pre {
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Optional: Adjust MathJax font to complement Roboto, if needed */
+.MathJax, .MathJax_Display {
+  font-family: 'Roboto', sans-serif !important;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+.ProseMirror{
+  scrollbar-width:none;
+}
+
+/*
+.toastui-editor-md-preview{
+  scrollbar-width:thin;
+}
+*/
+
+/* Custom scrollbar for WebKit browsers */
+.element-class {
+  overflow: auto; /* or overflow-y: scroll; */
+}
+
+.toastui-editor-md-preview::-webkit-scrollbar {
+  width: 2px; /* Adjust scrollbar width */
+  height: 12px; /* Adjust scrollbar height (for horizontal scrollbars) */
+}
+
+.toastui-editor-md-preview::-webkit-scrollbar-thumb {
+  background: #888; /* Scrollbar thumb color */
+  border-radius: 6px; /* Rounded corners */
+}
+
+.toastui-editor-md-preview::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Scrollbar track color */
 }
