@@ -46,31 +46,6 @@
 
 
 
-    #editor{
-      width: 100% ;
-      height:100% ;
-    }
-
-    #idMemoList{
-      width: 100%;
-      height:100%;
-
-      overflow-x: hidden;
-      overflow-y: auto;
-    }
-
-    .memoListItem{
-      font-family: "Montserrat", sans-serif;
-      font-optical-sizing: auto;
-      font-weight: 400;
-      font-style: normal;
-
-      font-size: 16px;
-    }
-
-    .memoListItem:hover{
-      cursor: pointer;;
-    }
   </style>
 </head>
 
@@ -96,16 +71,16 @@
           <div id="editor"></div>
         </div>
       </div>
+
       <div class="workingAside">
         <div class="workingAsideToolbar">
           <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
-
           <i class="bi-trash outpostBTN" id="RemoveButton"></i>
           <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
         </div>
 
-        <div id="idMemoList">
-
+        <div class="memoBrowser">
+          <div id="idMemoList"></div>
         </div>
       </div>
       <!----end of markdown editor-->
