@@ -83,11 +83,18 @@
 .toastui-editor-md-container,
 .toastui-editor-ww-container,
 .toastui-editor-contents {
+  /*
   font-family: 'Roboto', sans-serif;
   font-size: 16px;
   font-optical-sizing: auto;
   font-weight: 400;
   line-height: 1.5;
+  */
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 16px;
+
 }
 /* Ensure Markdown editor input area uses Roboto */
 .toastui-editor-md-container .toastui-editor-md-tab,
@@ -121,10 +128,23 @@
 }
 
 
-.ProseMirror{
+.ProseMirror p, span{
   scrollbar-width:none;
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
 }
 
+.ProseMirror div{
+  scrollbar-width:none;
+  font-family: "Lato", sans-serif;
+  font-weight: 600;
+}
+
+.ProseMirror span{
+  scrollbar-width:none;
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+}
 /*
 .toastui-editor-md-preview{
   scrollbar-width:thin;

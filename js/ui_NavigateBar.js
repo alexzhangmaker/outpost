@@ -11,7 +11,6 @@ function injectOutpostStyle_Navbar(){
     linkTippy.href = 'https://unpkg.com/tippy.js@6/dist/tippy.css';
     document.head.appendChild(linkTippy);
 
-
     const styleElement = document.createElement('style');
     styleElement.textContent = `
         .vertical-toolbar {
