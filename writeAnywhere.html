@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>outpost.Memo</title>
+  <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+
+   <!-- Google Fonts: Roboto -->
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+
+  <link rel="stylesheet" href="./css/outpostFW.css">
+  <link rel="stylesheet" href="./css/cssMarkdown.css">
+
+   <!-- Tippy.js -->
+   <script src="https://unpkg.com/@popperjs/core@2"></script>
+   <script src="https://unpkg.com/tippy.js@6"></script>
+
+  <!-- Tailwind CSS for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- MathJax for LaTeX rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  <script>
+    // Configure MathJax
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      CommonHTML: { linebreaks: { automatic: true } }
+    });
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+    .montserrat-Font-300 {
+      font-family: "Montserrat", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 300;
+      font-style: normal;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+    .lato-thin {
+      font-family: "Lato", sans-serif;
+      font-weight: 100;
+      font-style: normal;
+    }
+
+    .lato-light {
+      font-family: "Lato", sans-serif;
+      font-weight: 300;
+      font-style: normal;
+    }
+
+    .lato-regular {
+      font-family: "Lato", sans-serif;
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    .lato-bold {
+      font-family: "Lato", sans-serif;
+      font-weight: 700;
+      font-style: normal;
+    }
+
+    .lato-black {
+      font-family: "Lato", sans-serif;
+      font-weight: 900;
+      font-style: normal;
+    }
+
+    .lato-thin-italic {
+      font-family: "Lato", sans-serif;
+      font-weight: 100;
+      font-style: italic;
+    }
+
+    .lato-light-italic {
+      font-family: "Lato", sans-serif;
+      font-weight: 300;
+      font-style: italic;
+    }
+
+    .lato-regular-italic {
+      font-family: "Lato", sans-serif;
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    .lato-bold-italic {
+      font-family: "Lato", sans-serif;
+      font-weight: 700;
+      font-style: italic;
+    }
+
+    .lato-black-italic {
+      font-family: "Lato", sans-serif;
+      font-weight: 900;
+      font-style: italic;
+    }
+
+  </style>
+  <style>
+    </style>
+  <style>
+
+
+
+  </style>
+</head>
+
+<body>
+  <div class="leftPanel leftPanelCollapse">
+    <style>
+        .navigationPanel{
+            flex-grow: 1;
+            height:100% ;
+            background-color: bisque;
+        }
+        .naviICONGroup{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+    <div class="navigationBar">
+        <div class="naviICONGroup">
+            <i class="bi-list outpostBTN" id="idBTNToggleNavBar"></i>
+            <i class="bi-trash outpostBTN" id="RemoveButton"></i>
+            <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
+        </div>
+        <div class="naviICONGroup">
+            <i class="bi-gear-wide-connected outpostBTN"></i>
+        </div>
+    </div>
+    <div class="navigationPanel noShow">
+        <div class="memoBrowser">
+            <div id="idMemoList"></div>
+        </div>
+    </div>
+  </div>
+  <div class="rightPanel">
+
+    <div class="rightPanelMain mdEditorContainer">
+
+      <!---html code for Markdown Editor-->
+      <div class="workingSpace">
+        <div class="workingFocus">
+          <div class="mdEditorToolbar">
+            <style>
+                .iconTools{
+                    display: flex;
+                    gap:10px ;
+                }
+
+                .inputToolbar{
+                    width:50% ;
+                }
+
+                #docTitle{
+                    font-size: 18px;
+                    width:100% ;
+                }
+
+                input[type="text"] {
+                    border: none; /* Removes all default borders */
+                    border-bottom: 1px solid #a39797; /* Applies a 2px solid dark gray bottom border */
+                    /*padding: 8px;
+                    width: 100%;*/
+                    box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+                }
+            </style>
+            <div class="inputToolbar">
+                <input id="docTitle" type="text" placeholder="Document Title">
+            </div>
+            <div class="iconTools">
+                <i class="bi-hdd outpostBTN" id="saveButton"></i>
+                <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
+                <!-----
+                <i class="bi-trash outpostBTN" id="RemoveButton"></i>
+                <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
+                --->
+            </div>
+          </div>
+        
+          <div id="editor"></div>
+        </div>
+      </div>
+
+      <div class="workingAside noShow">
+        <div class="workingAsideToolbar">
+          <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
+        </div>
+        <!-----
+        <div class="memoBrowser">
+          <div id="idMemoList"></div>
+        </div>
+    -->
+      </div>
+      <!----end of markdown editor-->
+
+    </div>
+  </div>
+
+
+
+
+
+  <!-- Modal for Grid.js table editor -->
+  <div id="tableModal">
+    <div id="gridContainer">
+      <div id="grid"></div>
+      <div class="mt-4 flex justify-end space-x-2">
+        <button id="saveTable" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Save Table</button>
+        <button id="closeModal" class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+  <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+  <script src="./js/ui_NavigateBar.js"></script>
+  <script src="./js/mdEditor.js"></script>
+
+
+  <script>
+
+
+    document.getElementById('idBTNToggleNavBar').addEventListener('click',(event)=>{
+        let tagLeftPanel = document.querySelector('.leftPanel') ;
+        //tagLeftPanel.style.width = "200px" ;
+        tagLeftPanel.classList.toggle('leftPanelCollapse');
+        tagLeftPanel.classList.toggle('leftPanelExpand');
+
+        //navigationPanel
+        tagLeftPanel.querySelector('.navigationPanel').classList.toggle('noShow') ;
+    }) ;
+  </script>
+  <script>
+    
+  </script>
+</body>
+</html>

@@ -32,7 +32,7 @@
 
 
 .mdEditorToolbar{
-  height: 60px;
+  /*height: 60px;*/
   flex-grow: 0;
 
   display: flex;
@@ -128,6 +128,21 @@
 }
 
 
+.ProseMirror::-webkit-scrollbar {
+  width: 2px; /* Adjust scrollbar width */
+  height: 12px; /* Adjust scrollbar height (for horizontal scrollbars) */
+}
+
+.ProseMirror::-webkit-scrollbar-thumb {
+  background: #888; /* Scrollbar thumb color */
+  border-radius: 6px; /* Rounded corners */
+}
+
+.ProseMirror::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Scrollbar track color */
+}
+
+
 .ProseMirror p, span{
   scrollbar-width:none;
   font-family: "Lato", sans-serif;
@@ -170,6 +185,9 @@
   background: #f1f1f1; /* Scrollbar track color */
 }
 
+.toastui-editor-md-preview{
+  overflow-x: hidden !important;
+}
 
 
 
