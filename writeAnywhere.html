@@ -36,6 +36,7 @@
     });
   </script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
     .montserrat-Font-300 {
       font-family: "Montserrat", sans-serif;
@@ -105,6 +106,14 @@
       font-style: italic;
     }
 
+
+    .roboto-400 {
+        font-family: "Roboto", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+        font-variation-settings:"wdth" 100;
+    }
   </style>
   <style>
     </style>
@@ -121,7 +130,12 @@
         .navigationPanel{
             flex-grow: 1;
             height:100% ;
-            background-color: bisque;
+            background-color: white;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
         }
         .naviICONGroup{
             display: flex;
@@ -140,8 +154,95 @@
         </div>
     </div>
     <div class="navigationPanel noShow">
+        <style>
+
+            
+
+            
+
+            .memoBrowser{
+                width:100% ;
+                flex-grow: 1;
+                overflow-y: hidden;
+                overflow-x: hidden;
+
+                padding-top: 40px;
+                padding-left: 5px;
+
+            }
+
+            #idMemoList{
+                width: 100%;
+                height:100%;
+
+                overflow-x: hidden;
+                overflow-y: auto;
+
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+        </style>
+        <style>
+
+            .memoListItem{
+                font-family: "Montserrat", sans-serif;
+                font-optical-sizing: auto;
+                font-weight: 400;
+                font-style: normal;
+                font-size: 16px;
+
+                padding-bottom: 2px;
+                margin-bottom: 2px;
+
+                display: flex;
+                flex-direction: row;
+                gap:5px;
+            }
+
+            .memoListItem:hover{
+                cursor: pointer;;
+            }
+
+            input[type="text"] {
+                border: none; /* Removes all default borders */
+                border-bottom: 1px solid #a39797; /* Applies a 2px solid dark gray bottom border */
+                width: 100%;*/
+                box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+            }
+            .searchInput{
+                display: flex;
+                flex-direction: row;
+                gap: 20px;
+                /*padding-left: 5px;*/
+                padding-right: 5px;
+                justify-content: space-between;
+            }
+
+            .text-container {
+                /*width: 100%;*//*200px;*/ /* Fixed width */
+                overflow-wrap: break-word; /* Wrap long words */
+                border-left: 2px solid black; /* Vertical line on the left */
+                padding-left: 10px; /* Space between line and text */
+                line-height: 1.5; /* Optional: Adjust line spacing for readability */
+                max-width: 250px;
+                flex-grow: 1;
+            }
+            .memoTools{
+                width:40px;
+            }
+
+        </style>
         <div class="memoBrowser">
-            <div id="idMemoList"></div>
+            <div class="searchInput">
+                <input  type="text" placeholder="search..." class="roboto-400">
+                <i class="bi-search"></i>
+            </div>
+            <div id="idMemoList">
+            </div>
         </div>
     </div>
   </div>
@@ -168,6 +269,10 @@
                     width:100% ;
                 }
 
+                #docTitle:focus{
+                    outline: none;
+                }
+
                 input[type="text"] {
                     border: none; /* Removes all default borders */
                     border-bottom: 1px solid #a39797; /* Applies a 2px solid dark gray bottom border */
@@ -177,7 +282,7 @@
                 }
             </style>
             <div class="inputToolbar">
-                <input id="docTitle" type="text" placeholder="Document Title">
+                <input id="docTitle" type="text" placeholder="Document Title" class="roboto-400">
             </div>
             <div class="iconTools">
                 <i class="bi-hdd outpostBTN" id="saveButton"></i>
@@ -226,6 +331,7 @@
   <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
   <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
   <script src="./js/ui_NavigateBar.js"></script>
+  <script src="./js/API_supaBase.js"></script>
   <script src="./js/mdEditor.js"></script>
 
 
