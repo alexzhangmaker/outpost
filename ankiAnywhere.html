@@ -259,8 +259,24 @@
             let tagCardBack = document.querySelector('.card-back') ;
             tagCardBack.style.fontSize="80px" ;
             if(tagCardBack.classList.contains('noShow'))tagCardBack.classList.remove('noShow') ;
-            tagCardBack.textContent = flashcards[currentIndex].English;
-            fitTextToWidth(tagCardBack) ;
+            if(flashcards[currentIndex].hasOwnProperty('Sentence')){
+                tagCardBack.classList.remove('text-container');
+                tagCardBack.style.flexDirection = 'column'; 
+                tagCardBack.innerHTML=`
+                    <div style="font-size:40px">${flashcards[currentIndex].English}</div>
+                    <div class="text-container" style="font-size:40px;width:100%">
+                        ${flashcards[currentIndex].Sentence}
+                    </div>
+                   
+                `;
+                let tagSentence = tagCardBack.querySelector('.text-container') ;
+                tagSentence.style.textAlign = "center";
+                fitTextToWidth(tagSentence) ;
+            }else{
+                tagCardBack.textContent = flashcards[currentIndex].English;
+                fitTextToWidth(tagCardBack) ;
+            }
+            
 
             //document.querySelector('.card-inner').classList.remove('flipped');
             const cardInner = document.querySelector('.card-inner');
