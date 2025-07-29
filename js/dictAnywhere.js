@@ -26,6 +26,7 @@ async function _loadGoogleDicts(){
     console.log(gGoogleDicts) ;
 }
 
+
 async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex,GoogleTTSAvailable){
     let tagOutput = document.createElement('li') ;
     tagOutput.classList.add('dictAnywhereItem') ;
@@ -77,6 +78,62 @@ async function renderDictOutput(tagOutputContainer,jsonDict,dictIndex,GoogleTTSA
 
 }
 
+
+async function renderGoogleOutput(tagOutputContainer,jsonDict){
+    let tagOutput = document.createElement('li') ;
+    tagOutput.classList.add('dictAnywhereItem') ;
+    let cDate = new Date(jsonDict.timeStamp) ;
+    console.log(cDate.toLocaleString()) ;
+
+    tagOutput.innerHTML=`
+        <div class="dictAnywhereItemContent">
+            <span>${jsonDict.textTh}/${jsonDict.meaningEn}</span>
+            <div class="dictAnywhereItemTools">
+                <i class="bi-play-circle flashBTN" id="idBTNPlayAudio"></i>
+                <i class="bi-recycle flashBTN noShow" id="idBTNDelete"></i>
+                <i class="bi-file flashBTN" id="idBTN2Check"></i>
+                <i class="bi-file-check flashBTN noShow" id="idBTNChecked"></i>
+            </div>
+        </div>
+    ` ;
+    tagOutputContainer.prepend(tagOutput) ;
+    //tagOutput.dataset.dictIndex = dictIndex ;
+    /*
+    if(isMobile()!=true){
+        tagOutput.querySelector('.dictAnywhereItemTools').classList.remove('noShow') ;
+    }
+    */
+
+    tagOutput.querySelector('#idBTN2Check').addEventListener('click',(event)=>{
+        event.target.classList.add('noShow') ;
+        tagOutput.querySelector('#idBTNChecked').classList.remove('noShow');            
+    }) ;
+
+    tagOutput.querySelector('#idBTNChecked').addEventListener('click',(event)=>{
+        event.target.classList.add('noShow') ;
+        tagOutput.querySelector('#idBTN2Check').classList.remove('noShow');
+    }) ;
+
+    /*
+    tagOutput.querySelector('#idBTNDelete').addEventListener('click',(event)=>{
+        tagOutput.remove();
+        
+        let dictIndex = parseInt(tagOutput.dataset.dictIndex) ;
+        gGoogleDicts.splice(dictIndex,1) ;
+        sync2Firebase(gGoogleDicts) ;
+        
+    }) ;
+    */
+    //idBTNPlayAudio
+    tagOutput.querySelector('#idBTNPlayAudio').addEventListener('click',(event)=>{
+        const text = jsonDict.textTh;//tagOutput.querySelector("text").value;
+        //const urlGoogleTTSProxy = `http://192.168.1.188:3010/tts?q=${text}` ;
+        const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${text}` ;
+        const audio = new Audio(urlGoogleTTSProxy);
+        audio.play();    
+    });
+
+}
 
 // Load voices (required on some platforms)
 speechSynthesis.onvoiceschanged = () => {};
@@ -164,10 +221,20 @@ async function _onClickGoogleTranslate(event){
     console.log(meaning) ;
 
     let tagGoogleOutput = tagMainWnd.querySelector('#idOutputGoogle') ;
+    let cmDate = new Date();
+    let jsonDict={
+        textTh:text,
+        meaningEn:meaning,
+        timeStamp:cmDate.getTime()
+    } ;
+    renderGoogleOutput(tagGoogleOutput,jsonDict) ;
+
+    /*
     let tagOutput = document.createElement('li') ;
     tagOutput.innerHTML=`${text}/${meaning}` ;
     //tagGoogleOutput.appendChild(tagOutput) ;
     tagGoogleOutput.prepend(tagOutput) ;
+    */
 
     let cDate = new Date() ;
     let jsonGoogleDict={
