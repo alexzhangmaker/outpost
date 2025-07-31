@@ -42,17 +42,7 @@
 
     <script>
         // Your Firebase project configuration (replace with your actual config)
-        /*
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-*/
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",//AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs
@@ -70,6 +60,8 @@ firebase.initializeApp(firebaseConfig);
 // Get Firebase service references
 const auth = firebase.auth();
 const database = firebase.database();
+
+
 const messagesRef = database.ref('secretMessages'); // Reference to your messages path
 
 // DOM elements
@@ -125,52 +117,6 @@ signOutBtn.addEventListener('click', () => {
         });
 });
 
-/*
-// Listener for authentication state changes
-auth.onAuthStateChanged((user) => {
-    currentUser = user; // Update the global currentUser variable
-
-    if (user) {
-        authStatusElement.textContent = `Signed in as: ${user.displayName} (${user.email})`;
-        signInBtn.style.display = 'none';
-        signOutBtn.style.display = 'inline-block';
-
-        // Check if the user is in the 'allowedUsers' list using a direct read
-        // IMPORTANT: The rules will determine if this read is allowed for this user.
-        console.log(user.uid) ;
-        //https://outpost-8d74e-d45f1.asia-southeast1.firebasedatabase.app/allowedUsers/jQLwTHsEEjTfmumlOWWlvvUKr5j1
-        database.ref('allowedUsers/' + user.uid).once('value')
-            .then(snapshot => {
-                console.log(snapshot) ;
-                if (snapshot.val() === true) {
-                    messageSection.style.display = 'block';
-                    accessDeniedSection.style.display = 'none';
-                    listenForMessages(); // Start listening for messages
-                } else {
-                    messageSection.style.display = 'none';
-                    accessDeniedSection.style.display = 'block';
-                    messagesList.innerHTML = ''; // Clear messages if not allowed
-                    console.warn("User is authenticated but not in the allowedUsers list.");
-                }
-            })
-            .catch(error => {
-                console.error("Error checking allowed user status:", error);
-                messageSection.style.display = 'none';
-                accessDeniedSection.style.display = 'block';
-            });
-
-    } else {
-        authStatusElement.textContent = 'Not signed in.';
-        signInBtn.style.display = 'inline-block';
-        signOutBtn.style.display = 'none';
-        messageSection.style.display = 'none';
-        accessDeniedSection.style.display = 'none'; // Hide if not signed in at all
-        messagesList.innerHTML = ''; // Clear messages
-        // Stop any active listeners if a user signs out
-        messagesRef.off();
-    }
-});
-*/
 // Listener for authentication state changes
 auth.onAuthStateChanged((user) => {
     currentUser = user; // Update the global currentUser variable

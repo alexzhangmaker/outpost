@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - My App</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script> <script src="firebase-config.js"></script> <script src="auth-guard.js" defer></script> <script src="dashboard.js" defer></script> </head>
+<body>
+    <h1>Welcome to your Dashboard!</h1>
+    <p id="currentUserInfo">Loading user info...</p>
+    <button id="signOutBtn">Sign Out</button>
+
+    <hr>
+    <h2>Secret Messages</h2>
+    <input type="text" id="messageInput" placeholder="Enter your secret message">
+    <button id="addMessageBtn">Add Message</button>
+    <div id="messagesList"></div>
+    <p id="accessDeniedSection" style="color: red; display: none;">Access to secret messages denied. You might not be an allowed user.</p>
+
+    </body>
+</html>
