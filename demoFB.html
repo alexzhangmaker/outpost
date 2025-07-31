@@ -124,6 +124,7 @@ signOutBtn.addEventListener('click', () => {
         });
 });
 
+/*
 // Listener for authentication state changes
 auth.onAuthStateChanged((user) => {
     currentUser = user; // Update the global currentUser variable
@@ -168,7 +169,65 @@ auth.onAuthStateChanged((user) => {
         messagesRef.off();
     }
 });
+*/
+// Listener for authentication state changes
+auth.onAuthStateChanged((user) => {
+    currentUser = user; // Update the global currentUser variable
 
+    console.log("onAuthStateChanged triggered. User object:", user); // Debugging: Check if 'user' is null or an object
+
+    if (user) {
+        authStatusElement.textContent = `Signed in as: ${user.displayName} (${user.email})`;
+        signInBtn.style.display = 'none';
+        signOutBtn.style.display = 'inline-block';
+
+        // --- NEW LOGIC HERE ---
+        // Get the ID token for the current user. 'true' forces a refresh of the token.
+        user.getIdToken(true)
+            .then(idToken => {
+                console.log("User ID Token obtained successfully."); // Debugging: Confirm token acquisition
+                // Now that we have a fresh token, proceed with the database read
+                console.log("Attempting to check allowed user status for UID:", user.uid); // Debugging: Confirm UID is present
+
+                database.ref('allowedUsers/' + user.uid).once('value')
+                    .then(snapshot => {
+                        console.log("Allowed user status snapshot value:", snapshot.val()); // Debugging: Check the value read
+                        if (snapshot.val() === true) {
+                            messageSection.style.display = 'block';
+                            accessDeniedSection.style.display = 'none';
+                            listenForMessages(); // Start listening for messages
+                        } else {
+                            messageSection.style.display = 'none';
+                            accessDeniedSection.style.display = 'block';
+                            messagesList.innerHTML = ''; // Clear messages if not allowed
+                            console.warn("User is authenticated but not in the allowedUsers list (value is not true).");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error checking allowed user status (after token refresh):", error); // This is where your error comes from
+                        messageSection.style.display = 'none';
+                        accessDeniedSection.style.display = 'block';
+                    });
+            })
+            .catch(error => {
+                console.error("Error getting user ID token:", error);
+                alert("Failed to get user token. Please try signing in again.");
+                // Optionally, force sign out if token acquisition fails repeatedly
+                auth.signOut();
+            });
+        // --- END NEW LOGIC ---
+
+    } else {
+        authStatusElement.textContent = 'Not signed in.';
+        signInBtn.style.display = 'inline-block';
+        signOutBtn.style.display = 'none';
+        messageSection.style.display = 'none';
+        accessDeniedSection.style.display = 'none'; // Hide if not signed in at all
+        messagesList.innerHTML = ''; // Clear messages
+        messagesRef.off(); // Stop any active listeners if a user signs out
+        console.log("User is signed out."); // Debugging: Confirm user is signed out
+    }
+});
 // --- Realtime Database Logic ---
 
 function listenForMessages() {
