@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Realtime DB Access</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #app { max-width: 600px; margin: 0 auto; border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
+        #auth-status { margin-bottom: 20px; font-weight: bold; }
+        button { padding: 10px 15px; margin-right: 10px; cursor: pointer; }
+        #messageInput { width: 70%; padding: 8px; margin-right: 10px; }
+        #messagesList { list-style: none; padding: 0; }
+        #messagesList li { background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Secret Message Board</h1>
+        <div id="auth-status">
+            Not signed in.
+        </div>
+        <button id="signInBtn">Sign In with Google</button>
+        <button id="signOutBtn" style="display: none;">Sign Out</button>
+
+        <hr>
+
+        <h2>Your Secret Messages</h2>
+        <div id="message-section" style="display: none;">
+            <input type="text" id="messageInput" placeholder="Enter your secret message">
+            <button id="addMessageBtn">Add Message</button>
+            <ul id="messagesList">
+                </ul>
+        </div>
+        <div id="access-denied" style="color: red; display: none;">
+            You do not have access to this section. Please sign in with an allowed Google Account.
+        </div>
+    </div>
+
+    <script>
+        // Your Firebase project configuration (replace with your actual config)
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+
+// Get Firebase service references
+const auth = firebase.auth();
+const database = firebase.database();
+const messagesRef = database.ref('secretMessages'); // Reference to your messages path
+
+// DOM elements
+const authStatusElement = document.getElementById('auth-status');
+const signInBtn = document.getElementById('signInBtn');
+const signOutBtn = document.getElementById('signOutBtn');
+const messageSection = document.getElementById('message-section');
+const accessDeniedSection = document.getElementById('access-denied');
+const messageInput = document.getElementById('messageInput');
+const addMessageBtn = document.getElementById('addMessageBtn');
+const messagesList = document.getElementById('messagesList');
+
+let currentUser = null; // To store the authenticated user object
+
+// --- Authentication Logic ---
+
+// Google Sign-In Provider
+const provider = new firebase.auth.GoogleAuthProvider();
+
+signInBtn.addEventListener('click', () => {
+    auth.signInWithPopup(provider)
+        .then((result) => {
+            // This gives you a Google Access Token. You can use it to access the Google API.
+            // const credential = result.credential;
+            // const token = credential.accessToken;
+            // The signed-in user info.
+            const user = result.user;
+            console.log("Signed in as:", user.displayName, user.uid);
+            // The auth.onAuthStateChanged listener will handle UI updates
+        })
+        .catch((error) => {
+            // Handle Errors here.
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            // The email of the user's account used.
+            // const email = error.email;
+            // The AuthCredential type that was used.
+            // const credential = error.credential;
+            console.error("Sign-in error:", errorCode, errorMessage);
+            alert("Sign-in failed: " + errorMessage);
+        });
+});
+
+signOutBtn.addEventListener('click', () => {
+    auth.signOut()
+        .then(() => {
+            console.log("User signed out.");
+            // The auth.onAuthStateChanged listener will handle UI updates
+        })
+        .catch((error) => {
+            console.error("Sign-out error:", error);
+            alert("Sign-out failed: " + error.message);
+        });
+});
+
+// Listener for authentication state changes
+auth.onAuthStateChanged((user) => {
+    currentUser = user; // Update the global currentUser variable
+
+    if (user) {
+        authStatusElement.textContent = `Signed in as: ${user.displayName} (${user.email})`;
+        signInBtn.style.display = 'none';
+        signOutBtn.style.display = 'inline-block';
+
+        // Check if the user is in the 'allowedUsers' list using a direct read
+        // IMPORTANT: The rules will determine if this read is allowed for this user.
+        database.ref('allowedUsers/' + user.uid).once('value')
+            .then(snapshot => {
+                if (snapshot.val() === true) {
+                    messageSection.style.display = 'block';
+                    accessDeniedSection.style.display = 'none';
+                    listenForMessages(); // Start listening for messages
+                } else {
+                    messageSection.style.display = 'none';
+                    accessDeniedSection.style.display = 'block';
+                    messagesList.innerHTML = ''; // Clear messages if not allowed
+                    console.warn("User is authenticated but not in the allowedUsers list.");
+                }
+            })
+            .catch(error => {
+                console.error("Error checking allowed user status:", error);
+                messageSection.style.display = 'none';
+                accessDeniedSection.style.display = 'block';
+            });
+
+    } else {
+        authStatusElement.textContent = 'Not signed in.';
+        signInBtn.style.display = 'inline-block';
+        signOutBtn.style.display = 'none';
+        messageSection.style.display = 'none';
+        accessDeniedSection.style.display = 'none'; // Hide if not signed in at all
+        messagesList.innerHTML = ''; // Clear messages
+        // Stop any active listeners if a user signs out
+        messagesRef.off();
+    }
+});
+
+// --- Realtime Database Logic ---
+
+function listenForMessages() {
+    // Clear previous listeners to avoid duplicates if re-authenticating
+    messagesRef.off();
+
+    // Listen for new messages added
+    messagesRef.on('child_added', (snapshot) => {
+        const message = snapshot.val();
+        const messageId = snapshot.key;
+        displayMessage(messageId, message.text, message.ownerUid);
+    });
+
+    // Listen for messages removed
+    messagesRef.on('child_removed', (snapshot) => {
+        const messageId = snapshot.key;
+        const listItem = document.getElementById(`msg-${messageId}`);
+        if (listItem) {
+            listItem.remove();
+        }
+    });
+
+    // Listen for messages changed (e.g., text updated)
+    messagesRef.on('child_changed', (snapshot) => {
+        const message = snapshot.val();
+        const messageId = snapshot.key;
+        const listItem = document.getElementById(`msg-${messageId}`);
+        if (listItem) {
+            listItem.querySelector('span').textContent = message.text;
+            // You might update other parts of the message display if needed
+        }
+    });
+}
+
+
+addMessageBtn.addEventListener('click', () => {
+    const messageText = messageInput.value.trim();
+    if (messageText && currentUser) {
+        const newMessageRef = messagesRef.push(); // Generate a unique ID for the message
+        newMessageRef.set({
+            text: messageText,
+            ownerUid: currentUser.uid, // Store the owner's UID
+            timestamp: firebase.database.ServerValue.TIMESTAMP // Firebase server timestamp
+        })
+        .then(() => {
+            messageInput.value = ''; // Clear input
+            console.log("Message added successfully!");
+        })
+        .catch((error) => {
+            console.error("Error adding message:", error);
+            alert("Failed to add message. Check your rules and user permissions.");
+        });
+    } else if (!currentUser) {
+        alert("Please sign in to add a message.");
+    }
+});
+
+function displayMessage(id, text, ownerUid) {
+    const listItem = document.createElement('li');
+    listItem.id = `msg-${id}`;
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = text;
+    listItem.appendChild(messageSpan);
+
+    if (currentUser && currentUser.uid === ownerUid) {
+        // Add a delete button if the current user is the owner
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.style.marginLeft = '10px';
+        deleteBtn.onclick = () => {
+            messagesRef.child(id).remove()
+                .then(() => console.log("Message deleted!"))
+                .catch(error => console.error("Error deleting message:", error));
+        };
+        listItem.appendChild(deleteBtn);
+    }
+
+    messagesList.appendChild(listItem);
+}
+
+// Initial state on page load
+auth.onAuthStateChanged(user => {
+    if (!user) {
+        // If not signed in initially, hide message section and show sign-in button
+        messageSection.style.display = 'none';
+        signInBtn.style.display = 'inline-block';
+        signOutBtn.style.display = 'none';
+        accessDeniedSection.style.display = 'none';
+    }
+    // The main onAuthStateChanged listener handles the rest
+});
+    </script>
+</body>
+</html>
