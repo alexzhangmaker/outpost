@@ -54,7 +54,7 @@ const firebaseConfig = {
 };
 */
 const firebaseConfig = {
-  apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+  apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",//AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs
   authDomain: "outpost-8d74e.firebaseapp.com",
   databaseURL: "https://outpost-8d74e-default-rtdb.firebaseio.com",
   projectId: "outpost-8d74e",
@@ -135,8 +135,11 @@ auth.onAuthStateChanged((user) => {
 
         // Check if the user is in the 'allowedUsers' list using a direct read
         // IMPORTANT: The rules will determine if this read is allowed for this user.
+        console.log(user.uid) ;
+        //https://outpost-8d74e-d45f1.asia-southeast1.firebasedatabase.app/allowedUsers/jQLwTHsEEjTfmumlOWWlvvUKr5j1
         database.ref('allowedUsers/' + user.uid).once('value')
             .then(snapshot => {
+                console.log(snapshot) ;
                 if (snapshot.val() === true) {
                     messageSection.style.display = 'block';
                     accessDeniedSection.style.display = 'none';
