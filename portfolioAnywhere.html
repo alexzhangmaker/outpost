@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Firebase Sheet Editor</title>
+  <meta charset="UTF-8" />
+  <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+  <style>
+    body{
+      overflow-x: hidden;
+      overflow-y: hidden;
+    }
+    .GridContainer{
+      height:800px ;
+    }
+
+    #idPortfolioGrid{
+      height:100%;
+    }
+
+    .gridjs-summary{
+      font-size: 18px;
+    }
+    .alertHolding{
+      background-color: black;
+      color: aqua;
+    }
+
+    tr{
+      font-size: 16px;
+
+    }
+    tr:hover{
+      color: blue;    
+      font-size: 20px;
+    }
+
+    button{
+      font-size: 12px;
+    }
+
+    select{
+      font-size: 12px;
+    }
+
+    label{
+      font-size: 12px;
+
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <button id="idBTNPortfolio">账户汇总</button>
+    <label for="idSelectAccount">Choose Account:</label>
+    <select id="idSelectAccount">
+      <option value="IB7075">IB7075</option>
+      <option value="IB6325">IB6325</option>
+      <option value="IB3979">IB3979</option>
+      <option value="IB1279">IB1279</option>
+      <option value="ZYXG">ZYXG</option>
+      <option value="LHZQ">LHZQ</option>
+      <option value="PAZQ">PAZQ</option>
+      <option value="ZSZQ">ZSZQ</option>
+      <option value="HTZQ">HTZQ</option>
+      <option value="GJZQ">GJZQ</option>
+      <option value="FTZQ">FTZQ</option>
+    </select>
+    <button id="idBTNAccount">分账户视图</button>
+    <button id="idBTNLedger">账本视图</button>
+    <button id="idBTNAssetTracking">资产流水</button>
+
+
+  </div>
+  <div class="GridContainer">
+    <div id="idPortfolioGrid"></div>
+  </div>
+
+
+  <script src="./js/accounting.js"></script>
+  <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+  <script>
+    let gGridObj = new gridjs.Grid() ;
+    let gRendered = false ;
+  </script>
+  <script>
+    document.querySelector("#idBTNPortfolio").addEventListener('click',async (event)=>{
+      const firebaseUrl = "https://aesop-portfolio.asia-southeast1.firebasedatabase.app/AggregatedHoldings.json";
+      let jsonPortfolio = [];
+      const res = await fetch(firebaseUrl);
+      jsonPortfolio = await res.json();
+      renderMVAggrPortfolios(jsonPortfolio);
+    }) ;
+
+
+    document.querySelector("#idBTNAccount").addEventListener('click',async (event)=>{
+      let cAccountSelected = document.querySelector('#idSelectAccount').value ;
+      //alert(cAccountSelected) ;
+      const firebaseUrl = `https://aesop-portfolio.asia-southeast1.firebasedatabase.app/holdingsWithPEPer_${cAccountSelected}.json`;
+      let jsonAccountHolding = [];
+      const res = await fetch(firebaseUrl);
+      jsonAccountHolding = await res.json();
+      //renderTable(jsonPortfolio);
+      console.log(jsonAccountHolding) ;
+      renderMVAccount(jsonAccountHolding) ;
+
+    }) ;
+
+    //https://aesop-portfolio.asia-southeast1.firebasedatabase.app/ledger
+    document.querySelector("#idBTNLedger").addEventListener('click',async (event)=>{
+      let cAccountSelected = document.querySelector('#idSelectAccount').value ;
+      //alert(cAccountSelected) ;
+      const firebaseUrl = `https://aesop-portfolio.asia-southeast1.firebasedatabase.app/ledger.json`;
+      let ledger = [];
+      const res = await fetch(firebaseUrl);
+      ledger = await res.json();
+      //renderTable(jsonPortfolio);
+      console.log(ledger) ;
+      renderMVLedger(ledger) ;
+
+    }) ;
+
+    
+    document.querySelector("#idBTNAssetTracking").addEventListener('click',async (event)=>{
+      let cAccountSelected = document.querySelector('#idSelectAccount').value ;
+      //alert(cAccountSelected) ;
+      const firebaseUrl = `https://aesop-portfolio.asia-southeast1.firebasedatabase.app/assetTracker.json`;
+      let assetLog = [];
+      const res = await fetch(firebaseUrl);
+      assetLog = await res.json();
+      //renderTable(jsonPortfolio);
+      console.log(assetLog) ;
+      renderMVAssetLog(assetLog) ;
+
+    }) ;
+  </script>
+  <script>
+    
+    function renderMVAssetLog(assetLog) {
+      document.getElementById("idPortfolioGrid").innerHTML='' ;
+      if (!Array.isArray(assetLog)) return;
+
+      let gridData=[] ;
+
+      assetLog.forEach(account => {
+        let cDate = new Date(account.date) ;
+
+        let holdingRow = [
+          /*account.date,*/
+          cDate.toLocaleDateString(),
+          account.TOTAL,
+          account.IB7075,
+          account.IB1279,
+          account.IB3979,
+          account.IB6325,
+          account.HTZQ,
+          account.GJZQ,
+          account.PAZQ,
+          account.ZSZQ,
+          account.FTZQ,
+          account.LHZQ,
+          account.ZYXG,
+          account.BC_POLICY_3,
+          account.RS_POLICY_2,
+          account.ZSXN_POLICY,
+          account.ZSYH,
+          account.ARISE
+        ] ;
+        console.log(account) ;
+        gridData.push(holdingRow) ;
+      });
+
+      console.log(gridData) ;
+      gGridObj.updateConfig({
+        columns: [
+          "日期", 
+          {
+            name:"汇总合计",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"IB7075",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"IB1279",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"IB3979",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"IB6325",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"HTZQ",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"GJZQ",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"PAZQ",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"ZSZQ",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"FTZQ",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"LHZQ",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"ZYXG",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"香港保险",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"人寿保险",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"信诺保险",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"银行现金",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"泰国房产",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          }
+        ],
+
+        //pagination: true,
+        pagination: {
+          limit: 20
+        },
+        //search: true,
+        //sort: true,
+        resizable: true,
+        fixedHeader: true,
+        /*height: '800px',*/
+        data: gridData,
+        style: {
+          td: {
+            border: '1px solid #ccc',
+            'padding-top':'5px',
+            'padding-bottom':'5px',
+            //'text-align': 'right'
+          },
+          table: {
+            'font-size': '18px',
+            'font-family': "Fira Sans Condensed",
+            'font-weight': '400',
+            'font-style': 'normal'
+          }
+        }
+      });
+      if(gRendered==false){
+        gRendered = true ;
+        gGridObj.render(document.getElementById("idPortfolioGrid"));   
+      }else{
+        gGridObj.forceRender(document.getElementById("idPortfolioGrid"));      
+      }
+    }
+  </script>
+  <script>
+    //refer https://gridjs.io/
+    //refer https://openexchangerates.github.io/accounting.js/
+
+    
+    function renderMVAggrPortfolios(dataArray) {
+      document.getElementById("idPortfolioGrid").innerHTML='' ;
+
+      if (!Array.isArray(dataArray)) return;
+
+      const filterPortfolios = dataArray.filter((jsonHolding) =>{
+        if(jsonHolding.holding == 0) return false ;
+        //if(jsonHolding.quoteType == "priority" || jsonHolding.quoteType == "debt") return false ;
+
+        //priority
+        return true ;
+      });
+      //quoteType
+
+      let gridData=[] ;
+      filterPortfolios.forEach(jsonHolding => {
+
+        let holdingRow = [
+            /*jsonHolding.ticker,*/
+            jsonHolding.company,
+            jsonHolding.holding,
+            jsonHolding.costPerShare,
+            jsonHolding.current_value,
+            jsonHolding.quote,
+            jsonHolding.total_cost,
+            jsonHolding.pct_gain_loss
+        ] ;
+        gridData.push(holdingRow) ;
+      });
+
+      console.log(gridData) ;
+      gGridObj.updateConfig({
+        columns: [
+          "公司", 
+          {
+            name:"持股",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"每股成本",
+            formatter: (cell) =>`${accounting.formatNumber(cell,2)}`
+          },{
+            name:"价值TTM",
+            formatter: (cell) =>`${accounting.formatNumber(cell,2)}`
+          },{
+            name:"价格TTM",
+            formatter: (cell) =>`${accounting.formatNumber(cell,2)}`
+          },{
+            name:"总成本",
+            formatter: (cell) =>`${accounting.formatNumber(cell,2)}`
+          },{
+            name:"收益率%",
+            formatter: (cell) =>`${accounting.toFixed(cell,2)}%`
+          }
+        ],
+
+        //pagination: true,
+        pagination: {
+          limit: 20
+        },
+        search: true,
+        sort: true,
+        resizable: true,
+        fixedHeader: true,
+        /*height: '800px',*/
+        data: gridData,
+        style: {
+          td: {
+            border: '1px solid #ccc',
+            'padding-top':'5px',
+            'padding-bottom':'5px',
+            //'text-align': 'right'
+          },
+          table: {
+            'font-size': '18px',
+            'font-family': "Fira Sans Condensed",
+            'font-weight': '400',
+            'font-style': 'normal'
+          }
+        }
+      });
+      if(gRendered==false){
+        gRendered = true ;
+        gGridObj.render(document.getElementById("idPortfolioGrid"));   
+      }else{
+        gGridObj.forceRender(document.getElementById("idPortfolioGrid"));      
+      }
+    }
+
+    
+    async function updateFirebase() {
+      const res = await fetch(firebaseUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      alert("Data updated in Firebase!");
+    }
+
+  </script>
+  <script>
+    /*
+    {
+        "PEPert": 0.49565018315018317,
+        "accountID": "IB7075",
+        "company": "BN",
+        "costPerShare": 43.68,
+        "currency": "USD",
+        "exchangeRate": 7.2,
+        "holding": 400,
+        "quote": 65.33,
+        "ticker": "BN",
+        "totalCost": 17472,
+        "valueTTM": 26132
+    }
+    */
+    function renderMVAccount(holdings) {
+      document.getElementById("idPortfolioGrid").innerHTML='' ;
+      if (!Array.isArray(holdings)) return;
+
+      const filterPortfolios = holdings.filter((jsonHolding) =>{
+        if(jsonHolding.holding == 0) return false ;
+        //if(jsonHolding.quoteType == "priority" || jsonHolding.quoteType == "debt") return false ;
+
+        return true ;
+      });
+      //quoteType
+
+      let gridData=[] ;
+      filterPortfolios.forEach(jsonHolding => {
+
+        let holdingRow = [
+          jsonHolding.company,
+          jsonHolding.holding,
+          jsonHolding.costPerShare,
+          jsonHolding.quote,
+          (jsonHolding.quote/jsonHolding.costPerShare-1)*100
+        ] ;
+        gridData.push(holdingRow) ;
+      });
+
+      console.log(gridData) ;
+      gGridObj.updateConfig({
+        columns: [
+          "公司", 
+          {
+            name:"持股",
+            formatter: (cell) =>`${accounting.formatNumber(cell)}`
+          },{
+            name:"每股成本",
+            formatter: (cell) =>`${accounting.formatNumber(cell,2)}`
+          },{
+            name:"价格TTM",
+            formatter: (cell) =>`${accounting.formatNumber(cell,2)}`
+          },{
+            name:"收益率%",
+            formatter: (cell) =>`${accounting.toFixed(cell,2)}%`
+          }
+        ],
+
+        //pagination: true,
+        pagination: {
+          limit: 20
+        },
+        search: true,
+        sort: true,
+        resizable: true,
+        fixedHeader: true,
+        /*height: '800px',*/
+        data: gridData,
+        style: {
+          td: {
+            border: '1px solid #ccc',
+            'padding-top':'5px',
+            'padding-bottom':'5px',
+            //'text-align': 'right'
+          },
+          table: {
+            'font-size': '18px',
+            'font-family': "Fira Sans Condensed",
+            'font-weight': '400',
+            'font-style': 'normal'
+          }
+        }
+      });
+      if(gRendered==false){
+        gRendered = true ;
+        gGridObj.render(document.getElementById("idPortfolioGrid"));   
+      }else{
+        gGridObj.forceRender(document.getElementById("idPortfolioGrid"));      
+      }
+    }
+  </script>
+  <script>
+    
+    /*
+    {
+        "AssetType": "equity",
+        "Cash": 1880,
+        "Currency": "USD",
+        "Debt": 0,
+        "ValueTTMCNY": 1171444.82,
+        "assetID": "IB7075",
+        "marketValueCNY": 1157890.02,
+        "timeStamp": "2025-08-03"
+    }
+    */
+    function renderMVLedger(ledger) {
+      document.getElementById("idPortfolioGrid").innerHTML='' ;
+      if (!Array.isArray(ledger)) return;
+
+      let gridData=[] ;
+      ledger.forEach(ledgerItem => {
+
+        let ledgerRow = [
+          ledgerItem.assetID,
+          ledgerItem.AssetType,
+          ledgerItem.Currency,
+          ledgerItem.marketValueCNY,
+          ledgerItem.Cash,
+          ledgerItem.Debt,
+          ledgerItem.ValueTTMCNY
+
+        ] ;
+        gridData.push(ledgerRow) ;
+      });
+
+      console.log(gridData) ;
+      gGridObj.updateConfig({
+        columns: [
+          "账户/资产", "类型","货币",
+          ,{
+            name:"市值TTM",
+            formatter: (cell) =>`${accounting.formatNumber(cell,2)}`
+          },{
+            name:"现金",
+            formatter: (cell) =>`${accounting.formatNumber(cell,2)}`
+          },{
+            name:"负债",
+            formatter: (cell) =>`${accounting.toFixed(cell,2)}`
+          },{
+            name:"总计价值(CNY)",
+            formatter: (cell) =>`${accounting.formatNumber(cell,0)}`
+          }
+        ],
+
+        //pagination: true,
+        pagination: {
+          limit: 20
+        },
+        search: true,
+        sort: true,
+        resizable: true,
+        fixedHeader: true,
+        /*height: '800px',*/
+        data: gridData,
+        style: {
+          td: {
+            border: '1px solid #ccc',
+            'padding-top':'5px',
+            'padding-bottom':'5px',
+            //'text-align': 'right'
+          },
+          table: {
+            'font-size': '18px',
+            'font-family': "Fira Sans Condensed",
+            'font-weight': '400',
+            'font-style': 'normal'
+          }
+        }
+      });
+      if(gRendered==false){
+        gRendered = true ;
+        gGridObj.render(document.getElementById("idPortfolioGrid"));   
+      }else{
+        gGridObj.forceRender(document.getElementById("idPortfolioGrid"));      
+      }
+    }
+  </script>
+  <script>
+
+
+  </script>
+</body>
+</html>
