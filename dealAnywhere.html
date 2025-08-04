@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Input Component</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-size: 14px;
+        }
+        input, select {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .parsed-output {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .autocomplete-container {
+            position: relative;
+        }
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 10;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .autocomplete-list li {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .autocomplete-list li:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="input-container">
+        <div class="input-group">
+            <input type="checkbox" id="action" checked>
+        </div>
+        <div class="input-group">
+            <select id="market">
+                <option value="US">US</option>
+                <option value="HK">HK</option>
+                <option value="LSE">LSE</option>
+                <option value="TSE">TSE</option>
+                <option value="SS">SS</option>
+                <option value="SZ">SZ</option>
+            </select>
+        </div>
+        <div class="input-group autocomplete-container">
+            <input type="text" id="ticker" placeholder="Enter ticker">
+            <ul id="autocompleteList" class="autocomplete-list" style="display: none;"></ul>
+        </div>
+        <div class="input-group">
+            <input type="text" id="quantity" placeholder="Quantity">
+        </div>
+        <div class="input-group">
+            <input type="number" id="price" step="0.01" min="0" placeholder="Price">
+        </div>
+        <div class="input-group">
+            <input type="text" id="date" placeholder="YYYY-MM-DD">
+        </div>
+    </div>
+    <div id="error" class="error"></div>
+    <div id="parsedOutput" class="parsed-output"></div>
+
+    <script>
+        // Sample ticker list for autocomplete (ordered)
+        const tickers = {
+            US: ['AAPL', 'GOOGL', 'MSFT', 'TSLA'],
+            HK: ['01222', '0700', '0939', '3988'],
+            LSE: ['BP', 'HSBA', 'VOD', 'GSK'],
+            TSE: ['7203', '6758', '9432', '6501'],
+            SS: ['600519', '601318', '601688', '600036'],
+            SZ: ['002241', '000333', '300033', '002007']
+        };
+
+        const actionInput = document.getElementById('action');
+        const marketSelect = document.getElementById('market');
+        const tickerInput = document.getElementById('ticker');
+        const quantityInput = document.getElementById('quantity');
+        const priceInput = document.getElementById('price');
+        const dateInput = document.getElementById('date');
+        const errorDiv = document.getElementById('error');
+        const parsedOutput = document.getElementById('parsedOutput');
+        const autocompleteList = document.getElementById('autocompleteList');
+
+        // Initialize Cleave.js for quantity and date
+        new Cleave('#quantity', {
+            numeral: true,
+            numeralThousandsGroupStyle: 'none',
+            numeralDecimalScale: 0,
+            numeralPositiveOnly: true
+        });
+
+        new Cleave('#date', {
+            date: true,
+            datePattern: ['Y', 'm', 'd'],
+            delimiter: '-'
+        });
+
+        // Autocomplete for ticker
+        tickerInput.addEventListener('input', () => {
+            const market = marketSelect.value;
+            const query = tickerInput.value.toUpperCase();
+            autocompleteList.innerHTML = '';
+            autocompleteList.style.display = 'none';
+
+            if (query) {
+                const filteredTickers = tickers[market].filter(t => t.startsWith(query));
+                if (filteredTickers.length) {
+                    filteredTickers.forEach(ticker => {
+                        const li = document.createElement('li');
+                        li.textContent = ticker;
+                        li.addEventListener('click', () => {
+                            tickerInput.value = ticker;
+                            autocompleteList.style.display = 'none';
+                            quantityInput.focus(); // Move focus to next input
+                        });
+                        autocompleteList.appendChild(li);
+                    });
+                    autocompleteList.style.display = 'block';
+                }
+            }
+        });
+
+        // Hide autocomplete on click outside
+        document.addEventListener('click', (e) => {
+            if (!tickerInput.contains(e.target) && !autocompleteList.contains(e.target)) {
+                autocompleteList.style.display = 'none';
+            }
+        });
+
+        // Handle TAB and ENTER for navigation
+        const inputs = [actionInput, marketSelect, tickerInput, quantityInput, priceInput, dateInput];
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === 'Tab') {
+                    e.preventDefault();
+                    const nextIndex = (index + 1) % inputs.length;
+                    inputs[nextIndex].focus();
+                    if (input === tickerInput && autocompleteList.style.display === 'block' && autocompleteList.children.length > 0) {
+                        // Select first autocomplete suggestion on ENTER
+                        tickerInput.value = autocompleteList.children[0].textContent;
+                        autocompleteList.style.display = 'none';
+                        inputs[nextIndex].focus();
+                    }
+                }
+            });
+        });
+
+        // Validate and parse on input change
+        inputs.forEach(input => {
+            input.addEventListener('change', validateAndParseInput);
+            input.addEventListener('input', validateAndParseInput);
+        });
+
+        function validateAndParseInput() {
+            errorDiv.textContent = '';
+            parsedOutput.textContent = '';
+
+            const action = actionInput.checked ? 'BUY' : 'SELL';
+            const market = marketSelect.value;
+            const ticker = tickerInput.value.toUpperCase();
+            const quantity = quantityInput.value;
+            const price = priceInput.value;
+            const date = dateInput.value;
+
+            // Validate ticker
+            if (!ticker || !/^[A-Za-z0-9]+$/.test(ticker)) {
+                errorDiv.textContent = 'Invalid ticker format';
+                return;
+            }
+            if (!tickers[market].includes(ticker)) {
+                errorDiv.textContent = `Ticker ${ticker} not found in ${market} market`;
+                return;
+            }
+
+            // Validate quantity
+            if (!/^\d+$/.test(quantity) || parseInt(quantity) <= 0) {
+                errorDiv.textContent = 'Quantity must be a positive integer';
+                return;
+            }
+
+            // Validate price
+            if (!price || parseFloat(price) <= 0) {
+                errorDiv.textContent = 'Price must be a positive number';
+                return;
+            }
+
+            // Validate date
+            const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+            if (!datePattern.test(date)) {
+                errorDiv.textContent = 'Date must be in YYYY-MM-DD format';
+                return;
+            }
+            const parsedDate = new Date(date);
+            if (isNaN(parsedDate.getTime())) {
+                errorDiv.textContent = 'Invalid date';
+                return;
+            }
+
+            // Display parsed output
+            parsedOutput.innerHTML = `
+                <strong>Parsed Trade:</strong><br>
+                Action: ${action}<br>
+                Market: ${market}<br>
+                Ticker: ${ticker}<br>
+                Quantity: ${quantity}<br>
+                Price: ${price}<br>
+                Date: ${date}
+            `;
+        }
+    </script>
+</body>
+</html>

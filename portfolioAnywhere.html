@@ -148,9 +148,9 @@
         let cDate = new Date(account.date) ;
 
         let holdingRow = [
-          /*account.date,*/
-          cDate.toLocaleDateString(),
-          account.TOTAL,
+          account.timeStamp,
+          /*cDate.toLocaleDateString(),*/
+          account.ValueTTMCNY,
           account.IB7075,
           account.IB1279,
           account.IB3979,
@@ -162,10 +162,10 @@
           account.FTZQ,
           account.LHZQ,
           account.ZYXG,
-          account.BC_POLICY_3,
-          account.RS_POLICY_2,
-          account.ZSXN_POLICY,
-          account.ZSYH,
+          account.BCBX,
+          account.RSBX,
+          account.XNBX,
+          account.ZGYH,
           account.ARISE
         ] ;
         console.log(account) ;
@@ -275,7 +275,7 @@
 
       const filterPortfolios = dataArray.filter((jsonHolding) =>{
         if(jsonHolding.holding == 0) return false ;
-        //if(jsonHolding.quoteType == "priority" || jsonHolding.quoteType == "debt") return false ;
+        if(jsonHolding.quoteType == "priority" || jsonHolding.quoteType == "debt") return false ;
 
         //priority
         return true ;
