@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trade Input Form</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
     <style>
         body {
@@ -134,6 +135,13 @@
         .noShow{
             display: none;
         }
+
+        .outpostBTN{
+            font-size: 18px;
+        }
+        .outpostBTN:hover{
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -152,6 +160,7 @@
             <div class="input-group">
                 <label for="account">Account</label>
                 <select id="account" name="account">
+                    <option value="IB7075">IB7075</option>
                     <option value="personal">Personal</option>
                     <option value="business">Business</option>
                     <option value="retirement">Retirement</option>
@@ -185,6 +194,10 @@
             <div class="input-group">
                 <label for="date">Date</label>
                 <input type="text" id="date" name="date" placeholder="YYYY-MM-DD">
+            </div>
+            <div class="input-group">
+                <label for="memo">memo</label>
+                <textarea type="text" id="memo" name="memo" placeholder="memo..."></textarea>
             </div>
             <div class="input-group">
                 <button type="submit">Submit Trade</button>
@@ -239,8 +252,17 @@
 
                     <span>${jsonDeal.cleared}</span>
 
-
+                    <i class="bi-x-square outpostBTN" id="idBTNCancelDeal"></i>
+                    <i class="bi-check2-square outpostBTN" id="idBTNCheckInDeal"></i>
                 ` ;
+
+                tagDeal.querySelector('#idBTNCancelDeal').addEventListener('click',async (event)=>{
+                    alert('cancel') ;
+                }) ;
+                tagDeal.querySelector('#idBTNCheckInDeal').addEventListener('click',async (event)=>{
+                    alert('checkIn') ;
+                }) ;
+
             }
             dealKeys = Object.keys(jsonDealLogs) ;
             console.log(dealKeys) ;
@@ -253,7 +275,7 @@
     <script>
         // Sample ticker list for autocomplete (ordered)
         const tickers = {
-            US: ['AAPL', 'GOOGL', 'MSFT', 'TSLA'],
+            US: ['AAPL', 'GOOGL', 'MSFT', 'TSLA','BRK-B'],
             HK: ['01222', '0700', '0939', '3988'],
             LSE: ['BP', 'HSBA', 'VOD', 'GSK'],
             TSE: ['7203', '6758', '9432', '6501'],
@@ -358,11 +380,13 @@
             const price = priceInput.value;
             const date = dateInput.value;
 
+            /*
             // Validate ticker
             if (!ticker || !/^[A-Za-z0-9]+$/.test(ticker)) {
                 errorDiv.textContent = 'Invalid ticker format';
                 return null;
             }
+            */
             if (!tickers[market].includes(ticker)) {
                 errorDiv.textContent = `Ticker ${ticker} not found in ${market} market`;
                 return null;

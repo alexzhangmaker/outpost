@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>box.Anywhere</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            /*max-width: 900px;*/
+            margin: 20px auto;
+            padding: 20px;
+        }
+        
+    </style>
+    <style>
+        .noShow{
+            display: none;
+        }
+
+        .outpostBTN{
+            font-size: 18px;
+        }
+        .outpostBTN:hover{
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <label for="password">Password:</label><br>
+    <input type="password" id="password" name="password" required><br><br>
+    <div contenteditable="true" class="boxContent" id="idEditorBoxContent">mail...</div>
+    <button id="idBTNListBox">list</button>
+
+    <button id="idBTNEncode">encode</button>
+
+    <div class="boxContainer"></div>
+    <script src="./outpostCryptoAPI.js"></script>
+
+<script>
+
+let jsonContent={
+    "boxID":'boxIDDemo1',
+    "name":"alexszhang",
+    "Password":"ChinaNO0001",
+    "Computer":"iMacBook Air"
+};
+
+function genBoxID(){
+    const array = new Uint16Array(1);
+    window.crypto.getRandomValues(array);
+    // To get a number between 1000 and 9999 (inclusive)
+    const random4Digit = 1000 + (array[0] % 9000);
+    console.log(random4Digit);
+    let now = dayjs() ;
+    let cDate = now.format("YYYYMMDD") ;
+    return `${cDate}${random4Digit}` ;
+}
+
+document.getElementById('idBTNEncode').addEventListener('click',async (event)=>{
+    let password = document.getElementById('password').value ;
+    let boxContent  = document.getElementById('idEditorBoxContent').innerText ;
+    let jsonEncoded = await encryptData(boxContent, password);
+
+    let jsonBox={
+        boxID:genBoxID(),//jsonContent.boxID,
+        title:'demo',
+        owner:"alexszhang@gmail.com",
+        timeStamp:"2025-08-05",
+        memo:'memo',
+        boxContent:jsonEncoded
+    } ;
+    
+    let urlSafeBox_FB = `https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/gatekeeper/${jsonBox.boxID}.json` ;
+    let putResponse = await fetch(urlSafeBox_FB, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json',},
+            body: JSON.stringify(jsonBox)
+    });
+    if (!putResponse.ok) {
+        console.log(`Failed to logDeal : ${putResponse.statusText}`);
+    }
+    console.log("logDeal successfully!");
+}) ;
+
+async function renderBox(tagContainer,jsonBox){
+    let password = document.getElementById('password').value ;
+    const decrypted = await decryptData(jsonBox.boxContent.encrypted, password, 
+                            jsonBox.boxContent.salt, 
+                            jsonBox.boxContent.iv);
+    let tagBox = document.createElement('details') ;
+    tagBox.innerHTML=`
+        <summary>${jsonBox.title}</summary>
+        <div>
+            <button id="idBTNDecodeBox">decode</button>
+            <div id="idBoxContent">${decrypted}</div>
+        </div>
+    ` ;
+
+    tagContainer.appendChild(tagBox) ;
+    tagBox.querySelector('#idBTNDecodeBox').addEventListener('click',async (event)=>{
+    }) ;
+}
+
+document.getElementById('idBTNListBox').addEventListener('click',async (event)=>{
+    let urlSafeBox_FB = `https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/gatekeeper.json` ;
+    let result = await fetch(urlSafeBox_FB) ;
+    let jsonBoxes = await result.json() ;
+    console.log(jsonBoxes) ;
+    boxKeys = Object.keys(jsonBoxes) ;
+    console.log(boxKeys) ;
+
+    let tagContainer = document.querySelector(".boxContainer");
+    tagContainer.innerHTML='' ;
+    for(let i=0;i<boxKeys.length;i++){
+        await renderBox(tagContainer,jsonBoxes[boxKeys[i]]) ;
+    }
+}) ;
+</script>
+        
+</body>
+</html>
