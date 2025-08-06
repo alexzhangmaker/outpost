@@ -20,7 +20,148 @@ const _funcOnHome=async (event)=>{
     console.log('app OnHome') ;
 } ;
 
+const _style_AppBoxAnywhere=`
+.BoxPlusFormContainer{
+    width:100% ;
+    height:100% ;
+    /*background-color:#ccc;*/
+    padding: 5px;
+}
 
+.boxPlusForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex-wrap:nowrap;
+}
+
+.boxMetaGroup{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap:5px;
+    width:100% ;
+    height:60px;
+}
+
+.boxContentEditor{
+    flex-grow: 1;
+    width:100% ;
+
+}
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+label {
+    font-size: 14px;
+}
+input, select, button {
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+button {
+    background-color: #2196F3;
+    color: white;
+    cursor: pointer;
+    border: none;
+}
+button:hover {
+    background-color: #1976D2;
+}
+.error {
+    color: red;
+    font-size: 14px;
+    margin-top: 10px;
+}
+.parsed-output, .submit-message {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+.autocomplete-container {
+    position: relative;
+}
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 10;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.autocomplete-list li {
+    padding: 8px;
+    cursor: pointer;
+}
+.autocomplete-list li:hover {
+    background-color: #f0f0f0;
+}
+/* Toggle Switch Styles */
+.toggle-switch {
+    position: relative;
+    width: 100px;
+    height: 34px;
+}
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    font-size: 14px;
+    color: white;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 46px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50px;
+}
+input:checked + .slider {
+    background-color: #2196F3;
+}
+input:checked + .slider:before {
+    transform: translateX(46px);
+}
+.slider .buy-label {
+    margin-left: 10px;
+}
+.slider .sell-label {
+    margin-right: 10px;
+}
+` ;
 const _injectStyle_AppBoxAnywhere = ()=>{
     /*
     let linkBootstrap = document.createElement('link');
@@ -35,148 +176,7 @@ const _injectStyle_AppBoxAnywhere = ()=>{
     */
 
     const styleElement = document.createElement('style');
-    styleElement.textContent = `
-    .BoxPlusFormContainer{
-        width:100% ;
-        height:100% ;
-        /*background-color:#ccc;*/
-        padding: 5px;
-    }
-    
-    .boxPlusForm {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-        flex-wrap:nowrap;
-    }
-    
-    .boxMetaGroup{
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap:5px;
-        width:100% ;
-        height:60px;
-    }
-    
-    .boxContentEditor{
-        flex-grow: 1;
-        width:100% ;
-    
-    }
-    .input-group {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-    label {
-        font-size: 14px;
-    }
-    input, select, button {
-        padding: 8px;
-        font-size: 16px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-    button {
-        background-color: #2196F3;
-        color: white;
-        cursor: pointer;
-        border: none;
-    }
-    button:hover {
-        background-color: #1976D2;
-    }
-    .error {
-        color: red;
-        font-size: 14px;
-        margin-top: 10px;
-    }
-    .parsed-output, .submit-message {
-        margin-top: 10px;
-        padding: 10px;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
-        background-color: #f9f9f9;
-    }
-    .autocomplete-container {
-        position: relative;
-    }
-    .autocomplete-list {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        max-height: 150px;
-        overflow-y: auto;
-        z-index: 10;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    .autocomplete-list li {
-        padding: 8px;
-        cursor: pointer;
-    }
-    .autocomplete-list li:hover {
-        background-color: #f0f0f0;
-    }
-    /* Toggle Switch Styles */
-    .toggle-switch {
-        position: relative;
-        width: 100px;
-        height: 34px;
-    }
-    .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-    .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #ccc;
-        transition: 0.4s;
-        border-radius: 34px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 10px;
-        font-size: 14px;
-        color: white;
-    }
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 26px;
-        width: 46px;
-        left: 4px;
-        bottom: 4px;
-        background-color: white;
-        transition: 0.4s;
-        border-radius: 50px;
-    }
-    input:checked + .slider {
-        background-color: #2196F3;
-    }
-    input:checked + .slider:before {
-        transform: translateX(46px);
-    }
-    .slider .buy-label {
-        margin-left: 10px;
-    }
-    .slider .sell-label {
-        margin-right: 10px;
-    }
-    `;
+    styleElement.textContent = _style_AppBoxAnywhere;
     // Append the style to the document head
     document.head.appendChild(styleElement);
 
