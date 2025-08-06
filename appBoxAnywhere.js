@@ -1,12 +1,186 @@
-function appTitle(){
-    return 'box.Anywhere' ;
+
+function appMeta(){
+    return {
+        name:'boxAnywhere',
+        title:'box.Anywhere',
+        appTitle:_appTitle,
+        onHome:_funcOnHome,
+        renderPanel:_renderPanel,
+        renderWorkStudio:_renderWorkStudio,
+        injectStyle:_injectStyle_AppBoxAnywhere
+    }
 }
 
+
+const _appTitle = ()=>{
+    return 'box.Anywhere' ;
+} ;
 
 const _funcOnHome=async (event)=>{
     console.log('app OnHome') ;
 } ;
 
+
+const _injectStyle_AppBoxAnywhere = ()=>{
+    /*
+    let linkBootstrap = document.createElement('link');
+    linkBootstrap.rel = 'stylesheet';
+    linkBootstrap.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css';
+    document.head.appendChild(linkBootstrap);
+
+    let linkTippy = document.createElement('link');
+    linkTippy.rel = 'stylesheet';
+    linkTippy.href = 'https://unpkg.com/tippy.js@6/dist/tippy.css';
+    document.head.appendChild(linkTippy);
+    */
+
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+    .BoxPlusFormContainer{
+        width:100% ;
+        height:100% ;
+        /*background-color:#ccc;*/
+        padding: 5px;
+    }
+    
+    .boxPlusForm {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        flex-wrap:nowrap;
+    }
+    
+    .boxMetaGroup{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap:5px;
+        width:100% ;
+        height:60px;
+    }
+    
+    .boxContentEditor{
+        flex-grow: 1;
+        width:100% ;
+    
+    }
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    label {
+        font-size: 14px;
+    }
+    input, select, button {
+        padding: 8px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    button {
+        background-color: #2196F3;
+        color: white;
+        cursor: pointer;
+        border: none;
+    }
+    button:hover {
+        background-color: #1976D2;
+    }
+    .error {
+        color: red;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+    .parsed-output, .submit-message {
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+    }
+    .autocomplete-container {
+        position: relative;
+    }
+    .autocomplete-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        max-height: 150px;
+        overflow-y: auto;
+        z-index: 10;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .autocomplete-list li {
+        padding: 8px;
+        cursor: pointer;
+    }
+    .autocomplete-list li:hover {
+        background-color: #f0f0f0;
+    }
+    /* Toggle Switch Styles */
+    .toggle-switch {
+        position: relative;
+        width: 100px;
+        height: 34px;
+    }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+        font-size: 14px;
+        color: white;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 46px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50px;
+    }
+    input:checked + .slider {
+        background-color: #2196F3;
+    }
+    input:checked + .slider:before {
+        transform: translateX(46px);
+    }
+    .slider .buy-label {
+        margin-left: 10px;
+    }
+    .slider .sell-label {
+        margin-right: 10px;
+    }
+    `;
+    // Append the style to the document head
+    document.head.appendChild(styleElement);
+
+};
 
 async function renderBox(tagPanel,jsonBox){
 
@@ -105,6 +279,51 @@ const _renderPanel=async (tagPanel)=>{
 } ;
 
 const _renderWorkStudio=async (tagRightPanelMain)=>{
+    tagRightPanelMain.innerHTML=`
+        <div class="BoxPlusFormContainer">
+            <div id="idFormPlusBox" class="boxPlusForm">
+                <div class="boxMetaGroup"> 
+                    <div class="input-group">
+                        <label for="boxID">boxID</label>
+                        <input type="text" id="boxID" name="boxID" placeholder="boxID..." disabled>
+                    </div>
+                    <div class="input-group">
+                        <label for="boxTitle">title</label>
+                        <input type="text" id="boxTitle" name="boxTitle" placeholder="title...">
+                    </div>
+                    <div class="input-group autocomplete-container">
+                        <label for="boxOwner">owner</label>
+                        <select id="boxOwner" name="boxOwner">
+                            <option value="alexszhang@gmail.com">alexszhang@gmail.com</option>
+                            <option value="alexFamily">alex's Family</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="boxPassKey">passKey:</label>
+                        <input type="password" id="boxPassKey" name="boxPassKey" placeholder="passkey...">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="boxTimeStamp">timeStamp</label>
+                        <input type="text" id="boxTimeStamp" name="boxTimeStamp" placeholder="20250806" disabled>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="boxPlusSubmit">submit</label>
+                        <button type="submit" id="boxPlusSubmit">
+                            <i class="bi bi-unlock-fill"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="boxContentEditor">
+                    <div class="input-group">
+                        <label for="boxContent">box Content:</label>
+                        <textarea type="text" id="boxContent" name="memo" placeholder="what's in the box?"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
     let tagBoxID = tagRightPanelMain.querySelector('#boxID') ;
     tagBoxID.value = genBoxID() ;
     let now = dayjs();
@@ -129,16 +348,6 @@ function genBoxID(){
     console.log(random4Digit);
 
     return `${cDate}${random4Digit}` ;
-}
-
-function appMeta(){
-    return {
-        name:'boxAnywhere',
-        title:'box.Anywhere',
-        onHome:_funcOnHome,
-        renderPanel:_renderPanel,
-        renderWorkStudio:_renderWorkStudio
-    }
 }
 
 
