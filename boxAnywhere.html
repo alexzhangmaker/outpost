@@ -1,126 +1,295 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>box.Anywhere</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>outpost.Memo</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            /*max-width: 900px;*/
-            margin: 20px auto;
-            padding: 20px;
-        }
-        
-    </style>
-    <style>
-        .noShow{
-            display: none;
-        }
+   <!-- Google Fonts: Roboto -->
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
 
-        .outpostBTN{
-            font-size: 18px;
+   <link rel="stylesheet" href="./css/googleResource.css">
+  <link rel="stylesheet" href="./css/outpostFW.css">
+  <link rel="stylesheet" href="./css/cssMarkdown.css">
+
+
+   <!-- Tippy.js -->
+   <script src="https://unpkg.com/@popperjs/core@2"></script>
+   <script src="https://unpkg.com/tippy.js@6"></script>
+   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+
+
+<style>
+  
+</style>
+</head>
+
+<body>
+    <div class="headerNavigationBar">
+      <div class="outpostLogo"><i class="bi-house-fill outpostBTN" id="idBTNOutpostLogo"></i></div>
+      <div class="inputToolbar">
+        <input type="text" placeholder="search..." class="roboto-400 outpostInput">
+        <i class="bi-search"></i>
+      </div>
+      <div class="iconTools">
+        <i class="bi-hdd outpostBTN" id="saveButton"></i>
+        <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
+        <i class="bi-person-circle outpostBTN" id="idBTNOutpostAuth"></i>
+      </div>
+    </div>
+  <div class="bodyWorkingStudio">
+    <div class="leftPanel leftPanelCollapse">
+      <div class="navigationBar">
+          <div class="naviICONGroup">
+              <i class="bi-list outpostBTN" id="idBTNToggleNavBar"></i>
+              <i class="bi-trash outpostBTN" id="RemoveButton"></i>
+              <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
+          </div>
+          <div class="naviICONGroup">
+              <i class="bi-gear-wide-connected outpostBTN" id="idBTNOutpostSetting"></i>
+          </div>
+      </div>
+      <div class="navigationPanel noShow"></div>
+    </div>
+    <div class="rightPanel">
+      <div class="rightPanelMain">
+        <style>
+            .BoxPlusFormContainer{
+                width:100% ;
+                height:100% ;
+                background-color:#ccc;
+                padding: 5px;
+            }
+
+            .boxPlusForm {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                flex-wrap:nowrap;
+            }
+
+            .boxMetaGroup{
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap:5px;
+                width:100% ;
+                height:60px;
+            }
+            
+            .boxContentEditor{
+                flex-grow: 1;
+                width:100% ;
+
+            }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
-        .outpostBTN:hover{
+        label {
+            font-size: 14px;
+        }
+        input, select, button {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background-color: #1976D2;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .parsed-output, .submit-message {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .autocomplete-container {
+            position: relative;
+        }
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 10;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .autocomplete-list li {
+            padding: 8px;
             cursor: pointer;
         }
-    </style>
-</head>
-<body>
-    <label for="password">Password:</label><br>
-    <input type="password" id="password" name="password" required><br><br>
-    <div contenteditable="true" class="boxContent" id="idEditorBoxContent">mail...</div>
-    <button id="idBTNListBox">list</button>
+        .autocomplete-list li:hover {
+            background-color: #f0f0f0;
+        }
+        /* Toggle Switch Styles */
+        .toggle-switch {
+            position: relative;
+            width: 100px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            font-size: 14px;
+            color: white;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 46px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50px;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(46px);
+        }
+        .slider .buy-label {
+            margin-left: 10px;
+        }
+        .slider .sell-label {
+            margin-right: 10px;
+        }
+        </style>
+        <div class="BoxPlusFormContainer">
+            <div id="idFormPlusBox" class="boxPlusForm">
+                <div class="boxMetaGroup"> 
+                    <div class="input-group">
+                        <label for="boxID">boxID</label>
+                        <input type="text" id="boxID" name="boxID" placeholder="boxID..." disabled>
+                    </div>
+                    <div class="input-group">
+                        <label for="boxTitle">title</label>
+                        <input type="text" id="boxTitle" name="boxTitle" placeholder="title...">
+                    </div>
+                    <div class="input-group autocomplete-container">
+                        <label for="boxOwner">owner</label>
+                        <select id="boxOwner" name="boxOwner">
+                            <option value="alexszhang@gmail.com">alexszhang@gmail.com</option>
+                            <option value="alexFamily">alex's Family</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="boxPassKey">passKey:</label>
+                        <input type="password" id="boxPassKey" name="boxPassKey" placeholder="passkey...">
+                    </div>
 
-    <button id="idBTNEncode">encode</button>
-
-    <div class="boxContainer"></div>
-    <script src="./outpostCryptoAPI.js"></script>
-
-<script>
-
-let jsonContent={
-    "boxID":'boxIDDemo1',
-    "name":"alexszhang",
-    "Password":"ChinaNO0001",
-    "Computer":"iMacBook Air"
-};
-
-function genBoxID(){
-    const array = new Uint16Array(1);
-    window.crypto.getRandomValues(array);
-    // To get a number between 1000 and 9999 (inclusive)
-    const random4Digit = 1000 + (array[0] % 9000);
-    console.log(random4Digit);
-    let now = dayjs() ;
-    let cDate = now.format("YYYYMMDD") ;
-    return `${cDate}${random4Digit}` ;
-}
-
-document.getElementById('idBTNEncode').addEventListener('click',async (event)=>{
-    let password = document.getElementById('password').value ;
-    let boxContent  = document.getElementById('idEditorBoxContent').innerText ;
-    let jsonEncoded = await encryptData(boxContent, password);
-
-    let jsonBox={
-        boxID:genBoxID(),//jsonContent.boxID,
-        title:'demo',
-        owner:"alexszhang@gmail.com",
-        timeStamp:"2025-08-05",
-        memo:'memo',
-        boxContent:jsonEncoded
-    } ;
-    
-    let urlSafeBox_FB = `https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/gatekeeper/${jsonBox.boxID}.json` ;
-    let putResponse = await fetch(urlSafeBox_FB, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json',},
-            body: JSON.stringify(jsonBox)
-    });
-    if (!putResponse.ok) {
-        console.log(`Failed to logDeal : ${putResponse.statusText}`);
-    }
-    console.log("logDeal successfully!");
-}) ;
-
-async function renderBox(tagContainer,jsonBox){
-    let password = document.getElementById('password').value ;
-    const decrypted = await decryptData(jsonBox.boxContent.encrypted, password, 
-                            jsonBox.boxContent.salt, 
-                            jsonBox.boxContent.iv);
-    let tagBox = document.createElement('details') ;
-    tagBox.innerHTML=`
-        <summary>${jsonBox.title}</summary>
-        <div>
-            <button id="idBTNDecodeBox">decode</button>
-            <div id="idBoxContent">${decrypted}</div>
+                    <div class="input-group">
+                        <label for="boxTimeStamp">timeStamp</label>
+                        <input type="text" id="boxTimeStamp" name="boxTimeStamp" placeholder="20250806" disabled>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="boxPlusSubmit">submit</label>
+                        <button type="submit" id="boxPlusSubmit">
+                            <i class="bi bi-unlock-fill"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="boxContentEditor">
+                    <div class="input-group">
+                        <label for="boxContent">box Content:</label>
+                        <textarea type="text" id="boxContent" name="memo" placeholder="what's in the box?"></textarea>
+                    </div>
+                </div>
+            </div>
         </div>
-    ` ;
+      </div>
+    </div>
+  </div>
+  <script src="./js/ui_NavigateBar.js"></script>
+  <script src="./appBoxAnywhere.js"></script>
 
-    tagContainer.appendChild(tagBox) ;
-    tagBox.querySelector('#idBTNDecodeBox').addEventListener('click',async (event)=>{
+  <script>
+    document.getElementById('idBTNToggleNavBar').addEventListener('click',(event)=>{
+        let tagLeftPanel = document.querySelector('.leftPanel') ;
+        //tagLeftPanel.style.width = "200px" ;
+        tagLeftPanel.classList.toggle('leftPanelCollapse');
+        tagLeftPanel.classList.toggle('leftPanelExpand');
+
+        //navigationPanel
+        tagLeftPanel.querySelector('.navigationPanel').classList.toggle('noShow') ;
+        let jsonMeta = appMeta() ;
+        jsonMeta.renderPanel(tagLeftPanel.querySelector('.navigationPanel')) ;
     }) ;
-}
 
-document.getElementById('idBTNListBox').addEventListener('click',async (event)=>{
-    let urlSafeBox_FB = `https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/gatekeeper.json` ;
-    let result = await fetch(urlSafeBox_FB) ;
-    let jsonBoxes = await result.json() ;
-    console.log(jsonBoxes) ;
-    boxKeys = Object.keys(jsonBoxes) ;
-    console.log(boxKeys) ;
+    //
+    document.getElementById('idBTNOutpostLogo').addEventListener('click',(event)=>{
+        window.open('https://alexzhangmaker.github.io/index.html') ;
+    }) ;
 
-    let tagContainer = document.querySelector(".boxContainer");
-    tagContainer.innerHTML='' ;
-    for(let i=0;i<boxKeys.length;i++){
-        await renderBox(tagContainer,jsonBoxes[boxKeys[i]]) ;
-    }
-}) ;
-</script>
-        
+    //idBTNOutpostSetting
+    document.getElementById('idBTNOutpostSetting').addEventListener('click',(event)=>{
+      alert('will do setting') ;
+    }) ;
+
+    //idBTNOutpostAuth
+    document.getElementById('idBTNOutpostAuth').addEventListener('click',(event)=>{
+      alert('will do idBTNOutpostAuth with firebase') ;
+    }) ;
+
+    document.addEventListener("DOMContentLoaded",async (event)=>{
+      tippy('#idBTNOutpostLogo', {content: "go outpost Home!"});
+      tippy('#idBTNOutpostSetting', {content: "application setting"});
+      tippy('#idBTNOutpostAuth', {content: "authentication"});
+
+      document.title = appTitle();
+      let jsonMeta = appMeta() ;
+      jsonMeta.onHome(event) ;
+
+      //rightPanelMain
+      let tagRightPanelMain=document.querySelector('.rightPanelMain') ;
+      jsonMeta.renderWorkStudio(tagRightPanelMain) ;
+    }) ;
+
+
+  </script>
 </body>
 </html>

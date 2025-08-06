@@ -1,6 +1,7 @@
 body{
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
+    gap:2px ;
     width:100vw;
     height: 100vh;
     overflow-y: hidden;
@@ -9,7 +10,7 @@ body{
 
 
 .leftPanel{
-    height: 100vh;
+    height: 100%;
     background-color:white;
 
     display: flex;
@@ -24,7 +25,8 @@ body{
 }
 
 .leftPanelExpand{
-    width:400px ;
+    width:300px ;
+    /*background-color: brown;*/
 }
 
 .navigationBar{
@@ -40,7 +42,7 @@ body{
 
 .rightPanel{
     /*width:80%;*/
-    height: 100vh;
+    height: 100%;
     background-color: white;
     flex-grow: 1;
 
@@ -65,8 +67,10 @@ body{
     flex-grow: 0;
     background-color: white;
 
+    /*
     display: flex;
     flex-direction: row;
+    */
 }
 
 .workingSpace{
@@ -129,4 +133,89 @@ body{
 
 .outpostBTN:hover{
     cursor: pointer;
+}
+
+
+
+.iconTools{
+    display: flex;
+    gap:10px ;
+    flex-grow: 1 ;
+    justify-content: end;
+    padding-right: 20px;
+}
+
+.inputToolbar{
+    width:25% ;
+
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap:5px;
+}
+
+.outpostInput{
+    font-size: 18px;
+    width:100% ;
+}
+
+.outpostInput:focus{
+    outline: none;
+}
+
+input[type="text"] {
+    border: none; /* Removes all default borders */
+    border-bottom: 1px solid #a39797; /* Applies a 2px solid dark gray bottom border */
+    /*padding: 8px;
+    width: 100%;*/
+    box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+}
+
+.navigationPanel{
+    flex-grow: 1;
+    height:100% ;
+    background-color: white;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+.naviICONGroup{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.headerNavigationBar{
+    /*background-color: #a39797;*/
+    height:60px ;
+    width:100% ;
+
+    flex-grow: 0;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+}
+
+.outpostLogo{
+    width:40px;
+    /*background-color: black;*/
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+.bodyWorkingStudio{
+    /*background-color: blanchedalmond;*/
+    flex-grow: 1;
+    width:100% ;
+    display: flex;
+    flex-direction: row;
+
+    padding-bottom: 10px;
 }
