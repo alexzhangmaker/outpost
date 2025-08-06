@@ -7,23 +7,11 @@ const _funcOnHome=async (event)=>{
     console.log('app OnHome') ;
 } ;
 
-/*
-{
-  "boxContent": {
-    "encrypted": [120, 185, 144, 105, 181, 110, 221, 1, 170, 17, 25, 158, 160, 5, 185, 60, 70, 49, 37, 72, 141],
-    "iv": [42, 67, 138, 209, 25, 4, 197, 152, 188, 163, 58, 70],
-    "salt": [230, 38, 242, 127, 235, 158, 0, 54, 32, 66, 220, 16, 188, 210, 129, 152]
-  },
-  "boxID": "202508058443",
-  "memo": "memo",
-  "owner": "alexszhang@gmail.com",
-  "timeStamp": "2025-08-05",
-  "title": "demo"
-}
-*/
+
 async function renderBox(tagPanel,jsonBox){
 
     let password = tagPanel.querySelector('#password').value ;
+
     let tagContainer = tagPanel.querySelector(".boxContainer");
 
     const decrypted = await decryptData(jsonBox.boxContent.encrypted, password, 
@@ -34,12 +22,40 @@ async function renderBox(tagPanel,jsonBox){
         <summary>${jsonBox.title}</summary>
         <div>
             <button id="idBTNDecodeBox">decode</button>
+            <button id="idBTNDeleteBox">delete</button>
+
             <div id="idBoxContent">${decrypted}</div>
         </div>
     ` ;
+    tagBox.dataset.boxID = jsonBox.boxID ;
 
     tagContainer.appendChild(tagBox) ;
     tagBox.querySelector('#idBTNDecodeBox').addEventListener('click',async (event)=>{
+
+    }) ;
+    
+    tagBox.querySelector('#idBTNDeleteBox').addEventListener('click',async (event)=>{
+        let urlBoxNode = `https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/gatekeeper/${tagBox.dataset.boxID}.json` ;
+        const response = await fetch(urlBoxNode, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (response.ok) {
+            // A successful DELETE request typically returns an empty body or null
+            // You can check response.status for 200 (OK) or 204 (No Content)
+            console.log(`Node '${tagBox.dataset.boxID}' deleted successfully!`, 'success');
+            tagBox.remove() ;
+        } else {
+            const errorData = await response.json().catch(() => null); // Try to parse JSON error, but don't fail if it's not JSON
+            let errorMessage = `Failed to delete node. Status: ${response.status} ${response.statusText}.`;
+            if (errorData && errorData.error) {
+                errorMessage += ` Error: ${errorData.error}`;
+            }
+            console.log(errorMessage, 'error');
+        }
     }) ;
 }
 
@@ -66,6 +82,13 @@ const _renderPanel=async (tagPanel)=>{
     ` ;
 
     tagPanel.querySelector('#idBTNListBoxes').addEventListener('click',async (event)=>{
+        let password = tagPanel.querySelector('#password').value ;
+        
+        if(password==""){
+            alert('Please provide passKey to proceeds') ;
+            return ;
+        }
+        
         let urlSafeBox_FB = `https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/gatekeeper.json` ;
         let result = await fetch(urlSafeBox_FB) ;
         let jsonBoxes = await result.json() ;
@@ -131,6 +154,11 @@ async function _onPlusBoxSubmit(event) {
       alert("Please enter a password");
       return;
     }
+    if(boxTitle == '')boxTitle='title not provided';
+    if(!boxContent){
+        alert("Please enter content");
+      return;
+    }
     
     console.log(boxPassKey) ;
 
@@ -158,6 +186,11 @@ async function _onPlusBoxSubmit(event) {
         console.log(`Failed to logDeal : ${putResponse.statusText}`);
     }
     console.log("logDeal successfully!");
+
+    document.getElementById("boxID").value = genBoxID() ;
+    document.getElementById("boxTitle").value = "new box" ;
+    document.getElementById("boxPassKey").value="";
+    document.getElementById("boxContent").value = 'todo' ;
 };
 
 async function deriveKey(password, salt) {
