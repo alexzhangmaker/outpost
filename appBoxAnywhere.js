@@ -161,6 +161,10 @@ input:checked + .slider:before {
 .slider .sell-label {
     margin-right: 10px;
 }
+
+sl-details{
+    width:300px ;
+}
 ` ;
 const _injectStyle_AppBoxAnywhere = ()=>{
     /*
@@ -288,20 +292,47 @@ async function renderBox(tagPanel,jsonBox){
     */
     // 1. 创建元素
     let tagBox = document.createElement('sl-details');
+    tagBox.dataset.boxID = jsonBox.boxID ;
 
     // 2. 设置属性（可选）
     tagBox.summary = jsonBox.title; // 等效于 summary 属性
     tagBox.open = false; // 默认Close
 
     // 3. 添加子内容
-    const content = document.createElement('div');
-    content.innerHTML=`
+    const tagContent = document.createElement('div');
+    tagContent.innerHTML=`
         <button id="idBTNDecodeBox">decode</button>
         <button id="idBTNDeleteBox">delete</button>
 
     <div id="idBoxContent">${decrypted}</div>`
-    tagBox.appendChild(content);
+    tagBox.appendChild(tagContent);
+    tagContent.querySelector('#idBTNDecodeBox').addEventListener('click',async (event)=>{
 
+    }) ;
+    tagContent.querySelector('#idBTNDeleteBox').addEventListener('click',async (event)=>{
+        const parentData = event.target.closest('sl-details').dataset;
+        let urlBoxNode = `https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/gatekeeper/${parentData.boxID}.json` ;
+        const response = await fetch(urlBoxNode, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (response.ok) {
+            // A successful DELETE request typically returns an empty body or null
+            // You can check response.status for 200 (OK) or 204 (No Content)
+            console.log(`Node '${parentData.boxID}' deleted successfully!`, 'success');
+            tagBox.remove() ;
+        } else {
+            const errorData = await response.json().catch(() => null); // Try to parse JSON error, but don't fail if it's not JSON
+            let errorMessage = `Failed to delete node. Status: ${response.status} ${response.statusText}.`;
+            if (errorData && errorData.error) {
+                errorMessage += ` Error: ${errorData.error}`;
+            }
+            console.log(errorMessage, 'error');
+        }
+    }) ;
     // 4. 插入到 DOM
     tagContainer.appendChild(tagBox);
 }
