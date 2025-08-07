@@ -182,7 +182,7 @@ const _injectStyle_AppBoxAnywhere = ()=>{
 
 };
 
-async function renderBox(tagPanel,jsonBox){
+async function renderBoxV0(tagPanel,jsonBox){
 
     let password = tagPanel.querySelector('#password').value ;
 
@@ -233,6 +233,79 @@ async function renderBox(tagPanel,jsonBox){
     }) ;
 }
 
+
+async function renderBox(tagPanel,jsonBox){
+
+    let password = tagPanel.querySelector('#password').value ;
+
+    let tagContainer = tagPanel.querySelector(".boxContainer");
+
+    const decrypted = await decryptData(jsonBox.boxContent.encrypted, password, 
+                            jsonBox.boxContent.salt, 
+                            jsonBox.boxContent.iv);
+    
+    /*
+    let tagBox = document.createElement('details') ;
+    tagBox.innerHTML=`
+        <summary>${jsonBox.title}</summary>
+        <div>
+            <button id="idBTNDecodeBox">decode</button>
+            <button id="idBTNDeleteBox">delete</button>
+
+            <div id="idBoxContent">${decrypted}</div>
+        </div>
+    ` ;
+    tagBox.dataset.boxID = jsonBox.boxID ;
+
+    tagContainer.appendChild(tagBox) ;
+    tagBox.querySelector('#idBTNDecodeBox').addEventListener('click',async (event)=>{
+
+    }) ;
+    
+    tagBox.querySelector('#idBTNDeleteBox').addEventListener('click',async (event)=>{
+        let urlBoxNode = `https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/gatekeeper/${tagBox.dataset.boxID}.json` ;
+        const response = await fetch(urlBoxNode, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (response.ok) {
+            // A successful DELETE request typically returns an empty body or null
+            // You can check response.status for 200 (OK) or 204 (No Content)
+            console.log(`Node '${tagBox.dataset.boxID}' deleted successfully!`, 'success');
+            tagBox.remove() ;
+        } else {
+            const errorData = await response.json().catch(() => null); // Try to parse JSON error, but don't fail if it's not JSON
+            let errorMessage = `Failed to delete node. Status: ${response.status} ${response.statusText}.`;
+            if (errorData && errorData.error) {
+                errorMessage += ` Error: ${errorData.error}`;
+            }
+            console.log(errorMessage, 'error');
+        }
+    }) ;
+    */
+    // 1. 创建元素
+    let tagBox = document.createElement('sl-details');
+
+    // 2. 设置属性（可选）
+    tagBox.summary = jsonBox.title; // 等效于 summary 属性
+    tagBox.open = false; // 默认Close
+
+    // 3. 添加子内容
+    const content = document.createElement('div');
+    content.innerHTML=`
+        <button id="idBTNDecodeBox">decode</button>
+        <button id="idBTNDeleteBox">delete</button>
+
+    <div id="idBoxContent">${decrypted}</div>`
+    tagBox.appendChild(content);
+
+    // 4. 插入到 DOM
+    tagContainer.appendChild(tagBox);
+}
+
 const _renderPanel=async (tagPanel)=>{
     console.log('appBox _renderPanel') ;
     //alert('will render panel')
@@ -245,7 +318,13 @@ const _renderPanel=async (tagPanel)=>{
                 display:flex;
                 flex-direction:row;
                 align-items:center ;
-            }   
+                width:100% ;
+                justify-content:space-between;
+            }
+            .boxContainer{
+                overflow-y:auto;
+                height:85vh;
+            }
         </style>
         <label for="password">PassKey to list:</label>
         <div class="boxPassKey">
