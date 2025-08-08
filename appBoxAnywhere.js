@@ -360,6 +360,7 @@ const _renderPanel=async (tagPanel)=>{
         <label for="password">PassKey to list:</label>
         <div class="boxPassKey">
             <input type="password" id="password" name="password" placeholder="passKey" required>
+
             <i class="bi-cloud-arrow-down" id="idBTNListBoxes"></i>
         </div>
         <div class="boxContainer"></div>

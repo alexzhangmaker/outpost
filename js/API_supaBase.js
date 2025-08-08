@@ -94,13 +94,18 @@ async function API_LoadLatestMemo_Supabase() {
       let tagEditor = document.querySelector('#editor') ;
       tagEditor.dataset.ActiveMemoID = data[0].id ;
 
+      return data ;
+      /*
       renderMemoList(data) ;
+      */
       console.log('Document loaded successfully!');
     } else if (response.ok) {
       console.log('No documents found.');
+      return [] ;
     } else {
       console.error('Error loading document:', data);
       console.log('Error loading document: ' + (data.message || data.error || 'Unknown error'));
+      return [] ;
     }
   } catch (error) {
     console.error('Network error:', error);

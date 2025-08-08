@@ -125,33 +125,123 @@
 </head>
 
 <body>
-    <div class="headerNavigationBar">
-        <div class="outpostLogo"><i class="bi-house-fill outpostBTN" id="idBTNOutpostLogo"></i></div>
-        <div class="iconTools">
-          <i class="bi-hdd outpostBTN" id="saveButton"></i>
-          <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
-          <i class="bi-person-circle outpostBTN" id="idBTNOutpostAuth"></i>
+  <div class="leftPanel leftPanelCollapse">
+    <style>
+        .navigationPanel{
+            flex-grow: 1;
+            height:100% ;
+            background-color: white;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+        .naviICONGroup{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+    <div class="navigationBar">
+        <div class="naviICONGroup">
+            <i class="bi-list outpostBTN" id="idBTNToggleNavBar"></i>
+            <i class="bi-trash outpostBTN" id="RemoveButton"></i>
+            <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
         </div>
-      </div>
-      <div class="bodyWorkingStudio">
-        <div class="leftPanel leftPanelCollapse">
-            <div class="navigationBar">
-                <div class="naviICONGroup">
-                    <i class="bi-list outpostBTN" id="idBTNToggleNavBar"></i>
-                    <i class="bi-trash outpostBTN" id="RemoveButton"></i>
-                    <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
-                </div>
-                <div class="naviICONGroup">
-                    <i class="bi-gear-wide-connected outpostBTN" id="idBTNOutpostSetting"></i>
-                </div>
-            </div>
-        <div class="navigationPanel noShow">
-           <!-----Below for App to render out-->
-        
-            <!-----end of App rendering part-->
+        <div class="naviICONGroup">
+            <i class="bi-gear-wide-connected outpostBTN"></i>
         </div>
     </div>
-    <div class="rightPanel">
+    <div class="navigationPanel noShow">
+        <style>
+            .memoBrowser{
+                width:100% ;
+                flex-grow: 1;
+                overflow-y: hidden;
+                overflow-x: hidden;
+
+                padding-top: 40px;
+                padding-left: 5px;
+
+            }
+
+            #idMemoList{
+                width: 100%;
+                height:100%;
+
+                overflow-x: hidden;
+                overflow-y: auto;
+
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+        </style>
+        <style>
+
+            .memoListItem{
+                font-family: "Montserrat", sans-serif;
+                font-optical-sizing: auto;
+                font-weight: 400;
+                font-style: normal;
+                font-size: 16px;
+
+                padding-bottom: 2px;
+                margin-bottom: 2px;
+
+                display: flex;
+                flex-direction: row;
+                gap:5px;
+            }
+
+            .memoListItem:hover{
+                cursor: pointer;;
+            }
+
+            input[type="text"] {
+                border: none; /* Removes all default borders */
+                border-bottom: 1px solid #a39797; /* Applies a 2px solid dark gray bottom border */
+                width: 100%;*/
+                box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+            }
+            .searchInput{
+                display: flex;
+                flex-direction: row;
+                gap: 20px;
+                /*padding-left: 5px;*/
+                padding-right: 5px;
+                justify-content: space-between;
+            }
+
+            .text-container {
+                /*width: 100%;*//*200px;*/ /* Fixed width */
+                overflow-wrap: break-word; /* Wrap long words */
+                border-left: 2px solid black; /* Vertical line on the left */
+                padding-left: 10px; /* Space between line and text */
+                line-height: 1.5; /* Optional: Adjust line spacing for readability */
+                max-width: 250px;
+                flex-grow: 1;
+            }
+            .memoTools{
+                width:40px;
+            }
+
+        </style>
+        <div class="memoBrowser">
+            <div class="searchInput">
+                <input  type="text" placeholder="search..." class="roboto-400">
+                <i class="bi-search"></i>
+            </div>
+            <div id="idMemoList">
+            </div>
+        </div>
+    </div>
+  </div>
+  <div class="rightPanel">
 
     <div class="rightPanelMain mdEditorContainer">
 
@@ -159,7 +249,6 @@
       <div class="workingSpace">
         <div class="workingFocus">
           <div class="mdEditorToolbar">
-            <!------
             <style>
                 .iconTools{
                     display: flex;
@@ -186,9 +275,7 @@
                     width: 100%;*/
                     box-sizing: border-box; /* Includes padding and border in the element's total width and height */
                 }
-            
             </style>
-            --->
             <div class="inputToolbar">
                 <input id="docTitle" type="text" placeholder="Document Title" class="roboto-400">
             </div>
@@ -235,20 +322,17 @@
       </div>
     </div>
   </div>
-</div>
+
   <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
   <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
   <script src="./js/ui_NavigateBar.js"></script>
   <script src="./js/API_supaBase.js"></script>
-  <!-----
   <script src="./js/mdEditor.js"></script>
-  --->
-  <script src="./appWriteAnywhere.js"></script>
 
 
+  <script>
 
-  
- <script>
+
     document.getElementById('idBTNToggleNavBar').addEventListener('click',(event)=>{
         let tagLeftPanel = document.querySelector('.leftPanel') ;
         //tagLeftPanel.style.width = "200px" ;
@@ -257,55 +341,10 @@
 
         //navigationPanel
         tagLeftPanel.querySelector('.navigationPanel').classList.toggle('noShow') ;
-        let jsonMeta = appMeta() ;
-
-        let tagNaviPanel = tagLeftPanel.querySelector('.navigationPanel') ;
-
-        if(tagNaviPanel.dataset.rendered!='true'){
-            jsonMeta.renderPanel(tagNaviPanel) ;
-            tagNaviPanel.dataset.rendered!='true' ;
-        }
     }) ;
-
-    //
-    document.getElementById('idBTNOutpostLogo').addEventListener('click',(event)=>{
-        window.open('https://alexzhangmaker.github.io/index.html') ;
-    }) ;
-
-    //idBTNOutpostSetting
-    document.getElementById('idBTNOutpostSetting').addEventListener('click',(event)=>{
-      alert('will do setting') ;
-    }) ;
-
-    //idBTNOutpostAuth
-    document.getElementById('idBTNOutpostAuth').addEventListener('click',(event)=>{
-      alert('will do idBTNOutpostAuth with firebase') ;
-    }) ;
-
-    document.addEventListener("DOMContentLoaded",async (event)=>{
-        tippy('#idBTNOutpostLogo', {content: "go outpost Home!"});
-        tippy('#idBTNOutpostSetting', {content: "application setting"});
-        tippy('#idBTNOutpostAuth', {content: "authentication"});
-
-        
-        let jsonMeta = appMeta() ;
-
-        if(jsonMeta.hasOwnProperty('appTitle')){
-            document.title = jsonMeta.appTitle() ;
-        }
-        if(jsonMeta.hasOwnProperty('renderPanel')){
-            jsonMeta.renderPanel(document.querySelector('.navigationPanel')) ;
-        }
-
-        if(jsonMeta.hasOwnProperty('injectStyle'))jsonMeta.injectStyle() ;
-        if(jsonMeta.hasOwnProperty('renderWorkStudio')){
-            let tagRightPanelMain=document.querySelector('.rightPanelMain') ;
-            jsonMeta.renderWorkStudio(tagRightPanelMain) ;
-        }
-
-    }) ;
-
-
+  </script>
+  <script>
+    
   </script>
 </body>
 </html>

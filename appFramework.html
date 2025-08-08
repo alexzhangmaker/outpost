@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>outpost.Memo</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
-
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"></script>
+  
    <!-- Google Fonts: Roboto -->
    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
@@ -48,7 +50,11 @@
               <i class="bi-gear-wide-connected outpostBTN" id="idBTNOutpostSetting"></i>
           </div>
       </div>
-      <div class="navigationPanel noShow"></div>
+      <div class="navigationPanel noShow">
+        <!-----Below for App to render out-->
+        
+        <!-----end of App rendering part-->
+      </div>
     </div>
     <div class="rightPanel">
       <div class="rightPanelMain">
@@ -58,8 +64,17 @@
       </div>
     </div>
   </div>
-  <script src="./js/ui_NavigateBar.js"></script>
+
+  <sl-drawer label="Drawer" class="drawer-overview">
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+    <sl-button slot="footer" variant="primary">Close</sl-button>
+  </sl-drawer>
+  
+  
+  
   <script src="./appBoxAnywhere.js"></script>
+  <script src="./js/overlayDIVFactory.js"></script>
+  <script src="./js/modalFactory.js"></script>
 
   <script>
     document.getElementById('idBTNToggleNavBar').addEventListener('click',(event)=>{
@@ -79,14 +94,49 @@
         window.open('https://alexzhangmaker.github.io/index.html') ;
     }) ;
 
+    document.getElementById('PlusButton').addEventListener('click',(event)=>{
+      overlayView.createOverlay('<h3>Hello!</h3><p>This is a custom overlay.</p>')
+
+    }) ;
+
+    
+    
+
+    const callbackFunc =(data) => {
+        console.log('Submitted:', data) ;
+    } ;
+    
     //idBTNOutpostSetting
     document.getElementById('idBTNOutpostSetting').addEventListener('click',(event)=>{
-      alert('will do setting') ;
+
+      
+      window.modalFactory.createModal({
+        title: 'app setting',
+        fields: [
+          { label: 'Name', name: 'name', type: 'text', placeholder: 'Enter your name', required: true },
+          { label: 'Email', name: 'email', type: 'email', placeholder: 'Enter your email', required: true },
+          { label: 'Role', name: 'role', type: 'select', options: [
+            { value: 'admin', label: 'Admin' },
+            { value: 'user', label: 'User' }
+          ], required: true },
+          { label: 'Comments', name: 'comments', type: 'textarea', placeholder: 'Enter any comments' }
+        ],
+        callback: (data) => {
+          console.log('Submitted data:', data);
+          alert('Form submitted with data: ' + JSON.stringify(data));
+        }
+      });
+    
     }) ;
 
     //idBTNOutpostAuth
     document.getElementById('idBTNOutpostAuth').addEventListener('click',(event)=>{
-      alert('will do idBTNOutpostAuth with firebase') ;
+
+      const drawer = document.querySelector('.drawer-overview');
+      const closeButton = drawer.querySelector('sl-button[variant="primary"]');
+  
+      drawer.show();
+      closeButton.addEventListener('click', () => drawer.hide());
     }) ;
 
     document.addEventListener("DOMContentLoaded",async (event)=>{
@@ -108,5 +158,7 @@
 
 
   </script>
+
+
 </body>
 </html>
