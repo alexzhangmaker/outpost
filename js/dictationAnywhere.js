@@ -171,8 +171,6 @@ async function _finishDict4Today(){
 
 
 async function _renderDictationMode(tagWndContent){
-
-
     let storageKey = `outpostDictation` ;
     try {
         let jsonDictTble = await localforage.getItem(storageKey);

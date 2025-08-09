@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+</head>
+<body>
+
+    <h1>欢迎，请登录</h1>
+    <button id="google-login-btn">使用 Google 账号登录</button>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script>
+        // 您的 Firebase 项目配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",//AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-d45f1.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // 指定允许登录的 Google 账户邮箱清单
+        const allowedUsers = [
+            "alexszhang@gmail.com",
+            "raytflcmu@gmail.com"
+        ];
+
+        document.getElementById('google-login-btn').addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    // 登录成功
+                    const user = result.user;
+                    console.log('用户已登录:', user);
+
+                    // 检查用户邮箱是否在允许清单中
+                    if (allowedUsers.includes(user.email)) {
+                        console.log('邮箱匹配，认证成功！');
+                        // 认证通过，重定向到受保护页面
+                        window.location.href = 'outpostProtected.html';
+                    } else {
+                        console.log('邮箱不匹配，认证失败。');
+                        // 邮箱不在清单中，登出用户
+                        auth.signOut().then(() => {
+                            alert('您的账户没有权限访问此页面。');
+                            console.log('用户已登出。');
+                        });
+                    }
+                })
+                .catch((error) => {
+                    // 登录失败
+                    console.error('登录失败:', error);
+                    alert('登录失败，请重试。');
+                });
+        });
+    </script>
+</body>
+</html>

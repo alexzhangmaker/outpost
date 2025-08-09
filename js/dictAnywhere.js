@@ -130,7 +130,7 @@ async function renderGoogleOutput(tagOutputContainer,jsonDict){
         //const urlGoogleTTSProxy = `http://192.168.1.188:3010/tts?q=${text}` ;
         const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${text}` ;
         const audio = new Audio(urlGoogleTTSProxy);
-        audio.play();    
+        audio.play();
     });
 
 }

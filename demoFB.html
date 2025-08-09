@@ -40,8 +40,8 @@
         </div>
     </div>
 
-    <script>
-        // Your Firebase project configuration (replace with your actual config)
+<script>
+// Your Firebase project configuration (replace with your actual config)
 
 
 const firebaseConfig = {
@@ -120,9 +120,8 @@ signOutBtn.addEventListener('click', () => {
 // Listener for authentication state changes
 auth.onAuthStateChanged((user) => {
     currentUser = user; // Update the global currentUser variable
-
-    console.log("onAuthStateChanged triggered. User object:", user); // Debugging: Check if 'user' is null or an object
-
+    console.log("onAuthStateChanged triggered. User object:", user); 
+    // Debugging: Check if 'user' is null or an object
     if (user) {
         authStatusElement.textContent = `Signed in as: ${user.displayName} (${user.email})`;
         signInBtn.style.display = 'none';
@@ -266,6 +265,6 @@ auth.onAuthStateChanged(user => {
     }
     // The main onAuthStateChanged listener handles the rest
 });
-    </script>
+</script>
 </body>
 </html>
