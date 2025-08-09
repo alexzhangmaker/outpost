@@ -287,12 +287,18 @@ function renderMemoList(tagMemoBrowser,memoArray){
       editor.setMarkdown(jsonMemo.content);
       tagEditor.dataset.ActiveMemoID = tagMemoItem.dataset.memoID ;
     }) ;
+    tagMemoItem.querySelector('#idBTNRemoveMemo').addEventListener('click',async (event)=>{
+      if(tagMemoItem.dataset.memoID==undefined || tagMemoItem.dataset.memoID =='')return ;
+      await API_DeleteMDMemo(tagMemoItem.dataset.memoID);
+      tagMemoItem.remove();
+    }) ;
+
   }) ;
 }
 
 
 // Event listeners
-document.getElementById('saveButton').addEventListener('click', async () => {
+document.querySelector('#idBTNSaveButton').addEventListener('click', async () => {
     const title = document.getElementById('docTitle').value || 'Untitled';
     const content = editor.getMarkdown();
     
@@ -317,15 +323,25 @@ document.getElementById('loadButton').addEventListener('click', async () => {
     renderMemoList(tagMemoBrowser,jsonMemos) ;
 });
 
-document.getElementById('PlusButton').addEventListener('click', async () => {
+document.querySelector('#idBTNPlusButton').addEventListener('click', async () => {
+    /*
     const title = document.getElementById('docTitle').value || 'Untitled';
     const content = editor.getMarkdown();    
     await API_PlusMDMemo_Supabase(title, content);
+    */
+
+  document.getElementById('docTitle').value = 'new doc';
+  editor.setMarkdown(initialMDContent);
+  let tagEditor = document.querySelector('#editor') ;
+
+  tagEditor.dataset.ActiveMemoID = '';//tagMemoItem.dataset.memoID ;
 });
 
+/*
 document.getElementById('RemoveButton').addEventListener('click', async () => {
     let tagEditor = document.querySelector('#editor') ;
     let activeMemoID = tagEditor.dataset.ActiveMemoID ;
     if(activeMemoID==undefined || activeMemoID =='')return ;
     await API_DeleteMDMemo(activeMemoID);
 });
+*/

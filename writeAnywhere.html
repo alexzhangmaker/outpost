@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="./css/outpostFW.css">
   <link rel="stylesheet" href="./css/cssMarkdown.css">
 
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
    <!-- Tippy.js -->
    <script src="https://unpkg.com/@popperjs/core@2"></script>
    <script src="https://unpkg.com/tippy.js@6"></script>
@@ -128,8 +131,10 @@
     <div class="headerNavigationBar">
         <div class="outpostLogo"><i class="bi-house-fill outpostBTN" id="idBTNOutpostLogo"></i></div>
         <div class="iconTools">
+          <!----
           <i class="bi-hdd outpostBTN" id="saveButton"></i>
           <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
+          --->
           <i class="bi-person-circle outpostBTN" id="idBTNOutpostAuth"></i>
         </div>
       </div>
@@ -193,8 +198,8 @@
                 <input id="docTitle" type="text" placeholder="Document Title" class="roboto-400">
             </div>
             <div class="iconTools">
-                <i class="bi-hdd outpostBTN" id="saveButton"></i>
-                <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
+                <i class="bi-hdd outpostBTN" id="idBTNSaveButton"></i>
+                <i class="bi-clipboard-plus outpostBTN" id="idBTNPlusButton"></i>
                 <!-----
                 <i class="bi-trash outpostBTN" id="RemoveButton"></i>
                 <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
@@ -306,6 +311,61 @@
     }) ;
 
 
+  </script>
+  <script>
+    //https://alexzhangmaker.github.io/outpost/outpostProtected.html
+
+    // 您的 Firebase 项目配置
+    const firebaseConfig = {
+        apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",//AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs
+        authDomain: "outpost-8d74e.firebaseapp.com",
+        databaseURL: "https://outpost-8d74e-d45f1.asia-southeast1.firebasedatabase.app/",
+        projectId: "outpost-8d74e",
+        storageBucket: "outpost-8d74e.firebasestorage.app",
+        messagingSenderId: "724993324937",
+        appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+        measurementId: "G-QPHWRTH6BH"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // 指定允许登录的 Google 账户邮箱清单（与登录页保持一致）
+    const allowedUsers = [
+        "alexszhang@gmail.com",
+        "raytflcmu@gmail.com"
+    ];
+
+    // 监听用户的认证状态
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            // 用户已登录
+            if (allowedUsers.includes(user.email)) {
+                // 邮箱匹配，显示页面内容
+                document.getElementById('user-email').textContent = user.email;
+            } else {
+                // 邮箱不匹配，强制登出并跳转
+                alert('您的账户没有权限访问此页面。');
+                auth.signOut().then(() => {
+                    window.location.href = 'outpostLogin.html';
+                });
+            }
+        } else {
+            // 用户未登录，强制跳转到登录页
+            alert('请先登录。');
+            window.location.href = 'outpostLogin.html';
+        }
+    });
+
+    /*
+    // 退出登录按钮
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        auth.signOut().then(() => {
+            alert('您已成功退出登录。');
+            window.location.href = 'outpostLogin.html';
+        });
+    });
+    */
   </script>
 </body>
 </html>
