@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>outpost.Memo</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"></script>
+  
+   <!-- Google Fonts: Roboto -->
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
+
+    <script src="//cdn.jsdelivr.net/npm/medium-editor@latest/dist/js/medium-editor.min.js"></script>
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/medium-editor@latest/dist/css/medium-editor.min.css" type="text/css" media="screen" charset="utf-8">
+
+    <link rel="stylesheet" href="./css/googleResource.css">
+    <link rel="stylesheet" href="./css/outpostFW.css">
+    <link rel="stylesheet" href="./css/cssMarkdown.css">
+
+
+   <!-- Tippy.js -->
+   <script src="https://unpkg.com/@popperjs/core@2"></script>
+   <script src="https://unpkg.com/tippy.js@6"></script>
+   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+
+
+<style>
+  
+</style>
+</head>
+
+<body>
+    <div class="headerNavigationBar">
+      <div class="outpostLogo"><i class="bi-house-fill outpostBTN" id="idBTNOutpostLogo"></i></div>
+      <div class="iconTools">
+        <i class="bi-hdd outpostBTN" id="saveButton"></i>
+        <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
+        <i class="bi-person-circle outpostBTN" id="idBTNOutpostAuth"></i>
+      </div>
+    </div>
+  <div class="bodyWorkingStudio">
+    <div class="leftPanel leftPanelCollapse">
+      <div class="navigationBar">
+          <div class="naviICONGroup">
+              <i class="bi-list outpostBTN" id="idBTNToggleNavBar"></i>
+              <i class="bi-trash outpostBTN" id="RemoveButton"></i>
+              <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
+          </div>
+          <div class="naviICONGroup">
+              <i class="bi-gear-wide-connected outpostBTN" id="idBTNOutpostSetting"></i>
+          </div>
+      </div>
+      <div class="navigationPanel noShow">
+        <!-----Below for App to render out-->
+        
+        <!-----end of App rendering part-->
+      </div>
+    </div>
+    <div class="rightPanel">
+      <div class="rightPanelMain">
+        <!-----Below for App to render out-->
+        <style>
+            
+            *:focus {
+                outline: none;
+            }
+
+            /*
+            .mediumEditor{
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 22px;
+                line-height: 30px;
+                overflow-y: auto;
+                height:85vh;
+            }
+            
+          
+
+
+
+            .mediumEditor h1 {
+    font-size: 60px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 40px;
+    letter-spacing: -2px;
+    border-bottom: 1px solid #dbdbdb;
+}
+
+.mediumEditor h3 {
+    font-size: 32px;
+    line-height: 42px;
+}
+
+.mediumEditor h4 {
+    font-size: 26px;
+    line-height: 32px;
+}
+
+.mediumEditor p {
+    margin-bottom: 0px;
+    margin-top: 5px;
+
+    font-family: "Lato", sans-serif;
+      font-weight: 400;
+      font-style: normal;
+}
+
+.mediumEditor a {
+    color:black;
+}
+
+.mediumEditor a:hover {
+    color:green;
+}
+
+.mediumEditor pre {
+    font-family: 'Menlo', monospace;
+    font-size: 15px;
+    background-color: #f0f0f0;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    color: #666;
+}
+
+.mediumEditor blockquote {
+    display: block;
+    padding-left: 20px;
+    border-left: 6px solid #df0d32;
+    margin-left: -15px;
+    padding-left: 15px;
+    font-style: italic;
+    color: #555;
+}
+
+.mediumEditor #container {
+    width: 960px;
+    margin: 30px auto;
+}
+
+.mediumEditor,
+.secondmediumEditor
+ {
+    outline: none;
+    margin: 0 0 20px 0;
+    padding: 0 0 20px 0;
+    border-bottom: 1px solid #dbdbdb;
+}
+
+#columns {
+    width: 90%;
+    margin: 30px auto;
+}
+
+.column-container {
+
+}
+
+.column {
+    vertical-align: top;
+    display: inline-block;
+    width: 30%;
+    margin: 10px 1%;
+}
+
+*/
+
+/* Style the editable container */
+.editable {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 18px; /* Base font size for body text */
+    line-height: 1.6; /* Comfortable line spacing */
+    color: #333; /* Dark, readable text color */
+    background-color: /*#fff*/ #f5f5f5; /* Clean white background */
+    padding: 20px; /* Add padding for breathing room */
+    margin: 20px auto; /* Center the container with margin */
+    max-width: 800px; /* Limit width for readability */
+    border: 1px solid #e0e0e0; /* Subtle border */
+    border-radius: 2px; /* Rounded corners for a modern look */
+    /*box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);*/ /* Subtle shadow for depth */
+    min-height: 300px; /* Ensure enough space for writing */
+
+    overflow-y: auto;
+    height:85vh;
+}
+
+
+.editable::-webkit-scrollbar {
+  width: 2px; /* Adjust scrollbar width */
+  height: 6px; /* Adjust scrollbar height (for horizontal scrollbars) */
+}
+
+.editable::-webkit-scrollbar-thumb {
+  background: #888; /* Scrollbar thumb color */
+  border-radius: 6px; /* Rounded corners */
+}
+
+.editable::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Scrollbar track color */
+}
+
+/* Style headers */
+.editable h1 {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 1em 0 0.5em;
+  color: #222;
+}
+
+.editable h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 1em 0 0.5em;
+  color: #222;
+}
+
+.editable h3 {
+  font-size: 20px;
+  font-weight: 500;
+  margin: 1em 0 0.5em;
+  color: #222;
+}
+
+/* Style paragraphs */
+.editable p {
+  margin: 0 0 1em; /* Space between paragraphs */
+}
+
+/* Style links */
+.editable a {
+  color: #1a73e8; /* Vibrant link color */
+  text-decoration: underline;
+}
+
+/* Placeholder text styling */
+.editable:empty:before {
+  content: 'Start writing your diary...';
+  color: #999; /* Light gray placeholder */
+  font-style: italic;
+}
+
+/* Focus state for better UX */
+.editable:focus {
+  outline: none; /* Remove default outline */
+  border-color: #dbdee1; /* Highlight border on focus */
+  /*box-shadow: 0 0 8px rgba(200, 210, 222, 0.2);*/ /* Subtle glow */
+}
+
+/* Responsive typography */
+@media (max-width: 600px) {
+  .editable {
+    font-size: 16px; /* Slightly smaller on mobile */
+    padding: 15px;
+    max-width: 100%;
+  }
+
+  .editable h1 {
+    font-size: 24px;
+  }
+
+  .editable h2 {
+    font-size: 20px;
+  }
+
+  .editable h3 {
+    font-size: 18px;
+  }
+}
+
+        </style>
+        <style>
+            .medium-editor-toolbar {
+  background-color: #fff; /* White background */
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.medium-editor-toolbar li button {
+  color: #333; /* Dark button icons */
+  border: none;
+  padding: 8px;
+  transition: background-color 0.2s;
+}
+
+.medium-editor-toolbar li button:hover {
+  background-color: #f0f0f0; /* Subtle hover effect */
+}
+
+.medium-editor-toolbar-active {
+  visibility: visible; /* Ensure toolbar is visible when active */
+}
+        </style>
+        <style>
+            .dark-mode .editable {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  border-color: #333;
+}
+
+.dark-mode .editable:empty:before {
+  color: #666;
+}
+        </style>
+        <div class="editable"></div>
+        <!-----end of App rendering part-->
+      </div>
+    </div>
+  </div>
+
+  <sl-drawer label="Drawer" class="drawer-overview">
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+    <sl-button slot="footer" variant="primary">Close</sl-button>
+  </sl-drawer>
+  
+  
+  
+  <script src="./appMediumAnywhere.js"></script>
+  <script src="./js/overlayDIVFactory.js"></script>
+  <script src="./js/modalFactory.js"></script>
+
+  <script>
+  //var editor = new MediumEditor('.mediumEditor');
+    var elements = document.querySelectorAll('.editable'),
+    editor = new MediumEditor(elements,{
+    toolbar: {
+        /* These are the default options for the toolbar,
+           if nothing is passed this is what is used */
+        allowMultiParagraphSelection: true,
+        buttons: ['bold', 'italic', 'underline', 'anchor', 'h2', 'h3', 'quote'],
+        diffLeft: 0,
+        diffTop: -10,
+        firstButtonClass: 'medium-editor-button-first',
+        lastButtonClass: 'medium-editor-button-last',
+        relativeContainer: null,
+        standardizeSelectionStart: false,
+        static: false,
+        /* options which only apply when static is true */
+        align: 'center',
+        sticky: false,
+        updateOnEmptySelection: false
+    }
+});
+  </script>
+
+  <script>
+    document.getElementById('idBTNToggleNavBar').addEventListener('click',(event)=>{
+        let tagLeftPanel = document.querySelector('.leftPanel') ;
+        //tagLeftPanel.style.width = "200px" ;
+        tagLeftPanel.classList.toggle('leftPanelCollapse');
+        tagLeftPanel.classList.toggle('leftPanelExpand');
+
+        //navigationPanel
+        tagLeftPanel.querySelector('.navigationPanel').classList.toggle('noShow') ;
+        let jsonMeta = appMeta() ;
+        jsonMeta.renderPanel(tagLeftPanel.querySelector('.navigationPanel')) ;
+    }) ;
+
+    //
+    document.getElementById('idBTNOutpostLogo').addEventListener('click',(event)=>{
+        window.open('https://alexzhangmaker.github.io/index.html') ;
+    }) ;
+
+    document.getElementById('PlusButton').addEventListener('click',(event)=>{
+      overlayView.createOverlay('<h3>Hello!</h3><p>This is a custom overlay.</p>')
+
+    }) ;
+
+    
+    
+
+    const callbackFunc =(data) => {
+        console.log('Submitted:', data) ;
+    } ;
+    
+    //idBTNOutpostSetting
+    document.getElementById('idBTNOutpostSetting').addEventListener('click',(event)=>{
+
+      
+      window.modalFactory.createModal({
+        title: 'app setting',
+        fields: [
+          { label: 'Name', name: 'name', type: 'text', placeholder: 'Enter your name', required: true },
+          { label: 'Email', name: 'email', type: 'email', placeholder: 'Enter your email', required: true },
+          { label: 'Role', name: 'role', type: 'select', options: [
+            { value: 'admin', label: 'Admin' },
+            { value: 'user', label: 'User' }
+          ], required: true },
+          { label: 'Comments', name: 'comments', type: 'textarea', placeholder: 'Enter any comments' }
+        ],
+        callback: (data) => {
+          console.log('Submitted data:', data);
+          alert('Form submitted with data: ' + JSON.stringify(data));
+        }
+      });
+    
+    }) ;
+
+    //idBTNOutpostAuth
+    document.getElementById('idBTNOutpostAuth').addEventListener('click',(event)=>{
+
+      const drawer = document.querySelector('.drawer-overview');
+      const closeButton = drawer.querySelector('sl-button[variant="primary"]');
+  
+      drawer.show();
+      closeButton.addEventListener('click', () => drawer.hide());
+    }) ;
+
+    document.addEventListener("DOMContentLoaded",async (event)=>{
+      tippy('#idBTNOutpostLogo', {content: "go outpost Home!"});
+      tippy('#idBTNOutpostSetting', {content: "application setting"});
+      tippy('#idBTNOutpostAuth', {content: "authentication"});
+
+      
+      let jsonMeta = appMeta() ;
+
+      if(jsonMeta.hasOwnProperty('appTitle'))jsonMeta.appTitle() ;
+      if(jsonMeta.hasOwnProperty('injectStyle'))jsonMeta.injectStyle() ;
+      if(jsonMeta.hasOwnProperty('renderWorkStudio')){
+        let tagRightPanelMain=document.querySelector('.rightPanelMain') ;
+        jsonMeta.renderWorkStudio(tagRightPanelMain) ;
+      }
+
+    }) ;
+
+
+  </script>
+
+<script>
+    // Save content on input
+document.querySelector('.editable').addEventListener('input', function() {
+  localStorage.setItem('diaryContent', this.innerHTML);
+});
+
+// Load saved content on page load
+window.onload = function() {
+  const savedContent = localStorage.getItem('diaryContent');
+  if (savedContent) {
+    document.querySelector('.editable').innerHTML = savedContent;
+  }
+};
+</script>
+
+</body>
+</html>

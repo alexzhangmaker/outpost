@@ -8,10 +8,12 @@
   <link rel="stylesheet" href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
 
-   <!-- Google Fonts: Roboto -->
-   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
-   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+  <!-- Google Fonts: Roboto -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+
+  <link rel="stylesheet" href="./css/googleResource.css">
 
   <link rel="stylesheet" href="./css/outpostFW.css">
   <link rel="stylesheet" href="./css/cssMarkdown.css">
@@ -38,93 +40,7 @@
       CommonHTML: { linebreaks: { automatic: true } }
     });
   </script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
-    .montserrat-Font-300 {
-      font-family: "Montserrat", sans-serif;
-      font-optical-sizing: auto;
-      font-weight: 300;
-      font-style: normal;
-    }
-
-    @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
-    .lato-thin {
-      font-family: "Lato", sans-serif;
-      font-weight: 100;
-      font-style: normal;
-    }
-
-    .lato-light {
-      font-family: "Lato", sans-serif;
-      font-weight: 300;
-      font-style: normal;
-    }
-
-    .lato-regular {
-      font-family: "Lato", sans-serif;
-      font-weight: 400;
-      font-style: normal;
-    }
-
-    .lato-bold {
-      font-family: "Lato", sans-serif;
-      font-weight: 700;
-      font-style: normal;
-    }
-
-    .lato-black {
-      font-family: "Lato", sans-serif;
-      font-weight: 900;
-      font-style: normal;
-    }
-
-    .lato-thin-italic {
-      font-family: "Lato", sans-serif;
-      font-weight: 100;
-      font-style: italic;
-    }
-
-    .lato-light-italic {
-      font-family: "Lato", sans-serif;
-      font-weight: 300;
-      font-style: italic;
-    }
-
-    .lato-regular-italic {
-      font-family: "Lato", sans-serif;
-      font-weight: 400;
-      font-style: italic;
-    }
-
-    .lato-bold-italic {
-      font-family: "Lato", sans-serif;
-      font-weight: 700;
-      font-style: italic;
-    }
-
-    .lato-black-italic {
-      font-family: "Lato", sans-serif;
-      font-weight: 900;
-      font-style: italic;
-    }
-
-
-    .roboto-400 {
-        font-family: "Roboto", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-        font-variation-settings:"wdth" 100;
-    }
-  </style>
-  <style>
-    </style>
-  <style>
-
-
-
-  </style>
+  
 </head>
 
 <body>
@@ -160,68 +76,7 @@
 
     <div class="rightPanelMain mdEditorContainer">
 
-      <!---html code for Markdown Editor-->
-      <div class="workingSpace">
-        <div class="workingFocus">
-          <div class="mdEditorToolbar">
-            <!------
-            <style>
-                .iconTools{
-                    display: flex;
-                    gap:10px ;
-                }
-
-                .inputToolbar{
-                    width:50% ;
-                }
-
-                #docTitle{
-                    font-size: 18px;
-                    width:100% ;
-                }
-
-                #docTitle:focus{
-                    outline: none;
-                }
-
-                input[type="text"] {
-                    border: none; /* Removes all default borders */
-                    border-bottom: 1px solid #a39797; /* Applies a 2px solid dark gray bottom border */
-                    /*padding: 8px;
-                    width: 100%;*/
-                    box-sizing: border-box; /* Includes padding and border in the element's total width and height */
-                }
-            
-            </style>
-            --->
-            <div class="inputToolbar">
-                <input id="docTitle" type="text" placeholder="Document Title" class="roboto-400">
-            </div>
-            <div class="iconTools">
-                <i class="bi-hdd outpostBTN" id="idBTNSaveButton"></i>
-                <i class="bi-clipboard-plus outpostBTN" id="idBTNPlusButton"></i>
-                <!-----
-                <i class="bi-trash outpostBTN" id="RemoveButton"></i>
-                <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
-                --->
-            </div>
-          </div>
-        
-          <div id="editor"></div>
-        </div>
-      </div>
-
-      <div class="workingAside noShow">
-        <div class="workingAsideToolbar">
-          <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
-        </div>
-        <!-----
-        <div class="memoBrowser">
-          <div id="idMemoList"></div>
-        </div>
-    -->
-      </div>
-      <!----end of markdown editor-->
+      
 
     </div>
   </div>
@@ -230,24 +85,11 @@
 
 
 
-  <!-- Modal for Grid.js table editor -->
-  <div id="tableModal">
-    <div id="gridContainer">
-      <div id="grid"></div>
-      <div class="mt-4 flex justify-end space-x-2">
-        <button id="saveTable" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Save Table</button>
-        <button id="closeModal" class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
-      </div>
-    </div>
-  </div>
+  
 </div>
   <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
   <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
-  <script src="./js/ui_NavigateBar.js"></script>
   <script src="./js/API_supaBase.js"></script>
-  <!-----
-  <script src="./js/mdEditor.js"></script>
-  --->
   <script src="./appWriteAnywhere.js"></script>
 
 
@@ -313,6 +155,7 @@
 
   </script>
   <script>
+    /*
     //https://alexzhangmaker.github.io/outpost/outpostProtected.html
 
     // 您的 Firebase 项目配置
@@ -356,7 +199,7 @@
             window.location.href = 'outpostLogin.html';
         }
     });
-
+    */
     /*
     // 退出登录按钮
     document.getElementById('logout-btn').addEventListener('click', () => {

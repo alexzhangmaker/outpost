@@ -155,11 +155,6 @@ const _renderPanel=async (tagPanel)=>{
 
 } ;
 
-const _renderWorkStudio=async (tagRightPanelMain)=>{
-    console.log('appWriteAnywhere _renderWorkStudio') ;
-
-} ;
-
 
 
 const initialMDContent = '# Welcome to the Markdown Editor\n\nType `$E=mc^2$` for LaTeX formulas.\n\nClick the table button (📊) to create/edit tables with Grid.js.' ;
@@ -167,42 +162,143 @@ const initialMDContent = '# Welcome to the Markdown Editor\n\nType `$E=mc^2$` fo
 
 
 const { Editor } = toastui;
-const editor = new Editor({
-  el: document.querySelector('#editor'),
-  height: '90%',
-  initialEditType: 'markdown',
-  previewStyle: 'vertical',
-  initialValue: initialMDContent,
-  addons: ['math'],
-  toolbarItems: [
-    ['heading', 'bold', 'italic', 'strike'],
-    ['hr', 'quote'],
-    ['ul', 'ol', 'task', 'indent', 'outdent'],
-    ['table', 'image', 'link'],
-    ['code', 'codeblock'],
-    [{
-      name: 'gridTable',
-      tooltip: 'Insert/Edit Table with Grid.js',
-      command: 'openGridJsTable',
-      text: '📊',
-      className: 'grid-table-button'
-    }]
-  ],
-  hooks: {
-    afterPreviewRender: () => {
-      console.log('Rendering MathJax in preview');
-      MathJax.Hub.Queue(['Typeset', MathJax.Hub, document.querySelector('.toastui-editor-contents')]);
-    }
-  }
-});
+let editor ;
+let grid;
 
 // Initialize Grid.js in modal
-let grid;
 const gridData = [
   ['Header 1', 'Header 2', 'Header 3'],
   ['Row 1 Col 1', 'Row 1 Col 2', 'Row 1 Col 3'],
   ['Row 2 Col 1', 'Row 2 Col 2', 'Row 2 Col 3']
 ] ;
+
+const _renderWorkStudio=async (tagRightPanelMain)=>{
+  console.log('appWriteAnywhere _renderWorkStudio') ;
+  
+  tagRightPanelMain.classList.add('mdEditorContainer') ;
+  tagRightPanelMain.innerHTML=
+    `<!---html code for Markdown Editor-->
+    <div class="workingSpace">
+      <div class="workingFocus">
+        <div class="mdEditorToolbar">
+          <div class="inputToolbar">
+              <input id="docTitle" type="text" placeholder="Document Title" class="roboto-400">
+          </div>
+          <div class="iconTools">
+              <i class="bi-hdd outpostBTN" id="idBTNSaveButton"></i>
+              <i class="bi-clipboard-plus outpostBTN" id="idBTNPlusButton"></i>
+              <!-----
+              <i class="bi-trash outpostBTN" id="RemoveButton"></i>
+              <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
+              --->
+          </div>
+        </div>
+      
+        <div id="editor"></div>
+      </div>
+    </div>
+
+    <!-- Modal for Grid.js table editor -->
+    <div id="tableModal">
+      <div id="gridContainer">
+        <div id="grid"></div>
+        <div class="mt-4 flex justify-end space-x-2">
+          <button id="idBTNSaveTable" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Save Table</button>
+          <button id="idBTNCloseModal" class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <!----end of markdown editor-->
+  ` ;
+
+
+
+  editor = new Editor({
+    el: document.querySelector('#editor'),
+    height: '90%',
+    initialEditType: 'markdown',
+    previewStyle: 'vertical',
+    initialValue: initialMDContent,
+    addons: ['math'],
+    toolbarItems: [
+      ['heading', 'bold', 'italic', 'strike'],
+      ['hr', 'quote'],
+      ['ul', 'ol', 'task', 'indent', 'outdent'],
+      ['table', 'image', 'link'],
+      ['code', 'codeblock'],
+      [{
+        name: 'gridTable',
+        tooltip: 'Insert/Edit Table with Grid.js',
+        command: 'openGridJsTable',
+        text: '📊',
+        className: 'grid-table-button'
+      }]
+    ],
+    hooks: {
+      afterPreviewRender: () => {
+        console.log('Rendering MathJax in preview');
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub, document.querySelector('.toastui-editor-contents')]);
+      }
+    }
+  });
+
+
+  // Open Grid.js table editor
+  editor.addCommand('markdown', 'openGridJsTable', () => {
+    document.querySelector('#tableModal').classList.add('show');
+    initializeGrid(gridData);
+  });
+    
+
+  // Event listeners
+  tagRightPanelMain.querySelector('#idBTNSaveButton').addEventListener('click', async () => {
+    const title = document.getElementById('docTitle').value || 'Untitled';
+    const content = editor.getMarkdown();
+    
+    let tagEditor = document.querySelector('#editor') ;
+    let activeMemoID = tagEditor.dataset.ActiveMemoID ;
+    if(activeMemoID=='' || activeMemoID==undefined){
+      await API_PlusMDMemo_Supabase(title, content);
+    }else{
+      await API_UpdateMDMemo(activeMemoID,title,content) ;
+    }
+  });
+
+
+  tagRightPanelMain.querySelector('#idBTNPlusButton').addEventListener('click', async () => {
+    /*
+    const title = document.getElementById('docTitle').value || 'Untitled';
+    const content = editor.getMarkdown();    
+    await API_PlusMDMemo_Supabase(title, content);
+    */
+
+    document.getElementById('docTitle').value = 'new doc';
+    editor.setMarkdown(initialMDContent);
+    let tagEditor = document.querySelector('#editor') ;
+
+    tagEditor.dataset.ActiveMemoID = '';//tagMemoItem.dataset.memoID ;
+  });
+
+  tagRightPanelMain.querySelector('#idBTNSaveTable').addEventListener('click', async () => {
+    const gridData = [
+      grid.config.columns.map(col => col.name),
+      ...grid.config.data
+    ];
+    const markdownTable = gridToMarkdownTable(gridData);
+    editor.insertText(markdownTable);
+    document.getElementById('tableModal').classList.remove('show');
+    grid.destroy();
+  }) ;
+
+  // Save table to editor
+  // Close modal
+  tagRightPanelMain.querySelector('#idBTNCloseModal').addEventListener('click', () => {
+    document.getElementById('tableModal').classList.remove('show');
+    grid.destroy();
+  });
+} ;
+
+
 function initializeGrid(data) {
   grid = new gridjs.Grid({
     columns: data[0].map((header, index) => ({
@@ -229,35 +325,6 @@ function gridToMarkdownTable(gridData) {
   });
   return markdown;
 }
-
-// Open Grid.js table editor
-editor.addCommand('markdown', 'openGridJsTable', () => {
-  document.getElementById('tableModal').classList.add('show');
-  initializeGrid(gridData);
-});
-
-// Save table to editor
-document.getElementById('saveTable').addEventListener('click', () => {
-  const gridData = [
-    grid.config.columns.map(col => col.name),
-    ...grid.config.data
-  ];
-  const markdownTable = gridToMarkdownTable(gridData);
-  editor.insertText(markdownTable);
-  document.getElementById('tableModal').classList.remove('show');
-  grid.destroy();
-});
-
-// Close modal
-document.getElementById('closeModal').addEventListener('click', () => {
-  document.getElementById('tableModal').classList.remove('show');
-  grid.destroy();
-});
-// Save document to Supabase
-
-
-
-
 
 
 function renderMemoList(tagMemoBrowser,memoArray){
@@ -297,20 +364,6 @@ function renderMemoList(tagMemoBrowser,memoArray){
 }
 
 
-// Event listeners
-document.querySelector('#idBTNSaveButton').addEventListener('click', async () => {
-    const title = document.getElementById('docTitle').value || 'Untitled';
-    const content = editor.getMarkdown();
-    
-    let tagEditor = document.querySelector('#editor') ;
-    let activeMemoID = tagEditor.dataset.ActiveMemoID ;
-    if(activeMemoID=='' || activeMemoID==undefined){
-      await API_PlusMDMemo_Supabase(title, content);
-    }else{
-      await API_UpdateMDMemo(activeMemoID,title,content) ;
-    }
-});
-
 document.getElementById('loadButton').addEventListener('click', async () => {
     let jsonMemos = await API_LoadLatestMemo_Supabase();
     console.log(jsonMemos) ;
@@ -323,19 +376,6 @@ document.getElementById('loadButton').addEventListener('click', async () => {
     renderMemoList(tagMemoBrowser,jsonMemos) ;
 });
 
-document.querySelector('#idBTNPlusButton').addEventListener('click', async () => {
-    /*
-    const title = document.getElementById('docTitle').value || 'Untitled';
-    const content = editor.getMarkdown();    
-    await API_PlusMDMemo_Supabase(title, content);
-    */
-
-  document.getElementById('docTitle').value = 'new doc';
-  editor.setMarkdown(initialMDContent);
-  let tagEditor = document.querySelector('#editor') ;
-
-  tagEditor.dataset.ActiveMemoID = '';//tagMemoItem.dataset.memoID ;
-});
 
 /*
 document.getElementById('RemoveButton').addEventListener('click', async () => {
