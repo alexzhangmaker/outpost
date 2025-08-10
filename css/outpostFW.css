@@ -140,7 +140,7 @@ body{
 .iconTools{
     display: flex;
     gap:10px ;
-    flex-grow: 1 ;
+    /*flex-grow: 1 ;*/
     justify-content: end;
     padding-right: 20px;
 }

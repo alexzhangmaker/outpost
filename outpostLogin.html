@@ -53,6 +53,7 @@
                         tagPortalEntry.innerHTML=`
                             <button id="idBoxAnywhere">boxAnywhere</button>
                             <button id="idWriteAnywhere">WriteAnywhere</button>
+                            <button id="idMediumAnywhere">medium.Anywhere</button>
 
                         ` ;
                         tagPortalEntry.querySelector('#idBoxAnywhere').addEventListener('click',(event)=>{
@@ -60,6 +61,9 @@
                         }) ;
                         tagPortalEntry.querySelector('#idWriteAnywhere').addEventListener('click',(event)=>{
                             window.location.href = 'writeAnywhere.html';
+                        }) ;
+                        tagPortalEntry.querySelector('#idMediumAnywhere').addEventListener('click',(event)=>{
+                            window.location.href = 'mediumAnywhere.html';
                         }) ;
                     } else {
                         console.log('邮箱不匹配，认证失败。');
