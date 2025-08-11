@@ -7,6 +7,7 @@ function appMeta(){
         renderPanel:_renderPanel,
         renderWorkStudio:_renderWorkStudio,
         renderHeadTools:_renderHeadTools,
+        renderNavTools:_renderNavTools,
         injectStyle:_injectStyle_AppBoxAnywhere
     }
 }
@@ -44,7 +45,7 @@ const _style_AppMediumAnywhere=`
     min-height: 300px; /* Ensure enough space for writing */
 
     overflow-y: auto;
-    height:85vh;
+    height:80vh;
 }
 
 
@@ -96,11 +97,13 @@ const _style_AppMediumAnywhere=`
 }
 
 /* Placeholder text styling */
+
 .editable:empty:before {
   content: 'Start writing your diary...';
   color: #999; /* Light gray placeholder */
   font-style: italic;
 }
+
 
 /* Focus state for better UX */
 .editable:focus {
@@ -161,6 +164,10 @@ const _style_AppMediumAnywhere=`
 .dark-mode .editable:empty:before {
   color: #666;
 }
+
+.memoItem:hover{
+    cursor:pointer ;
+}
 ` ;
 const _injectStyle_AppBoxAnywhere = ()=>{
     /*
@@ -187,6 +194,12 @@ const _injectStyle_AppBoxAnywhere = ()=>{
 
 let gMemos=[] ;
 
+const _renderNavTools=async (tagAppNavTool)=>{
+    let tagToggle = tagAppNavTool.querySelector('#idBTNToggleNavBar') ;
+    tagToggle.classList.add('noShow') ;
+    tagAppNavTool.classList.remove('noShow') ;
+} ;
+
 const _renderHeadTools=async (tagAppIconTools)=>{
     tagAppIconTools.innerHTML=`
         <input type="text" id="idMemoTitle" placeholder="title..." onfocus="this.value=''" style="width:20rem">
@@ -198,37 +211,33 @@ const _renderHeadTools=async (tagAppIconTools)=>{
     tagAppIconTools.querySelector('#idBTNSaveButton').addEventListener('click',async (event)=>{
         let title = tagAppIconTools.querySelector('#idMemoTitle').value ;
         let content = document.querySelector('.editable').innerHTML ;
-        await _SaveMemo2FB(title,content) ;
+        let currentMemoID = document.querySelector('.editable').dataset.memoID ;
+        let savedMemoID = '' ;
+        let jsonMemo = {} ;
+        if(currentMemoID==undefined || currentMemoID==''){
+            jsonMemo = await _SaveMemo2FB('',title,content) ;
+            savedMemoID = jsonMemo.memoID ;
+            //
+            let appDrawerContent = document.querySelector('.appDrawerContent');
+            renderMemoItem(appDrawerContent,jsonMemo) ;
+            //
+        }else{
+            jsonMemo = await _SaveMemo2FB(currentMemoID,title,content) ;
+            savedMemoID = jsonMemo.memoID ;
+        }
+        if(savedMemoID!=currentMemoID){
+            document.querySelector('.editable').dataset.memoID = savedMemoID ;
+        }
     }) ;
     tagAppIconTools.querySelector('#idBTNPlusButton').addEventListener('click',(event)=>{
         //alert('idBTNPlusButton') ;
         document.querySelector('.editable').innerHTML='new...' ;
+        document.querySelector('.editable').dataset.memoID = '' ;
         tagAppIconTools.querySelector('#idMemoTitle').value = '...' ;
     }) ;
     tagAppIconTools.querySelector('#idBTNListMemo').addEventListener('click',async (event)=>{
         const drawer = document.querySelector('.drawer-overview');
         const closeButton = drawer.querySelector('sl-button[variant="primary"]');
-    
-
-        function renderMemoItem(memoList,jsonMemo){
-            let tagMemoItem = document.createElement('div') ;
-            memoList.appendChild(tagMemoItem) ;
-            tagMemoItem.innerHTML=`
-                <span>${jsonMemo.title}</span>
-            ` ;
-            tagMemoItem.dataset.memoID = jsonMemo.memoID ;
-
-            tagMemoItem.addEventListener('click',(event)=>{
-                for(let i=0;i<gMemos.length;i++){
-                    if(gMemos[i].memoID == tagMemoItem.dataset.memoID){
-                        document.querySelector('.editable').innerHTML=gMemos[i].memo ;
-                        tagAppIconTools.querySelector('#idMemoTitle').value = gMemos[i].title ;
-                        document.querySelector('.editable').dataset.memoID = tagMemoItem.dataset.memoID ;
-                        break ;
-                    }
-                }
-            }) ;
-        }
 
         if(event.target.dataset.memoRendered!='true'){
             gMemos =await _ListMemo4FB() ;
@@ -264,11 +273,40 @@ function genMemoID(){
     return `${cDate}${random4Digit}` ;
 }
 
-async function _SaveMemo2FB(memoTitle,memoContent){
+function renderMemoItem(memoList,jsonMemo){
+    let tagMemoItem = document.createElement('div') ;
+    memoList.appendChild(tagMemoItem) ;
+    //memoItem
+    tagMemoItem.classList.add('memoItem') ;
+    tagMemoItem.innerHTML=`
+        <span>${jsonMemo.title}</span>
+        <i class="bi-recycle outpostBTN btnRemoveMemo"></i>
+    ` ;
+    tagMemoItem.dataset.memoID = jsonMemo.memoID ;
+
+    tagMemoItem.addEventListener('click',(event)=>{
+        for(let i=0;i<gMemos.length;i++){
+            if(gMemos[i].memoID == tagMemoItem.dataset.memoID){
+                document.querySelector('.editable').innerHTML=gMemos[i].memo ;
+                tagAppIconTools.querySelector('#idMemoTitle').value = gMemos[i].title ;
+                document.querySelector('.editable').dataset.memoID = tagMemoItem.dataset.memoID ;
+                break ;
+            }
+        }
+    }) ;
+    tagMemoItem.querySelector('.btnRemoveMemo').addEventListener('click',async(event)=>{
+        let memoID = tagMemoItem.dataset.memoID ;
+        event.stopPropagation() ;
+        //alert('fdsfdsg');
+        await _removeMemo4FB(memoID) ;
+        tagMemoItem.remove() ;
+    }) ;
+}
+async function _SaveMemo2FB(memoID,memoTitle,memoContent){
 
     let cDate = new Date() ;
     let jsonMemo = {
-        "memoID": genMemoID(),
+        "memoID": memoID==''?genMemoID():memoID,
         "title": memoTitle,
         "memo":memoContent,
         "timeStamp":cDate.getTime()
@@ -287,10 +325,44 @@ async function _SaveMemo2FB(memoTitle,memoContent){
         console.log(`Failed to logDeal : ${putResponse.statusText}`);
     }
     console.log("logDeal successfully!");
+    return jsonMemo ;
+}
+
+async function _removeMemo4FB(memoID){
+    //https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos/202508108151
+    let urlFB = `https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos/${memoID}.json` ;
+    let result = await fetch(urlFB, {method: "DELETE"}) ;
+    //let jsonMemos=await result.json() ;
+    //console.log(jsonMemos);
+    console.log(`Successfully deleted the node at: ${memoID}`);
 }
 
 async function _ListMemo4FB(){
-    let url=`https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos.json` ;
+
+    const user = firebase.auth().currentUser;
+
+    if(!user)return ;
+    /*
+    if (user) {
+        // User is signed in.
+        user.getIdToken().then((idToken) => {
+            console.log("ID Token:", idToken);
+
+            // You can now use this idToken for your REST API calls
+            // For example:
+            // const url = `https://your-project.firebaseio.com/data.json?auth=${idToken}`;
+            // fetch(url).then(...);
+        }).catch((error) => {
+            // Handle any errors that might occur while getting the token
+            console.error("Error getting ID token:", error);
+        });
+    } else {
+        // No user is signed in.
+        console.log("No user is currently signed in.");
+    }
+    */
+    let idToken = await user.getIdToken() ;
+    let url=`https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos.json?auth=${idToken}` ;
     let result = await fetch(url) ;
     let jsonMemos=await result.json() ;
     console.log(jsonMemos);
@@ -312,11 +384,16 @@ const _renderPanel=async (tagPanel)=>{
     console.log('appBox _renderPanel') ;
     //alert('will render panel')
 
+    //idBTNToggleNavBar
+    let tagToggle = document.querySelector('#idBTNToggleNavBar') ;
+    tagToggle.classList.add('noShow') ;
+    /*
     if(tagPanel.dataset.rendered =='true')return ;
 
     tagPanel.innerHTML=`
         
     ` ;
+    */
 
     
 
@@ -346,7 +423,8 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
           align: 'center',
           sticky: false,
           updateOnEmptySelection: false
-      }
+      },
+      placeholder: false
     });
 
     // Save content on input

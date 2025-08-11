@@ -40,9 +40,7 @@
 <body>
     <div class="headerNavigationBar">
       <div class="outpostLogo"><i class="bi-house-fill outpostBTN" id="idBTNOutpostLogo"></i></div>
-      <div class="appIconTools iconTools" style="flex-grow: 1;" >
-        
-      </div>
+      <div class="appIconTools iconTools" style="flex-grow: 1;" ></div>
       <div class="iconTools">
         <i class="bi-person-circle outpostBTN" id="idBTNOutpostAuth"></i>
       </div>
@@ -50,10 +48,12 @@
   <div class="bodyWorkingStudio">
     <div class="leftPanel leftPanelCollapse">
       <div class="navigationBar">
-          <div class="naviICONGroup">
+          <div class="naviICONGroup appNaviTools noShow">
               <i class="bi-list outpostBTN" id="idBTNToggleNavBar"></i>
+              <!------
               <i class="bi-trash outpostBTN" id="RemoveButton"></i>
               <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
+              -->
           </div>
           <div class="naviICONGroup">
               <i class="bi-gear-wide-connected outpostBTN" id="idBTNOutpostSetting"></i>
@@ -75,7 +75,7 @@
     </div>
   </div>
 
-  <sl-drawer label="Drawer" class="drawer-overview">
+  <sl-drawer label="appMedium" class="drawer-overview">
     <div class="appDrawerContent"></div>
     <sl-button slot="footer" variant="primary">Close</sl-button>
   </sl-drawer>
@@ -162,6 +162,11 @@
         let tagAppIconTools=document.querySelector('.appIconTools') ;
         jsonMeta.renderHeadTools(tagAppIconTools) ;
       }
+      if(jsonMeta.hasOwnProperty('renderNavTools')){
+        let tagAppNavTool=document.querySelector('.appNaviTools') ;
+        jsonMeta.renderNavTools(tagAppNavTool) ;
+      }
+
 
     }) ;
 
@@ -204,6 +209,16 @@
               // 邮箱匹配，显示页面内容
               //document.getElementById('user-email').textContent = user.email;
               console.log(user.email) ;
+              user.getIdToken().then((idToken) => {
+                // Now you have the ID token, you can use it in your REST API calls
+                /*const url = `https://[YOUR_PROJECT_ID].firebaseio.com/users/profile.json?auth=${idToken}`;
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => console.log(data))
+                    .catch(error => console.error(error));
+                */
+                console.log(`idToken:${idToken}`);
+              });
           } else {
               // 邮箱不匹配，强制登出并跳转
               alert('您的账户没有权限访问此页面。');
@@ -219,6 +234,7 @@
   });
   
   /*
+
   // 退出登录按钮
   document.getElementById('logout-btn').addEventListener('click', () => {
       auth.signOut().then(() => {
