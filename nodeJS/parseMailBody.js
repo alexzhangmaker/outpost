@@ -7,39 +7,39 @@
  * @returns {object} A JSON object containing the parsed receipt details, or an empty object on failure.
  */
 function parseKBankReceipt(mailContent) {
-    const receiptData = {};
-    
-    try {
-      // A single, more powerful regex to find all "*Key:* Value" pairs.
-      // Explanation:
-      // \*([^*]+):\*: Matches the pattern "*KEY:*". Captures the KEY inside parentheses.
-      // ([^]+?): Captures the VALUE. The [^] matches any character, including newlines. The ? makes it non-greedy.
-      // (?=\*|$): A lookahead that stops the capture right before the next asterisk or at the end of the string.
-      const keyValuePairRegex = /\*([^*]+):\*([^]+?)(?=\*|$)/g;
+  const receiptData = {};
   
-      let match;
-      
-      // Iterate through all matches found by the regex.
-      while ((match = keyValuePairRegex.exec(mailContent)) !== null) {
-        // Clean up the key and value.
-        const key = match[1].trim().replace(/\s+/g, '').replace(/\(THB\)/, '');
-        let value = match[2].trim();
-        
-        // Convert specific keys to numbers if they are amounts or fees.
-        if (key === 'Amount' || key === 'Fee') {
-          value = parseFloat(value);
-        }
-        
-        // Store the cleaned key-value pair in the object.
-        receiptData[key] = value;
-      }
-    } catch (error) {
-      console.error("Failed to parse the receipt content:", error);
-      return {}; // Return an empty object on error
-    }
+  try {
+    // A single, more powerful regex to find all "*Key:* Value" pairs.
+    // Explanation:
+    // \*([^*]+):\*: Matches the pattern "*KEY:*". Captures the KEY inside parentheses.
+    // ([^]+?): Captures the VALUE. The [^] matches any character, including newlines. The ? makes it non-greedy.
+    // (?=\*|$): A lookahead that stops the capture right before the next asterisk or at the end of the string.
+    const keyValuePairRegex = /\*([^*]+):\*([^]+?)(?=\*|$)/g;
+
+    let match;
     
-    return receiptData;
+    // Iterate through all matches found by the regex.
+    while ((match = keyValuePairRegex.exec(mailContent)) !== null) {
+      // Clean up the key and value.
+      const key = match[1].trim().replace(/\s+/g, '').replace(/\(THB\)/, '');
+      let value = match[2].trim();
+      
+      // Convert specific keys to numbers if they are amounts or fees.
+      if (key === 'Amount' || key === 'Fee') {
+        value = parseFloat(value);
+      }
+      
+      // Store the cleaned key-value pair in the object.
+      receiptData[key] = value;
+    }
+  } catch (error) {
+    console.error("Failed to parse the receipt content:", error);
+    return {}; // Return an empty object on error
   }
+  
+  return receiptData;
+}
   
   // Example Usage:
   const mailContent = `*Dear ZHANG QING,* Please be notified of your bill payment transaction via krungsri app as follows:   *Transaction Result:* Success *Type of Transaction:* Bill Payment *From Account:* QING ZHANG *To Biller:* โบ๊ต เชียงใหม่ *Amount (THB):* 370.00 *Fee (THB):* 0.00 *Merchant ID:* KB000001923021 *Transaction ID:* KPS004KB000001923021 *Reference No.:* BAYM4474588395 *Date/Time:* 09/08/2025 19:01:48 *Memo:* In case you are totally unaware of the transaction or the activity mentioned above please immediately contact Krungsri Call Center 1572 (Overseas call 66-2296-2000 # 1) to take necessary security actions.   This e-mail is automatically sent to you by system. Please do not reply.For further enquiry, please immediately contact Krungsri Call Center 1572 (Overseas call 66-2296-2000 # 1)   Thank you for using our services.   Yours sincerely,Online ServiceBank of Ayudhya Public Company Limited `;

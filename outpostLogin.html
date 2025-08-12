@@ -54,6 +54,9 @@
                             <button id="idBoxAnywhere">boxAnywhere</button>
                             <button id="idWriteAnywhere">WriteAnywhere</button>
                             <button id="idMediumAnywhere">medium.Anywhere</button>
+                            <button id="idBalanceAnywhere">Balance.Anywhere</button>
+                            <button id="idPortfolioAnywhere">Portfolio.Anywhere</button>
+                            <button id="idDealAnywhere">Deal.Anywhere</button>
 
                         ` ;
                         tagPortalEntry.querySelector('#idBoxAnywhere').addEventListener('click',(event)=>{
@@ -65,6 +68,16 @@
                         tagPortalEntry.querySelector('#idMediumAnywhere').addEventListener('click',(event)=>{
                             window.location.href = 'mediumAnywhere.html';
                         }) ;
+                        tagPortalEntry.querySelector('#idBalanceAnywhere').addEventListener('click',(event)=>{
+                            window.location.href = 'appBalanceAnywhere.html';
+                        }) ;
+                        tagPortalEntry.querySelector('#idPortfolioAnywhere').addEventListener('click',(event)=>{
+                            window.location.href = 'portfolioAnywhere.html';
+                        }) ;
+                        tagPortalEntry.querySelector('#idDealAnywhere').addEventListener('click',(event)=>{
+                            window.location.href = 'appDealAnywhere.html';
+                        }) ;
+                        //portfolioAnywhere.html
                     } else {
                         console.log('邮箱不匹配，认证失败。');
                         // 邮箱不在清单中，登出用户

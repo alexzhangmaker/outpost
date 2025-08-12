@@ -288,8 +288,11 @@ function renderMemoItem(memoList,jsonMemo){
         for(let i=0;i<gMemos.length;i++){
             if(gMemos[i].memoID == tagMemoItem.dataset.memoID){
                 document.querySelector('.editable').innerHTML=gMemos[i].memo ;
+                let tagAppIconTools = document.querySelector('.mediumAnywhereTools') ;
                 tagAppIconTools.querySelector('#idMemoTitle').value = gMemos[i].title ;
                 document.querySelector('.editable').dataset.memoID = tagMemoItem.dataset.memoID ;
+                const drawer = document.querySelector('.drawer-overview');
+                drawer.hide() ;
                 break ;
             }
         }
@@ -303,6 +306,8 @@ function renderMemoItem(memoList,jsonMemo){
     }) ;
 }
 async function _SaveMemo2FB(memoID,memoTitle,memoContent){
+  const user = firebase.auth().currentUser;
+  if(!user)return ;
 
     let cDate = new Date() ;
     let jsonMemo = {
@@ -312,8 +317,9 @@ async function _SaveMemo2FB(memoID,memoTitle,memoContent){
         "timeStamp":cDate.getTime()
     } ;
 
-    //https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos
-    const urlDict = `https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos/${jsonMemo.memoID}.json`;
+    let idToken = await user.getIdToken() ;
+    //let url=`https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos.json?auth=${idToken}` ;
+    const urlDict = `https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos/${jsonMemo.memoID}.json?auth=${idToken}`;
     let putResponse = await fetch(urlDict, {
         method: 'PUT',
         headers: {
@@ -329,38 +335,18 @@ async function _SaveMemo2FB(memoID,memoTitle,memoContent){
 }
 
 async function _removeMemo4FB(memoID){
-    //https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos/202508108151
-    let urlFB = `https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos/${memoID}.json` ;
-    let result = await fetch(urlFB, {method: "DELETE"}) ;
-    //let jsonMemos=await result.json() ;
-    //console.log(jsonMemos);
-    console.log(`Successfully deleted the node at: ${memoID}`);
+  const user = firebase.auth().currentUser;
+  if(!user)return ;
+  let idToken = await user.getIdToken() ;
+  let urlFB = `https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos/${memoID}.json?auth=${idToken}` ;
+  let result = await fetch(urlFB, {method: "DELETE"}) ;
+  console.log(`Successfully deleted the node at: ${memoID}`);
 }
 
 async function _ListMemo4FB(){
-
     const user = firebase.auth().currentUser;
-
     if(!user)return ;
-    /*
-    if (user) {
-        // User is signed in.
-        user.getIdToken().then((idToken) => {
-            console.log("ID Token:", idToken);
-
-            // You can now use this idToken for your REST API calls
-            // For example:
-            // const url = `https://your-project.firebaseio.com/data.json?auth=${idToken}`;
-            // fetch(url).then(...);
-        }).catch((error) => {
-            // Handle any errors that might occur while getting the token
-            console.error("Error getting ID token:", error);
-        });
-    } else {
-        // No user is signed in.
-        console.log("No user is currently signed in.");
-    }
-    */
+    
     let idToken = await user.getIdToken() ;
     let url=`https://outpost-medium-20250810.asia-southeast1.firebasedatabase.app/memos.json?auth=${idToken}` ;
     let result = await fetch(url) ;
@@ -387,15 +373,6 @@ const _renderPanel=async (tagPanel)=>{
     //idBTNToggleNavBar
     let tagToggle = document.querySelector('#idBTNToggleNavBar') ;
     tagToggle.classList.add('noShow') ;
-    /*
-    if(tagPanel.dataset.rendered =='true')return ;
-
-    tagPanel.innerHTML=`
-        
-    ` ;
-    */
-
-    
 
     tagPanel.dataset.rendered='true' ;    
 } ;

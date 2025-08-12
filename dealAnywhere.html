@@ -223,19 +223,7 @@
             let jsonDealLogs = await result.json() ;
             console.log(jsonDealLogs) ;
 
-            /*
-            {
-                    "account": "personal",
-                    "action": "BUY",
-                    "cleared": false,
-                    "date": "2025-08-04",
-                    "dealID": 1754295995616,
-                    "market": "US",
-                    "price": "36.08",
-                    "quantity": "22",
-                    "ticker": "AAPL"
-                }
-            */
+            
             function renderDealLog(tagContainer,jsonDeal){
                 console.log(jsonDeal) ;
                 let tagDeal = document.createElement('div') ;

@@ -26,10 +26,127 @@
    <script src="https://unpkg.com/@popperjs/core@2"></script>
    <script src="https://unpkg.com/tippy.js@6"></script>
    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
 
 
 <style>
-  
+.input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-size: 14px;
+        }
+        input, select, button {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background-color: #1976D2;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .parsed-output, .submit-message {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .autocomplete-container {
+            position: relative;
+        }
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 10;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .autocomplete-list li {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .autocomplete-list li:hover {
+            background-color: #f0f0f0;
+        }
+        /* Toggle Switch Styles */
+        .toggle-switch {
+            position: relative;
+            width: 100px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            font-size: 14px;
+            color: white;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 46px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50px;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(46px);
+        }
+        .slider .buy-label {
+            margin-left: 10px;
+        }
+        .slider .sell-label {
+            margin-right: 10px;
+        }
 
 </style>
 </head>
@@ -42,8 +159,10 @@
         <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
       </div>
       <div class="iconTools">
+        <!------
         <i class="bi-hdd outpostBTN" id="saveButton"></i>
         <i class="bi-clipboard-plus outpostBTN" id="PlusButton"></i>
+        --->
         <i class="bi-person-circle outpostBTN" id="idBTNOutpostAuth"></i>
       </div>
     </div>
@@ -70,7 +189,71 @@
     <div class="rightPanel">
       <div class="rightPanelMain">
         <!-----Below for App to render out-->
-        
+        <div>
+            <form id="tradeForm" class="input-container">
+                <div class="input-group">
+                    <label for="action">Action</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="action" name="action" checked>
+                        <label class="slider" for="action">
+                            <span class="buy-label">Buy</span>
+                            <span class="sell-label">Sell</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="account">Account</label>
+                    <select id="account" name="account">
+                        <option value="IB7075">IB7075</option>
+                        <option value="IB1279">IB1279</option>
+                        <option value="IB3979">IB3979</option>
+                        <option value="IB6325">IB6325</option>
+                        <option value="trust">Trust</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="market">Market</label>
+                    <select id="market" name="market">
+                        <option value="US">US</option>
+                        <option value="HK">HK</option>
+                        <option value="LSE">LSE</option>
+                        <option value="TSE">TSE</option>
+                        <option value="SS">SS</option>
+                        <option value="SZ">SZ</option>
+                    </select>
+                </div>
+                <div class="input-group autocomplete-container">
+                    <label for="ticker">Ticker</label>
+                    <input type="text" id="ticker" name="ticker" placeholder="Enter ticker">
+                    <ul id="autocompleteList" class="autocomplete-list" style="display: none;"></ul>
+                </div>
+                <div class="input-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="text" id="quantity" name="quantity" placeholder="Quantity">
+                </div>
+                <div class="input-group">
+                    <label for="price">Price</label>
+                    <input type="number" id="price" name="price" step="0.01" min="0" placeholder="Price">
+                </div>
+                <div class="input-group">
+                    <label for="date">Date</label>
+                    <input type="text" id="date" name="date" placeholder="YYYY-MM-DD">
+                </div>
+                <div class="input-group">
+                    <label for="memo">memo</label>
+                    <textarea type="text" id="memo" name="memo" placeholder="memo..."></textarea>
+                </div>
+                <div class="input-group">
+                    <button type="submit">Submit Trade</button>
+                </div>
+            </form>
+        </div>
+        <div>
+            <div>
+                <button id="idBTNShowDealLogs">list deals</button>
+            </div>
+            <div class="dealHistoryWnd"></div>
+        </div>
         <!-----end of App rendering part-->
       </div>
     </div>
@@ -83,7 +266,7 @@
   
   
   
-  <script src="./appBoxAnywhere.js"></script>
+  <script src="./appDealAnywhere.js"></script>
   <script src="./js/overlayDIVFactory.js"></script>
   <script src="./js/modalFactory.js"></script>
 
