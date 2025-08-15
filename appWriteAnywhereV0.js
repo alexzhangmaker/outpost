@@ -4,9 +4,8 @@ function appMeta(){
         title:'write.Anywhere',
         appTitle:_appTitle,
         renderPanel:_renderPanel,
-        renderHeadTools:_renderHeadTools,
         renderWorkStudio:_renderWorkStudio,
-        injectStyle:_injectStyle_AppWriteAnywhere
+        injectStyle:_injectStyle_AppBoxAnywhere
     }
 }
 
@@ -132,7 +131,7 @@ const _inject_StyleResource= ()=>{
 */
 } ;
 
-const _injectStyle_AppWriteAnywhere = ()=>{
+const _injectStyle_AppBoxAnywhere = ()=>{
     const styleElement = document.createElement('style');
     styleElement.textContent = _style_AppWriteAnywhere;
     // Append the style to the document head
@@ -186,7 +185,6 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
               <input id="docTitle" type="text" placeholder="Document Title" class="roboto-400">
           </div>
           <div class="iconTools">
-              <i class="bi-sliders outpostBTN" id="idBTNNoteSetting"></i>
               <i class="bi-hdd outpostBTN" id="idBTNSaveButton"></i>
               <i class="bi-clipboard-plus outpostBTN" id="idBTNPlusButton"></i>
               <!-----
@@ -266,11 +264,6 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
     }
   });
 
-  tagRightPanelMain.querySelector('#idBTNNoteSetting').addEventListener('click', async () => {
-    let tagDlgSaveNote = document.querySelector('#idDlgSaveNote') ;
-    tagDlgSaveNote.classList.add('outpostDlg');
-    tagDlgSaveNote.showModal();
-  });
 
   tagRightPanelMain.querySelector('#idBTNPlusButton').addEventListener('click', async () => {
     /*
@@ -384,151 +377,11 @@ document.getElementById('loadButton').addEventListener('click', async () => {
 });
 
 
-
-
-const _renderHeadTools=async (tagAppIconTools)=>{
-  tagAppIconTools.innerHTML=`
-      <i class="bi-list-check outpostBTN" id="idBTNShowDrawer"></i>
-  ` ; 
-  tagAppIconTools.classList.add('balanceAnywhereTools') ;
-
-  tagAppIconTools.querySelector('#idBTNShowDrawer').addEventListener('click',(event)=>{
-      const drawer = document.querySelector('.drawer-scrolling');
-      const closeButton = drawer.querySelector('sl-button[variant="primary"]');
-  
-      drawer.show();
-      closeButton.addEventListener('click', () => drawer.hide());
-  }) ;
-  
-} ;
-
-//default:notes:[]
 /*
-let jsonKnowledgeTree={
-  lifeStyle:{},
-  investment:{},
-  hobby:{},
-  programming:{},
-  lifeLearning:{
-    Thai:{},
-    Chinese:{},
-    English:{}
-  },
-  improvision:{}
-} ;
+document.getElementById('RemoveButton').addEventListener('click', async () => {
+    let tagEditor = document.querySelector('#editor') ;
+    let activeMemoID = tagEditor.dataset.ActiveMemoID ;
+    if(activeMemoID==undefined || activeMemoID =='')return ;
+    await API_DeleteMDMemo(activeMemoID);
+});
 */
-
-let jsonKnowledgeTree={
-  lifeStyle:{
-    code:"0001",
-    title:"lifeStyle"
-  },
-  
-  lifeLearning:{
-    code:"0003",
-    title:"lifeLearning",
-    Thai:{
-      code:"00031",
-      title:"Thai"
-    },
-    Chinese:{
-      code:"00032",
-      title:"Chinese"
-    },
-    English:{
-      code:"00033",
-      title:"English",
-      writing:{
-        code:"000331",
-        title:"English Writing"
-      }
-    },
-    notes:['21213','dfsfds11-2']
-  }
-  ,
-  investment:{
-    code:"0002",
-    title:"investment"
-  },
-  improvise:{
-    code:"0002",
-    title:"闪念笔记"
-  }
-
-
-} ;
-
-
-
-function renderKTNode(tagContainer,tagListContainer,jsonKTNode){
-  let tagTreeNode = document.createElement('details');
-  tagContainer.appendChild(tagTreeNode) ;
-  tagTreeNode.dataset.code = jsonKTNode.code ;
-  if(jsonKTNode.hasOwnProperty('notes')){
-    tagTreeNode.dataset.notes = JSON.stringify(jsonKTNode.notes) ;
-  }else{
-    tagTreeNode.dataset.notes = JSON.stringify([]) ;
-  }
-
-  
-  tagTreeNode.innerHTML = `
-    <summary class="treeNodeSummary">
-      <div>
-        <i class="bi-folder2 outpostBTN"></i>
-        <i class="bi-folder2-open outpostBTN"></i>
-        <span>${jsonKTNode.title}</span>
-      </div>
-    </summary>
-    <ul class="treeNodeChildren"></ul>
-  ` ;
-  tagTreeNode.classList.add('treeNodeDetails') ;
-
-  let nodeKeys = Object.keys(jsonKTNode) ;
-  tagTreeNode.dataset.hasChildren = 'false' ;
-  for(let i=0;i<nodeKeys.length;i++){
-    let nodeKey = nodeKeys[i] ;
-    if(nodeKey =='code' || nodeKey =='title' ||nodeKey =='notes' )continue ;
-
-    tagTreeNode.dataset.hasChildren = 'true ;'
-    let jsonNextNode = jsonKTNode[nodeKey] ;
-    renderKTNode(tagTreeNode.querySelector('ul'),tagListContainer,jsonNextNode) ;
-  }
-
-  tagTreeNode.addEventListener('click',(event)=>{
-    //alert(`${tagTreeNode.innerText}`) ;
-    //event.stopPropagation() ;
-    //if(tagTreeNode.dataset.hasChildren=="false")
-    {
-      //alert(`${tagTreeNode.innerText}`) ;
-      renderNodeContent(tagListContainer,JSON.parse(tagTreeNode.dataset.notes)) ;
-      event.stopPropagation() ;
-    }
-  }) ;
-}
-
-function renderNodeContent(tagContainer,notes){
-  tagContainer.querySelector('.treeNodeContent').innerHTML=`` ;
-  for(let i=0;i<notes.length;i++){
-    let tagNote = document.createElement('div') ;
-    tagContainer.querySelector('.treeNodeContent').appendChild(tagNote) ;
-    tagNote.innerHTML=`${notes[i]}` ;
-    tagNote.addEventListener('click',async (event)=>{
-      const drawer = document.querySelector('.drawer-scrolling');
-  
-      drawer.hide();
-    }) ;
-  }
-}
-
-function renderKnowledgeTree(tagContainer,jsonKnowledgeTree){
-  let ktKeys = Object.keys(jsonKnowledgeTree) ;
-
-  for(let i=0;i<ktKeys.length;i++){
-    console.log(jsonKnowledgeTree[ktKeys[i]]) ;
-    if(typeof jsonKnowledgeTree[ktKeys[i]] == 'object'){
-      if(Object.keys(jsonKnowledgeTree).length != 0)renderKTNode(tagContainer.querySelector('.treeContainer'),tagContainer.querySelector('.treeListContainer'),jsonKnowledgeTree[ktKeys[i]]) ;
-    }
-  }
-}
-
-renderKnowledgeTree(document.querySelector(".appTreeBrowser"),jsonKnowledgeTree);

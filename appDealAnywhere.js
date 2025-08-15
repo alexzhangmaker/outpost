@@ -88,52 +88,55 @@ document.getElementById('idBTNShowDealLogs').addEventListener('click',async (eve
     let jsonDealLogs = await result.json() ;
     console.log(jsonDealLogs) ;
 
-    
+    async function removeDealLog(dealID){
+        let urlDeal=`https://aesop-portfolio.asia-southeast1.firebasedatabase.app/dealLogs/${dealID}.json` ;
+        let result = await fetch(urlDeal, {method: "DELETE"}) ;
+    }
+
     function renderDealLog(tagContainer,jsonDeal){
         console.log(jsonDeal) ;
         let tagDeal = document.createElement('div') ;
+        tagDeal.classList.add('dealLogItem') ;
         tagContainer.prepend(tagDeal) ;
+        tagDeal.dataset.dealID = jsonDeal.dealID ;
         tagDeal.innerHTML=`
-            <span>${jsonDeal.dealID}</span>
-            <span>${jsonDeal.date}</span>
-
-            <span>${jsonDeal.account}</span>
-            <span>${jsonDeal.action}</span>
-            <span>${jsonDeal.ticker}</span>
-            <span>${jsonDeal.quantity}</span>
-            <span>${jsonDeal.price}</span>
-
-            <span>${jsonDeal.cleared}</span>
-
-            <i class="bi-x-square outpostBTN" id="idBTNCancelDeal"></i>
-            <i class="bi-check2-square outpostBTN" id="idBTNCheckInDeal"></i>
+            <div class="dealLogContent">
+                  <div style="flex-grow: 1;">
+                    <span>${jsonDeal.date}</span>
+                    <span contenteditable="true">${jsonDeal.account}</span>
+                    <span>${jsonDeal.action}</span>
+                    <span>${jsonDeal.ticker}</span>
+                    <span>${jsonDeal.quantity}</span>
+                    <span>${jsonDeal.price}</span>
+                    <span id="idClearState">${jsonDeal.cleared}</span>
+                </div>
+                <div>
+                    <i class="bi-check2-square outpostBTN" id="idBTNCheckInDeal"></i>
+                    <i class="bi-x-square outpostBTN" id="idBTNCancelDeal"></i>
+                </div>
+            </div>
         ` ;
-
+        
         tagDeal.querySelector('#idBTNCancelDeal').addEventListener('click',async (event)=>{
-            alert('cancel') ;
+            event.stopPropagation() ;
+            //alert('cancel') ;
+            await removeDealLog(tagDeal.dataset.dealID) ;
+            tagDeal.remove() ;
         }) ;
         tagDeal.querySelector('#idBTNCheckInDeal').addEventListener('click',async (event)=>{
-            alert('checkIn') ;
+            event.stopPropagation() ;
         }) ;
-
     }
+
     dealKeys = Object.keys(jsonDealLogs) ;
     console.log(dealKeys) ;
     let tagLogContainer = document.querySelector(".dealHistoryWnd");
+    tagLogContainer.innerHTML=`` ;
     for(let i=0;i<dealKeys.length;i++){
         renderDealLog(tagLogContainer,jsonDealLogs[dealKeys[i]]) ;
     }
 }) ;
 
-
-const tickers = {
-    US: ['AAPL', 'GOOGL', 'MSFT', 'TSLA','BRK-B','NVO','HUM','HTHT','CMCSA'],
-    HK: ['01222', '0700', '0939', '3988'],
-    LSE: ['BP', 'HSBA', 'VOD', 'GSK'],
-    TSE: ['7203', '6758', '9432', '6501'],
-    SS: ['600519', '601318', '601688', '600036'],
-    SZ: ['002241', '000333', '300033', '002007']
-};
 
 const tradeForm = document.getElementById('tradeForm');
 const actionInput = document.getElementById('action');
@@ -143,9 +146,9 @@ const tickerInput = document.getElementById('ticker');
 const quantityInput = document.getElementById('quantity');
 const priceInput = document.getElementById('price');
 const dateInput = document.getElementById('date');
-const errorDiv = document.getElementById('error');
-const parsedOutput = document.getElementById('parsedOutput');
-const submitMessage = document.getElementById('submitMessage');
+//const errorDiv = document.getElementById('error');
+//const parsedOutput = document.getElementById('parsedOutput');
+//const submitMessage = document.getElementById('submitMessage');
 const autocompleteList = document.getElementById('autocompleteList');
 
 // Set default date to today (2025-08-04)
@@ -240,31 +243,31 @@ function validateInputs() {
     }
     */
     if (!tickers[market].includes(ticker)) {
-        errorDiv.textContent = `Ticker ${ticker} not found in ${market} market`;
+        //errorDiv.textContent = `Ticker ${ticker} not found in ${market} market`;
         return null;
     }
 
     // Validate quantity
     if (!/^\d+$/.test(quantity) || parseInt(quantity) <= 0) {
-        errorDiv.textContent = 'Quantity must be a positive integer';
+        //errorDiv.textContent = 'Quantity must be a positive integer';
         return null;
     }
 
     // Validate price
     if (!price || parseFloat(price) <= 0) {
-        errorDiv.textContent = 'Price must be a positive number';
+        //errorDiv.textContent = 'Price must be a positive number';
         return null;
     }
 
     // Validate date
     const datePattern = /^\d{4}-\d{2}-\d{2}$/;
     if (!datePattern.test(date)) {
-        errorDiv.textContent = 'Date must be in YYYY-MM-DD format';
+        //errorDiv.textContent = 'Date must be in YYYY-MM-DD format';
         return null;
     }
     const parsedDate = new Date(date);
     if (isNaN(parsedDate.getTime())) {
-        errorDiv.textContent = 'Invalid date';
+        //errorDiv.textContent = 'Invalid date';
         return null;
     }
 
@@ -274,7 +277,7 @@ function validateInputs() {
 // Display parsed output
 function displayParsedOutput(data) {
     if (data) {
-        parsedOutput.innerHTML = `
+        console.log(`
             <strong>Parsed Trade:</strong><br>
             Action: ${data.action}<br>
             Account: ${data.account}<br>
@@ -283,21 +286,21 @@ function displayParsedOutput(data) {
             Quantity: ${data.quantity}<br>
             Price: ${data.price}<br>
             Date: ${data.date}
-        `;
+        `);
     }
 }
 
 // Validate and parse on input change
 inputs.forEach(input => {
     input.addEventListener('change', () => {
-        errorDiv.textContent = '';
-        submitMessage.textContent = '';
+        //errorDiv.textContent = '';
+        //submitMessage.textContent = '';
         const data = validateInputs();
         displayParsedOutput(data);
     });
     input.addEventListener('input', () => {
-        errorDiv.textContent = '';
-        submitMessage.textContent = '';
+        //errorDiv.textContent = '';
+        //submitMessage.textContent = '';
         const data = validateInputs();
         displayParsedOutput(data);
     });
@@ -306,19 +309,23 @@ inputs.forEach(input => {
 // Form submission
 tradeForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    errorDiv.textContent = '';
-    submitMessage.textContent = '';
+    //errorDiv.textContent = '';
+    //submitMessage.textContent = '';
 
     const jsonDeal = validateInputs();
     if (!jsonDeal) {
         return;
     }
 
+    console.log(jsonDeal) ;
+    jsonDeal.price = parseFloat(jsonDeal.price) ;
+    jsonDeal.quantity = parseInt(jsonDeal.quantity) ;
+
     try {
         //let uuid = self.crypto.randomUUID();
         //console.log(uuid); // for example "36b8f84d-df4e-4d49-b662-bcde71a8764f"
         let cDate = new Date() ;
-        jsonDeal.dealID=cDate.getTime() ;
+        jsonDeal.dealID=`${cDate.getTime()}` ;
         jsonDeal.cleared=false ;
         //https://aesop-portfolio.asia-southeast1.firebasedatabase.app/dealLogs.json
         const urlDict = `https://aesop-portfolio.asia-southeast1.firebasedatabase.app/dealLogs/${jsonDeal.dealID}.json`;
@@ -357,4 +364,5 @@ tradeForm.addEventListener('submit', async (e) => {
 });
 
 // Trigger initial validation to display default date
-displayParsedOutput(validateInputs());
+let now = dayjs() ;
+document.querySelector('#date').value=now.format("YYYY-MM-DD");

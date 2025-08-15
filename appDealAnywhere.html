@@ -29,6 +29,11 @@
    <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
 
 
+  <!----for grid.js-->
+  <script src="./js/accounting.js"></script>
+  <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+
+
 <style>
 .input-container {
             display: flex;
@@ -190,7 +195,15 @@
       <div class="rightPanelMain">
         <!-----Below for App to render out-->
         <div>
+          <style>
+            #tradeForm{
+              display: flex;
+              flex-direction: row;
+              justify-content: space-between;
+            }
+          </style>
             <form id="tradeForm" class="input-container">
+              <div style="display: flex;flex-direction: row;gap:2px;">
                 <div class="input-group">
                     <label for="action">Action</label>
                     <div class="toggle-switch">
@@ -208,7 +221,11 @@
                         <option value="IB1279">IB1279</option>
                         <option value="IB3979">IB3979</option>
                         <option value="IB6325">IB6325</option>
-                        <option value="trust">Trust</option>
+                        <option value="GJZQ">国金证券</option>
+                        <option value="HTZQ">海通证券</option>
+                        <option value="PAZQ">平安证券</option>
+                        <option value="ZSZQ">招商证券</option>
+
                     </select>
                 </div>
                 <div class="input-group">
@@ -218,33 +235,43 @@
                         <option value="HK">HK</option>
                         <option value="LSE">LSE</option>
                         <option value="TSE">TSE</option>
-                        <option value="SS">SS</option>
-                        <option value="SZ">SZ</option>
+                        <option value="CN">CN</option>
                     </select>
                 </div>
                 <div class="input-group autocomplete-container">
                     <label for="ticker">Ticker</label>
-                    <input type="text" id="ticker" name="ticker" placeholder="Enter ticker">
+                    <input type="text" id="ticker" name="ticker" placeholder="ticker..." style="max-width:200px">
                     <ul id="autocompleteList" class="autocomplete-list" style="display: none;"></ul>
                 </div>
                 <div class="input-group">
                     <label for="quantity">Quantity</label>
-                    <input type="text" id="quantity" name="quantity" placeholder="Quantity">
+                    <input type="text" id="quantity" name="quantity" placeholder="Quantity"  style="max-width:100px">
                 </div>
                 <div class="input-group">
                     <label for="price">Price</label>
-                    <input type="number" id="price" name="price" step="0.01" min="0" placeholder="Price">
+                    <input type="number" id="price" name="price" step="0.01" min="0" placeholder="Price"  style="max-width:100px">
                 </div>
                 <div class="input-group">
                     <label for="date">Date</label>
-                    <input type="text" id="date" name="date" placeholder="YYYY-MM-DD">
+                    <input type="text" id="date" name="date" placeholder="YYYY-MM-DD" style="max-width:100px">
                 </div>
                 <div class="input-group">
                     <label for="memo">memo</label>
-                    <textarea type="text" id="memo" name="memo" placeholder="memo..."></textarea>
+                    <input type="text" id="memo" name="memo" placeholder="memo...">
                 </div>
-                <div class="input-group">
-                    <button type="submit">Submit Trade</button>
+              </div>
+                <div>
+                  <div class="input-group">
+                      <style>
+                        #idBTNSubmit{
+                          border: none;
+                        }
+                      </style>
+                      <label for="idBTNSubmit">checkIn</label>
+                      <button type="submit" id="idBTNSubmit">
+                        <i class="bi-cloud-check outpostBTN"></i>
+                      </button>
+                  </div>
                 </div>
             </form>
         </div>
@@ -252,7 +279,37 @@
             <div>
                 <button id="idBTNShowDealLogs">list deals</button>
             </div>
-            <div class="dealHistoryWnd"></div>
+            <style>
+              .dealHistoryWnd{
+                width:80%;
+              }
+              .dealLogItem:hover{
+                  background-color:lightgray;
+                  padding-bottom: 5px;
+                  padding-left: 5px;
+                }
+                
+                .dealLogItem {
+                  display: block; /* Ensure sl-checkbox takes full width of its parent */
+                  width: 100%; /* Explicitly set to full width of its container */
+                  font-size: small;
+                  font-family: "Lato", sans-serif;
+                }
+
+                .dealLogItem .dealLogContent {
+                  width: 100%; /* Make idDemo take the full width of sl-checkbox */
+                  box-sizing: border-box; /* Ensure padding/borders are included in width */
+                  display: flex;
+                  flex-direction: row;
+                }
+
+                .dealLogItem .dealLogContent,
+                .dealLogItem .dealLogContent * {
+                  font-family: 'Lato', Arial, sans-serif !important; /* Apply to idDemo and all its descendants */
+                  font-size: 18px !important;
+                }
+            </style>
+            <div class="dealHistoryWnd" style="padding-top: 20px;"></div>
         </div>
         <!-----end of App rendering part-->
       </div>
@@ -267,6 +324,8 @@
   
   
   <script src="./appDealAnywhere.js"></script>
+  <script src="./appDealAnywhereData.js"></script>
+
   <script src="./js/overlayDIVFactory.js"></script>
   <script src="./js/modalFactory.js"></script>
 

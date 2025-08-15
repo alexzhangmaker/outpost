@@ -98,7 +98,7 @@ trix-editor {
     box-sizing: border-box; /* Ensure padding doesn't affect max-height */
 }
 
-trix-editor { 
+trix-editor {
     min-height: 200px; 
     margin-bottom: 1em; 
 }
