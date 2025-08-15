@@ -58,7 +58,30 @@
     <div class="rootWnd">
         <div class="contentWnd" id="idWndContent">
             <!---<div id="idWndContent"></div>-->
-            <div style="padding-top: 20px;padding-bottom: 10px;">闪念笔记</div>
+            <style>
+
+            #docTitle{
+                font-size: 18px;
+                width:100% ;
+            }
+
+            #docTitle:focus{
+                outline: none;
+            }
+
+            input[type="text"] {
+                height: 40px;
+                border: none; /* Removes all default borders */
+                border-bottom: 1px solid #a39797; /* Applies a 2px solid dark gray bottom border */
+                /*padding: 8px;
+                width: 100%;*/
+                box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+            }
+            </style>
+            <div style="display: flex;flex-direction: row;justify-content: space-between;padding-right: 5px;gap:10px;">
+                <input id="docTitle" type="text" placeholder="闪念笔记" class="roboto-400">
+                <button id="idBTNSaveNote" style="width:40px;"><i class="bi-cloud-arrow-up"></i></button>
+            </div>
             <div id="editor"></div>
 
         </div>  
@@ -80,6 +103,7 @@
 <script src="./js/dictAnywhere.js"></script>
 <script src="./js/todoAnywhere.js"></script>
 <script src="./js/dictationAnywhere.js"></script>
+<script src="./js/APIWriteFB.js"></script>
 
 
 
@@ -162,16 +186,23 @@ async function _onClick_ToDo(event){
     await renderTasks(tagWndContent.querySelector('.memoContainer')) ;
 }
 
-
+let editor;
 async function _onDOMContentLoad(event){
     console.log('_onDOMContentLoad_') ;
-    const editor = new toastui.Editor({
+    editor = new toastui.Editor({
         el: document.querySelector('#editor'),
         previewStyle: 'vertical',
         height: '100%',// '500px',
         initialValue: "闪念笔记...",
         initialEditType: 'wysiwyg'
       });
+    document.querySelector('#idBTNSaveNote').addEventListener('click',async (event)=>{
+        let title = document.querySelector('#docTitle').value;
+        let now = new Date() ;
+        if(title=='')title = now.toLocaleDateString() ;
+        const content = editor.getMarkdown();
+        await API_PlusMDMemo_Supabase(title, content);
+    }) ;
 }
 
 </script>
