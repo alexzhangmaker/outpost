@@ -181,20 +181,7 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
     `<!---html code for Markdown Editor-->
     <div class="workingSpace">
       <div class="workingFocus">
-        <div class="mdEditorToolbar">
-          <div class="inputToolbar">
-              <input id="docTitle" type="text" placeholder="Document Title" class="roboto-400">
-          </div>
-          <div class="iconTools">
-              <i class="bi-sliders outpostBTN" id="idBTNNoteSetting"></i>
-              <i class="bi-hdd outpostBTN" id="idBTNSaveButton"></i>
-              <i class="bi-clipboard-plus outpostBTN" id="idBTNPlusButton"></i>
-              <!-----
-              <i class="bi-trash outpostBTN" id="RemoveButton"></i>
-              <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
-              --->
-          </div>
-        </div>
+        
       
         <div id="editor"></div>
       </div>
@@ -253,38 +240,9 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
     
 
   // Event listeners
-  tagRightPanelMain.querySelector('#idBTNSaveButton').addEventListener('click', async () => {
-    const title = document.getElementById('docTitle').value || 'Untitled';
-    const content = editor.getMarkdown();
-    
-    let tagEditor = document.querySelector('#editor') ;
-    let activeMemoID = tagEditor.dataset.ActiveMemoID ;
-    if(activeMemoID=='' || activeMemoID==undefined){
-      await API_PlusMDMemo_Supabase(title, content);
-    }else{
-      await API_UpdateMDMemo(activeMemoID,title,content) ;
-    }
-  });
+  
 
-  tagRightPanelMain.querySelector('#idBTNNoteSetting').addEventListener('click', async () => {
-    let tagDlgSaveNote = document.querySelector('#idDlgSaveNote') ;
-    tagDlgSaveNote.classList.add('outpostDlg');
-    tagDlgSaveNote.showModal();
-  });
 
-  tagRightPanelMain.querySelector('#idBTNPlusButton').addEventListener('click', async () => {
-    /*
-    const title = document.getElementById('docTitle').value || 'Untitled';
-    const content = editor.getMarkdown();    
-    await API_PlusMDMemo_Supabase(title, content);
-    */
-
-    document.getElementById('docTitle').value = 'new doc';
-    editor.setMarkdown(initialMDContent);
-    let tagEditor = document.querySelector('#editor') ;
-
-    tagEditor.dataset.ActiveMemoID = '';//tagMemoItem.dataset.memoID ;
-  });
 
   tagRightPanelMain.querySelector('#idBTNSaveTable').addEventListener('click', async () => {
     const gridData = [
@@ -360,6 +318,8 @@ function renderMemoList(tagMemoBrowser,memoArray){
       document.getElementById('docTitle').value = jsonMemo.title;
       editor.setMarkdown(jsonMemo.content);
       tagEditor.dataset.ActiveMemoID = tagMemoItem.dataset.memoID ;
+
+      document.getElementById('idBTNToggleNavBar').click() ;
     }) ;
     tagMemoItem.querySelector('#idBTNRemoveMemo').addEventListener('click',async (event)=>{
       if(tagMemoItem.dataset.memoID==undefined || tagMemoItem.dataset.memoID =='')return ;
@@ -371,7 +331,7 @@ function renderMemoList(tagMemoBrowser,memoArray){
 }
 
 
-document.getElementById('loadButton').addEventListener('click', async () => {
+document.getElementById('idBTNLoadNotes').addEventListener('click', async () => {
     let jsonMemos = await API_LoadLatestMemo_Supabase();
     console.log(jsonMemos) ;
 
@@ -388,9 +348,18 @@ document.getElementById('loadButton').addEventListener('click', async () => {
 
 const _renderHeadTools=async (tagAppIconTools)=>{
   tagAppIconTools.innerHTML=`
+      <input id="docTitle" type="text" placeholder="Document Title" class="roboto-400">
+      <i class="bi-sliders outpostBTN" id="idBTNNoteSetting"></i>
+      <i class="bi-hdd outpostBTN" id="idBTNSaveButton"></i>
+      <i class="bi-clipboard-plus outpostBTN" id="idBTNPlusButton"></i>
       <i class="bi-list-check outpostBTN" id="idBTNShowDrawer"></i>
   ` ; 
-  tagAppIconTools.classList.add('balanceAnywhereTools') ;
+  tagAppIconTools.classList.add('writeAnywhereTools') ;
+  tippy('#idBTNNoteSetting', {content: "笔记参数设置!"});
+  tippy('#idBTNSaveButton', {content: "保存到云端!"});
+  tippy('#idBTNPlusButton', {content: "创建笔记!"});
+  tippy('#idBTNShowDrawer', {content: "笔记总览!"});
+
 
   tagAppIconTools.querySelector('#idBTNShowDrawer').addEventListener('click',(event)=>{
       const drawer = document.querySelector('.drawer-scrolling');
@@ -399,6 +368,33 @@ const _renderHeadTools=async (tagAppIconTools)=>{
       drawer.show();
       closeButton.addEventListener('click', () => drawer.hide());
   }) ;
+
+  tagAppIconTools.querySelector('#idBTNPlusButton').addEventListener('click', async () => {
+    document.getElementById('docTitle').value = 'new doc';
+    editor.setMarkdown(initialMDContent);
+    let tagEditor = document.querySelector('#editor') ;
+
+    tagEditor.dataset.ActiveMemoID = '';//tagMemoItem.dataset.memoID ;
+  });
+
+  tagAppIconTools.querySelector('#idBTNSaveButton').addEventListener('click', async () => {
+    const title = document.getElementById('docTitle').value || 'Untitled';
+    const content = editor.getMarkdown();
+    
+    let tagEditor = document.querySelector('#editor') ;
+    let activeMemoID = tagEditor.dataset.ActiveMemoID ;
+    if(activeMemoID=='' || activeMemoID==undefined){
+      await API_PlusMDMemo_Supabase(title, content);
+    }else{
+      await API_UpdateMDMemo(activeMemoID,title,content) ;
+    }
+  });
+
+  tagAppIconTools.querySelector('#idBTNNoteSetting').addEventListener('click', async () => {
+    let tagDlgSaveNote = document.querySelector('#idDlgSaveNote') ;
+    tagDlgSaveNote.classList.add('outpostDlg');
+    tagDlgSaveNote.showModal();
+  });
   
 } ;
 
