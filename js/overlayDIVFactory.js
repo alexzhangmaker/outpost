@@ -1,4 +1,4 @@
-(function () {
+function _injectOverlayStyle() {
     // Inject CSS styles for the overlay
     const style = document.createElement('style');
     style.textContent = `
@@ -32,27 +32,31 @@
     document.head.appendChild(style);
 
     // Factory object
-    window.overlayView = {
-        createOverlay: function (htmlContent) {
-            // Remove existing overlay
-            const existingOverlay = document.querySelector('.overlay-view');
-            if (existingOverlay) {
-                existingOverlay.remove();
-            }
+    
+}
 
-            // Create new overlay
-            const overlayDiv = document.createElement('div');
-            overlayDiv.className = 'overlay-view';
-            overlayDiv.innerHTML = `
-                ${htmlContent || 'Centered Overlay'}
-                <button class="overlay-view-close" onclick="this.parentElement.remove()">Close</button>
-            `;
+_injectOverlayStyle() ;
 
-            // Append to body
-            document.body.appendChild(overlayDiv);
-
-            // Return reference to the overlay for further manipulation if needed
-            return overlayDiv;
+window.overlayView = {
+    createOverlay: function (htmlContent) {
+        // Remove existing overlay
+        const existingOverlay = document.querySelector('.overlay-view');
+        if (existingOverlay) {
+            existingOverlay.remove();
         }
-    };
-})();
+
+        // Create new overlay
+        const overlayDiv = document.createElement('div');
+        overlayDiv.className = 'overlay-view';
+        overlayDiv.innerHTML = `
+            ${htmlContent || 'Centered Overlay'}
+            <button class="overlay-view-close" onclick="this.parentElement.remove()">Close</button>
+        `;
+
+        // Append to body
+        document.body.appendChild(overlayDiv);
+
+        // Return reference to the overlay for further manipulation if needed
+        return overlayDiv;
+    }
+};

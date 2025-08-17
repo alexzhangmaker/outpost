@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Auth Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #error { color: red; }
+    #success { color: green; }
+    #data { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Supabase Auth Demo</h1>
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email" value="user@example.com"><br><br>
+  <input type="password" id="password" placeholder="Password" value="your-secure-password"><br><br>
+  <button onclick="login()">Login</button>
+  <button onclick="logout()">Logout</button>
+  <h2>Data from Document Table</h2>
+  <button onclick="fetchDocuments()">Fetch Documents</button>
+  <p id="error"></p>
+  <p id="success"></p>
+  <pre id="data"></pre>
+
+  <script>
+    // Initialize Supabase client
+    const supabaseUrl = 'https://yfftwweuxxkrzlvqilvc.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmZnR3d2V1eHhrcnpsdnFpbHZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMjYxMTEsImV4cCI6MjA2NzkwMjExMX0.7rcV3RBrH5kY3KLqD-NHLMhMyc62wIxxYG9VfW-i1tk';
+
+    
+  </script>
+<script>
+    // Initialize Supabase client after page load
+    let supabase;
+    window.addEventListener('DOMContentLoaded', () => {
+      // Check if Supabase client is loaded
+      if (typeof window.supabase === 'undefined') {
+        document.getElementById('error').textContent = 'Error: Supabase client not loaded. Check CDN or network.';
+        return;
+      }
+
+      // Initialize Supabase client
+      supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    });
+
+    // Login function
+    async function login() {
+      if (!supabase) {
+        document.getElementById('error').textContent = 'Supabase client not initialized';
+        return;
+      }
+      const email = 'alexszhang@gmail.com';//document.getElementById('email').value;
+      const password = 'demo';//'ChinaNO001.';//document.getElementById('password').value;
+      const errorDiv = document.getElementById('error');
+      const successDiv = document.getElementById('success');
+
+      errorDiv.textContent = '';
+      successDiv.textContent = '';
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (error) {
+        errorDiv.textContent = 'Login failed: ' + error.message;
+      } else {
+        successDiv.textContent = 'Login successful! User: ' + data.user.email;
+      }
+    }
+
+    // Logout function
+    async function logout() {
+      if (!supabase) {
+        document.getElementById('error').textContent = 'Supabase client not initialized';
+        return;
+      }
+      const errorDiv = document.getElementById('error');
+      const successDiv = document.getElementById('success');
+      const dataDiv = document.getElementById('data');
+
+      errorDiv.textContent = '';
+      successDiv.textContent = '';
+      dataDiv.textContent = '';
+
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        errorDiv.textContent = 'Logout failed: ' + error.message;
+      } else {
+        successDiv.textContent = 'Logged out successfully';
+      }
+    }
+
+    // Fetch documents from the document table
+    async function fetchDocuments() {
+      if (!supabase) {
+        document.getElementById('error').textContent = 'Supabase client not initialized';
+        return;
+      }
+      const errorDiv = document.getElementById('error');
+      const dataDiv = document.getElementById('data');
+
+      errorDiv.textContent = '';
+      dataDiv.textContent = '';
+
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*');
+
+      if (error) {
+        errorDiv.textContent = 'Error fetching documents: ' + error.message;
+      } else {
+        dataDiv.textContent = JSON.stringify(data, null, 2);
+      }
+    }
+  </script>
+</body>
+</html>

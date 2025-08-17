@@ -22,12 +22,19 @@
   <link rel="stylesheet" href="./css/outpostFW.css">
   <link rel="stylesheet" href="./css/cssMarkdown.css">
 
+  <!---firebase-->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+  <!----supabase-->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
    <!-- Tippy.js -->
    <script src="https://unpkg.com/@popperjs/core@2"></script>
    <script src="https://unpkg.com/tippy.js@6"></script>
+
+    <!-- marked.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
 
   <!-- Tailwind CSS for styling -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -45,6 +52,12 @@
     });
   </script>
   
+  <style>
+    .activeMemo{
+      background-color: black;
+      color: aqua;
+    }
+  </style>
 </head>
 
 <body>
@@ -62,7 +75,6 @@
             <div class="navigationBar">
                 <div class="naviICONGroup">
                     <i class="bi-list outpostBTN" id="idBTNToggleNavBar"></i>
-                    <i class="bi-trash outpostBTN" id="RemoveButton"></i>
                     <i class="bi-cloud-download outpostBTN" id="idBTNLoadNotes"></i>
                     <i class="bi-calendar2-date outpostBTN" id="idBTNTimeline"></i>
                     <i class="bi-tags outpostBTN" id="idBTNTagsMode"></i>
@@ -281,7 +293,9 @@
 
     //idBTNOutpostAuth
     document.getElementById('idBTNOutpostAuth').addEventListener('click',(event)=>{
-      alert('will do idBTNOutpostAuth with firebase') ;
+      //alert('will do idBTNOutpostAuth with firebase') ;
+      _LoginSupabase() ;
+
     }) ;
 
     document.addEventListener("DOMContentLoaded",async (event)=>{
@@ -290,9 +304,8 @@
       tippy('#idBTNOutpostAuth', {content: "authentication"});
       tippy('#idBTNTimeline', {content: "timeline view!"});
       tippy('#idBTNTagsMode', {content: "searching by tag!"});
+      tippy('#idBTNLoadNotes', {content: "fetch notes!"});
 
-      
-      
       let jsonMeta = appMeta() ;
 
       if(jsonMeta.hasOwnProperty('appTitle')){
@@ -316,11 +329,14 @@
         jsonMeta.renderPanel(document.querySelector('.navigationPanel')) ;
       }
 
+      _InitSupabase() ;
+
     }) ;
 
 
   </script>
   <script>
+    
     /*
     //https://alexzhangmaker.github.io/outpost/outpostProtected.html
 
@@ -336,6 +352,7 @@
         measurementId: "G-QPHWRTH6BH"
     };
     
+    let gJWTToken ;
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
@@ -351,7 +368,9 @@
             // 用户已登录
             if (allowedUsers.includes(user.email)) {
                 // 邮箱匹配，显示页面内容
-                document.getElementById('user-email').textContent = user.email;
+                console.log(user.email);
+                gJWTToken = user.getIdToken();
+                console.log(gJWTToken); // Firebase JWT token
             } else {
                 // 邮箱不匹配，强制登出并跳转
                 alert('您的账户没有权限访问此页面。');

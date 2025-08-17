@@ -192,3 +192,171 @@ async function API_UpdateMDMemo(id, title, content) {
     console.log('Network error: ' + error.message);
   }
 }
+
+
+let supabase = null;
+
+function _InitSupabase(){
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+
+// Login function
+async function _LoginSupabase() {
+  if (!supabase) {
+    console.log('Supabase client not initialized');
+    return;
+  }
+  const email = 'alexszhang@gmail.com';//document.getElementById('email').value;
+  const password = 'ChinaNO001.';//document.getElementById('password').value;
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: password,
+  });
+
+  if (error) {
+    console.log('Login failed: ' + error.message);
+  } else {
+    console.log('Login successful! User: ' + data.user.email);
+  }
+}
+
+// Logout function
+async function _LogoutSupabase() {
+  if (!supabase) {
+    console.log('Supabase client not initialized');
+    return;
+  }
+
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.log('Logout failed: ' + error.message);
+  } else {
+    console.log('Logged out successfully');
+  }
+}
+
+// Fetch documents from the document table
+async function _FetchDocumentsSupabase() {
+  if (!supabase) {
+    console.log('Supabase client not initialized');
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('documents')
+    .select('id,title')
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.log('Error fetching documents: ' + error.message);
+  } else {
+    console.log(JSON.stringify(data, null, 2));
+    return data ;
+  }
+}
+/*
+const { data, error } = await supabase
+  .from('documents')
+  .select('*')
+  .order('updated_at', { ascending: false }); // Newest first
+*/
+async function _FetchDocumentSupabase(uuid) {
+  if (!supabase) {
+    console.log('Supabase client not initialized');
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('documents')
+    .select('*')
+    .eq('id', uuid);
+
+  if (error) {
+    console.log('Error fetching documents: ' + error.message);
+  } else {
+    console.log(JSON.stringify(data, null, 2));
+    return data[0] ;
+  }
+}
+
+
+// Insert document
+async function _InsertDocumentSupabase(title, content) {
+  if (!supabase) {
+    console.log('Supabase client not initialized');
+    return;
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    console.log('No active session. Please log in.');
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('documents')
+    .insert([{ title:title, content: content }])
+    .select();
+
+  if (error) {
+    console.log('Error inserting document: ' + error.message);
+  } else {
+    console.log('Document inserted successfully');
+  }
+}
+
+// Update document
+async function _UpdateDocumentSupabase(id, title, content) {
+  if (!supabase) {
+    console.log('Supabase client not initialized');
+    return;
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    console.log('No active session. Please log in.');
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('documents')
+    .update({ title,title,content: content })
+    .eq('id', id)
+    .select();
+
+  if (error) {
+    console.log('Error updating document: ' + error.message);
+  } else if (data.length === 0) {
+    console.log('No document found with ID ' + id);
+  } else {
+    console.log('Document updated successfully');
+  }
+}
+
+// Delete document
+async function _DeleteDocumentSupabase(uuid) {
+  if (!supabase) {
+    console.log('Supabase client not initialized');
+    return;
+  }
+
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    console.log('No active session. Please log in.');
+    return;
+  }
+
+  const { error } = await supabase
+    .from('documents')
+    .delete()
+    .eq('id', uuid);
+
+  if (error) {
+    console.log('Error deleting document: ' + error.message);
+  } else {
+    console.log('Document deleted successfully');
+  }
+}

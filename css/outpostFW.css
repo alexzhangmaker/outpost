@@ -193,7 +193,6 @@ input[type="text"] {
 }
 
 .headerNavigationBar{
-    /*background-color: #a39797;*/
     height:40px ;
     width:100% ;
 
@@ -204,6 +203,8 @@ input[type="text"] {
     align-items: center;
     justify-content: flex-start;
     gap: 5px;
+
+    background-color:whitesmoke;
 }
 
 .outpostLogo{

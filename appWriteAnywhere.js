@@ -312,18 +312,28 @@ function renderMemoList(tagMemoBrowser,memoArray){
       if(tagMemoItem.dataset.memoID == tagEditor.dataset.ActiveMemoID)return ;
 
       console.log(`click on ${tagMemoItem.dataset.memoID}`) ;
-      let jsonMemo = await API_FetchMDMemo(tagMemoItem.dataset.memoID) ;
+      //let jsonMemo = await API_FetchMDMemo(tagMemoItem.dataset.memoID) ;
+      let jsonMemo = await _FetchDocumentSupabase(tagMemoItem.dataset.memoID) ;
+
+      
       if(jsonMemo==null)return ;
       
       document.getElementById('docTitle').value = jsonMemo.title;
       editor.setMarkdown(jsonMemo.content);
-      tagEditor.dataset.ActiveMemoID = tagMemoItem.dataset.memoID ;
 
+      let tagPreActiveMemo = tagMemoBrowser.querySelector('.activeMemo') ;
+      if(tagPreActiveMemo)tagPreActiveMemo.classList.remove('activeMemo') ;
+
+      tagEditor.dataset.ActiveMemoID = tagMemoItem.dataset.memoID ;
+      tagMemoItem.classList.add('activeMemo') ;  
+      
+     
       document.getElementById('idBTNToggleNavBar').click() ;
     }) ;
     tagMemoItem.querySelector('#idBTNRemoveMemo').addEventListener('click',async (event)=>{
       if(tagMemoItem.dataset.memoID==undefined || tagMemoItem.dataset.memoID =='')return ;
-      await API_DeleteMDMemo(tagMemoItem.dataset.memoID);
+      //await API_DeleteMDMemo(tagMemoItem.dataset.memoID);
+      await _DeleteDocumentSupabase(tagMemoItem.dataset.memoID) ;
       tagMemoItem.remove();
     }) ;
 
@@ -332,7 +342,8 @@ function renderMemoList(tagMemoBrowser,memoArray){
 
 
 document.getElementById('idBTNLoadNotes').addEventListener('click', async () => {
-    let jsonMemos = await API_LoadLatestMemo_Supabase();
+    //let jsonMemos = await API_LoadLatestMemo_Supabase();
+    let jsonMemos = await _FetchDocumentsSupabase();
     console.log(jsonMemos) ;
 
     let tagNaviPanel = document.querySelector('.navigationPanel') ;
@@ -352,6 +363,8 @@ const _renderHeadTools=async (tagAppIconTools)=>{
       <i class="bi-sliders outpostBTN" id="idBTNNoteSetting"></i>
       <i class="bi-hdd outpostBTN" id="idBTNSaveButton"></i>
       <i class="bi-clipboard-plus outpostBTN" id="idBTNPlusButton"></i>
+      <i class="bi-fullscreen outpostBTN" id="idBTNFullScreen"></i>
+      <i class="bi-printer outpostBTN" id="idBTNPrintNote"></i>
       <i class="bi-list-check outpostBTN" id="idBTNShowDrawer"></i>
   ` ; 
   tagAppIconTools.classList.add('writeAnywhereTools') ;
@@ -359,7 +372,10 @@ const _renderHeadTools=async (tagAppIconTools)=>{
   tippy('#idBTNSaveButton', {content: "保存到云端!"});
   tippy('#idBTNPlusButton', {content: "创建笔记!"});
   tippy('#idBTNShowDrawer', {content: "笔记总览!"});
+  tippy('#idBTNFullScreen', {content: "全屏显示!"});
+  tippy('#idBTNPrintNote', {content: "打印笔记!"});
 
+  
 
   tagAppIconTools.querySelector('#idBTNShowDrawer').addEventListener('click',(event)=>{
       const drawer = document.querySelector('.drawer-scrolling');
@@ -384,9 +400,11 @@ const _renderHeadTools=async (tagAppIconTools)=>{
     let tagEditor = document.querySelector('#editor') ;
     let activeMemoID = tagEditor.dataset.ActiveMemoID ;
     if(activeMemoID=='' || activeMemoID==undefined){
-      await API_PlusMDMemo_Supabase(title, content);
+      //await API_PlusMDMemo_Supabase(title, content);
+      await _InsertDocumentSupabase(title, content) ;
     }else{
-      await API_UpdateMDMemo(activeMemoID,title,content) ;
+      //await API_UpdateMDMemo(activeMemoID,title,content) ;
+      await _UpdateDocumentSupabase(activeMemoID,title,content) ;
     }
   });
 
@@ -394,6 +412,34 @@ const _renderHeadTools=async (tagAppIconTools)=>{
     let tagDlgSaveNote = document.querySelector('#idDlgSaveNote') ;
     tagDlgSaveNote.classList.add('outpostDlg');
     tagDlgSaveNote.showModal();
+  });
+
+  
+  tagAppIconTools.querySelector('#idBTNPrintNote').addEventListener('click', async () => {
+    const markdownContent = editor.getMarkdown();
+    const htmlContent = marked.parse(markdownContent); // Convert Markdown to HTML
+    console.log(markdownContent); // Raw Markdown
+    console.log(htmlContent); // Rendered HTML
+    // Optionally, update a DOM element with the HTML
+
+    //document.getElementById('output').innerHTML = htmlContent;
+    overlayView.createOverlay(htmlContent) ;
+
+  });
+
+  tagAppIconTools.querySelector('#idBTNFullScreen').addEventListener('click', async () => {
+    //event.target.requestFullscreen() ;
+    const appContainer = document.body; // Or whatever element you want to make fullscreen
+    // Check if the browser supports the Fullscreen API
+    if (appContainer.requestFullscreen) {
+      appContainer.requestFullscreen();
+    } else if (appContainer.webkitRequestFullscreen) { /* Safari */
+        appContainer.webkitRequestFullscreen();
+    } else if (appContainer.mozRequestFullScreen) { /* Firefox */
+        appContainer.mozRequestFullScreen();
+    } else if (appContainer.msRequestFullscreen) { /* IE11 */
+        appContainer.msRequestFullscreen();
+    }
   });
   
 } ;
@@ -416,6 +462,7 @@ let jsonKnowledgeTree={
 
 let jsonKnowledgeTree={
   lifeStyle:{
+    uuid:'sssadda-fsdf-ds22-3',
     code:"0001",
     title:"lifeStyle"
   },
@@ -517,6 +564,7 @@ function renderNodeContent(tagContainer,notes){
 }
 
 function renderKnowledgeTree(tagContainer,jsonKnowledgeTree){
+  console.log(JSON.stringify(jsonKnowledgeTree,null,3));
   let ktKeys = Object.keys(jsonKnowledgeTree) ;
 
   for(let i=0;i<ktKeys.length;i++){
