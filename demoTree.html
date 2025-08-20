@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Tree Popup Menu</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 2rem;
+        }
+        
+        /* Main button styling */
+        .icon-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem;
+            border-radius: 9999px;
+            background-color: #4f46e5;
+            color: #ffffff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .icon-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .icon-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Popup menu container */
+        .popup-menu {
+            position: absolute;
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 0.5rem;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.95);
+            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out, visibility 0.2s ease-in-out;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 300px;
+        }
+        .popup-menu.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+
+        /* Styling for each tree node */
+        .menu-node {
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            transition: background-color 0.1s;
+        }
+        .menu-node:hover {
+            background-color: #f3f4f6;
+        }
+        .node-title-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+        .node-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
+        }
+        .expand-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease-in-out;
+        }
+        .expanded > .node-title-container > .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        /* Styling for child lists */
+        .children-list {
+            display: none;
+            padding-left: 1rem;
+            border-left: 2px solid #e5e7eb;
+            margin-top: 0.25rem;
+            margin-left: 0.5rem;
+        }
+        .expanded > .children-list {
+            display: block;
+        }
+
+        .no-children .expand-icon {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <!-- The button that will trigger the popup menu -->
+    <div id="trigger-icon" class="icon-button">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 15h16a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a2 2 0 012-2zM4 9h16a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2zM4 3h16a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2z"></path>
+        </svg>
+    </div>
+
+    <!-- The popup menu container, initially hidden -->
+    <div id="popup-menu" class="popup-menu">
+        <ul id="menu-content">
+            <!-- Menu items will be inserted here by JavaScript -->
+        </ul>
+    </div>
+
+    <script>
+        // Data structure for the tree
+        const treeData = {
+            "uuid": "root-12345",
+            "title": "My Project Plan",
+            "content": "This is the main project plan document.",
+            "children": [
+                {
+                    "uuid": "task-abcde",
+                    "title": "Phase 1: Research & Discovery",
+                    "content": "Gathering all necessary background information and resources.",
+                    "children": [
+                        {
+                            "uuid": "subtask-fghij",
+                            "title": "Competitive Analysis",
+                            "content": "Analyze competitor products and strategies.",
+                            "children": []
+                        },
+                        {
+                            "uuid": "subtask-klmno",
+                            "title": "User Surveys & Interviews",
+                            "content": "Conduct surveys to understand user needs.",
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "uuid": "task-pqrst",
+                    "title": "Phase 2: Product Design",
+                    "content": "Developing wireframes and mockups.",
+                    "children": [
+                        {
+                            "uuid": "subtask-uvwxy",
+                            "title": "Wireframing",
+                            "content": "Creating low-fidelity prototypes.",
+                            "children": []
+                        },
+                        {
+                            "uuid": "subtask-z1234",
+                            "title": "High-Fidelity Mockups",
+                            "content": "Designing the final visual layout.",
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "uuid": "task-56789",
+                    "title": "Phase 3: Development & Testing",
+                    "content": "Implementation and quality assurance.",
+                    "children": []
+                }
+            ]
+        };
+
+        const triggerIcon = document.getElementById('trigger-icon');
+        const popupMenu = document.getElementById('popup-menu');
+        const menuContent = document.getElementById('menu-content');
+        
+        /**
+         * Recursively generates HTML for a single tree node and its children.
+         * @param {Object} node The node object from the JSON data.
+         * @returns {string} The HTML string for the node and its children.
+         */
+        function createNodeHtml(node) {
+            const hasChildren = node.children && node.children.length > 0;
+            const nodeClass = `menu-node ${!hasChildren ? 'no-children' : ''}`;
+            const expandIcon = hasChildren ? '▶' : ''; // Unicode right-pointing triangle
+
+            let html = `<li class="${nodeClass}" data-uuid="${node.uuid}">
+                            <div class="node-title-container">
+                                <span class="expand-icon">${expandIcon}</span>
+                                <span class="node-title" title="${node.content}">${node.title}</span>
+                            </div>`;
+
+            if (hasChildren) {
+                html += `<ul class="children-list">`;
+                node.children.forEach(child => {
+                    html += createNodeHtml(child);
+                });
+                html += `</ul>`;
+            }
+
+            html += `</li>`;
+            return html;
+        }
+
+        /**
+         * Renders the entire tree structure into the menu.
+         */
+        function renderMenu() {
+            // Start with the root's children, not the root itself
+            const menuHtml = treeData.children.map(createNodeHtml).join('');
+            menuContent.innerHTML = menuHtml;
+        }
+
+        /**
+         * Toggles the visibility of the popup menu.
+         */
+        function toggleMenu() {
+            const iconRect = triggerIcon.getBoundingClientRect();
+            
+            // Position the menu to the right of the icon
+            popupMenu.style.top = `${iconRect.top}px`;
+            popupMenu.style.left = `${iconRect.right + 10}px`;
+            
+            popupMenu.classList.toggle('visible');
+            console.log("Popup menu toggled:", popupMenu.classList.contains('visible'));
+        }
+
+        // Add event listener to the trigger icon
+        triggerIcon.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevents the window click from immediately closing the menu
+            toggleMenu();
+        });
+
+        // Add a click listener to the menu to handle node expansion/collapse
+        menuContent.addEventListener('click', (event) => {
+            let targetNode = event.target.closest('.menu-node');
+            if (targetNode) {
+                const childrenList = targetNode.querySelector('.children-list');
+                if (childrenList) {
+                    // This node has children, so we can toggle expansion
+                    targetNode.classList.toggle('expanded');
+                } else {
+                    // This is a leaf node, we can handle a click action here
+                    console.log(`Clicked on leaf node: ${targetNode.dataset.uuid}`);
+                    // You could add a modal or a toast notification here
+                }
+            }
+        });
+        
+        // Add a listener to close the menu when clicking anywhere else
+        window.addEventListener('click', (event) => {
+            // Check if the click is outside the menu and the trigger icon
+            if (!popupMenu.contains(event.target) && !triggerIcon.contains(event.target)) {
+                if (popupMenu.classList.contains('visible')) {
+                    popupMenu.classList.remove('visible');
+                }
+            }
+        });
+
+        // Initial render of the menu
+        window.onload = function() {
+            renderMenu();
+        }
+    </script>
+
+</body>
+</html>

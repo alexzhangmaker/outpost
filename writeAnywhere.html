@@ -21,7 +21,12 @@
 
   <link rel="stylesheet" href="./css/outpostFW.css">
   <link rel="stylesheet" href="./css/cssMarkdown.css">
+  <link rel="stylesheet" href="./css/cssOutpostMenu.css">
+  <link rel="stylesheet" href="./css/cssOutpostSidePanel.css">
+  <link rel="stylesheet" href="./css/cssOutpostDlg.css">
 
+  
+  
   <!---firebase-->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -58,15 +63,21 @@
       color: aqua;
     }
   </style>
+  <style>
+    
+  </style>
 </head>
 
 <body>
     <div class="headerNavigationBar">
         <div class="outpostLogo"><i class="bi-house-fill outpostBTN" id="idBTNOutpostLogo"></i></div>
         <div class="appIconTools iconTools" style="flex-grow: 1;" >
+
         </div>
 
         <div class="iconTools">
+          <i class="bi-person-circle outpostBTN" id="idBTNMenuDemo"></i>
+
           <i class="bi-person-circle outpostBTN" id="idBTNOutpostAuth"></i>
         </div>
       </div>
@@ -91,91 +102,15 @@
     </div>
     <div class="rightPanel">
 
-    <div class="rightPanelMain mdEditorContainer">
-
-      
-
-    </div>
+    <div class="rightPanelMain mdEditorContainer"></div>
   </div>
 
   <style>
-    .outpostDrawer{
-      width:200px !important;
-      height:100vh ;
-    }
-
-
-
-        
-    sl-tree-item::part(indentation) {
-      width: 5px; 
-    }
 
   </style>
 
   <sl-drawer label="笔记总览" class="drawer-scrolling outpostDrawer" style="--size:400px;--body-spacing:5px;">
-    <style>
-      .appTreeBrowser{
-        height:100% ;
-        overflow-y: hidden;
-        background-color: rgb(204, 185, 185);
-
-        display: flex;
-        flex-direction: column;
-      }
-      
-      .treeContainer{
-        height:60%;
-        overflow-y: auto;
-        flex-grow: 0;
-        flex-shrink: 0;
-      }
-      .treeListContainer{
-        padding-top: 10px;
-        flex-grow: 1;
-        overflow-y: auto;
-
-      }
-      .treeNodeDetails {
-          padding-top: 1px;
-          padding-bottom: 1px;
-          width: 100%;
-          padding-left: 10px;
-      }
-
-      .treeNodeDetails:hover{
-        cursor: pointer;
-      }
-
-      .treeNodeSummary {
-          display: flex;
-          flex-direction: row;
-          justify-content: space-between;
-      }
-      .treeNodeChildren{
-        padding-left: 1px;
-      }
-
-    /* Default state: details is closed */
-    .treeNodeDetails > .treeNodeSummary .bi-folder2 {
-      display: inline-block; /* Show closed folder icon */
-    }
-
-    .treeNodeDetails > .treeNodeSummary .bi-folder2-open {
-      display: none; /* Hide open folder icon */
-    }
-
-    /* When details is open */
-    .treeNodeDetails[open] > .treeNodeSummary .bi-folder2 {
-      display: none; /* Hide closed folder icon */
-    }
-
-    .treeNodeDetails[open] > .treeNodeSummary .bi-folder2-open {
-      display: inline-block; /* Show open folder icon */
-    }
-
-
-    </style>
+    <!-----
     <div class="appTreeBrowser">
       <div class="treeContainer"></div>
       <div class="treeListContainer">
@@ -183,58 +118,19 @@
         <div class="treeNodeContent"></div>
       </div>
     </div>
+    --->
+    <div class="accordionContainer" id="accordion-container">
+      <!-- Accordion items will be rendered here by JavaScript -->
+    </div>
     <sl-button slot="footer" variant="primary">Close</sl-button>
   </sl-drawer>
 
   <style>
-    .outpostDlg{
-      width: 960px;
-      height:600px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-
-      padding-top: 20px;
-      padding-bottom: 10px;
-    }
-    .outpostDlgHeader{
-      height:40px;
-      width: 100%;
-      flex-grow: 0;
-      padding-right: 10px;
-      padding-left: 10px;
-
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-
-    }
-    .outpostDlgBody{
-      width: 100%;
-      flex-grow: 1;
-      padding-right: 10px;
-      padding-left: 10px;
-    }
-    .outpostDlgFooter{
-      height:40px;
-      width: 100%;
-      flex-grow: 0;
-      padding-right: 10px;
-      padding-left: 10px;
-
-      display: flex;
-      flex-direction: row;
-      align-items: flex-end;
-      align-content: flex-end;
-      justify-content: flex-end;
-      gap:10px;
-    }
-
-    .outpostButton{
-      font-style: normal;
-      text-decoration: underline;
-    }
+    
   </style>
+  <style>
+    
+</style>
   <dialog id="idDlgSaveNote">
     <div class="outpostDlgHeader">
       <div>title:</div>
@@ -244,7 +140,7 @@
     </div>
     <div class="outpostDlgBody"></div>
     <div class="outpostDlgFooter">
-      <button class="outpostButton" onclick="document.querySelector('#idDlgSaveNote').close();document.querySelector('#idDlgSaveNote').classList.remove('outpostDlg')">Cancel</button>
+      <button class="outpostButton" id="idBTNDialogCancel">Cancel</button>
       <button class="outpostButton">Confirm</button>
     </div>
     
@@ -252,6 +148,13 @@
   
   
 </div>
+<!-- The popup menu container, initially hidden -->
+<div id="popup-menu" class="popup-menu">
+  <ul id="menu-content">
+      <!-- Menu items will be inserted here by JavaScript -->
+  </ul>
+</div>
+
   <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
   <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
   <script src="./js/APIWriteFB.js"></script>
@@ -259,8 +162,163 @@
   <script src="./js/modalFactory.js"></script>
   <script src="./appWriteAnywhere.js"></script>
 
+  <script>
 
+    //test for menu
+    // Data structure for the tree
+    const treeData = {
+            "uuid": "root-12345",
+            "title": "My Project Plan",
+            "content": "This is the main project plan document.",
+            "children": [
+                {
+                    "uuid": "task-abcde",
+                    "title": "Phase 1: Research & Discovery",
+                    "content": "Gathering all necessary background information and resources.",
+                    "children": [
+                        {
+                            "uuid": "subtask-fghij",
+                            "title": "Competitive Analysis",
+                            "content": "Analyze competitor products and strategies.",
+                            "children": []
+                        },
+                        {
+                            "uuid": "subtask-klmno",
+                            "title": "User Surveys & Interviews",
+                            "content": "Conduct surveys to understand user needs.",
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "uuid": "task-pqrst",
+                    "title": "Phase 2: Product Design",
+                    "content": "Developing wireframes and mockups.",
+                    "children": [
+                        {
+                            "uuid": "subtask-uvwxy",
+                            "title": "Wireframing",
+                            "content": "Creating low-fidelity prototypes.",
+                            "children": []
+                        },
+                        {
+                            "uuid": "subtask-z1234",
+                            "title": "High-Fidelity Mockups",
+                            "content": "Designing the final visual layout.",
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "uuid": "task-56789",
+                    "title": "Phase 3: Development & Testing",
+                    "content": "Implementation and quality assurance.",
+                    "children": []
+                }
+            ]
+        };
 
+        const triggerIcon = document.getElementById('idBTNMenuDemo');
+        const popupMenu = document.getElementById('popup-menu');
+        const menuContent = document.getElementById('menu-content');
+        
+        /**
+         * Recursively generates HTML for a single tree node and its children.
+         * @param {Object} node The node object from the JSON data.
+         * @returns {string} The HTML string for the node and its children.
+         */
+        function createNodeHtml(node) {
+            const hasChildren = node.children && node.children.length > 0;
+            const nodeClass = `menu-node ${!hasChildren ? 'no-children' : ''}`;
+            const expandIcon = hasChildren ? '▶' : ''; // Unicode right-pointing triangle
+
+            let html = `<li class="${nodeClass}" data-uuid="${node.uuid}">
+                            <div class="node-title-container">
+                                <span class="expand-icon">${expandIcon}</span>
+                                <span class="node-title" title="${node.content}">${node.title}</span>
+                            </div>`;
+
+            if (hasChildren) {
+                html += `<ul class="children-list">`;
+                node.children.forEach(child => {
+                    html += createNodeHtml(child);
+                });
+                html += `</ul>`;
+            }
+
+            html += `</li>`;
+            return html;
+        }
+
+        /**
+         * Renders the entire tree structure into the menu.
+         */
+        function renderMenu() {
+            // Start with the root's children, not the root itself
+            const menuHtml = treeData.children.map(createNodeHtml).join('');
+            menuContent.innerHTML = menuHtml;
+        }
+
+        /**
+         * Toggles the visibility of the popup menu.
+         */
+        function toggleMenu() {
+            const iconRect = triggerIcon.getBoundingClientRect();
+            
+            // Position the menu to the right of the icon
+            popupMenu.style.top = `${iconRect.top}px`;
+            popupMenu.style.left = `${iconRect.right + 10}px`;
+            
+            popupMenu.classList.toggle('visible');
+            console.log("Popup menu toggled:", popupMenu.classList.contains('visible'));
+        }
+
+        // Add event listener to the trigger icon
+        triggerIcon.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevents the window click from immediately closing the menu
+            toggleMenu();
+        });
+
+        // Add a click listener to the menu to handle node expansion/collapse
+        menuContent.addEventListener('click', (event) => {
+            let targetNode = event.target.closest('.menu-node');
+            if (targetNode) {
+                const childrenList = targetNode.querySelector('.children-list');
+                if (childrenList) {
+                    // This node has children, so we can toggle expansion
+                    targetNode.classList.toggle('expanded');
+                } else {
+                    // This is a leaf node, we can handle a click action here
+                    console.log(`Clicked on leaf node: ${targetNode.dataset.uuid}`);
+                    // You could add a modal or a toast notification here
+                }
+            }
+        });
+        
+        // Add a listener to close the menu when clicking anywhere else
+        window.addEventListener('click', (event) => {
+            // Check if the click is outside the menu and the trigger icon
+            if (!popupMenu.contains(event.target) && !triggerIcon.contains(event.target)) {
+                if (popupMenu.classList.contains('visible')) {
+                    popupMenu.classList.remove('visible');
+                }
+            }
+        });
+
+        // Initial render of the menu
+        window.onload = function() {
+            renderMenu();
+        }
+  </script>
+
+  <script>
+    
+    document.querySelector('#idBTNDialogCancel').addEventListener('click',(event)=>{
+      document.querySelector('#idDlgSaveNote').close();
+      document.querySelector('#idDlgSaveNote').classList.remove('outpostDlg') ;
+
+    }) ;
+  </script>
   
  <script>
     document.getElementById('idBTNToggleNavBar').addEventListener('click',(event)=>{
@@ -395,5 +453,136 @@
     });
     */
   </script>
+
+<script>
+  // JSON data representing the tree structure
+  const accordionData = [
+      {
+          id: 'a1',
+          title: 'Category 1',
+          children: [
+              {
+                  id: 'b1',
+                  title: 'Sub-Category 1.1',
+                  children: [
+                      {
+                          id: 'c1',
+                          title: 'Item 1.1.1',
+                          description: 'This is the first item in the nested section.'
+                      },
+                      {
+                          id: 'c2',
+                          title: 'Item 1.1.2',
+                          description: 'This is the second item in the nested section.'
+                      },
+                  ],
+              },
+              {
+                  id: 'b2',
+                  title: 'Sub-Category 1.2',
+                  description: 'A brief description for sub-category 1.2.'
+              },
+          ],
+      },
+      {
+          id: 'a2',
+          title: 'Category 2',
+          children: [
+              {
+                  id: 'b3',
+                  title: 'Sub-Category 2.1',
+                  description: 'A description for the second main sub-category.',
+              },
+              {
+                  id: 'b4',
+                  title: 'Sub-Category 2.2',
+                  children: [
+                      {
+                          id: 'c3',
+                          title: 'Item 2.2.1',
+                          description: 'The first item in the final nested section.'
+                      },
+                  ]
+              },
+          ],
+      },
+      {
+          id: 'a3',
+          title: 'Category 3',
+          description: 'This is a top-level category with no sub-items.'
+      },
+  ];
+
+  // Main function to render the accordion from the data
+  function renderAccordion(data, parentElement) {
+      data.forEach(item => {
+          const hasChildren = item.children && item.children.length > 0;
+
+          // Create the main accordion item container
+          const itemDiv = document.createElement('div');
+          itemDiv.classList.add('accordion-item');
+
+          // Create the clickable header
+          const headerDiv = document.createElement('div');
+          headerDiv.classList.add('accordion-header');
+          
+          // Header title
+          const titleSpan = document.createElement('span');
+          titleSpan.textContent = item.title;
+          titleSpan.classList.add('font-medium'/*, 'text-slate-100'*/);
+
+          headerDiv.appendChild(titleSpan);
+
+          // Add the icon if the item has children
+          if (hasChildren) {
+              const iconSvg = `
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+              `;
+              headerDiv.insertAdjacentHTML('beforeend', iconSvg);
+          }
+
+          // Create the content container
+          const contentDiv = document.createElement('div');
+          contentDiv.classList.add('accordion-content');
+
+          // If the item has a description, add it to the content
+          if (item.description) {
+              const descriptionP = document.createElement('p');
+              descriptionP.textContent = item.description;
+              descriptionP.classList.add('accordion-content-text');
+              contentDiv.appendChild(descriptionP);
+          }
+
+          // If the item has children, recursively render them
+          if (hasChildren) {
+              const childrenContainer = document.createElement('div');
+              childrenContainer.classList.add('accordion-children');
+              contentDiv.appendChild(childrenContainer);
+              renderAccordion(item.children, childrenContainer);
+          }
+
+          // Add click listener to the header to toggle the accordion
+          headerDiv.addEventListener('click', () => {
+              itemDiv.classList.toggle('expanded');
+          });
+          
+          // Append the header and content to the item div
+          itemDiv.appendChild(headerDiv);
+          itemDiv.appendChild(contentDiv);
+
+          // Append the complete item to the parent element
+          parentElement.appendChild(itemDiv);
+      });
+  }
+
+  // Get the main container and render the accordion on page load
+  document.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('accordion-container');
+      renderAccordion(accordionData, container);
+  });
+
+</script>
 </body>
 </html>

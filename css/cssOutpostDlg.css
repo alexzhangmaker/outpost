@@ -1,0 +1,47 @@
+.outpostDlg{
+      width: 960px;
+      height:600px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      padding-top: 20px;
+      padding-bottom: 10px;
+    }
+    .outpostDlgHeader{
+      height:40px;
+      width: 100%;
+      flex-grow: 0;
+      padding-right: 10px;
+      padding-left: 10px;
+
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+
+    }
+    .outpostDlgBody{
+      width: 100%;
+      flex-grow: 1;
+      padding-right: 10px;
+      padding-left: 10px;
+    }
+    .outpostDlgFooter{
+      height:40px;
+      width: 100%;
+      flex-grow: 0;
+      padding-right: 10px;
+      padding-left: 10px;
+
+      display: flex;
+      flex-direction: row;
+      align-items: flex-end;
+      align-content: flex-end;
+      justify-content: flex-end;
+      gap:10px;
+    }
+
+    .outpostButton{
+      font-style: normal;
+      text-decoration: underline;
+    }

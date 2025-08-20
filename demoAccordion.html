@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layered Accordion UI</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .accordionContainer{
+            width:400px ;
+        }
+        /* Container for each accordion item */
+        .accordion-item {
+            border-bottom: 1px solid #334155;
+        }
+        
+        /* The clickable header of the accordion item */
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            user-select: none;
+        }
+
+        .accordion-header:hover {
+            background-color: #1e293b;
+        }
+
+        /* The icon for expand/collapse */
+        .accordion-icon {
+            transition: transform 0.2s ease-in-out;
+            flex-shrink: 0;
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        .accordion-item.expanded > .accordion-header > .accordion-icon {
+            transform: rotate(90deg);
+        }
+
+        /* The container for the content or nested children */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: #1e293b;
+        }
+        
+        .accordion-item.expanded > .accordion-content {
+            max-height: 500px; /* A large enough value to allow content to expand */
+        }
+        
+        /* Inner padding for content */
+        .accordion-content-text {
+            padding: 1rem;
+            font-size: 0.875rem; /* text-sm */
+            color: #94a3b8;
+        }
+        
+        /* Nested children styling */
+        .accordion-children {
+            padding-left: 1rem;
+            border-left: 2px solid #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-2xl mx-auto bg-slate-800 rounded-lg shadow-lg overflow-hidden">
+        <h1 class="text-3xl font-bold text-slate-100 p-6">Layered Accordion</h1>
+        <p class="text-sm text-slate-400 px-6 pb-4">
+            Click on the items to expand or collapse them and reveal nested content.
+        </p>
+        <div class="accordionContainer" id="accordion-container">
+            <!-- Accordion items will be rendered here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // JSON data representing the tree structure
+        const accordionData = [
+            {
+                id: 'a1',
+                title: 'Category 1',
+                children: [
+                    {
+                        id: 'b1',
+                        title: 'Sub-Category 1.1',
+                        children: [
+                            {
+                                id: 'c1',
+                                title: 'Item 1.1.1',
+                                description: 'This is the first item in the nested section.'
+                            },
+                            {
+                                id: 'c2',
+                                title: 'Item 1.1.2',
+                                description: 'This is the second item in the nested section.'
+                            },
+                        ],
+                    },
+                    {
+                        id: 'b2',
+                        title: 'Sub-Category 1.2',
+                        description: 'A brief description for sub-category 1.2.'
+                    },
+                ],
+            },
+            {
+                id: 'a2',
+                title: 'Category 2',
+                children: [
+                    {
+                        id: 'b3',
+                        title: 'Sub-Category 2.1',
+                        description: 'A description for the second main sub-category.',
+                    },
+                    {
+                        id: 'b4',
+                        title: 'Sub-Category 2.2',
+                        children: [
+                            {
+                                id: 'c3',
+                                title: 'Item 2.2.1',
+                                description: 'The first item in the final nested section.'
+                            },
+                        ]
+                    },
+                ],
+            },
+            {
+                id: 'a3',
+                title: 'Category 3',
+                description: 'This is a top-level category with no sub-items.'
+            },
+        ];
+
+        // Main function to render the accordion from the data
+        function renderAccordion(data, parentElement) {
+            data.forEach(item => {
+                const hasChildren = item.children && item.children.length > 0;
+
+                // Create the main accordion item container
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('accordion-item');
+
+                // Create the clickable header
+                const headerDiv = document.createElement('div');
+                headerDiv.classList.add('accordion-header');
+                
+                // Header title
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = item.title;
+                titleSpan.classList.add('font-medium', 'text-slate-100');
+
+                headerDiv.appendChild(titleSpan);
+
+                // Add the icon if the item has children
+                if (hasChildren) {
+                    const iconSvg = `
+                        <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    `;
+                    headerDiv.insertAdjacentHTML('beforeend', iconSvg);
+                }
+
+                // Create the content container
+                const contentDiv = document.createElement('div');
+                contentDiv.classList.add('accordion-content');
+
+                // If the item has a description, add it to the content
+                if (item.description) {
+                    const descriptionP = document.createElement('p');
+                    descriptionP.textContent = item.description;
+                    descriptionP.classList.add('accordion-content-text');
+                    contentDiv.appendChild(descriptionP);
+                }
+
+                // If the item has children, recursively render them
+                if (hasChildren) {
+                    const childrenContainer = document.createElement('div');
+                    childrenContainer.classList.add('accordion-children');
+                    contentDiv.appendChild(childrenContainer);
+                    renderAccordion(item.children, childrenContainer);
+                }
+
+                // Add click listener to the header to toggle the accordion
+                headerDiv.addEventListener('click', () => {
+                    itemDiv.classList.toggle('expanded');
+                });
+                
+                // Append the header and content to the item div
+                itemDiv.appendChild(headerDiv);
+                itemDiv.appendChild(contentDiv);
+
+                // Append the complete item to the parent element
+                parentElement.appendChild(itemDiv);
+            });
+        }
+
+        // Get the main container and render the accordion on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('accordion-container');
+            renderAccordion(accordionData, container);
+        });
+
+    </script>
+</body>
+</html>

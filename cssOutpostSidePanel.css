@@ -1,0 +1,139 @@
+.outpostDrawer{
+    width:200px !important;
+    height:100vh ;
+  }
+
+
+
+      
+  sl-tree-item::part(indentation) {
+    width: 5px; 
+  }
+
+  
+.appTreeBrowser{
+        height:100% ;
+        overflow-y: hidden;
+        background-color: rgb(204, 185, 185);
+
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .treeContainer{
+        height:60%;
+        overflow-y: auto;
+        flex-grow: 0;
+        flex-shrink: 0;
+      }
+      .treeListContainer{
+        padding-top: 10px;
+        flex-grow: 1;
+        overflow-y: auto;
+
+      }
+      .treeNodeDetails {
+          padding-top: 1px;
+          padding-bottom: 1px;
+          width: 100%;
+          padding-left: 10px;
+      }
+
+      .treeNodeDetails:hover{
+        cursor: pointer;
+      }
+
+      .treeNodeSummary {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+      }
+      .treeNodeChildren{
+        padding-left: 1px;
+      }
+
+    /* Default state: details is closed */
+    .treeNodeDetails > .treeNodeSummary .bi-folder2 {
+      display: inline-block; /* Show closed folder icon */
+    }
+
+    .treeNodeDetails > .treeNodeSummary .bi-folder2-open {
+      display: none; /* Hide open folder icon */
+    }
+
+    /* When details is open */
+    .treeNodeDetails[open] > .treeNodeSummary .bi-folder2 {
+      display: none; /* Hide closed folder icon */
+    }
+
+    .treeNodeDetails[open] > .treeNodeSummary .bi-folder2-open {
+      display: inline-block; /* Show open folder icon */
+    }
+
+
+
+
+    .accordionContainer{
+      width:400px ;
+      padding-right: 10px;
+      font-size: 16px;
+  }
+  /* Container for each accordion item */
+  .accordion-item {
+      border-bottom: 1px solid #334155;
+  }
+  
+  /* The clickable header of the accordion item */
+  .accordion-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      /*padding: 1rem;*/
+      padding-top: 5px;
+      padding-bottom: 5px;
+      padding-left: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+      user-select: none;
+  }
+
+  .accordion-header:hover {
+      background-color: #c0c6d0;
+  }
+
+  /* The icon for expand/collapse */
+  .accordion-icon {
+      transition: transform 0.2s ease-in-out;
+      flex-shrink: 0;
+      width: 1.25rem;
+      height: 1.25rem;
+  }
+
+  .accordion-item.expanded > .accordion-header > .accordion-icon {
+      transform: rotate(90deg);
+  }
+
+  /* The container for the content or nested children */
+  .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      /*background-color: #1e293b;*/
+  }
+  
+  .accordion-item.expanded > .accordion-content {
+      max-height: 500px; /* A large enough value to allow content to expand */
+  }
+  
+  /* Inner padding for content */
+  .accordion-content-text {
+      padding: 1rem;
+      font-size: 0.875rem; /* text-sm */
+      /*color: #94a3b8;*/
+  }
+  
+  /* Nested children styling */
+  .accordion-children {
+      padding-left: 1rem;
+      /*border-left: 2px solid #475569;*/
+  }

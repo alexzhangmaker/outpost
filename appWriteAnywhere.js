@@ -417,13 +417,76 @@ const _renderHeadTools=async (tagAppIconTools)=>{
   
   tagAppIconTools.querySelector('#idBTNPrintNote').addEventListener('click', async () => {
     const markdownContent = editor.getMarkdown();
-    const htmlContent = marked.parse(markdownContent); // Convert Markdown to HTML
-    console.log(markdownContent); // Raw Markdown
-    console.log(htmlContent); // Rendered HTML
+    //const htmlContent = marked.parse(markdownContent); // Convert Markdown to HTML
+    //console.log(markdownContent); // Raw Markdown
+    //console.log(htmlContent); // Rendered HTML
     // Optionally, update a DOM element with the HTML
 
     //document.getElementById('output').innerHTML = htmlContent;
-    overlayView.createOverlay(htmlContent) ;
+    //overlayView.createOverlay(htmlContent) ;
+    const htmlContent = editor.getHTML();
+
+    // Create a new window
+    const printWindow = window.open('', '_blank');
+
+    printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Print Preview</title>
+      <!-- Include Toast UI Editor CSS for preview style -->
+      <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
+      <!-- Optional: Include Prism.js CSS for syntax highlighting -->
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+      <!-- Custom print styles -->
+      <style>
+        body {
+          font-family: Arial, sans-serif; /* Fallback font */
+        }
+        .toastui-editor-contents {
+          font-size: 12pt; /* Adjust for print readability */
+          padding: 20px;
+        }
+        pre, code {
+          page-break-inside: avoid; /* Prevent code blocks from splitting across pages */
+        }
+        h1, h2, h3 {
+          page-break-after: avoid; /* Prevent headers from being last on a page */
+        }
+        @media print {
+          body {
+            margin: 0;
+          }
+          .toastui-editor-contents {
+            margin: 10mm; /* Print-specific margins */
+          }
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="toastui-editor-contents">
+        ${htmlContent}
+      </div>
+      <script>
+        // Trigger print dialog after content loads
+        window.onload = function() {
+          window.print();
+        };
+        // Close window after printing (optional)
+        window.onafterprint = function() {
+          window.close();
+        };
+      </script>
+    </body>
+    </html>
+  `);
+
+    // Close the document stream
+    //printWindow.document.close();
 
   });
 
@@ -462,7 +525,6 @@ let jsonKnowledgeTree={
 
 let jsonKnowledgeTree={
   lifeStyle:{
-    uuid:'sssadda-fsdf-ds22-3',
     code:"0001",
     title:"lifeStyle"
   },
@@ -575,4 +637,4 @@ function renderKnowledgeTree(tagContainer,jsonKnowledgeTree){
   }
 }
 
-renderKnowledgeTree(document.querySelector(".appTreeBrowser"),jsonKnowledgeTree);
+//renderKnowledgeTree(document.querySelector(".appTreeBrowser"),jsonKnowledgeTree);
