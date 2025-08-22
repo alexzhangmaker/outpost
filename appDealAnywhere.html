@@ -174,9 +174,12 @@
   <div class="bodyWorkingStudio">
     <div class="leftPanel leftPanelCollapse">
       <div class="navigationBar">
-        <div class="naviICONGroup appNaviTools noShow">
-            <i class="bi-list outpostBTN" id="idBTNToggleNavBar"></i>
+        <div class="naviICONGroup appNaviTools">
+            <i class="bi-currency-exchange outpostBTN" id="idBTNDealLog"></i>
+            <i class="bi-stopwatch outpostBTN" id="idBTNTradeWatch"></i>
+            <i class="bi-receipt outpostBTN" id="idBTNMetaConfig"></i>
             <!------
+              
             <i class="bi-trash outpostBTN" id="RemoveButton"></i>
             <i class="bi-cloud-download outpostBTN" id="loadButton"></i>
             -->
@@ -330,6 +333,7 @@
   <script src="./js/modalFactory.js"></script>
 
   <script>
+    /*
     document.getElementById('idBTNToggleNavBar').addEventListener('click',(event)=>{
         let tagLeftPanel = document.querySelector('.leftPanel') ;
         //tagLeftPanel.style.width = "200px" ;
@@ -341,6 +345,7 @@
         let jsonMeta = appMeta() ;
         jsonMeta.renderPanel(tagLeftPanel.querySelector('.navigationPanel')) ;
     }) ;
+    */
 
     //
     document.getElementById('idBTNOutpostLogo').addEventListener('click',(event)=>{
@@ -397,6 +402,12 @@
       tippy('#idBTNOutpostSetting', {content: "application setting"});
       tippy('#idBTNOutpostAuth', {content: "authentication"});
 
+      tippy('#idBTNDealLog', {content: "DealBooks"});
+      tippy('#idBTNTradeWatch', {content: "Policy!"});
+      tippy('#idBTNMetaConfig', {content: "元数据管理!"});
+
+      
+      
       
       let jsonMeta = appMeta() ;
 

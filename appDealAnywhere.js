@@ -8,7 +8,7 @@ function appMeta(){
         renderPanel:_renderPanel,
         renderWorkStudio:_renderWorkStudio,
         renderHeadTools:_renderHeadTools,
-        renderNavTools:_renderNavTools,
+        //renderNavTools:_renderNavTools,
         injectStyle:_injectStyle_AppBoxAnywhere
     } ;
 }
