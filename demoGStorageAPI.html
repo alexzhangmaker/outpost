@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Functions Tester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        // IMPORTANT: Replace with your actual Firebase project configuration.
+        // You can find this in your Firebase console under Project settings -> General.
+        const firebaseConfig = {
+        apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",//AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs
+        authDomain: "outpost-8d74e.firebaseapp.com",
+        databaseURL: "https://outpost-8d74e-d45f1.asia-southeast1.firebasedatabase.app/",
+        projectId: "outpost-8d74e",
+        storageBucket: "outpost-8d74e.firebasestorage.app",
+        messagingSenderId: "724993324937",
+        appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+        measurementId: "G-QPHWRTH6BH"
+    };
+        
+        // IMPORTANT: Replace with the actual URL of your Firebase Function.
+        // You can find this in the Firebase console under Functions -> Dashboard.
+        const FUNCTION_URL = "https://us-central1-outpost-8d74e.cloudfunctions.net/manageMarkdown";// https://us-central1-outpost-8d74e.cloudfunctions.net/manageMarkdown
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const markdownInput = document.getElementById('markdownInput');
+            const signInBtn = document.getElementById('signInBtn');
+            const callBtn = document.getElementById('callBtn');
+            const outputElement = document.getElementById('output');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            let isAuthReady = false;
+
+            function logOutput(message) {
+                const p = document.createElement('p');
+                p.textContent = `> ${message}`;
+                outputElement.appendChild(p);
+                outputElement.scrollTop = outputElement.scrollHeight;
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    logOutput(`Authentication successful. User: ${user.email}. Ready to call function.`);
+                    logOutput(`User UID: ${user.uid}`);
+                    isAuthReady = true;
+                    signInBtn.disabled = true;
+                    callBtn.disabled = false;
+                } else {
+                    logOutput("Please sign in to call the function.");
+                    isAuthReady = false;
+                    signInBtn.disabled = false;
+                    callBtn.disabled = true;
+                }
+            });
+
+            signInBtn.addEventListener('click', async () => {
+                logOutput("Signing in with Google...");
+                try {
+                    await signInWithPopup(auth, provider);
+                } catch (error) {
+                    logOutput(`Authentication failed: ${error.message}`);
+                }
+            });
+
+            callBtn.addEventListener('click', async () => {
+                if (!isAuthReady) {
+                    logOutput("Authentication is not yet complete. Please sign in first.");
+                    return;
+                }
+
+                const markdownText = markdownInput.value.trim();
+                if (markdownText === '') {
+                    logOutput("Please enter some markdown text to process.");
+                    return;
+                }
+                
+                // Explicitly get the user and ID token
+                const user = auth.currentUser;
+                if (!user) {
+                    logOutput("User is not authenticated at the time of the call. Please try signing in again.");
+                    return;
+                }
+                
+                logOutput(`Verified user UID: ${user.uid}. Getting authentication token...`);
+                
+                try {
+                    const idToken = await user.getIdToken();
+                    logOutput("Token successfully retrieved. Calling function...");
+                    logOutput(`Token: ${idToken.substring(0, 20)}...`);
+
+                    const response = await fetch(FUNCTION_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${idToken}`
+                        },
+                        body: JSON.stringify({ data: { text: markdownText } })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error.message || `HTTP Error: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    logOutput(`Function Result: ${JSON.stringify(result.data, null, 2)}`);
+                } catch (error) {
+                    logOutput(`Error calling manageMarkdown: ${error.message}`);
+                }
+            });
+
+            clearBtn.addEventListener('click', () => {
+                outputElement.innerHTML = '';
+            });
+
+            callBtn.disabled = true;
+        });
+    </script>
+</head>
+<body class="bg-gray-100 font-sans p-6">
+    <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6 text-center">Markdown Function Tester</h1>
+
+        <div class="mb-4">
+            <label for="markdownInput" class="block text-gray-700 font-medium mb-2">Enter Markdown:</label>
+            <textarea id="markdownInput" rows="10" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200" placeholder="# Hello World!&#10;This is a sample markdown text.&#10;&#10;* Item 1&#10;* Item 2&#10;&#10;## A Subheading&#10;Here is some more text."></textarea>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
+            <button id="signInBtn" class="bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 w-full sm:w-auto">
+                Sign in with Google
+            </button>
+            <button id="callBtn" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-700 transition duration-300 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
+                Call manageMarkdown
+            </button>
+            <button id="clearBtn" class="bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-gray-500 transition duration-300 w-full sm:w-auto">
+                Clear Output
+            </button>
+        </div>
+
+        <div id="output-container" class="bg-gray-800 text-green-400 p-4 rounded-lg shadow-inner mt-6 overflow-y-auto h-64">
+            <pre id="output" class="font-mono text-sm"></pre>
+        </div>
+    </div>
+</body>
+</html>
