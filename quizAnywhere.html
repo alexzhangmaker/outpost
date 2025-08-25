@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        .question h3 {
+            margin-top: 0;
+        }
+        .options label {
+            display: block;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        .submit-btn, .home-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .submit-btn:hover, .home-btn:hover {
+            background: #357ae8;
+        }
+        .loading {
+            text-align: center;
+            font-style: italic;
+        }
+        .error {
+            color: red;
+            text-align: center;
+        }
+        .feedback {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .correct {
+            background: #e6ffed;
+            color: #2e7d32;
+        }
+        .incorrect {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Quiz App</h1>
+        </div>
+        <form id="quizForm">
+            <div id="questionsContainer"></div>
+            <button type="submit" class="submit-btn" id="submitBtn">Submit Quiz</button>
+            <button class="home-btn" id="homeBtn" style="display: none;">Go Home</button>
+        </form>
+        <div id="loading" class="loading">Loading quiz...</div>
+        <div id="error" class="error"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Replace with your Supabase URL and public anon key
+        const SUPABASE_URL = 'https://your-project-id.supabase.co';
+        const SUPABASE_KEY = 'your-anon-key';
+
+        const supabaseUrl = "https://yfftwweuxxkrzlvqilvc.supabase.co" ;
+        //using service_role secret key
+        const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmZnR3d2V1eHhrcnpsdnFpbHZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMjYxMTEsImV4cCI6MjA2NzkwMjExMX0.7rcV3RBrH5kY3KLqD-NHLMhMyc62wIxxYG9VfW-i1tk";
+
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+        // Assume quiz questions are stored in a table called 'quiz_questions'
+        // Each row: { id: number, question_text: string, options: array<string>, correct_answer: string }
+        // Results will be stored in 'quiz_results' table: { score: number, total_questions: number, created_at: timestamp }
+
+       
+        /*
+
+        async function fetchQuiz() {
+            try {
+                loading.style.display = 'block';
+                const { data, error } = await supabase
+                    .from('quiz_questions')
+                    .select('*')
+                    .order('id', { ascending: true });
+
+                if (error) throw error;
+
+                globalQuestions = data;
+                renderQuestions();
+            } catch (err) {
+                errorDiv.textContent = 'Error loading quiz: ' + err.message;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        */
+
+        
+
+        /*
+        async function submitQuiz(e) {
+            e.preventDefault();
+            const formData = new FormData(quizForm);
+            let score = 0;
+
+            globalQuestions.forEach(q => {
+                const answer = formData.get(`q${q.id}`);
+                if (answer === q.correct_answer) {
+                    score++;
+                }
+            });
+
+            try {
+                const { error } = await supabase
+                    .from('quiz_results')
+                    .insert([{ score, total_questions: globalQuestions.length }]);
+
+                if (error) throw error;
+
+                alert(`Quiz submitted! Your score: ${score}/${globalQuestions.length}`);
+                // Optionally reset form or redirect
+            } catch (err) {
+                errorDiv.textContent = 'Error submitting quiz: ' + err.message;
+            }
+        }
+        */
+
+    </script>
+    <script>
+        // Mock data for quiz questions
+        const mockQuizData = [
+            {
+                id: 1,
+                challenge: "What is the capital city of France?",
+                choices: ["Paris", "London", "Berlin", "Madrid"],
+                shouldBe: "Paris"
+            },
+            {
+                id: 2,
+                challenge: "Which planet is known as the Red Planet?",
+                choices: ["Jupiter", "Mars", "Venus", "Mercury"],
+                shouldBe: "Mars"
+            },
+            {
+                id: 3,
+                challenge: "What is 2 + 2?",
+                choices: ["3", "4", "5", "6"],
+                shouldBe: "4"
+            },
+            {
+                id: 4,
+                challenge: "Which element has the chemical symbol 'O'?",
+                choices: ["Oxygen", "Gold", "Iron", "Hydrogen"],
+                shouldBe: "Oxygen"
+            },
+            {
+                id: 5,
+                challenge: "Who wrote 'Romeo and Juliet'?",
+                choices: ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+                shouldBe: "William Shakespeare"
+            }
+        ];
+
+        const questionsContainer = document.getElementById('questionsContainer');
+        const quizForm = document.getElementById('quizForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const homeBtn = document.getElementById('homeBtn');
+        const loading = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+
+        let globalQuestions = [];
+
+        async function fetchQuiz() {
+            try {
+                loading.style.display = 'block';
+                //console.log(mockQuizData);
+                const { data, error } = await supabase
+                    .from('quizAnywhereTbl')
+                    .select('*').eq('user_email', 'alexszhang@gmail.com')
+
+                if (error) throw error;
+
+                console.log(data) ;
+                
+
+                globalQuestions = data[0].quizJson;//mockQuizData;
+                console.log(globalQuestions) ;
+                renderQuestions();
+            } catch (err) {
+                errorDiv.textContent = 'Error loading quiz: ' + err.message;
+                console.error('Fetch error:', err);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function renderQuestions() {
+            questionsContainer.innerHTML = ''; // Clear previous content
+            globalQuestions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                questionDiv.id = `question-${q.id}`;
+                questionDiv.innerHTML = `
+                    <h3>${index + 1}. ${q.challenge}</h3>
+                    <div class="options">
+                        ${q.choices.map((choice, optIndex) => `
+                            <label>
+                                <input type="radio" name="q${q.id}" value="${choice}" required>
+                                ${choice}
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div id="feedback-${q.id}" class="feedback" style="display: none;"></div>
+                `;
+                questionsContainer.appendChild(questionDiv);
+            });
+            console.log('Questions rendered:', globalQuestions.length);
+            // Ensure submit button is visible and home button is hidden
+            submitBtn.style.display = 'block';
+            homeBtn.style.display = 'none';
+        }
+
+        function submitQuiz(e) {
+            e.preventDefault();
+            console.log('Submit button clicked');
+            const formData = new FormData(quizForm);
+            let score = 0;
+
+            globalQuestions.forEach(q => {
+                console.log(`Processing question ${q.id}`);
+                const answer = formData.get(`q${q.id}`);
+                const feedbackDiv = document.getElementById(`feedback-${q.id}`);
+                if (answer === null) {
+                    feedbackDiv.textContent = 'No answer selected.';
+                    feedbackDiv.className = 'feedback incorrect';
+                } else if (answer === q.shouldBe) {
+                    score++;
+                    feedbackDiv.textContent = 'Correct!';
+                    feedbackDiv.className = 'feedback correct';
+                } else {
+                    feedbackDiv.textContent = `Incorrect. Your answer: ${answer}. Correct answer: ${q.shouldBe}`;
+                    feedbackDiv.className = 'feedback incorrect';
+                }
+                feedbackDiv.style.display = 'block';
+                // Disable radio buttons after submission
+                const inputs = document.getElementsByName(`q${q.id}`);
+                inputs.forEach(input => input.disabled = true);
+                console.log(`Question ${q.id} answer: ${answer}, Correct: ${q.shouldBe}`);
+            });
+
+            // Hide submit button and show home button
+            submitBtn.style.display = 'none';
+            homeBtn.style.display = 'block';
+
+            // Log result to console (replace with Supabase insert in production)
+            console.log({ score, total_questions: globalQuestions.length });
+            alert(`Quiz submitted! Your score: ${score}/${globalQuestions.length}`);
+        }
+
+        function goHome() {
+            console.log('Go Home button clicked');
+            // Reset form and re-render questions
+            quizForm.reset();
+            globalQuestions.forEach(q => {
+                const feedbackDiv = document.getElementById(`feedback-${q.id}`);
+                feedbackDiv.style.display = 'none';
+                feedbackDiv.textContent = '';
+                // Re-enable radio buttons
+                const inputs = document.getElementsByName(`q${q.id}`);
+                inputs.forEach(input => input.disabled = false);
+            });
+            renderQuestions();
+        }
+
+        // Ensure event listeners are attached
+        if (quizForm) {
+            quizForm.addEventListener('submit', submitQuiz);
+            console.log('Submit event listener attached');
+        } else {
+            console.error('Form element not found');
+            errorDiv.textContent = 'Error: Form element not found';
+        }
+
+        if (homeBtn) {
+            homeBtn.addEventListener('click', goHome);
+            console.log('Home button event listener attached');
+        } else {
+            console.error('Home button element not found');
+            errorDiv.textContent = 'Error: Home button element not found';
+        }
+
+        fetchQuiz();
+    </script>
+</body>
+</html>
