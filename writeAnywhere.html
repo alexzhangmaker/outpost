@@ -122,6 +122,7 @@
     <div class="accordionContainer" id="accordion-container">
       <!-- Accordion items will be rendered here by JavaScript -->
     </div>
+    <div class="noteList" id="idNoteList"></div>
     <sl-button slot="footer" variant="primary">Close</sl-button>
   </sl-drawer>
 
@@ -455,134 +456,241 @@
   </script>
 
 <script>
-  // JSON data representing the tree structure
-  const accordionData = [
-      {
-          id: 'a1',
-          title: 'Category 1',
-          children: [
-              {
-                  id: 'b1',
-                  title: 'Sub-Category 1.1',
-                  children: [
-                      {
-                          id: 'c1',
-                          title: 'Item 1.1.1',
-                          description: 'This is the first item in the nested section.'
-                      },
-                      {
-                          id: 'c2',
-                          title: 'Item 1.1.2',
-                          description: 'This is the second item in the nested section.'
-                      },
-                  ],
-              },
-              {
-                  id: 'b2',
-                  title: 'Sub-Category 1.2',
-                  description: 'A brief description for sub-category 1.2.'
-              },
-          ],
-      },
-      {
-          id: 'a2',
-          title: 'Category 2',
-          children: [
-              {
-                  id: 'b3',
-                  title: 'Sub-Category 2.1',
-                  description: 'A description for the second main sub-category.',
-              },
-              {
-                  id: 'b4',
-                  title: 'Sub-Category 2.2',
-                  children: [
-                      {
-                          id: 'c3',
-                          title: 'Item 2.2.1',
-                          description: 'The first item in the final nested section.'
-                      },
-                  ]
-              },
-          ],
-      },
-      {
-          id: 'a3',
-          title: 'Category 3',
-          description: 'This is a top-level category with no sub-items.'
-      },
-  ];
+  
 
   // Main function to render the accordion from the data
-  function renderAccordion(data, parentElement) {
-      data.forEach(item => {
-          const hasChildren = item.children && item.children.length > 0;
+  let noteFolderTree={
+    "user_email": "alexszhang@gmail.com",
+    "noteFolderTree": [
+        {
+            "id": "680a31ab-cda1-4973-8ecb-788a7398ac4c",
+            "title": "闪念笔记"
+        },
+        {
+            "id": "06ef20f4-3c6a-435c-8b73-489c21a706b7",
+            "title": "文献笔记"
+        },
+        {
+            "id": "eb6bdaa8-0e3d-43e7-8ea8-527ffe321f7f",
+            "title": "语言学习",
+            "subFolders": [
+                {
+                    "id": "ae2c489d-7566-426d-bc65-1b2d95e27741",
+                    "title": "泰语语法"
+                },
+                {
+                    "id": "0fa0f803-dad0-42bb-9959-c0037472baf5",
+                    "title": "英语语法"
+                }
+            ]
+        },
+        {
+            "id": "8026413c-d562-4d4a-93cb-f793727d71c4",
+            "title": "硬资产价值研究"
+        },
+        {
+            "id": "812cdb25-c393-4266-9863-14ec8e648a63",
+            "title": "计算机编程"
+        }
+    ]
+} ;
 
-          // Create the main accordion item container
-          const itemDiv = document.createElement('div');
-          itemDiv.classList.add('accordion-item');
+async function renderTreeNode(item,parentElement){
+    const hasChildren = item.subFolders && item.subFolders.length > 0;
 
-          // Create the clickable header
-          const headerDiv = document.createElement('div');
-          headerDiv.classList.add('accordion-header');
-          
-          // Header title
-          const titleSpan = document.createElement('span');
-          titleSpan.textContent = item.title;
-          titleSpan.classList.add('font-medium'/*, 'text-slate-100'*/);
+    // Create the main accordion item container
+    const itemDiv = document.createElement('div');
+    itemDiv.classList.add('accordion-item');
 
-          headerDiv.appendChild(titleSpan);
+    // Create the clickable header
+    const headerDiv = document.createElement('div');
+    headerDiv.classList.add('accordion-header');
+    
+    // Header title
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = item.title;
+    titleSpan.classList.add('font-medium'/*, 'text-slate-100'*/);
 
-          // Add the icon if the item has children
-          if (hasChildren) {
-              const iconSvg = `
-                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                  </svg>
-              `;
-              headerDiv.insertAdjacentHTML('beforeend', iconSvg);
-          }
+    headerDiv.appendChild(titleSpan);
 
-          // Create the content container
-          const contentDiv = document.createElement('div');
-          contentDiv.classList.add('accordion-content');
+    // Add the icon if the item has children
+    if (hasChildren) {
+        const iconSvg = `
+            <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+        `;
+        headerDiv.insertAdjacentHTML('beforeend', iconSvg);
+    }
 
-          // If the item has a description, add it to the content
-          if (item.description) {
-              const descriptionP = document.createElement('p');
-              descriptionP.textContent = item.description;
-              descriptionP.classList.add('accordion-content-text');
-              contentDiv.appendChild(descriptionP);
-          }
+    // Create the content container
+    const contentDiv = document.createElement('div');
+    contentDiv.classList.add('accordion-content');
 
-          // If the item has children, recursively render them
-          if (hasChildren) {
-              const childrenContainer = document.createElement('div');
-              childrenContainer.classList.add('accordion-children');
-              contentDiv.appendChild(childrenContainer);
-              renderAccordion(item.children, childrenContainer);
-          }
+    // If the item has a description, add it to the content
+    if (item.description) {
+        const descriptionP = document.createElement('p');
+        descriptionP.textContent = item.description;
+        descriptionP.classList.add('accordion-content-text');
+        contentDiv.appendChild(descriptionP);
+    }
 
-          // Add click listener to the header to toggle the accordion
-          headerDiv.addEventListener('click', () => {
-              itemDiv.classList.toggle('expanded');
-          });
-          
-          // Append the header and content to the item div
-          itemDiv.appendChild(headerDiv);
-          itemDiv.appendChild(contentDiv);
+    // If the item has children, recursively render them
+    if (hasChildren) {
+        const childrenContainer = document.createElement('div');
+        childrenContainer.classList.add('accordion-children');
+        contentDiv.appendChild(childrenContainer);
+        await renderNoteFolderAccordion(item.subFolders, childrenContainer);
+    }
 
-          // Append the complete item to the parent element
-          parentElement.appendChild(itemDiv);
-      });
-  }
+    // Add click listener to the header to toggle the accordion
+    headerDiv.addEventListener('click', () => {
+        itemDiv.classList.toggle('expanded');
+    });
+    
+    // Append the header and content to the item div
+    itemDiv.appendChild(headerDiv);
+    itemDiv.appendChild(contentDiv);
+
+    // Append the complete item to the parent element
+    parentElement.appendChild(itemDiv);
+
+    itemDiv.addEventListener('click',async (event)=>{
+        let tagChildren = itemDiv.querySelectorAll('.accordion-item') ;
+        if(tagChildren.length==0){
+            event.stopPropagation() ;
+        }
+        //let nDocumentIDs = parseInt(itemDiv.dataset.NumDocumentIDs) ;
+        let documentIDs = JSON.parse(itemDiv.dataset.documentIDs) ;
+
+        let tagEditor = document.querySelector('#editor') ;
+        let documentID = tagEditor.dataset.ActiveMemoID ;
+        if(documentID=='' || documentID==undefined)return ;
+        if(documentIDs.includes(documentID))return ;
+
+        documentIDs.push(documentID) ;
+        itemDiv.dataset.NumDocumentIDs = documentIDs.length ;
+        itemDiv.dataset.documentIDs = JSON.stringify(documentIDs) ;
+        await addNote2Folder(documentID,itemDiv.dataset.uuid) ;
+    }) ;
+    itemDiv.dataset.uuid=item.id ;
+
+    let noteIDs = await notesInFolder(itemDiv.dataset.uuid) ;
+    console.log(noteIDs) ;
+    const documentIDs = noteIDs.map(noteID => noteID.documentID);
+    itemDiv.dataset.documentIDs=JSON.stringify(documentIDs) ;
+    itemDiv.dataset.NumDocumentIDs = documentIDs.length ;
+
+}
+
+async function renderDocumentList(documentIDs,tagListContainer){
+    tagListContainer.innerHTML=`` ;
+    for(let i=0;i<documentIDs.length;i++){
+        let tagDocument = document.createElement('li') ;
+        tagListContainer.appendChild(tagDocument) ;
+        tagDocument.innerHTML=`${documentIDs[i]}` ;
+    }
+}
+
+async function renderNoteFolderAccordion(noteFolderTree, parentElement) {
+    for(let i=0;i<noteFolderTree.length;i++){
+        let item = noteFolderTree[i] ;
+        await renderTreeNode(item,parentElement) ;
+    }
+}
 
   // Get the main container and render the accordion on page load
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
       const container = document.getElementById('accordion-container');
-      renderAccordion(accordionData, container);
+
+      let jsonNoteFolderTree =  await fetchNoteFolderTree("alexszhang@gmail.com") ;
+      console.log(jsonNoteFolderTree) ;
+      await renderNoteFolderAccordion(jsonNoteFolderTree[0].noteFolderTree, container);
   });
 
+</script>
+<script>
+    const supabaseUrl = "https://yfftwweuxxkrzlvqilvc.supabase.co" ;
+    //using service_role secret key
+    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmZnR3d2V1eHhrcnpsdnFpbHZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMjYxMTEsImV4cCI6MjA2NzkwMjExMX0.7rcV3RBrH5kY3KLqD-NHLMhMyc62wIxxYG9VfW-i1tk";
+
+
+    const supabaseSDK = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+    console.log('Supabase Instance: ', supabaseSDK) ;
+    const noteFoldersTbl = 'noteFoldersTbl' ;
+
+    let globalNoteFolderTree={} ;
+    async function fetchNoteFolderTree(email){
+        try {
+            let { data: noteFolderTreeTbl, error } = await supabaseSDK.from('noteFolderTreeTbl').select("*")
+                .eq('user_email', email) ;
+            if (error) {
+                throw new Error(`Failed to fetchNoteFolderTree: ${error.message} (code: ${error.code})`);
+            }
+            return noteFolderTreeTbl;
+        } catch (error) {
+            throw new Error(`fetchNoteFolderTree error: ${error.message}`);
+        }
+    }
+
+    async function notesInFolder(folderID){
+        let { data, error } = await supabaseSDK.from('document_FolderTbl').select("documentID").eq('folderID', folderID) ;
+        if(error) {
+            throw new Error(`Failed to fetchNoteFolderTree: ${error.message} (code: ${error.code})`);
+            return { error };
+        }
+        return data;
+    }
+
+
+async function addNote2Folder(documentID, folderID) {
+    // Ensure UUIDs are valid
+    if (!documentID || !folderID || documentID ==undefined) {
+      console.error('documentID and folderID are required');
+      return { error: 'Missing required fields' };
+    }
+  
+    const { data, error } = await supabaseSDK
+      .from('document_FolderTbl')
+      .upsert(
+        [
+          {
+            documentID: documentID, // UUID for the document
+            folderID: folderID, // UUID for the folder
+          },
+        ],
+        {
+          onConflict: 'documentID', // Specify the column to check for conflicts (primary key)
+        }
+      )
+      .select(); // Return the inserted/updated row
+  
+    if (error) {
+      console.error('Error during upsert:', error);
+      return { error };
+    }
+  
+    console.log('Upsert successful:', data);
+    return { data };
+}
+
+    async function _test(){
+
+        /*
+        let jsonRow = await fetchNoteFolderTree("alexszhang@gmail.com") ;
+        console.log(JSON.stringify(jsonRow,null,3)) ;
+        globalNoteFolderTree = jsonRow[0] ;
+        console.log(globalNoteFolderTree) ;
+        */
+        let documentID = '17513397-de8e-4fd0-a10b-818d600947f2' ;
+        let folderID = '0fa0f803-dad0-42bb-9959-c0037472baf5' ;
+        //let result = await addNote2Folder(documentID,folderID) ;
+
+        let result = await notesInFolder(folderID) ;
+        console.log(result) ;
+    }
+
+    _test() ;
 </script>
 </body>
 </html>
