@@ -261,6 +261,17 @@ async function notesInFolder(folderID){
     return data;
 }
 
+async function notesInWhichFolder(noteID){
+  let { data, error } = await supabase.from('document_FolderTbl').select("folderID").eq('documentID', noteID) ;
+  if(error) {
+      throw new Error(`Failed to fetchNoteFolderTree: ${error.message} (code: ${error.code})`);
+      return [];
+  }
+  console.log(data) ;
+  if(data.length>0)return data[0].folderID ;
+  return '';
+}
+
 async function toolMain(){
 
     let jsonContent={
@@ -287,7 +298,9 @@ async function toolMain(){
     let folderID = '680a31ab-cda1-4973-8ecb-788a7398ac4c';//'0fa0f803-dad0-42bb-9959-c0037472baf5' ;
     //let result = await addNote2Folder(documentID,folderID) ;
 
-    let result = await notesInFolder(folderID) ;
+    //let result = await notesInFolder(folderID) ;
+    //console.log(result) ;
+    let result = await notesInWhichFolder('a2b17cb1-fdc1-438c-8613-a91be3fa1510') ;
     console.log(result) ;
 }
 

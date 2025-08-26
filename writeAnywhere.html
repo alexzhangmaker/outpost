@@ -62,6 +62,11 @@
       background-color: black;
       color: aqua;
     }
+
+    .activeFolder{
+      background-color: black;
+      color: aqua;
+    }
   </style>
   <style>
     
@@ -89,6 +94,7 @@
                     <i class="bi-cloud-download outpostBTN" id="idBTNLoadNotes"></i>
                     <i class="bi-calendar2-date outpostBTN" id="idBTNTimeline"></i>
                     <i class="bi-tags outpostBTN" id="idBTNTagsMode"></i>
+                    <i class="bi-pin-angle outpostBTN" id="idBTNPinNoteinFolder"></i>
                 </div>
                 <div class="naviICONGroup">
                     <i class="bi-gear-wide-connected outpostBTN" id="idBTNOutpostSetting"></i>
@@ -458,42 +464,6 @@
 <script>
   
 
-  // Main function to render the accordion from the data
-  let noteFolderTree={
-    "user_email": "alexszhang@gmail.com",
-    "noteFolderTree": [
-        {
-            "id": "680a31ab-cda1-4973-8ecb-788a7398ac4c",
-            "title": "闪念笔记"
-        },
-        {
-            "id": "06ef20f4-3c6a-435c-8b73-489c21a706b7",
-            "title": "文献笔记"
-        },
-        {
-            "id": "eb6bdaa8-0e3d-43e7-8ea8-527ffe321f7f",
-            "title": "语言学习",
-            "subFolders": [
-                {
-                    "id": "ae2c489d-7566-426d-bc65-1b2d95e27741",
-                    "title": "泰语语法"
-                },
-                {
-                    "id": "0fa0f803-dad0-42bb-9959-c0037472baf5",
-                    "title": "英语语法"
-                }
-            ]
-        },
-        {
-            "id": "8026413c-d562-4d4a-93cb-f793727d71c4",
-            "title": "硬资产价值研究"
-        },
-        {
-            "id": "812cdb25-c393-4266-9863-14ec8e648a63",
-            "title": "计算机编程"
-        }
-    ]
-} ;
 
 async function renderTreeNode(item,parentElement){
     const hasChildren = item.subFolders && item.subFolders.length > 0;
@@ -599,6 +569,28 @@ async function renderNoteFolderAccordion(noteFolderTree, parentElement) {
     }
 }
 
+document.querySelector('#idBTNPinNoteinFolder').addEventListener('click',async (event)=>{
+  let activeNoteID = document.querySelector('#editor').dataset.ActiveMemoID ;
+  if(activeNoteID==''||activeNoteID==undefined)return ;
+
+  let folderID = await notesInWhichFolder(activeNoteID) ;
+  console.log(folderID);
+
+  const tagFolderTreeContainer = document.getElementById('accordion-container');
+  // Use querySelector with the attribute selector
+  const tagFolder = tagFolderTreeContainer.querySelector(`[data-uuid="${folderID}"]`);
+
+  // Check if an element was found
+  if (tagFolder) {
+    console.log('Element found:', tagFolder);
+    console.log('Its UUID is:', tagFolder.dataset.uuid);
+    tagFolder.classList.add('activeFolder')
+  } else {
+    console.log('Element not found.');
+  }
+
+}) ;
+
   // Get the main container and render the accordion on page load
   document.addEventListener('DOMContentLoaded', async () => {
       const container = document.getElementById('accordion-container');
@@ -642,6 +634,17 @@ async function renderNoteFolderAccordion(noteFolderTree, parentElement) {
         return data;
     }
 
+
+async function notesInWhichFolder(noteID){
+  let { data, error } = await supabaseSDK.from('document_FolderTbl').select("folderID").eq('documentID', noteID) ;
+  if(error) {
+      throw new Error(`Failed to fetchNoteFolderTree: ${error.message} (code: ${error.code})`);
+      return [];
+  }
+  console.log(data) ;
+  if(data.length>0)return data[0].folderID ;
+  return '';
+}
 
 async function addNote2Folder(documentID, folderID) {
     // Ensure UUIDs are valid
