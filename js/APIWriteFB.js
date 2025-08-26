@@ -302,8 +302,11 @@ async function _InsertDocumentSupabase(title, content) {
 
   if (error) {
     console.log('Error inserting document: ' + error.message);
+    return '' ;
   } else {
     console.log('Document inserted successfully');
+    console.log(data) ;
+    return data[0].id ;
   }
 }
 
