@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Keyboard Practice App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        #word, #meaning {
+            font-size: 24px;
+            margin: 20px;
+        }
+        #input {
+            font-size: 20px;
+            padding: 10px;
+            width: 300px;
+        }
+        #feedback {
+            font-size: 18px;
+            margin: 20px;
+            color: red;
+        }
+        #stats {
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Thai Keyboard Practice App</h1>
+    <div id="meaning"></div>
+    <div id="word"></div>
+    <input type="text" id="input" placeholder="Type the Thai word here">
+    <button id="submit">Submit</button>
+    <div id="feedback"></div>
+    <div id="stats"></div>
+
+    <script>
+        const words = [
+            {
+                word: "สวัสดี",
+                meaning: "hello",
+                audio: "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=%E0%B8%AA%E0%B8%A7%E0%B8%B1%E0%B8%AA%E0%B8%94%E0%B8%B5"
+            },
+            {
+                word: "ขอบคุณ",
+                meaning: "thank you",
+                audio: "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=%E0%B8%82%E0%B8%AD%E0%B8%9A%E0%B8%84%E0%B8%B8%E0%B8%93"
+            },
+            {
+                word: "ลาก่อน",
+                meaning: "goodbye",
+                audio: "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=%E0%B8%A5%E0%B8%B2%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%99"
+            },
+            {
+                word: "ใช่",
+                meaning: "yes",
+                audio: "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=%E0%B9%83%E0%B8%8A%E0%B9%88"
+            },
+            {
+                word: "ไม่",
+                meaning: "no",
+                audio: "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=%E0%B9%84%E0%B8%A1%E0%B9%88"
+            }
+        ];
+
+        const reps = 3; // Configurable number of repetitions per phase
+
+        let currentIndex = 0;
+        let phase = 'visible'; // 'visible' or 'hidden'
+        let attempts = 0;
+        let correctVisible = 0;
+        let correctHidden = 0;
+        let allStats = []; // To store stats for all words
+
+        const meaningDiv = document.getElementById('meaning');
+        const wordDiv = document.getElementById('word');
+        const input = document.getElementById('input');
+        const submitBtn = document.getElementById('submit');
+        const feedback = document.getElementById('feedback');
+        const statsDiv = document.getElementById('stats');
+
+        function startWord() {
+            const currentWord = words[currentIndex];
+            meaningDiv.textContent = `Meaning: ${currentWord.meaning}`;
+            if (phase === 'visible') {
+                wordDiv.textContent = `Word: ${currentWord.word}`;
+            } else {
+                wordDiv.textContent = 'Word: (hidden)';
+            }
+
+            if (attempts === 0 && phase === 'visible') {
+                const audio = new Audio(currentWord.audio);
+                audio.play();
+            }
+
+            input.value = '';
+            feedback.textContent = '';
+            input.focus();
+        }
+
+        function checkInput() {
+            const currentWord = words[currentIndex];
+            const userInput = input.value.trim();
+            const isCorrect = userInput === currentWord.word;
+
+            attempts++;
+
+            if (isCorrect) {
+                if (phase === 'visible') {
+                    correctVisible++;
+                } else {
+                    correctHidden++;
+                }
+                feedback.textContent = 'Correct!';
+                feedback.style.color = 'green';
+            } else {
+                feedback.textContent = `Incorrect! Expected: ${phase === 'visible' ? currentWord.word : '(hidden)'}`;
+                feedback.style.color = 'red';
+            }
+
+            input.value = '';
+
+            if (attempts < reps) {
+                // Continue same phase
+                setTimeout(() => { feedback.textContent = ''; }, 2000);
+            } else {
+                if (phase === 'visible') {
+                    // Switch to hidden phase
+                    phase = 'hidden';
+                    attempts = 0;
+                    startWord();
+                } else {
+                    // Finish word, record stats
+                    const accVisible = (correctVisible / reps * 100).toFixed(2);
+                    const accHidden = (correctHidden / reps * 100).toFixed(2);
+                    allStats.push({
+                        word: currentWord.word,
+                        visibleAccuracy: accVisible,
+                        hiddenAccuracy: accHidden
+                    });
+
+                    // Display stats for this word
+                    statsDiv.innerHTML += `<p>Word: ${currentWord.word}<br>Visible Accuracy: ${accVisible}%<br>Hidden Accuracy: ${accHidden}%</p>`;
+
+                    // Move to next word
+                    currentIndex++;
+                    if (currentIndex < words.length) {
+                        phase = 'visible';
+                        attempts = 0;
+                        correctVisible = 0;
+                        correctHidden = 0;
+                        startWord();
+                    } else {
+                        // End of practice
+                        feedback.textContent = 'Practice complete!';
+                        submitBtn.disabled = true;
+                        // Optionally, display overall stats
+                        let overallVisible = allStats.reduce((sum, stat) => sum + parseFloat(stat.visibleAccuracy), 0) / allStats.length;
+                        let overallHidden = allStats.reduce((sum, stat) => sum + parseFloat(stat.hiddenAccuracy), 0) / allStats.length;
+                        statsDiv.innerHTML += `<h2>Overall:<br>Visible Accuracy: ${overallVisible.toFixed(2)}%<br>Hidden Accuracy: ${overallHidden.toFixed(2)}%</h2>`;
+                    }
+                }
+            }
+        }
+
+        // Event listeners
+        submitBtn.addEventListener('click', checkInput);
+        input.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                checkInput();
+            }
+        });
+
+        // Start the app
+        startWord();
+    </script>
+</body>
+</html>
