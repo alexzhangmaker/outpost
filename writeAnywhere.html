@@ -45,16 +45,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- MathJax for LaTeX rendering -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  <!---
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  -->
   <script>
-    // Configure MathJax
+
     MathJax.Hub.Config({
-      tex2jax: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        processEscapes: true
-      },
-      CommonHTML: { linebreaks: { automatic: true } }
-    });
+    tex2jax: {
+      inlineMath: [['$','$'], ['\\(','\\)']],
+      displayMath: [['$$','$$'], ['\\[','\\]']],
+      processEscapes: true
+    },
+    TeX: {
+      extensions: ["AMSmath.js", "AMSsymbols.js"]
+    }
+  });
   </script>
   
   <style>
@@ -68,9 +74,7 @@
       color: aqua;
     }
   </style>
-  <style>
-    
-  </style>
+
 </head>
 
 <body>
@@ -132,13 +136,8 @@
     <sl-button slot="footer" variant="primary">Close</sl-button>
   </sl-drawer>
 
-  <style>
-    
-  </style>
-  <style>
-    
-</style>
-  <dialog id="idDlgSaveNote">
+
+  <dialog id="idDlgArchiveNote">
     <div class="outpostDlgHeader">
       <div>title:</div>
       <div>
@@ -150,7 +149,6 @@
       <button class="outpostButton" id="idBTNDialogCancel">Cancel</button>
       <button class="outpostButton">Confirm</button>
     </div>
-    
   </dialog>
   
   
@@ -321,9 +319,8 @@
   <script>
     
     document.querySelector('#idBTNDialogCancel').addEventListener('click',(event)=>{
-      document.querySelector('#idDlgSaveNote').close();
-      document.querySelector('#idDlgSaveNote').classList.remove('outpostDlg') ;
-
+      document.querySelector('#idDlgArchiveNote').close();
+      document.querySelector('#idDlgArchiveNote').classList.remove('outpostDlg') ;
     }) ;
   </script>
   
@@ -463,9 +460,45 @@
 
 <script>
   
+  let _onClickAccordionArchive = async (event)=>{
+    let itemDiv=event.target ;
+    if(itemDiv.classList.contains("accordion-item")==false){
+      itemDiv = event.target.closest(".accordion-item");
+    }
+    let tagChildren = itemDiv.querySelectorAll('.accordion-item') ;
+    if(tagChildren.length==0){
+        event.stopPropagation() ;
+    }
+
+    let documentIDs = JSON.parse(itemDiv.dataset.documentIDs) ;
+
+    let tagEditor = document.querySelector('#editor') ;
+    let documentID = tagEditor.dataset.ActiveMemoID ;
+    if(documentID=='' || documentID==undefined)return ;
+    if(documentIDs.includes(documentID))return ;
+
+    documentIDs.push(documentID) ;
+    itemDiv.dataset.NumDocumentIDs = documentIDs.length ;
+    itemDiv.dataset.documentIDs = JSON.stringify(documentIDs) ;
+    await addNote2Folder(documentID,itemDiv.dataset.uuid) ;
+} ;
 
 
-async function renderTreeNode(item,parentElement){
+let _onClickAccordionBrowse = async (event)=>{
+    let itemDiv=event.target ;
+    if(itemDiv.classList.contains("accordion-item")==false){
+      itemDiv = event.target.closest(".accordion-item");
+    }
+    let tagChildren = itemDiv.querySelectorAll('.accordion-item') ;
+    if(tagChildren.length==0){
+        event.stopPropagation() ;
+    }
+
+    let documentIDs = JSON.parse(itemDiv.dataset.documentIDs) ;
+    renderDocumentList(documentIDs,document.querySelector("#idNoteList")) ;//idNoteList
+} ;
+
+async function renderTreeNode(item,parentElement,onClickItem){
     const hasChildren = item.subFolders && item.subFolders.length > 0;
 
     // Create the main accordion item container
@@ -526,22 +559,7 @@ async function renderTreeNode(item,parentElement){
     parentElement.appendChild(itemDiv);
 
     itemDiv.addEventListener('click',async (event)=>{
-        let tagChildren = itemDiv.querySelectorAll('.accordion-item') ;
-        if(tagChildren.length==0){
-            event.stopPropagation() ;
-        }
-        //let nDocumentIDs = parseInt(itemDiv.dataset.NumDocumentIDs) ;
-        let documentIDs = JSON.parse(itemDiv.dataset.documentIDs) ;
-
-        let tagEditor = document.querySelector('#editor') ;
-        let documentID = tagEditor.dataset.ActiveMemoID ;
-        if(documentID=='' || documentID==undefined)return ;
-        if(documentIDs.includes(documentID))return ;
-
-        documentIDs.push(documentID) ;
-        itemDiv.dataset.NumDocumentIDs = documentIDs.length ;
-        itemDiv.dataset.documentIDs = JSON.stringify(documentIDs) ;
-        await addNote2Folder(documentID,itemDiv.dataset.uuid) ;
+      await onClickItem(event) ;
     }) ;
     itemDiv.dataset.uuid=item.id ;
 
@@ -559,13 +577,29 @@ async function renderDocumentList(documentIDs,tagListContainer){
         let tagDocument = document.createElement('li') ;
         tagListContainer.appendChild(tagDocument) ;
         tagDocument.innerHTML=`${documentIDs[i]}` ;
+        tagDocument.addEventListener('click',async (event)=>{
+          //alert('documentID:'+documentIDs[i] ) ;
+
+          let result = await _FetchDocumentSupabase(documentIDs[i]) ;
+          console.log(result) ;
+          let tagEditor = document.querySelector('#editor') ;
+          if(tagEditor.dataset.ActiveMemoID == documentIDs[i])return ;
+
+          tagEditor.dataset.ActiveMemoID = documentIDs[i] ;
+          document.getElementById('docTitle').value = result.title;
+          editor.setMarkdown(result.content);
+
+          const drawer = document.querySelector('.drawer-scrolling');
+          drawer.hide();
+
+        }) ;
     }
 }
 
-async function renderNoteFolderAccordion(noteFolderTree, parentElement) {
+async function renderNoteFolderAccordion(noteFolderTree, parentElement,onClickItem) {
     for(let i=0;i<noteFolderTree.length;i++){
         let item = noteFolderTree[i] ;
-        await renderTreeNode(item,parentElement) ;
+        await renderTreeNode(item,parentElement,onClickItem) ;
     }
 }
 
@@ -597,7 +631,7 @@ document.querySelector('#idBTNPinNoteinFolder').addEventListener('click',async (
 
       let jsonNoteFolderTree =  await fetchNoteFolderTree("alexszhang@gmail.com") ;
       console.log(jsonNoteFolderTree) ;
-      await renderNoteFolderAccordion(jsonNoteFolderTree[0].noteFolderTree, container);
+      await renderNoteFolderAccordion(jsonNoteFolderTree[0].noteFolderTree, container,_onClickAccordionBrowse);
   });
 
 </script>

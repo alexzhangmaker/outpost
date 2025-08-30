@@ -158,7 +158,7 @@ const _renderPanel=async (tagPanel)=>{
 
 
 
-const initialMDContent = '# Welcome to the Markdown Editor\n\nType `$E=mc^2$` for LaTeX formulas.\n\nClick the table button (📊) to create/edit tables with Grid.js.' ;
+const initialMDContent = '# Welcome to the Markdown Editor' ;
 // Initialize Toast UI Editor
 
 
@@ -200,36 +200,40 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
     <!----end of markdown editor-->
   ` ;
 
+  // When initializing the editor
+  editor = new Editor({ 
+    el: document.querySelector('#editor'), 
+    height: '90%', 
+    initialEditType: 'markdown', 
+    previewStyle: 'vertical', 
+    initialValue: initialMDContent, 
+    addons: ['math'], 
+    toolbarItems: [ 
+      ['heading', 'bold', 'italic', 'strike'], 
+      ['hr', 'quote'], 
+      ['ul', 'ol', 'task', 'indent', 'outdent'], 
+      ['table', 'image', 'link'], 
+      ['code', 'codeblock'], 
+      [{ name: 'gridTable', tooltip: 'Insert/Edit Table with Grid.js', command: 'openGridJsTable', text: '📊', className: 'grid-table-button' }],
+      [
+        { 
+          name: 'outpostTbl', 
+          tooltip: 'outpost tbl', 
+          command: 'outpostTblImport', 
+          text: '📊', 
+          className: 'tui-editor-toolbar-my-custom-button' 
+        }
+      ] 
 
-
-  editor = new Editor({
-    el: document.querySelector('#editor'),
-    height: '90%',
-    initialEditType: 'markdown',
-    previewStyle: 'vertical',
-    initialValue: initialMDContent,
-    addons: ['math'],
-    toolbarItems: [
-      ['heading', 'bold', 'italic', 'strike'],
-      ['hr', 'quote'],
-      ['ul', 'ol', 'task', 'indent', 'outdent'],
-      ['table', 'image', 'link'],
-      ['code', 'codeblock'],
-      [{
-        name: 'gridTable',
-        tooltip: 'Insert/Edit Table with Grid.js',
-        command: 'openGridJsTable',
-        text: '📊',
-        className: 'grid-table-button'
-      }]
-    ],
-    hooks: {
-      afterPreviewRender: () => {
-        console.log('Rendering MathJax in preview');
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub, document.querySelector('.toastui-editor-contents')]);
+    ], 
+    hooks: { 
+      afterPreviewRender: () => { 
+        console.log('Rendering MathJax in preview'); 
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub, document.querySelector('.toastui-editor-contents')]); 
       }
-    }
+    } 
   });
+  
 
 
   // Open Grid.js table editor
@@ -237,10 +241,95 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
     document.querySelector('#tableModal').classList.add('show');
     initializeGrid(gridData);
   });
-    
 
-  // Event listeners
+  editor.addCommand('markdown', 'outpostTblImport', () => {
+    //document.querySelector('#tableModal').classList.add('show');
+    //initializeGrid(gridData);
+    console.log('outpostTblImport') ;
+    //alert('outpostTblImport') ;
+    openImportModal(editor) ;
+  });
+
   
+function openImportModal(editor) {
+  console.log('openImportModal') ;
+  const modal = document.createElement('div');//tableModal modal-overlay
+  modal.innerHTML = `
+    <style>
+      .modalOverlay{
+        position:fixed;
+        top:0;left:0 ;
+        width:100% ;height:100%;
+        background:rgba(0,0,0,0.6) ;
+        display:flex ;
+        justify-content:center;
+        align-items:center;
+        z-index:9999;
+      }
+
+      .modalContent{
+        background:white;
+        padding:20px;
+        border-radius:5px;
+        width:500px;
+        max-width:90% ;
+      }
+    </style>
+    <div class="modalOverlay">
+
+      <div class="modalContent">
+        <h3>Paste CSV or JSON</h3>
+        <textarea id="dataInput" rows="10" placeholder="Paste your data here..."></textarea>
+        <br/>
+        <button id="importBtn">Import</button>
+        <button id="cancelBtn">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  document.getElementById('importBtn').onclick = () => {
+    const rawData = document.getElementById('dataInput').value;
+    const markdownTable = parseDataToMarkdown(rawData);
+    if (markdownTable) {
+      editor.insertText(markdownTable);
+    }
+    document.body.removeChild(modal);
+  };
+
+  document.getElementById('cancelBtn').onclick = () => {
+    document.body.removeChild(modal);
+  };
+}
+
+
+function parseDataToMarkdown(data) {
+  try {
+    let rows = [];
+
+    if (data.trim().startsWith('[')) {
+      // JSON array of objects
+      const json = JSON.parse(data);
+      const headers = Object.keys(json[0]);
+      rows.push(headers);
+      json.forEach(obj => {
+        rows.push(headers.map(h => obj[h]));
+      });
+    } else {
+      // CSV
+      rows = data.trim().split('\n').map(row => row.split(','));
+    }
+
+    const header = `| ${rows[0].join(' | ')} |`;
+    const separator = `| ${rows[0].map(() => '---').join(' | ')} |`;
+    const body = rows.slice(1).map(row => `| ${row.join(' | ')} |`).join('\n');
+
+    return `${header}\n${separator}\n${body}`;
+  } catch (err) {
+    alert('Invalid CSV or JSON format');
+    return null;
+  }
+}
 
 
 
@@ -360,8 +449,10 @@ document.getElementById('idBTNLoadNotes').addEventListener('click', async () => 
 const _renderHeadTools=async (tagAppIconTools)=>{
   tagAppIconTools.innerHTML=`
       <input id="docTitle" type="text" placeholder="Document Title" class="roboto-400">
-      <i class="bi-sliders outpostBTN" id="idBTNNoteSetting"></i>
       <i class="bi-hdd outpostBTN" id="idBTNSaveButton"></i>
+      <i class="bi-inbox outpostBTN" id="idBTNNoteArchive"></i>
+
+      <i class="bi-sliders outpostBTN" id="idBTNNoteSetting"></i>
       <i class="bi-clipboard-plus outpostBTN" id="idBTNPlusButton"></i>
       <i class="bi-fullscreen outpostBTN" id="idBTNFullScreen"></i>
       <i class="bi-printer outpostBTN" id="idBTNPrintNote"></i>
@@ -374,6 +465,9 @@ const _renderHeadTools=async (tagAppIconTools)=>{
   tippy('#idBTNShowDrawer', {content: "笔记总览!"});
   tippy('#idBTNFullScreen', {content: "全屏显示!"});
   tippy('#idBTNPrintNote', {content: "打印笔记!"});
+  tippy('#idBTNNoteArchive', {content: "笔记归类 !"});
+
+  
 
   
 
@@ -393,6 +487,26 @@ const _renderHeadTools=async (tagAppIconTools)=>{
     tagEditor.dataset.ActiveMemoID = '';//tagMemoItem.dataset.memoID ;
   });
 
+  tagAppIconTools.querySelector('#idBTNNoteArchive').addEventListener('click', async (event) => {
+    let tagEditor = document.querySelector('#editor') ;
+    let noteID = tagEditor.dataset.ActiveMemoID;//tagMemoItem.dataset.memoID ;
+    if(noteID==""|| noteID==undefined)return ;
+
+    let tagDlgArchiveNote = document.querySelector('#idDlgArchiveNote') ;
+    tagDlgArchiveNote.classList.add('outpostDlg');
+
+    let tagDlgBody = tagDlgArchiveNote.querySelector(".outpostDlgBody") ;
+    tagDlgBody.innerHTML=`<div class="accordionContainer" id="NoteArchiveAccordion"></div>` ;
+
+    let jsonNoteFolderTree =  await fetchNoteFolderTree("alexszhang@gmail.com") ;
+    console.log(jsonNoteFolderTree) ;
+    await renderNoteFolderAccordion(jsonNoteFolderTree[0].noteFolderTree, 
+      tagDlgBody.querySelector("#NoteArchiveAccordion"),
+      _onClickAccordionArchive);
+
+    tagDlgArchiveNote.showModal();
+  });
+
   tagAppIconTools.querySelector('#idBTNSaveButton').addEventListener('click', async () => {
     const title = document.getElementById('docTitle').value || 'Untitled';
     const content = editor.getMarkdown();
@@ -402,7 +516,11 @@ const _renderHeadTools=async (tagAppIconTools)=>{
     if(activeMemoID=='' || activeMemoID==undefined){
       //await API_PlusMDMemo_Supabase(title, content);
       activeMemoID = await _InsertDocumentSupabase(title, content) ;
-      if(activeMemoID!='')tagEditor.dataset.ActiveMemoID = activeMemoID ;
+      if(activeMemoID!=''){
+        alert('fdsfdsfc choose folder') ;
+
+        tagEditor.dataset.ActiveMemoID = activeMemoID ;
+      }
     }else{
       //await API_UpdateMDMemo(activeMemoID,title,content) ;
       await _UpdateDocumentSupabase(activeMemoID,title,content) ;
@@ -410,839 +528,15 @@ const _renderHeadTools=async (tagAppIconTools)=>{
   });
 
   tagAppIconTools.querySelector('#idBTNNoteSetting').addEventListener('click', async () => {
-    let tagDlgSaveNote = document.querySelector('#idDlgSaveNote') ;
-    tagDlgSaveNote.classList.add('outpostDlg');
-    tagDlgSaveNote.showModal();
+    alert('tbd')
   });
 
-  
-  async function _formatPrintV0(){
-    const markdownContent = editor.getMarkdown();
-    //const htmlContent = marked.parse(markdownContent); // Convert Markdown to HTML
-    //console.log(markdownContent); // Raw Markdown
-    //console.log(htmlContent); // Rendered HTML
-    // Optionally, update a DOM element with the HTML
-
-    //document.getElementById('output').innerHTML = htmlContent;
-    //overlayView.createOverlay(htmlContent) ;
-    const htmlContent = editor.getHTML();
-
-    // Create a new window
-    const printWindow = window.open('', '_blank');
-
-    printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Print Preview</title>
-      <!-- Include Toast UI Editor CSS for preview style -->
-      <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
-      <!-- Optional: Include Prism.js CSS for syntax highlighting -->
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
-      <!-- Custom print styles -->
-      <style>
-        body {
-          font-family: Arial, sans-serif; /* Fallback font */
-        }
-        .toastui-editor-contents {
-          font-size: 12pt; /* Adjust for print readability */
-          padding: 20px;
-        }
-        pre, code {
-          page-break-inside: avoid; /* Prevent code blocks from splitting across pages */
-        }
-        h1, h2, h3 {
-          page-break-after: avoid; /* Prevent headers from being last on a page */
-        }
-        @media print {
-          body {
-            margin: 0;
-          }
-          .toastui-editor-contents {
-            margin: 10mm; /* Print-specific margins */
-          }
-          @page {
-            size: A4;
-            margin: 10mm;
-          }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="toastui-editor-contents">
-        ${htmlContent}
-      </div>
-      <script>
-        // Trigger print dialog after content loads
-        window.onload = function() {
-          window.print();
-        };
-        // Close window after printing (optional)
-        window.onafterprint = function() {
-          window.close();
-        };
-      </script>
-    </body>
-    </html>
-  `);
-
-    // Close the document stream
-    //printWindow.document.close();
-
-  }
-  
 
 
-  async function _formatPrintV2(){
-    const markdownContent = editor.getMarkdown();
-    const htmlContent = editor.getHTML();
-
-    // Create a new window
-    const printWindow = window.open('', '_blank');
-
-    printWindow.document.write(`
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Printable Markdown Content</title>
-  <style>
-    /* General styles for screen and print */
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      margin: 0;
-      padding: 0;
-      font-size: 12px;
-    }
-    .content {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    /* Visual indicator for page breaks on screen */
-    .page-break {
-      position: relative;
-    }
-    .page-break::before {
-      content: "Page Break";
-      display: block;
-      background: #ffeb3b;
-      color: #000;
-      padding: 5px;
-      margin: 10px 0;
-      border: 1px dashed #f00;
-      text-align: center;
-      font-weight: bold;
-    }
-    /* Ensure clickable elements are distinguishable */
-    .content p, .content h1, .content h2, .content h3, .content h4, .content h5, .content h6, .content ul, .content ol, .content blockquote, .content pre {
-      cursor: pointer;
-    }
-    /* Hover effect for clickable elements */
-    .content p:hover, .content h1:hover, .content h2:hover, .content h3:hover, .content h4:hover, .content h5:hover, .content h6:hover, .content ul:hover, .content ol:hover, .content blockquote:hover, .content pre:hover {
-      background: #f0f0f0;
-    }
-    /* Print-specific styles */
-    @media print {
-      body {
-        margin: 0;
-        padding: 0;
-      }
-      .content {
-        max-width: 100%;
-        padding: 1cm;
-      }
-      /* Define page size and margins for A4 */
-      @page {
-        size: A4;
-        margin: 2cm;
-      }
-      /* Avoid breaking headings and paragraphs across pages */
-      h1, h2, h3, h4, h5, h6 {
-        page-break-before: auto;
-        page-break-after: avoid;
-        page-break-inside: avoid;
-      }
-      p, ul, ol, blockquote, pre {
-        page-break-inside: avoid;
-      }
-      /* Ensure images don't split across pages */
-      img {
-        max-width: 100%;
-        height: auto;
-        page-break-inside: avoid;
-      }
-      /* Prevent tables from breaking poorly */
-      table {
-        page-break-inside: avoid;
-      }
-      tr, td, th {
-        page-break-inside: avoid;
-      }
-      /* Force a page break before elements with page-break class */
-      .page-break {
-        page-break-before: always;
-      }
-      /* Hide page break indicators in print */
-      .page-break::before {
-        display: none;
-      }
-      /* Hide elements not needed in print */
-      .no-print {
-        display: none;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="content">
-    ${htmlContent}
-  </div>
-  <script>
-    // Select all clickable elements within the content div
-    const elements = document.querySelectorAll('.content p, .content h1, .content h2, .content h3, .content h4, .content h5, .content h6, .content ul, .content ol, .content blockquote, .content pre');
-    
-    elements.forEach(element => {
-      element.addEventListener('click', () => {
-        // Toggle page-break class
-        if (element.classList.contains('page-break')) {
-          element.classList.remove('page-break');
-        } else {
-          element.classList.add('page-break');
-        }
-      });
-    });
-  </script>
-</body>
-</html>
-  `);
-
-    // Close the document stream
-    //printWindow.document.close();
-
-  }
 
 
-  async function _formatPrint4(){
-    const markdownContent = editor.getMarkdown();
-    const htmlContent = editor.getHTML();
+tagAppIconTools.querySelector('#idBTNPrintNote').addEventListener('click', _formatPrint);
 
-    // Create a new window
-    const printWindow = window.open('', '_blank');
-
-    printWindow.document.write(`
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Printable Markdown Content with A4 Preview</title>
-  <style>
-    /* General layout for screen */
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      margin: 0;
-      padding: 0;
-      display: flex;
-    }
-    .main-container {
-      display: flex;
-      width: 100%;
-      max-width: 1600px;
-      margin: 0 auto;
-    }
-    .content {
-      flex: 1;
-      max-width: 800px;
-      padding: 20px;
-      overflow-y: auto; /* Make content scrollable */
-      height: 100vh; /* Full viewport height */
-      box-sizing: border-box;
-    }
-    .preview-container {
-      flex: 0 0 300px;
-      padding: 20px;
-      background: #f5f5f5;
-      border-left: 1px solid #ccc;
-      position: fixed; /* Fix preview in viewport */
-      right: 0;
-      top: 0;
-      height: 100vh; /* Full viewport height */
-      box-sizing: border-box;
-    }
-    /* Style for preview pages to simulate scaled A4 */
-    .preview-page {
-      width: 148mm; /* Scaled A4 width (210mm * 0.7) */
-      height: 210mm; /* Scaled A4 height (297mm * 0.7) */
-      background: white;
-      margin: 0 auto;
-      padding: 14mm; /* Scaled 20mm padding */
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-      box-sizing: border-box;
-      font-size: 8.4pt; /* Scaled 12pt font */
-      overflow: hidden;
-      display: none; /* Hidden by default, shown via JS */
-    }
-    .preview-page.active {
-      display: block;
-    }
-    /* Apply print-like styles to preview */
-    .preview-page h1, .preview-page h2, .preview-page h3, .preview-page h4, .preview-page h5, .preview-page h6 {
-      page-break-before: auto;
-      page-break-after: avoid;
-      page-break-inside: avoid;
-    }
-    .preview-page p, .preview-page ul, .preview-page ol, .preview-page blockquote, .preview-page pre {
-      page-break-inside: avoid;
-    }
-    .preview-page img {
-      max-width: 100%;
-      height: auto;
-      page-break-inside: avoid;
-    }
-    .preview-page table {
-      page-break-inside: avoid;
-    }
-    .preview-page tr, .preview-page td, .preview-page th {
-      page-break-inside: avoid;
-    }
-    /* Navigation buttons */
-    .preview-nav {
-      text-align: center;
-      margin: 10px 0;
-    }
-    .preview-nav button {
-      padding: 5px 10px;
-      margin: 0 5px;
-      cursor: pointer;
-    }
-    .preview-nav button:disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
-    /* Visual indicator for page breaks in main content */
-    .page-break {
-      position: relative;
-    }
-    .page-break::before {
-      content: "Page Break";
-      display: block;
-      background: #ffeb3b;
-      color: #000;
-      padding: 5px;
-      margin: 10px 0;
-      border: 1px dashed #f00;
-      text-align: center;
-      font-weight: bold;
-    }
-    /* Ensure clickable elements are distinguishable */
-    .content p, .content h1, .content h2, .content h3, .content h4, .content h5, .content h6, .content ul, .content ol, .content blockquote, .content pre {
-      cursor: pointer;
-    }
-    /* Hover effect for clickable elements */
-    .content p:hover, .content h1:hover, .content h2:hover, .content h3:hover, .content h4:hover, .content h5:hover, .content h6:hover, .content ul:hover, .content ol:hover, .content blockquote:hover, .content pre:hover {
-      background: #f0f0f0;
-    }
-    /* Print-specific styles */
-    @media print {
-      body {
-        margin: 0;
-        padding: 0;
-        display: block;
-      }
-      .main-container {
-        display: block;
-      }
-      .content {
-        max-width: 100%;
-        padding: 1cm;
-        overflow: visible; /* Ensure content is not clipped during print */
-      }
-      .preview-container {
-        display: none;
-      }
-      /* Define page size and margins for A4 */
-      @page {
-        size: A4;
-        margin: 2cm;
-      }
-      /* Avoid breaking headings and paragraphs across pages */
-      h1, h2, h3, h4, h5, h6 {
-        page-break-before: auto;
-        page-break-after: avoid;
-        page-break-inside: avoid;
-      }
-      p, ul, ol, blockquote, pre {
-        page-break-inside: avoid;
-      }
-      /* Ensure images don't split across pages */
-      img {
-        max-width: 100%;
-        height: auto;
-        page-break-inside: avoid;
-      }
-      /* Prevent tables from breaking poorly */
-      table {
-        page-break-inside: avoid;
-      }
-      tr, td, th {
-        page-break-inside: avoid;
-      }
-      /* Force a page break before elements with page-break class */
-      .page-break {
-        page-break-before: always;
-      }
-      /* Hide page break indicators in print */
-      .page-break::before {
-        display: none;
-      }
-      /* Hide elements not needed in print */
-      .no-print {
-        display: none;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="main-container">
-    <div class="content">
-     ${htmlContent}
-  </div>
-  <script>
-    // Select all clickable elements within the content div
-    const elements = document.querySelectorAll('.content p, .content h1, .content h2, .content h3, .content h4, .content h5, .content h6, .content ul, .content ol, .content blockquote, .content pre');
-    const previewPagesContainer = document.querySelector('.preview-pages');
-    const prevButton = document.querySelector('#prev-page');
-    const nextButton = document.querySelector('#next-page');
-    let currentPageIndex = 0;
-    let pages = [];
-
-    function updatePreview() {
-      // Clear existing preview pages
-      previewPagesContainer.innerHTML = '';
-      pages = [];
-
-      // Create first page
-      let currentPage = document.createElement('div');
-      currentPage.classList.add('preview-page');
-      if (currentPageIndex === 0) currentPage.classList.add('active');
-      previewPagesContainer.appendChild(currentPage);
-      pages.push(currentPage);
-
-      // A4 page height in pixels for preview (210mm * 0.7, minus 28mm padding, at 96 DPI)
-      const pageHeight = (210 - 28) * (96 / 25.4); // Approx 682px
-      let currentHeight = 0;
-
-      // Clone content elements
-      const contentElements = document.querySelectorAll('.content > *');
-      contentElements.forEach(element => {
-        if (!element.classList.contains('no-print')) {
-          const clone = element.cloneNode(true);
-          // Remove page break indicator for preview
-          if (clone.classList.contains('page-break')) {
-            clone.classList.remove('page-break');
-          }
-
-          // Temporarily append to measure height
-          currentPage.appendChild(clone);
-          const elementHeight = clone.offsetHeight;
-
-          // Check if adding element exceeds page height or has page-break class
-          if ((currentHeight + elementHeight > pageHeight || element.classList.contains('page-break')) && currentPage.childElementCount > 0) {
-            currentPage = document.createElement('div');
-            currentPage.classList.add('preview-page');
-            if (currentPageIndex === pages.length) currentPage.classList.add('active');
-            previewPagesContainer.appendChild(currentPage);
-            pages.push(currentPage);
-            currentHeight = 0;
-            currentPage.appendChild(clone.cloneNode(true)); // Re-clone for new page
-          }
-          currentHeight += elementHeight;
-        }
-      });
-
-      // Update navigation buttons
-      prevButton.disabled = currentPageIndex === 0;
-      nextButton.disabled = currentPageIndex === pages.length - 1;
-    }
-
-    // Navigation button event listeners
-    prevButton.addEventListener('click', () => {
-      if (currentPageIndex > 0) {
-        pages[currentPageIndex].classList.remove('active');
-        currentPageIndex--;
-        pages[currentPageIndex].classList.add('active');
-        prevButton.disabled = currentPageIndex === 0;
-        nextButton.disabled = false;
-      }
-    });
-
-    nextButton.addEventListener('click', () => {
-      if (currentPageIndex < pages.length - 1) {
-        pages[currentPageIndex].classList.remove('active');
-        currentPageIndex++;
-        pages[currentPageIndex].classList.add('active');
-        nextButton.disabled = currentPageIndex === pages.length - 1;
-        prevButton.disabled = false;
-      }
-    });
-
-    // Initial preview render
-    updatePreview();
-
-    // Add click event listeners to toggle page breaks and update preview
-    elements.forEach(element => {
-      element.addEventListener('click', () => {
-        // Toggle page-break class
-        if (element.classList.contains('page-break')) {
-          element.classList.remove('page-break');
-        } else {
-          element.classList.add('page-break');
-        }
-        // Reset to first page and update preview
-        pages[currentPageIndex].classList.remove('active');
-        currentPageIndex = 0;
-        updatePreview();
-      });
-    });
-  </script>
-</body>
-</html>
-  `);
-
-    // Close the document stream
-    //printWindow.document.close();
-
-  }
-  
-  tagAppIconTools.querySelector('#idBTNPrintNote').addEventListener('click', _formatPrint);
-
-function _formatPrintOK_001() {
-  const markdownContent = editor.getMarkdown();
-  const htmlContent = editor.getHTML();
-
-  // Create a new window
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Printable Markdown Content with A4 Preview</title>
-      <style>
-        /* General layout for screen */
-        body {
-          font-family: Arial, sans-serif;
-          line-height: 1.6;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          font-size:14px;
-        }
-        .main-container {
-          display: flex;
-          width: 100%;
-          max-width: 1600px;
-          margin: 0 auto;
-        }
-        .content {
-          flex: 1;
-          max-width: 800px;
-          padding: 20px;
-          overflow-y: auto;
-          height: 100vh;
-          box-sizing: border-box;
-        }
-        .preview-container {
-          flex: 0 0 300px;
-          padding: 20px;
-          background: #f5f5f5;
-          border-left: 1px solid #ccc;
-          position: fixed;
-          right: 0;
-          top: 0;
-          height: 100vh;
-          box-sizing: border-box;
-        }
-        .preview-page {
-          width: 148mm;
-          height: 210mm;
-          background: white;
-          margin: 0 auto;
-          padding: 14mm;
-          box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-          box-sizing: border-box;
-          font-size: 8.4pt;
-          overflow: hidden;
-          display: none;
-        }
-        .preview-page.active {
-          display: block;
-        }
-        .preview-page h1, .preview-page h2, .preview-page h3, .preview-page h4, .preview-page h5, .preview-page h6 {
-          page-break-before: auto;
-          page-break-after: avoid;
-          page-break-inside: avoid;
-        }
-        .preview-page p, .preview-page ul, .preview-page ol, .preview-page blockquote, .preview-page pre {
-          page-break-inside: avoid;
-        }
-        .preview-page img {
-          max-width: 100%;
-          height: auto;
-          page-break-inside: avoid;
-        }
-        .preview-page table {
-          page-break-inside: avoid;
-        }
-        .preview-page tr, .preview-page td, .preview-page th {
-          page-break-inside: avoid;
-        }
-        .preview-nav {
-          text-align: center;
-          margin: 10px 0;
-        }
-        .preview-nav button {
-          padding: 5px 10px;
-          margin: 0 5px;
-          cursor: pointer;
-        }
-        .preview-nav button:disabled {
-          cursor: not-allowed;
-          opacity: 0.5;
-        }
-        .page-break {
-          position: relative;
-        }
-        .page-break::before {
-          content: "Page Break";
-          display: block;
-          background: #ffeb3b;
-          color: #000;
-          padding: 5px;
-          margin: 10px 0;
-          border: 1px dashed #f00;
-          text-align: center;
-          font-weight: bold;
-        }
-        .content p, .content h1, .content h2, .content h3, .content h4, .content h5, .content h6, .content ul, .content ol, .content blockquote, .content pre {
-          cursor: pointer;
-        }
-        .content p:hover, .content h1:hover, .content h2:hover, .content h3:hover, .content h4:hover, .content h5:hover, .content h6:hover, .content ul:hover, .content ol:hover, .content blockquote:hover, .content pre:hover {
-          background: #f0f0f0;
-        }
-        @media print {
-          body {
-            margin: 0;
-            padding: 0;
-            display: block;
-          }
-          .main-container {
-            display: block;
-          }
-          .content {
-            max-width: 100%;
-            padding: 1cm;
-            overflow: visible;
-          }
-          .preview-container {
-            display: none;
-          }
-          @page {
-            size: A4;
-            margin: 2cm;
-          }
-          h1, h2, h3, h4, h5, h6 {
-            page-break-before: auto;
-            page-break-after: avoid;
-            page-break-inside: avoid;
-          }
-          p, ul, ol, blockquote, pre {
-            page-break-inside: avoid;
-          }
-          img {
-            max-width: 100%;
-            height: auto;
-            page-break-inside: avoid;
-          }
-          table {
-            page-break-inside: avoid;
-          }
-          tr, td, th {
-            page-break-inside: avoid;
-          }
-          .page-break {
-            page-break-before: always;
-          }
-          .page-break::before {
-            display: none;
-          }
-          .no-print {
-            display: none;
-          }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="main-container">
-        <div class="content">${htmlContent}</div>
-        <div class="preview-container">
-          <div class="preview-nav">
-            <button id="prev-page" disabled>Previous</button>
-            <button id="next-page">Next</button>
-          </div>
-          <div class="preview-pages"></div>
-        </div>
-      </div>
-      <script>
-        document.addEventListener('DOMContentLoaded', () => {
-          const elements = document.querySelectorAll('.content p, .content h1, .content h2, .content h3, .content h4, .content h5, .content h6, .content ul, .content ol, .content blockquote, .content pre');
-          const previewPagesContainer = document.querySelector('.preview-pages');
-          const prevButton = document.querySelector('#prev-page');
-          const nextButton = document.querySelector('#next-page');
-          let currentPageIndex = 0;
-          let pages = [];
-
-          /*
-          function updatePreview() {
-            previewPagesContainer.innerHTML = '';
-            pages = [];
-
-            let currentPage = document.createElement('div');
-            currentPage.classList.add('preview-page');
-            if (currentPageIndex === 0) currentPage.classList.add('active');
-            previewPagesContainer.appendChild(currentPage);
-            pages.push(currentPage);
-
-            const pageHeight = (210 - 28) * (96 / 25.4); // Approx 682px
-            let currentHeight = 0;
-
-            const contentElements = document.querySelectorAll('.content > *');
-            contentElements.forEach(element => {
-              if (!element.classList.contains('no-print')) {
-                const clone = element.cloneNode(true);
-                if (clone.classList.contains('page-break')) {
-                  clone.classList.remove('page-break');
-                }
-
-                currentPage.appendChild(clone);
-                const elementHeight = clone.offsetHeight;
-
-                if ((currentHeight + elementHeight > pageHeight || element.classList.contains('page-break')) && currentPage.childElementCount > 0) {
-                  currentPage = document.createElement('div');
-                  currentPage.classList.add('preview-page');
-                  if (currentPageIndex === pages.length) currentPage.classList.add('active');
-                  previewPagesContainer.appendChild(currentPage);
-                  pages.push(currentPage);
-                  currentHeight = 0;
-                  currentPage.appendChild(clone.cloneNode(true));
-                }
-                currentHeight += elementHeight;
-              }
-            });
-
-            prevButton.disabled = currentPageIndex === 0;
-            nextButton.disabled = currentPageIndex === pages.length - 1;
-          }
-          */
-          function updatePreview() {
-            previewPagesContainer.innerHTML = '';
-            pages = [];
-    
-            let currentPage = document.createElement('div');
-            currentPage.classList.add('preview-page');
-            if (currentPageIndex === 0) currentPage.classList.add('active');
-            previewPagesContainer.appendChild(currentPage);
-            pages.push(currentPage);
-    
-            const pageHeight = (210 - 28) * (96 / 25.4); // Approx 682px
-            let currentHeight = 0;
-    
-            const contentElements = document.querySelectorAll('.content > *');
-            contentElements.forEach(element => {
-              if (!element.classList.contains('no-print')) {
-                const clone = element.cloneNode(true);
-                if (clone.classList.contains('page-break')) {
-                  clone.classList.remove('page-break');
-                }
-    
-                if (element.classList.contains('page-break') && currentPage.childElementCount > 0) {
-                  currentPage = document.createElement('div');
-                  currentPage.classList.add('preview-page');
-                  if (currentPageIndex === pages.length) currentPage.classList.add('active');
-                  previewPagesContainer.appendChild(currentPage);
-                  pages.push(currentPage);
-                  currentHeight = 0;
-                }
-    
-                currentPage.appendChild(clone);
-                const elementHeight = clone.offsetHeight;
-    
-                if (currentHeight + elementHeight > pageHeight && currentPage.childElementCount > 0 && !element.classList.contains('page-break')) {
-                  clone.remove(); // Remove from current page
-                  currentPage = document.createElement('div');
-                  currentPage.classList.add('preview-page');
-                  if (currentPageIndex === pages.length) currentPage.classList.add('active');
-                  previewPagesContainer.appendChild(currentPage);
-                  pages.push(currentPage);
-                  currentHeight = 0;
-                  currentPage.appendChild(clone.cloneNode(true));
-                  currentHeight += elementHeight;
-                } else {
-                  currentHeight += elementHeight;
-                }
-              }
-            });
-    
-            prevButton.disabled = currentPageIndex === 0;
-            nextButton.disabled = currentPageIndex === pages.length - 1;
-          }
-
-          prevButton.addEventListener('click', () => {
-            if (currentPageIndex > 0) {
-              pages[currentPageIndex].classList.remove('active');
-              currentPageIndex--;
-              pages[currentPageIndex].classList.add('active');
-              prevButton.disabled = currentPageIndex === 0;
-              nextButton.disabled = false;
-            }
-          });
-
-          nextButton.addEventListener('click', () => {
-            if (currentPageIndex < pages.length - 1) {
-              pages[currentPageIndex].classList.remove('active');
-              currentPageIndex++;
-              pages[currentPageIndex].classList.add('active');
-              nextButton.disabled = currentPageIndex === pages.length - 1;
-              prevButton.disabled = false;
-            }
-          });
-
-          updatePreview();
-
-          elements.forEach(element => {
-            element.addEventListener('click', () => {
-              if (element.classList.contains('page-break')) {
-                element.classList.remove('page-break');
-              } else {
-                element.classList.add('page-break');
-              }
-              pages[currentPageIndex].classList.remove('active');
-              currentPageIndex = 0;
-              updatePreview();
-            });
-          });
-        });
-      </script>
-    </body>
-    </html>
-  `);
-  printWindow.document.close(); // Close the document to ensure rendering
-}
 
 
 function _formatPrint() {
@@ -1958,3 +1252,6 @@ function renderKnowledgeTree(tagContainer,jsonKnowledgeTree){
 }
 
 //renderKnowledgeTree(document.querySelector(".appTreeBrowser"),jsonKnowledgeTree);
+
+
+
