@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DaisyUI Mobile Todo App</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- DaisyUI -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <!-- LocalForage CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+  <!-- Firebase CDN (Compat version for simplicity) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-database-compat.js"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-base-200">
+  <!-- Main Content Area -->
+  <main id="content" class="flex-grow p-4 overflow-y-auto">
+    <!-- Content will be dynamically loaded here -->
+  </main>
+
+  <!-- Bottom Navigation (Dock) -->
+  <div class="dock fixed bottom-0 left-0 right-0 bg-base-100 shadow-lg">
+    <button id="home-btn" class="dock-active">
+      <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="currentColor" stroke-linejoin="miter" stroke-linecap="butt"><polyline points="1 11 12 2 23 11" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"></polyline><path d="m5,13v7c0,1.105.895,2,2,2h10c1.105,0,2-.895,2-2v-7" fill="none" stroke="currentColor" stroke-linecap="square" stroke-miterlimit="10" stroke-width="2"></path><line x1="12" y1="22" x2="12" y2="18" fill="none" stroke="currentColor" stroke-linecap="square" stroke-miterlimit="10" stroke-width="2"></line></g></svg>
+      <span class="dock-label">Home</span>
+    </button>
+    <button id="add-btn">
+      <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="currentColor" stroke-linejoin="miter" stroke-linecap="butt"><path d="m12,3v18" fill="none" stroke="currentColor" stroke-linecap="square" stroke-miterlimit="10" stroke-width="2"></path><path d="m3,12h18" fill="none" stroke="currentColor" stroke-linecap="square" stroke-miterlimit="10" stroke-width="2"></path></g></svg>
+      <span class="dock-label">Add</span>
+    </button>
+  </div>
+
+  <script>
+    // Firebase Configuration (Replace with Susana's Firebase project details)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "susanas-project.firebaseapp.com",
+      databaseURL: "https://susanas-project-default-rtdb.firebaseio.com",
+      projectId: "susanas-project",
+      storageBucket: "susanas-project.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const todosRef = db.ref('todos');
+
+    // LocalForage instance
+    const localStore = localforage.createInstance({
+      name: 'todoApp'
+    });
+
+    // Function to render todo list as cards
+    function renderTodoList(todos) {
+      const content = document.getElementById('content');
+      content.innerHTML = '';
+      const listDiv = document.createElement('div');
+      listDiv.className = 'space-y-4';
+      Object.entries(todos).forEach(([key, todo]) => {
+        const card = document.createElement('div');
+        card.className = 'card bg-base-100 shadow-sm compact';
+        card.innerHTML = `
+          <div class="card-body">
+            <h2 class="card-title">${todo}</h2>
+            <div class="card-actions justify-end">
+              <button class="btn btn-error btn-xs" onclick="deleteTodo('${key}')">Delete</button>
+            </div>
+          </div>
+        `;
+        listDiv.appendChild(card);
+      });
+      content.appendChild(listDiv);
+    }
+
+    // Function to render add form
+    function renderAddForm() {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="card bg-base-100 shadow-sm">
+          <div class="card-body">
+            <h2 class="card-title">Add New Todo</h2>
+            <form id="add-form">
+              <label class="input input-bordered flex items-center gap-2">
+                Todo
+                <input type="text" id="todo-input" class="grow" placeholder="Enter todo" required />
+              </label>
+              <button type="submit" class="btn btn-primary mt-4">Add Todo</button>
+            </form>
+          </div>
+        </div>
+      `;
+      document.getElementById('add-form').addEventListener('submit', addTodo);
+    }
+
+    // Sync with Firebase and local cache
+    let localTodos = {};
+    todosRef.on('value', (snapshot) => {
+      const data = snapshot.val() || {};
+      localTodos = data;
+      localStore.setItem('todos', data);
+      if (document.getElementById('home-btn').classList.contains('dock-active')) {
+        renderTodoList(data);
+      }
+    });
+
+    // Load from local cache on start
+    async function loadLocal() {
+      const cached = await localStore.getItem('todos');
+      if (cached) {
+        localTodos = cached;
+        renderTodoList(cached);
+      } else {
+        // If no cache, wait for Firebase
+      }
+    }
+    loadLocal();
+
+    // Add Todo
+    function addTodo(e) {
+      e.preventDefault();
+      const input = document.getElementById('todo-input');
+      const value = input.value.trim();
+      if (value) {
+        const newRef = todosRef.push();
+        newRef.set(value);
+        input.value = '';
+        // Switch back to home
+        switchView('home');
+      }
+    }
+
+    // Delete Todo
+    function deleteTodo(key) {
+      todosRef.child(key).remove();
+    }
+
+    // Switch views
+    function switchView(view) {
+      const homeBtn = document.getElementById('home-btn');
+      const addBtn = document.getElementById('add-btn');
+      if (view === 'home') {
+        homeBtn.classList.add('dock-active');
+        addBtn.classList.remove('dock-active');
+        renderTodoList(localTodos);
+      } else {
+        homeBtn.classList.remove('dock-active');
+        addBtn.classList.add('dock-active');
+        renderAddForm();
+      }
+    }
+
+    // Event listeners for nav
+    document.getElementById('home-btn').addEventListener('click', () => switchView('home'));
+    document.getElementById('add-btn').addEventListener('click', () => switchView('add'));
+
+    // Initial view
+    switchView('home');
+  </script>
+</body>
+</html>

@@ -711,23 +711,39 @@ async function addNote2Folder(documentID, folderID) {
     return { data };
 }
 
-    async function _test(){
-
-        /*
-        let jsonRow = await fetchNoteFolderTree("alexszhang@gmail.com") ;
-        console.log(JSON.stringify(jsonRow,null,3)) ;
-        globalNoteFolderTree = jsonRow[0] ;
-        console.log(globalNoteFolderTree) ;
-        */
-        let documentID = '17513397-de8e-4fd0-a10b-818d600947f2' ;
-        let folderID = '0fa0f803-dad0-42bb-9959-c0037472baf5' ;
-        //let result = await addNote2Folder(documentID,folderID) ;
-
-        let result = await notesInFolder(folderID) ;
-        console.log(result) ;
+async function removeNoteFromFolder(documentID){
+  if (!documentID || documentID ==undefined) {
+      console.error('documentID are required');
+      return { error: 'Missing required fields' };
     }
+  const { error } = await supabaseSDK.from('document_FolderTbl')
+    .delete().eq('documentID',documentID) ;
 
-    _test() ;
+  if (error) {
+    console.error('Error during upsert:', error);
+    return { error };
+  }
+  
+  console.log('removeNoteFromFolder successful:');
+}
+
+async function _test(){
+
+    /*
+    let jsonRow = await fetchNoteFolderTree("alexszhang@gmail.com") ;
+    console.log(JSON.stringify(jsonRow,null,3)) ;
+    globalNoteFolderTree = jsonRow[0] ;
+    console.log(globalNoteFolderTree) ;
+    */
+    let documentID = '17513397-de8e-4fd0-a10b-818d600947f2' ;
+    let folderID = '0fa0f803-dad0-42bb-9959-c0037472baf5' ;
+    //let result = await addNote2Folder(documentID,folderID) ;
+
+    let result = await notesInFolder(folderID) ;
+    console.log(result) ;
+}
+
+//_test() ;
 </script>
 </body>
 </html>

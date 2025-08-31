@@ -423,6 +423,7 @@ function renderMemoList(tagMemoBrowser,memoArray){
       if(tagMemoItem.dataset.memoID==undefined || tagMemoItem.dataset.memoID =='')return ;
       //await API_DeleteMDMemo(tagMemoItem.dataset.memoID);
       await _DeleteDocumentSupabase(tagMemoItem.dataset.memoID) ;
+      await removeNoteFromFolder(tagMemoItem.dataset.memoID) ;
       tagMemoItem.remove();
     }) ;
 
@@ -517,9 +518,10 @@ const _renderHeadTools=async (tagAppIconTools)=>{
       //await API_PlusMDMemo_Supabase(title, content);
       activeMemoID = await _InsertDocumentSupabase(title, content) ;
       if(activeMemoID!=''){
-        alert('fdsfdsfc choose folder') ;
-
         tagEditor.dataset.ActiveMemoID = activeMemoID ;
+        let idFolderDefault = '680a31ab-cda1-4973-8ecb-788a7398ac4c' ;
+        await addNote2Folder(activeMemoID,idFolderDefault) ;
+
       }
     }else{
       //await API_UpdateMDMemo(activeMemoID,title,content) ;
@@ -1121,21 +1123,7 @@ function _formatPrinterr() {
   
 } ;
 
-//default:notes:[]
-/*
-let jsonKnowledgeTree={
-  lifeStyle:{},
-  investment:{},
-  hobby:{},
-  programming:{},
-  lifeLearning:{
-    Thai:{},
-    Chinese:{},
-    English:{}
-  },
-  improvision:{}
-} ;
-*/
+
 
 let jsonKnowledgeTree={
   lifeStyle:{
