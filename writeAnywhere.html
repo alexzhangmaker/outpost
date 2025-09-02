@@ -572,11 +572,37 @@ async function renderTreeNode(item,parentElement,onClickItem){
 }
 
 async function renderDocumentList(documentIDs,tagListContainer){
-    tagListContainer.innerHTML=`` ;
+    tagListContainer.innerHTML=`
+      <style>
+        .truncate-li {
+          list-style-type: none;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          padding: 5px 0; /* Optional: for better spacing */
+        }
+
+        .clickableLi{
+          font-size:14px ;
+        }
+        .clickableLi:hover{
+          cursor: pointer;
+          background-color: grey;
+        }
+
+      </style>
+    ` ;
     for(let i=0;i<documentIDs.length;i++){
         let tagDocument = document.createElement('li') ;
         tagListContainer.appendChild(tagDocument) ;
-        tagDocument.innerHTML=`${documentIDs[i]}` ;
+        //tagDocument.style.fontSize="14px" ;
+        let title = await fetchNoteMeta(documentIDs[i]) ;
+        tagDocument.innerHTML=`${title}` ;
+        tagDocument.dataset.uuid = documentIDs[i] ;
+        tagDocument.classList.add("truncate-li") ;
+        tagDocument.classList.add("clickableLi") ;
+
+        //clickableLi
         tagDocument.addEventListener('click',async (event)=>{
           //alert('documentID:'+documentIDs[i] ) ;
 
@@ -725,6 +751,24 @@ async function removeNoteFromFolder(documentID){
   }
   
   console.log('removeNoteFromFolder successful:');
+}
+
+async function fetchNoteMeta(documentID){
+  if (!documentID || documentID ==undefined) {
+    console.error('documentID are required');
+    return { error: 'Missing required fields' };
+  }
+
+  let { data: titles, error } = await supabaseSDK.from('documents')
+    .select("title").eq('id', documentID) ;
+  if (error) {
+    console.error('Error during upsert:', error);
+    return { error };
+  }
+
+  if(titles.length==0)return "" ;
+
+  return titles[0].title ;
 }
 
 async function _test(){

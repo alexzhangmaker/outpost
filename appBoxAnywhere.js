@@ -166,6 +166,7 @@ sl-details{
     width:300px ;
 }
 ` ;
+
 const _injectStyle_AppBoxAnywhere = ()=>{
     /*
     let linkBootstrap = document.createElement('link');

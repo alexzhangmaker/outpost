@@ -553,9 +553,37 @@ function _formatPrint() {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Printable Markdown Content with A4 Preview</title>
+
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@350&family=Noto+Serif+Thai:wght@100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+        
+        .ch-noto-sans-sc-350 {
+          font-family: "Noto Sans SC", sans-serif;
+          font-optical-sizing: auto;
+          font-weight: 350;
+          font-style: normal;
+        }
+
+
+        .en-noto-sans-sc-350 {
+          font-family: "Noto Sans SC", sans-serif;
+          font-optical-sizing: auto;
+          font-weight: 350;
+          font-style: normal;
+        }
+
+
+      .th-noto-sans-sc-350 {
+        font-family: "Noto Sans SC", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 350;
+        font-style: normal;
+      }
+      
+      </style>
       <style>
         body {
-          font-family: Arial, sans-serif;
+          /*font-family: Arial, sans-serif;*/
           line-height: 1.6;
           margin: 0;
           padding: 0;
@@ -711,6 +739,10 @@ function _formatPrint() {
         <div class="content">${htmlContent}</div>
         <div class="preview-container">
           <div class="preview-nav">
+            <button id="idBTNChinese">中文</button>
+            <button id="idBTNEnglish">英文</button>
+            <button id="idBTNThai">泰文</button>
+
             <button id="prev-page" disabled>Previous</button>
             <button id="next-page">Next</button>
             <button id="print-page" class="no-print">Print</button>
@@ -804,6 +836,34 @@ function _formatPrint() {
           printButton.addEventListener('click', () => {
             window.print();
           });
+
+          //document.body.classList.add("th-noto-sans-sc-350");
+          document.querySelector("#idBTNChinese").addEventListener('click', (event) => {
+
+            let tagContent = document.querySelector(".content");
+            if(tagContent.classList.contains("en-noto-sans-sc-350"))tagContent.classList.remove("en-noto-sans-sc-350");
+            if(tagContent.classList.contains("th-noto-sans-sc-350"))tagContent.classList.remove("th-noto-sans-sc-350");
+            tagContent.classList.add("ch-noto-sans-sc-350");
+            //ch-noto-sans-sc-350 en-noto-sans-sc-350 th-noto-sans-sc-350
+          }) ;
+
+          document.querySelector("#idBTNEnglish").addEventListener('click', (event) => {
+            let tagContent = document.querySelector(".content");
+
+            if(tagContent.classList.contains("ch-noto-sans-sc-350"))tagContent.classList.remove("ch-noto-sans-sc-350");
+            if(tagContent.classList.contains("th-noto-sans-sc-350"))tagContent.classList.remove("th-noto-sans-sc-350");
+            tagContent.classList.add("en-noto-sans-sc-350");//ch-noto-sans-sc-350
+            //ch-noto-sans-sc-350 en-noto-sans-sc-350 th-noto-sans-sc-350
+          }) ;
+
+          document.querySelector("#idBTNThai").addEventListener('click', (event) => {
+            let tagContent = document.querySelector(".content");
+
+            if(tagContent.classList.contains("en-noto-sans-sc-350"))tagContent.classList.remove("en-noto-sans-sc-350");
+            if(tagContent.classList.contains("ch-noto-sans-sc-350"))tagContent.classList.remove("ch-noto-sans-sc-350");
+            tagContent.classList.add("th-noto-sans-sc-350");//ch-noto-sans-sc-350
+            //ch-noto-sans-sc-350 en-noto-sans-sc-350 th-noto-sans-sc-350
+          }) ;
 
           updatePreview();
 
