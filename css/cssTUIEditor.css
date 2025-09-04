@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@350&family=Noto+Serif+Thai:wght@100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+.ch-noto-sans-sc-350 {
+    font-family: "Noto Sans SC", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 350;
+    font-style: normal;
+}
+.en-noto-sans-sc-350 {
+    font-family: "Noto Sans SC", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 350;
+    font-style: normal;
+}
+
+.th-noto-sans-sc-350 {
+font-family: "Noto Sans SC", sans-serif;
+font-optical-sizing: auto;
+font-weight: 350;
+font-style: normal;
+}
+
+.ProseMirror{
+font-family: "Noto Sans SC", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 350;
+    font-style: normal;
+
+}

@@ -158,7 +158,30 @@ const _renderPanel=async (tagPanel)=>{
 
 
 
-const initialMDContent = '# Welcome to the Markdown Editor' ;
+const initialMDContent = `
+# Heading 1
+## Heading 2
+### Heading 3
+
+This is a paragraph of **bold text** and *italic text*. You can also combine them for ***bold and italic***.
+
+- List item 1
+- List item 2
+  - Nested list item A
+  - Nested list item B
+- List item 3
+
+1. Ordered list item 1
+2. Ordered list item 2
+3. Ordered list item 3
+
+This is a within a sentence.
+
+中文内容显示
+
+
+
+` ;
 // Initialize Toast UI Editor
 
 
