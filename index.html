@@ -36,6 +36,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
 
+    <!----supabase-->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         @import url(https://fonts.googleapis.com/css?family=Open+Sans);
         @import url(https://fonts.googleapis.com/css?family=Lobster);
@@ -189,6 +192,8 @@ async function _onClick_ToDo(event){
 let editor;
 async function _onDOMContentLoad(event){
     console.log('_onDOMContentLoad_') ;
+    _InitSupabase() ;
+
     editor = new toastui.Editor({
         el: document.querySelector('#editor'),
         previewStyle: 'vertical',
@@ -196,12 +201,25 @@ async function _onDOMContentLoad(event){
         initialValue: "闪念笔记...",
         initialEditType: 'wysiwyg'
       });
+
     document.querySelector('#idBTNSaveNote').addEventListener('click',async (event)=>{
         let title = document.querySelector('#docTitle').value;
         let now = new Date() ;
         if(title=='')title = now.toLocaleDateString() ;
         const content = editor.getMarkdown();
-        await API_PlusMDMemo_Supabase(title, content);
+        //await API_PlusMDMemo_Supabase(title, content);
+        let tagEditor = document.querySelector('#editor') ;
+        let activeMemoID = tagEditor.dataset.memoID ;
+        if(activeMemoID==undefined || activeMemoID==''){
+            activeMemoID = await _InsertDocumentSupabase(title, content) ;
+            tagEditor.dataset.memoID = activeMemoID ;
+            let idFolderDefault = '680a31ab-cda1-4973-8ecb-788a7398ac4c' ;
+            await addNote2Folder(activeMemoID,idFolderDefault) ;
+        }else{
+            await _UpdateDocumentSupabase(activeMemoID,title,content) ;
+
+        }
+
     }) ;
 }
 

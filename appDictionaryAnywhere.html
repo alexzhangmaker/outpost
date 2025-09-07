@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome扩展本地存储分析</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        h1 {
+            color: #1a2a6c;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card h2 {
+            color: #1a2a6c;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card h2 i {
+            margin-right: 10px;
+            color: #b21f1f;
+        }
+        
+        .card p {
+            margin-bottom: 15px;
+            color: #444;
+        }
+        
+        .card ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .card li {
+            margin-bottom: 8px;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #fdbb2d33, #b21f1f33);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .demo-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .demo-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1a2a6c;
+        }
+        
+        .input-group input, .input-group button {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 16px;
+        }
+        
+        .input-group input {
+            background: #f9f9f9;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .storage-visualization {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .storage-bar {
+            height: 30px;
+            background: linear-gradient(90deg, #4CAF50, #FFC107, #FF5252);
+            border-radius: 15px;
+            margin-top: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .storage-used {
+            height: 100%;
+            background: #1a2a6c;
+            border-radius: 15px;
+            width: 0%;
+            transition: width 1s ease;
+        }
+        
+        .storage-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .result-box {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .faq-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+        }
+        
+        .faq-question {
+            font-weight: 700;
+            color: #1a2a6c;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .faq-question i {
+            margin-right: 10px;
+            color: #b21f1f;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: white;
+            padding: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .warning {
+            color: #b21f1f;
+            font-weight: 600;
+        }
+        
+        .success {
+            color: #4CAF50;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Chrome扩展本地存储容量分析</h1>
+            <p class="subtitle">了解Chrome扩展的本地存储限制，以及如何高效存储字典等数据</p>
+        </header>
+        
+        <div class="cards-container">
+            <div class="card">
+                <h2><i class="fas fa-database"></i> 存储限制</h2>
+                <p>Chrome扩展的本地存储API（chrome.storage.local）提供了相当大的存储空间：</p>
+                <ul>
+                    <li>默认配额：<span class="highlight">10MB</span> per extension</li>
+                    <li>通过申请<code>unlimitedStorage</code权限可达到：<span class="highlight">1GB+</span></li>
+                    <li>存储方式：键值对存储，值可以是对象、数组等复杂结构</li>
+                </ul>
+                <p>对于几千个词条的字典数据，通常只需要几MB空间，完全在限制范围内。</p>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-book"></i> 字典数据示例</h2>
+                <p>一个典型的中文词典词条可能包含：</p>
+                <ul>
+                    <li>词条名称（平均20字符）</li>
+                    <li>拼音（平均15字符）</li>
+                    <li释义（平均100字符）</li>
+                    <li>例句（平均150字符）</li>
+                </ul>
+                <p>每个词条大约需要<span class="highlight">285字符</span>，即约285字节（UTF-8编码）。</p>
+                <p>5,000个词条约需要：<span class="highlight">1.4MB</span>存储空间。</p>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-lightbulb"></i> 优化策略</h2>
+                <p>为了更高效地使用存储空间：</p>
+                <ul>
+                    <li>使用简短但清晰的键名</li>
+                    <li>压缩较长的字符串数据</li>
+                    <li>将大数据拆分成多个块存储</li>
+                    <li>定期清理不再需要的数据</li>
+                    <li>使用<code>unlimitedStorage</code>权限应对大型数据</li>
+                </ul>
+                <p>使用这些策略，即使存储10,000+词条也不成问题。</p>
+            </div>
+        </div>
+        
+        <section class="demo-section">
+            <h2><i class="fas fa-vial"></i> 存储空间模拟演示</h2>
+            <p>下方演示了如何估算字典数据占用的存储空间，以及存储使用情况。</p>
+            
+            <div class="demo-container">
+                <div class="input-section">
+                    <div class="input-group">
+                        <label for="wordCount">词条数量（千词）</label>
+                        <input type="range" id="wordCount" min="1" max="20" value="5">
+                        <div id="wordCountValue">5,000 个词条</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="avgLength">平均每个词条大小（字节）</label>
+                        <input type="range" id="avgLength" min="100" max="1000" value="285">
+                        <div id="avgLengthValue">285 字节/词条</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <button id="calculateBtn" class="btn">计算存储使用情况</button>
+                    </div>
+                    
+                    <div class="storage-visualization">
+                        <h3>存储使用情况</h3>
+                        <div id="storageResult">预计使用: 0 MB / 10 MB</div>
+                        <div class="storage-bar">
+                            <div id="storageUsed" class="storage-used"></div>
+                        </div>
+                        <div class="storage-labels">
+                            <span>0MB</span>
+                            <span>5MB</span>
+                            <span>10MB</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result-section">
+                    <h3>存储数据分析</h3>
+                    <div class="result-box">
+                        <div class="result-item">
+                            <p id="analysisResult">输入词条数量和大小后点击计算按钮</p>
+                        </div>
+                        <div class="result-item">
+                            <h4>存储代码示例：</h4>
+                            <pre><code>// 保存字典数据
+chrome.storage.local.set({ dictionary: data }, () => {
+    console.log('字典数据已保存');
+});
+
+// 读取字典数据
+chrome.storage.local.get(['dictionary'], (result) => {
+    const dictionary = result.dictionary || {};
+    // 使用数据
+});</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="faq-section">
+            <h2><i class="fas fa-question-circle"></i> 常见问题解答</h2>
+            
+            <div class="faq-item">
+                <p class="faq-question"><i class="fas fa-question"></i> 我需要为大型字典申请unlimitedStorage权限吗？</p>
+                <p>对于5,000词条的字典，通常不需要。但如果你计划存储超过10,000词条或包含多媒体数据，建议申请该权限。</p>
+            </div>
+            
+            <div class="faq-item">
+                <p class="faq-question"><i class="fas fa-question"></i> 如何申请unlimitedStorage权限？</p>
+                <p>在manifest.json中添加权限声明：<code>"permissions": ["unlimitedStorage"]</code></p>
+            </div>
+            
+            <div class="faq-item">
+                <p class="faq-question"><i class="fas fa-question"></i> 存储空间超出限制会发生什么？</p>
+                <p>Chrome会抛出错误，存储操作将失败。你需要优化数据或申请unlimitedStorage权限。</p>
+            </div>
+            
+            <div class="faq-item">
+                <p class="faq-question"><i class="fas fa-question"></i> 如何高效存储大型字典？</p>
+                <p>考虑将字典拆分为多个部分，使用压缩算法，或使用IndexedDB进行更复杂的数据管理。</p>
+            </div>
+        </section>
+        
+        <footer>
+            <p>© 2023 Chrome扩展开发指南 | 本地存储分析</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const wordCountSlider = document.getElementById('wordCount');
+            const wordCountValue = document.getElementById('wordCountValue');
+            const avgLengthSlider = document.getElementById('avgLength');
+            const avgLengthValue = document.getElementById('avgLengthValue');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const storageResult = document.getElementById('storageResult');
+            const storageUsed = document.getElementById('storageUsed');
+            const analysisResult = document.getElementById('analysisResult');
+            
+            // 更新词条数量显示
+            wordCountSlider.addEventListener('input', function() {
+                wordCountValue.textContent = `${this.value * 1000} 个词条`;
+            });
+            
+            // 更新平均长度显示
+            avgLengthSlider.addEventListener('input', function() {
+                avgLengthValue.textContent = `${this.value} 字节/词条`;
+            });
+            
+            // 计算存储使用情况
+            calculateBtn.addEventListener('click', function() {
+                const wordCount = parseInt(wordCountSlider.value) * 1000;
+                const avgLength = parseInt(avgLengthSlider.value);
+                const totalBytes = wordCount * avgLength;
+                const totalMB = (totalBytes / (1024 * 1024)).toFixed(2);
+                
+                // 更新存储条
+                const percentage = Math.min((totalMB / 10) * 100, 100);
+                storageUsed.style.width = `${percentage}%`;
+                
+                // 更新结果显示
+                storageResult.textContent = `预计使用: ${totalMB} MB / 10 MB`;
+                
+                // 更新分析结果
+                if (totalMB < 8) {
+                    analysisResult.innerHTML = `<p class="success">✅ 存储空间充足！${totalMB}MB在10MB限制内，可以安全存储字典数据。</p>`;
+                } else if (totalMB < 10) {
+                    analysisResult.innerHTML = `<p class="warning">⚠️ 接近存储限制！${totalMB}MB接近10MB限制，建议优化数据或申请unlimitedStorage权限。</p>`;
+                } else {
+                    analysisResult.innerHTML = `<p class="warning">❌ 超出存储限制！${totalMB}MB超过10MB限制，必须申请unlimitedStorage权限或优化数据。</p>`;
+                }
+                
+                analysisResult.innerHTML += `<p>词条总数: ${wordCount.toLocaleString()}</p>`;
+                analysisResult.innerHTML += `<p>总数据大小: ${totalBytes.toLocaleString()} 字节 (${totalMB} MB)</p>`;
+                analysisResult.innerHTML += `<p>每个词条平均大小: ${avgLength} 字节</p>`;
+            });
+            
+            // 初始化显示
+            wordCountValue.textContent = `${wordCountSlider.value * 1000} 个词条`;
+            avgLengthValue.textContent = `${avgLengthSlider.value} 字节/词条`;
+        });
+    </script>
+</body>
+</html>

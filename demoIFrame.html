@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iFrame与localForage数据共享分析</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        h1 {
+            color: #1a2a6c;
+            margin-bottom: 15px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card h2 {
+            color: #1a2a6c;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card h2 i {
+            margin-right: 10px;
+            color: #b21f1f;
+        }
+        
+        .card p {
+            margin-bottom: 15px;
+            color: #444;
+        }
+        
+        .card ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .card li {
+            margin-bottom: 8px;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #fdbb2d33, #b21f1f33);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .warning {
+            color: #b21f1f;
+            font-weight: 600;
+        }
+        
+        .success {
+            color: #4CAF50;
+            font-weight: 600;
+        }
+        
+        .demo-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .demo-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1a2a6c;
+        }
+        
+        .input-group input, .input-group select, .input-group button {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 16px;
+        }
+        
+        .input-group input {
+            background: #f9f9f9;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #666, #999);
+        }
+        
+        .result-box {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .iframe-container {
+            border: 2px solid #1a2a6c;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 400px;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .faq-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+        }
+        
+        .faq-question {
+            font-weight: 700;
+            color: #1a2a6c;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .faq-question i {
+            margin-right: 10px;
+            color: #b21f1f;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: white;
+            padding: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .tab-container {
+            margin-top: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #1a2a6c;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background: #1a2a6c;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background: white;
+            border-radius: 0 0 5px 5px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>iFrame与localForage数据共享分析</h1>
+            <p class="subtitle">了解iFrame中的页面是否能访问父页面使用localForage缓存的数据</p>
+        </header>
+        
+        <div class="cards-container">
+            <div class="card">
+                <h2><i class="fas fa-database"></i> 同源情况</h2>
+                <p>当iFrame与父页面<strong>同源</strong>时（相同协议、域名和端口）：</p>
+                <ul>
+                    <li><span class="success">可以共享</span>localForage存储的数据</li>
+                    <li>共享相同的存储配额限制</li>
+                    <li>可以相互访问和修改存储的数据</li>
+                </ul>
+                <p>这是因为同源页面共享相同的存储空间。</p>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-ban"></i> 跨源情况</h2>
+                <p>当iFrame与父页面<strong>不同源</strong>时：</p>
+                <ul>
+                    <li><span class="warning">无法共享</span>localForage存储的数据</li>
+                    <li>拥有独立的存储空间</li>
+                    <li>受浏览器同源策略限制</li>
+                </ul>
+                <p>跨源iFrame无法访问父页面的存储数据，反之亦然。</p>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-lightbulb"></i> Chrome扩展特殊情况</h2>
+                <p>在Chrome扩展中，通过sidepanel嵌入iFrame：</p>
+                <ul>
+                    <li>扩展页面使用<code>chrome-extension://</code>协议</li>
+                    <li>与普通网页<code>http/https</code>协议不同源</li>
+                    <li><span class="warning">无法直接共享</span>localForage数据</li>
+                </ul>
+                <p>需要通过Chrome扩展API实现数据通信。</p>
+            </div>
+        </div>
+        
+        <section class="demo-section">
+            <h2><i class="fas fa-vial"></i> 数据共享演示</h2>
+            <p>选择iFrame的源类型，测试数据共享情况：</p>
+            
+            <div class="demo-container">
+                <div class="input-section">
+                    <div class="input-group">
+                        <label for="iframeType">iFrame源类型</label>
+                        <select id="iframeType">
+                            <option value="same">同源iFrame</option>
+                            <option value="cross">跨源iFrame</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="dataKey">数据键名</label>
+                        <input type="text" id="dataKey" placeholder="例如: userData">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="dataValue">数据值</label>
+                        <input type="text" id="dataValue" placeholder="例如: Hello, localForage!">
+                    </div>
+                    
+                    <button id="saveDataBtn" class="btn">在父页面保存数据</button>
+                    <button id="loadDataBtn" class="btn btn-secondary">在iFrame中尝试读取数据</button>
+                    
+                    <div class="result-box">
+                        <h3>操作结果</h3>
+                        <div id="demoResult">等待操作...</div>
+                    </div>
+                </div>
+                
+                <div class="iframe-section">
+                    <h3>iFrame内容</h3>
+                    <div class="iframe-container">
+                        <iframe id="demoFrame" src="about:blank"></iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="faq-section">
+            <h2><i class="fas fa-question-circle"></i> 实现数据共享的解决方案</h2>
+            
+            <div class="tab-container">
+                <div class="tabs">
+                    <div class="tab active" data-tab="message">消息传递</div>
+                    <div class="tab" data-tab="extension">扩展API</div>
+                    <div class="tab" data-tab="shared">共享Worker</div>
+                </div>
+                
+                <div class="tab-content active" id="message-tab">
+                    <h3>使用postMessage进行通信</h3>
+                    <p>通过window.postMessage()方法实现跨源通信：</p>
+                    <div class="code-block">
+// 父页面发送消息
+iframe.contentWindow.postMessage({
+    type: 'STORAGE_DATA',
+    key: 'userData',
+    value: data
+}, '*');
+
+// iFrame中接收消息
+window.addEventListener('message', (event) => {
+    if (event.data.type === 'STORAGE_DATA') {
+        // 使用接收到的数据
+        localForage.setItem(event.data.key, event.data.value);
+    }
+});
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="extension-tab">
+                    <h3>使用Chrome扩展API</h3>
+                    <p>在Chrome扩展中，可以通过chrome.runtime API进行通信：</p>
+                    <div class="code-block">
+// 内容脚本
+chrome.runtime.sendMessage({
+    action: 'getStorageData',
+    key: 'userData'
+}, (response) => {
+    // 使用返回的数据
+});
+
+// 后台脚本
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'getStorageData') {
+        localForage.getItem(request.key).then(value => {
+            sendResponse({value: value});
+        });
+        return true; // 保持消息通道开放
+    }
+});
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="shared-tab">
+                    <h3>使用SharedWorker</h3>
+                    <p>通过SharedWorker实现多个页面间的数据共享：</p>
+                    <div class="code-block">
+// 创建SharedWorker
+const worker = new SharedWorker('shared-storage.js');
+
+// 发送消息到Worker
+worker.port.postMessage({
+    action: 'setItem',
+    key: 'userData',
+    value: data
+});
+
+// 接收Worker消息
+worker.port.onmessage = (event) => {
+    if (event.data.action === 'getItemResponse') {
+        // 使用数据
+    }
+};
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>© 2023 Chrome扩展开发指南 | iFrame数据共享分析</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const iframeType = document.getElementById('iframeType');
+            const dataKey = document.getElementById('dataKey');
+            const dataValue = document.getElementById('dataValue');
+            const saveDataBtn = document.getElementById('saveDataBtn');
+            const loadDataBtn = document.getElementById('loadDataBtn');
+            const demoResult = document.getElementById('demoResult');
+            const demoFrame = document.getElementById('demoFrame');
+            const tabs = document.querySelectorAll('.tab');
+            
+            // 初始化iframe
+            updateIframe();
+            
+            // 切换iframe类型
+            iframeType.addEventListener('change', updateIframe);
+            
+            // 保存数据到父页面
+            saveDataBtn.addEventListener('click', function() {
+                const key = dataKey.value || 'defaultKey';
+                const value = dataValue.value || '默认值';
+                
+                // 模拟使用localForage保存数据
+                localStorage.setItem(key, value);
+                
+                demoResult.innerHTML = `<p class="success">✅ 数据已保存到父页面存储中</p>
+                                       <p>键: ${key}</p>
+                                       <p>值: ${value}</p>`;
+            });
+            
+            // 尝试从iframe读取数据
+            loadDataBtn.addEventListener('click', function() {
+                const key = dataKey.value || 'defaultKey';
+                const iframeSrc = iframeType.value;
+                
+                if (iframeSrc === 'same') {
+                    // 同源iframe可以直接访问
+                    try {
+                        const iframeStorage = demoFrame.contentWindow.localStorage;
+                        const value = iframeStorage.getItem(key);
+                        
+                        if (value) {
+                            demoResult.innerHTML = `<p class="success">✅ iFrame成功读取到数据</p>
+                                                   <p>键: ${key}</p>
+                                                   <p>值: ${value}</p>`;
+                        } else {
+                            demoResult.innerHTML = `<p class="warning">⚠️ iFrame中未找到对应数据</p>
+                                                   <p>键: ${key}</p>`;
+                        }
+                    } catch (e) {
+                        demoResult.innerHTML = `<p class="warning">⚠️ 读取数据时出错: ${e.message}</p>`;
+                    }
+                } else {
+                    // 跨源iframe无法直接访问
+                    demoResult.innerHTML = `<p class="warning">⚠️ 跨源iFrame无法直接访问父页面存储数据</p>
+                                           <p>这是由于浏览器同源策略的限制。</p>
+                                           <p>需要使用postMessage等其他通信方法。</p>`;
+                }
+            });
+            
+            // 更新iframe内容
+            function updateIframe() {
+                const type = iframeType.value;
+                let iframeContent = '';
+                
+                if (type === 'same') {
+                    iframeContent = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>同源iFrame</title>
+                            <style>body { font-family: sans-serif; padding: 20px; }</style>
+                        </head>
+                        <body>
+                            <h2>同源iFrame</h2>
+                            <p>此iframe与父页面同源，可以访问相同的存储空间。</p>
+                            <div id="iframeData">等待读取数据...</div>
+                        </body>
+                        </html>
+                    `;
+                } else {
+                    iframeContent = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>跨源iFrame</title>
+                            <style>body { font-family: sans-serif; padding: 20px; }</style>
+                        </head>
+                        <body>
+                            <h2>跨源iFrame</h2>
+                            <p>此iframe与父页面不同源，无法直接访问父页面的存储空间。</p>
+                            <div id="iframeData">等待读取数据...</div>
+                        </body>
+                        </html>
+                    `;
+                }
+                
+                demoFrame.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(iframeContent);
+            }
+            
+            // 标签切换功能
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 移除所有active类
+                    tabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                    
+                    // 添加active类到当前标签和对应内容
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

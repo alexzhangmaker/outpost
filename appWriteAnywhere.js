@@ -544,7 +544,6 @@ const _renderHeadTools=async (tagAppIconTools)=>{
         tagEditor.dataset.ActiveMemoID = activeMemoID ;
         let idFolderDefault = '680a31ab-cda1-4973-8ecb-788a7398ac4c' ;
         await addNote2Folder(activeMemoID,idFolderDefault) ;
-
       }
     }else{
       //await API_UpdateMDMemo(activeMemoID,title,content) ;

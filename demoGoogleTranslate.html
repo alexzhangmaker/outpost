@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多语言翻译工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background: #4285f4;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+        
+        .input-section, .output-section {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+        }
+        
+        .input-text {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: none;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-text:focus {
+            border-color: #4285f4;
+            outline: none;
+        }
+        
+        .output-text {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: #f9f9f9;
+            font-size: 16px;
+            overflow-y: auto;
+        }
+        
+        .language-selectors {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        select {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            color: #333;
+        }
+        
+        .translate-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 20px;
+        }
+        
+        .translate-btn:hover {
+            background: #3367d6;
+        }
+        
+        .icon {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .icon svg {
+            width: 50px;
+            height: 50px;
+            color: #4285f4;
+        }
+        
+        .note {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .input-section, .output-section {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>多语言翻译工具</h1>
+            <p class="description">支持100多种语言互译，简单易用</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <div class="language-selectors">
+                    <select id="source-lang">
+                        <option value="auto">自动检测</option>
+                        <option value="zh">中文</option>
+                        <option value="en">英语</option>
+                        <option value="es">西班牙语</option>
+                        <option value="fr">法语</option>
+                        <option value="de">德语</option>
+                        <option value="ja">日语</option>
+                        <option value="ko">韩语</option>
+                    </select>
+                    
+                    <select id="target-lang">
+                        <option value="en">英语</option>
+                        <option value="zh">中文</option>
+                        <option value="es">西班牙语</option>
+                        <option value="fr">法语</option>
+                        <option value="de">德语</option>
+                        <option value="ja">日语</option>
+                        <option value="ko">韩语</option>
+                        <option value="ru">俄语</option>
+                    </select>
+                </div>
+                
+                <textarea class="input-text" placeholder="请输入要翻译的文本...">你好，这是一个多语言翻译工具的演示界面。</textarea>
+            </div>
+            
+            <div class="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+            </div>
+            
+            <div class="output-section">
+                <div class="language-selectors">
+                    <span>翻译结果</span>
+                    <button id="speak-btn" style="padding: 8px 15px; background: #34a853; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        朗读
+                    </button>
+                </div>
+                
+                <div class="output-text">
+                    Hello, this is a demonstration interface of a multilingual translation tool.
+                </div>
+            </div>
+        </div>
+        
+        <button class="translate-btn">翻译文本</button>
+        
+        <div class="note">
+            <strong>注意：</strong> 这是一个模拟的翻译界面。实际上，由于Google的限制，Google Translate不能直接嵌入iframe中。在实际应用中，您需要使用Google Cloud Translation API或其他翻译API来实现类似功能。
+        </div>
+        
+        <footer>
+            <p>© 2023 多语言翻译工具 | 设计用于教育和演示目的</p>
+        </footer>
+    </div>
+
+    <script>
+        document.querySelector('.translate-btn').addEventListener('click', function() {
+            const inputText = document.querySelector('.input-text').value;
+            const sourceLang = document.querySelector('#source-lang').value;
+            const targetLang = document.querySelector('#target-lang').value;
+            
+            // 模拟翻译过程 - 实际应用中这里会调用API
+            const translations = {
+                'zh-en': 'Hello, this is a demonstration interface of a multilingual translation tool.',
+                'en-zh': '你好，这是一个多语言翻译工具的演示界面。',
+                'zh-es': 'Hola, esta es una interfaz de demostración de una herramienta de traducción multilingüe.',
+                'zh-fr': 'Bonjour, ceci est une interface de démonstration d\'un outil de traduction multilingue.',
+                'zh-de': 'Hallo, dies ist eine Demonstrationsoberfläche für ein mehrsprachiges Übersetzungstool.',
+                'zh-ja': 'こんにちは、これは多言語翻訳ツールのデモインターフェースです。',
+                'zh-ko': '안녕하세요, 이것은 다국어 번역 도구의 데모 인터페이스입니다.',
+                'auto-en': 'Hello, this is a demonstration interface of a multilingual translation tool.'
+            };
+            
+            const translationKey = sourceLang === 'auto' ? 'auto-' + targetLang : sourceLang + '-' + targetLang;
+            
+            // 显示翻译结果
+            document.querySelector('.output-text').textContent = 
+                translations[translationKey] || "抱歉，无法翻译此文本。请尝试其他语言组合。";
+        });
+        
+        // 朗读功能
+        document.querySelector('#speak-btn').addEventListener('click', function() {
+            const outputText = document.querySelector('.output-text').textContent;
+            if ('speechSynthesis' in window) {
+                const speech = new SpeechSynthesisUtterance(outputText);
+                speech.lang = document.querySelector('#target-lang').value === 'zh' ? 'zh-CN' : 'en-US';
+                window.speechSynthesis.speak(speech);
+            } else {
+                alert('您的浏览器不支持文本朗读功能');
+            }
+        });
+    </script>
+</body>
+</html>
