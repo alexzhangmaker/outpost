@@ -204,6 +204,13 @@ async function _onClickGoogleTranslate(event){
     const text = tagText2Google.value;//'ประมาท' ;
     if(text.length<=1)return ;
 
+    //commonicate with sharedWorker
+    let localQuery = `/thaiDictionary/${text}` ;
+    userOperation("read",localQuery) ;
+
+}
+
+async function _doGoogleIt(text){
     let sourceLang = 'th' ;
     let targetLang = 'en' ;
     if(isChineseOnly(text)){
@@ -220,6 +227,21 @@ async function _onClickGoogleTranslate(event){
     let meaning = await _larkGoogleTranslate(text,sourceLang,targetLang) ;
     console.log(meaning) ;
 
+    return meaning ;
+}
+
+let gCallbackResponse=async (path2Query,data)=>{
+    console.log(path2Query) ;
+    console.log(JSON.stringify(data)) ;
+    let meaning = "" ;
+    let text =path2Query.replace("/thaiDictionary/","");//"เขา" ;//path2Query /thaiDictionary/เขา
+    if(data == undefined){
+        console.log("no such data find in local Copy");
+        meaning = await _doGoogleIt(text) ;
+    }else{
+        meaning = data.definitions[0].english ;
+    }
+    let tagMainWnd = document.querySelector('#idWndContent') ;
     let tagGoogleOutput = tagMainWnd.querySelector('#idOutputGoogle') ;
     let cmDate = new Date();
     let jsonDict={
@@ -230,12 +252,6 @@ async function _onClickGoogleTranslate(event){
     renderGoogleOutput(tagGoogleOutput,jsonDict) ;
 
     /*
-    let tagOutput = document.createElement('li') ;
-    tagOutput.innerHTML=`${text}/${meaning}` ;
-    //tagGoogleOutput.appendChild(tagOutput) ;
-    tagGoogleOutput.prepend(tagOutput) ;
-    */
-
     let cDate = new Date() ;
     let jsonGoogleDict={
         textTh:text,
@@ -247,9 +263,10 @@ async function _onClickGoogleTranslate(event){
     _sendMessage2Worker('GoogleDict',jsonGoogleDict) ;
     gGoogleDicts.push(jsonGoogleDict) ;
     sync2Firebase(gGoogleDicts) ;
+    */
     return meaning ;
-}
 
+} ;
 
 async function sync2Firebase(GoogleDicts) {
     let url=`https://outpost-8d74e.asia-southeast1.firebasedatabase.app/GoogleDicts.json` ;

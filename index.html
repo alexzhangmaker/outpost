@@ -107,6 +107,7 @@
 <script src="./js/todoAnywhere.js"></script>
 <script src="./js/dictationAnywhere.js"></script>
 <script src="./js/APIWriteFB.js"></script>
+<script src="./outpostSharedWorkerUser.js"></script>
 
 
 
@@ -193,6 +194,7 @@ let editor;
 async function _onDOMContentLoad(event){
     console.log('_onDOMContentLoad_') ;
     _InitSupabase() ;
+    initSharedWorkerUser(gCallbackResponse) ;
 
     editor = new toastui.Editor({
         el: document.querySelector('#editor'),

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Local Copy Management Console</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { text-align: center; }
+        .section { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; }
+        input, textarea { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        button { padding: 10px 15px; margin-right: 10px; cursor: pointer; }
+        #dataDisplay, #workerStatus { white-space: pre-wrap; background: #f4f4f4; padding: 10px; border: 1px solid #ddd; max-height: 200px; overflow-y: auto; }
+        #status { color: green; font-weight: bold; }
+        #error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Firebase Local Copy Management Console</h1>
+
+    <div class="section">
+        <h2>CRUD Operations</h2>
+        <label for="path">Database Path (e.g., users/123):</label>
+        <input type="text" id="path" placeholder="Enter path">
+        <label for="data">JSON Data (for Create/Update):</label>
+        <textarea id="data" rows="5" placeholder='{"name": "John", "age": 30}'></textarea>
+        <button onclick="performOperation('create')">Create/Update</button>
+        <button onclick="performOperation('read')">Read</button>
+        <button onclick="performOperation('delete')">Delete</button>
+        <button onclick="performOperation('dump')">Dump Local Data</button>
+        <button onclick="performOperation('ping')">Ping Worker</button>
+    </div>
+
+    <div class="section">
+        <h2>Data Display</h2>
+        <div id="dataDisplay"></div>
+    </div>
+
+    <div class="section">
+        <h2>Worker Status</h2>
+        <div id="workerStatus"></div>
+    </div>
+
+    <div class="section">
+        <h2>Status</h2>
+        <div id="status"></div>
+        <div id="error"></div>
+    </div>
+
+    <script>
+        /*
+        // Ensure SharedWorker is instantiated only once
+        let worker, port;
+        function initializeSharedWorker() {
+            if (worker) {
+                console.log('[Main] SharedWorker already initialized');
+                return;
+            }
+            try {
+                worker = new SharedWorker('worker.js');
+                console.log('[Main] SharedWorker instantiated');
+                port = worker.port;
+
+                port.onmessage = function(event) {
+                    console.log('[Main] Received from worker:', event.data);
+                    const { type, data, error, message } = event.data;
+                    const statusDiv = document.getElementById('workerStatus');
+                    const statusEl = document.getElementById('status');
+                    const errorEl = document.getElementById('error');
+                    const dataDisplayEl = document.getElementById('dataDisplay');
+
+                    if (type === 'status') {
+                        if (statusDiv) {
+                            statusDiv.textContent += `[${new Date().toLocaleTimeString()}] ${message}\n`;
+                            statusDiv.scrollTop = statusDiv.scrollHeight;
+                        } else {
+                            console.error('[Main] workerStatus element not found');
+                        }
+                    } else if (type === 'response') {
+                        if (statusEl) statusEl.textContent = 'Operation successful!';
+                        if (errorEl) errorEl.textContent = '';
+                        if (dataDisplayEl) dataDisplayEl.textContent = JSON.stringify(data, null, 2) || 'No data returned.';
+                    } else if (type === 'error') {
+                        if (statusEl) statusEl.textContent = '';
+                        if (errorEl) errorEl.textContent = error;
+                        if (dataDisplayEl) dataDisplayEl.textContent = '';
+                    } else if (type === 'sync') {
+                        if (statusEl) statusEl.textContent = 'Data synced from Firebase.';
+                    }
+                };
+
+                port.start();
+                console.log('[Main] Port started');
+                window.sharedWorker = worker; // Prevent garbage collection
+            } catch (e) {
+                console.error('[Main] Failed to initialize SharedWorker:', e);
+                const errorEl = document.getElementById('error');
+                if (errorEl) errorEl.textContent = 'Failed to start SharedWorker: ' + e.message;
+            }
+        }
+
+        function performOperation(action) {
+            if (!port) {
+                console.error('[Main] SharedWorker port not initialized');
+                document.getElementById('error').textContent = 'SharedWorker not initialized';
+                return;
+            }
+            const path = document.getElementById('path').value.trim();
+            let data;
+            if (action === 'create' || action === 'update') {
+                try {
+                    data = JSON.parse(document.getElementById('data').value);
+                } catch (e) {
+                    document.getElementById('error').textContent = 'Invalid JSON data.';
+                    return;
+                }
+            }
+            if (action !== 'dump' && action !== 'ping' && !path) {
+                document.getElementById('error').textContent = 'Path is required.';
+                return;
+            }
+            console.log('[Main] Sending message:', { action, path, data });
+            port.postMessage({ action, path, data });
+            document.getElementById('status').textContent = 'Processing...';
+            document.getElementById('error').textContent = '';
+            document.getElementById('dataDisplay').textContent = '';
+        }
+        */
+    </script>
+    <script src="./outpostSharedWorkerUser.js"></script>
+    <script>
+
+        // Run after DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeSharedWorker);
+
+    </script>
+</body>
+</html>
