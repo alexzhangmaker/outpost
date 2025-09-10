@@ -30,6 +30,8 @@
         <button onclick="performOperation('delete')">Delete</button>
         <button onclick="performOperation('dump')">Dump Local Data</button>
         <button onclick="performOperation('ping')">Ping Worker</button>
+        <button onclick="sendToWorkerDeepSeek()">Ping DeepSeek</button>
+
     </div>
 
     <div class="section">
@@ -47,6 +49,7 @@
         <div id="status"></div>
         <div id="error"></div>
     </div>
+    <div id="response"></div>
 
     <script>
         /*
@@ -133,6 +136,10 @@
 
         // Run after DOM is loaded
         document.addEventListener('DOMContentLoaded', initializeSharedWorker);
+        document.addEventListener('DOMContentLoaded', (event)=>{
+            initializeSharedWorker() ;
+        });
+
 
     </script>
 </body>

@@ -1,5 +1,6 @@
 // Ensure SharedWorker is instantiated only once
 let gSharedWorker, gSharedWorkerPort;
+let gShareWorkDeepSeek ,gSharedWorkerPortDeepSeek ;
 function initializeSharedWorker() {
     if (gSharedWorker) {
         console.log('[Main] SharedWorker already initialized');
@@ -41,6 +42,24 @@ function initializeSharedWorker() {
         gSharedWorkerPort.start();
         console.log('[Main] Port started');
         window.sharedWorker = gSharedWorker; // Prevent garbage collection
+
+        gShareWorkDeepSeek = new SharedWorker('workerDeepSeek.js');
+        console.log('[Main] gShareWorkDeepSeek instantiated');
+        gSharedWorkerPortDeepSeek = gShareWorkDeepSeek.port;
+        gSharedWorkerPortDeepSeek.onmessage = function(event) {
+            const { type, success, data, error } = event.data;
+            if (type === 'response') {
+              const output = document.getElementById('response');
+              if (success) {
+                output.innerHTML = `<p>AI 响应: ${data}</p>`;
+              } else {
+                output.innerHTML = `<p>错误: ${error}</p>`;
+              }
+            }
+          };
+        gSharedWorkerPortDeepSeek.start();
+        console.log('[Main] gSharedWorkerPortDeepSeek started');
+
     } catch (e) {
         console.error('[Main] Failed to initialize SharedWorker:', e);
         const errorEl = document.getElementById('error');
@@ -48,6 +67,21 @@ function initializeSharedWorker() {
     }
 }
 
+async function sendToWorkerDeepSeek() {
+    const userInput = "เช่น什么意思？";//document.getElementById('userInput').value;
+    if (!userInput) return;
+
+    // 发送消息到 SharedWorker
+    gSharedWorkerPortDeepSeek.postMessage({
+      type: 'callDeepSeek',
+      apiKey: 'your_deepseek_api_key_here',  // 替换为你的实际 API 密钥（建议从环境变量或安全存储获取）
+      model: 'deepseek-chat',  // 或 'deepseek-reasoner' 用于复杂推理
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant.' },
+        { role: 'user', content: userInput }
+      ]
+    });
+  }
 
 function performOperation(action) {
     if (!gSharedWorkerPort) {

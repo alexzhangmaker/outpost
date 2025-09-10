@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek SharedWorker 完整实现</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        h1 {
+            color: #1a2a6c;
+            margin-bottom: 15px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card h2 {
+            color: #1a2a6c;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card h2 i {
+            margin-right: 10px;
+            color: #b21f1f;
+        }
+        
+        .card p {
+            margin-bottom: 15px;
+            color: #444;
+        }
+        
+        .card ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .card li {
+            margin-bottom: 8px;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #fdbb2d33, #b21f1f33);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .warning {
+            color: #b21f1f;
+            font-weight: 600;
+        }
+        
+        .success {
+            color: #4CAF50;
+            font-weight: 600;
+        }
+        
+        .info {
+            color: #1a2a6c;
+            font-weight: 600;
+        }
+        
+        .demo-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .demo-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1a2a6c;
+        }
+        
+        .input-group input, .input-group select, .input-group button, .input-group textarea {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 16px;
+        }
+        
+        .input-group input, .input-group textarea {
+            background: #f9f9f9;
+        }
+        
+        .input-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.3s ease;
+            margin-top: 10px;
+            display: inline-block;
+            width: auto;
+            padding: 10px 20px;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #666, #999);
+        }
+        
+        .btn-tertiary {
+            background: linear-gradient(135deg, #1a2a6c, #2a3c9c);
+        }
+        
+        .result-box {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .faq-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+        }
+        
+        .faq-question {
+            font-weight: 700;
+            color: #1a2a6c;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .faq-question i {
+            margin-right: 10px;
+            color: #b21f1f;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: white;
+            padding: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+        }
+        
+        .tab-container {
+            margin-top: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #1a2a6c;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .tab.active {
+            background: #1a2a6c;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background: white;
+            border-radius: 0 0 5px 5px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .request-status {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        
+        .api-response {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+        }
+        
+        .connection-info {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-box {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .worker-status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>DeepSeek SharedWorker 完整实现</h1>
+            <p class="subtitle">包含内联SharedWorker的完整解决方案</p>
+        </header>
+        
+        <div class="cards-container">
+            <div class="card">
+                <h2><i class="fas fa-info-circle"></i> 实现原理</h2>
+                <p>这个实现使用Blob创建内联SharedWorker，无需外部JS文件：</p>
+                <ul>
+                    <li><span class="highlight">Blob创建Worker</span>：将Worker代码作为Blob对象创建</li>
+                    <li><span class="highlight">URL.createObjectURL</span>：生成Worker的临时URL</li>
+                    <li><span class="highlight">完全自包含</span>：所有代码在单个HTML文件中</li>
+                    <li><span class="highlight">易于部署</span>：无需管理多个文件</li>
+                </ul>
+                <p>这种方法特别适合演示和简单应用。</p>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-cogs"></i> 工作机制</h2>
+                <p>内联SharedWorker的工作流程：</p>
+                <ul>
+                    <li>将Worker代码定义为字符串</li>
+                    <li>使用Blob对象包装代码</li>
+                    <li>创建Object URL指向该Blob</li>
+                    <li>使用该URL创建SharedWorker</li>
+                    <li>正常使用SharedWorker</li>
+                </ul>
+                <p>浏览器将其视为外部Worker文件处理。</p>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-lightbulb"></i> 优势</h2>
+                <ul>
+                    <li>无需额外网络请求获取Worker文件</li>
+                    <li>所有代码在一个文件中，便于管理</li>
+                    <li>避免跨域问题</li>
+                    <li>简化部署流程</li>
+                    <li>代码更易于理解和调试</li>
+                </ul>
+                <p>适合原型开发和小型项目。</p>
+            </div>
+        </div>
+        
+        <section class="demo-section">
+            <h2><i class="fas fa-paper-plane"></i> DeepSeek API 请求演示</h2>
+            <p>通过内联SharedWorker调用DeepSeek API（模拟）：</p>
+            
+            <div class="demo-container">
+                <div class="input-section">
+                    <div class="input-group">
+                        <label for="apiPrompt">输入提示词</label>
+                        <textarea id="apiPrompt" placeholder="请输入您想询问DeepSeek的内容...">请解释一下SharedWorker在Web开发中的作用</textarea>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="apiModel">选择模型</label>
+                        <select id="apiModel">
+                            <option value="deepseek-chat">DeepSeek Chat</option>
+                            <option value="deepseek-coder">DeepSeek Coder</option>
+                            <option value="deepseek-llm">DeepSeek LLM</option>
+                        </select>
+                    </div>
+                    
+                    <button id="sendApiRequestBtn" class="btn">发送API请求</button>
+                    <button id="clearApiResponseBtn" class="btn btn-secondary">清空响应</button>
+                    
+                    <div class="request-status" id="apiRequestStatus">等待操作...</div>
+                    
+                    <div class="connection-info">
+                        <div class="info-box">
+                            <h3>连接状态</h3>
+                            <div id="connectionStatus">未连接</div>
+                        </div>
+                        <div class="info-box">
+                            <h3>活动标签页</h3>
+                            <div id="tabCount">0</div>
+                        </div>
+                        <div class="info-box">
+                            <h3>缓存请求数</h3>
+                            <div id="cachedRequests">0</div>
+                        </div>
+                    </div>
+
+                    <div class="worker-status">
+                        <h3>SharedWorker状态</h3>
+                        <div id="workerCodeStatus">
+                            <span class="success">内联SharedWorker已就绪</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result-section">
+                    <h3>API 响应结果</h3>
+                    <div class="api-response" id="apiResponse">
+                        <div class="result-item">API响应将显示在这里...</div>
+                    </div>
+                    
+                    <h3>请求历史</h3>
+                    <div class="result-box" id="requestHistory">
+                        <div class="result-item">最近请求将显示在这里...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="faq-section">
+            <h2><i class="fas fa-code"></i> 代码实现</h2>
+            
+            <div class="tab-container">
+                <div class="tabs">
+                    <div class="tab active" data-tab="worker">SharedWorker代码</div>
+                    <div class="tab" data-tab="client">客户端代码</div>
+                    <div class="tab" data-tab="usage">使用示例</div>
+                </div>
+                
+                <div class="tab-content active" id="worker-tab">
+                    <h3>内联SharedWorker实现</h3>
+                    <p>使用Blob创建内联SharedWorker：</p>
+                    <div class="code-block">
+// 创建SharedWorker代码字符串
+const workerCode = `
+  const ports = [];
+  const requestCache = new Map();
+  const pendingRequests = new Map();
+  
+  self.addEventListener('connect', function(e) {
+    const port = e.ports[0];
+    ports.push(port);
+    
+    port.addEventListener('message', async function(e) {
+      const data = e.data;
+      
+      if (data.type === 'deepseek_request') {
+        const { prompt, model, requestId } = data;
+        const cacheKey = \`\${model}-\${prompt}\`;
+        
+        // 检查缓存
+        if (requestCache.has(cacheKey)) {
+          port.postMessage({
+            type: 'deepseek_response',
+            requestId,
+            data: requestCache.get(cacheKey),
+            cached: true
+          });
+          return;
+        }
+        
+        // 检查是否有相同的请求正在处理
+        if (pendingRequests.has(cacheKey)) {
+          pendingRequests.get(cacheKey).push({ port, requestId });
+          return;
+        }
+        
+        // 创建新的待处理请求列表
+        pendingRequests.set(cacheKey, [{ port, requestId }]);
+        
+        try {
+          // 模拟API调用延迟
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          // 模拟API响应
+          const result = {
+            id: "chatcmpl-" + Math.random().toString(36).substr(2, 9),
+            object: "chat.completion",
+            created: Math.floor(Date.now() / 1000),
+            model: model,
+            choices: [{
+              message: {
+                role: "assistant",
+                content: "这是关于'" + prompt + "'的模拟响应。SharedWorker是Web Workers的一种，允许多个浏览器上下文共享同一个Worker实例。"
+              },
+              finish_reason: "stop",
+              index: 0
+            }],
+            usage: {
+              prompt_tokens: prompt.length / 4,
+              completion_tokens: 150,
+              total_tokens: prompt.length / 4 + 150
+            }
+          };
+          
+          // 缓存结果
+          requestCache.set(cacheKey, result);
+          
+          // 通知所有等待此请求的端口
+          const waitingPorts = pendingRequests.get(cacheKey);
+          waitingPorts.forEach(({ port, requestId }) => {
+            port.postMessage({
+              type: 'deepseek_response',
+              requestId,
+              data: result,
+              cached: false
+            });
+          });
+          
+          // 清除待处理请求
+          pendingRequests.delete(cacheKey);
+          
+        } catch (error) {
+          const waitingPorts = pendingRequests.get(cacheKey);
+          waitingPorts.forEach(({ port, requestId }) => {
+            port.postMessage({
+              type: 'deepseek_error',
+              requestId,
+              error: error.message
+            });
+          });
+          
+          pendingRequests.delete(cacheKey);
+        }
+      }
+    });
+    
+    port.start();
+    
+    // 发送连接确认
+    port.postMessage({
+      type: 'connection',
+      count: ports.length,
+      cachedRequests: requestCache.size
+    });
+  });
+`;
+
+// 创建Blob和Object URL
+const blob = new Blob([workerCode], { type: 'application/javascript' });
+const workerUrl = URL.createObjectURL(blob);
+
+// 创建SharedWorker
+const sharedWorker = new SharedWorker(workerUrl);
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="client-tab">
+                    <h3>客户端调用代码</h3>
+                    <p>在客户端使用async函数调用SharedWorker中的DeepSeek API：</p>
+                    <div class="code-block">
+// 存储待处理的请求
+const pendingRequests = new Map();
+
+// 生成唯一请求ID
+function generateRequestId() {
+    return Math.random().toString(36).substr(2, 9);
+}
+
+// 调用DeepSeek API的async函数
+async function callDeepSeekAPI(prompt, model = 'deepseek-chat') {
+    const requestId = generateRequestId();
+    
+    return new Promise((resolve, reject) => {
+        // 设置超时
+        const timeoutId = setTimeout(() => {
+            pendingRequests.delete(requestId);
+            reject(new Error('请求超时'));
+        }, 30000); // 30秒超时
+        
+        // 存储待处理请求
+        pendingRequests.set(requestId, { resolve, reject, timeoutId });
+        
+        // 发送请求到SharedWorker
+        sharedWorker.port.postMessage({
+            type: 'deepseek_request',
+            prompt,
+            model,
+            requestId
+        });
+    });
+}
+
+// 处理SharedWorker响应
+sharedWorker.port.onmessage = function(e) {
+    const data = e.data;
+    
+    if (data.type === 'deepseek_response') {
+        const request = pendingRequests.get(data.requestId);
+        if (request) {
+            clearTimeout(request.timeoutId);
+            pendingRequests.delete(data.requestId);
+            request.resolve(data);
+        }
+    } else if (data.type === 'deepseek_error') {
+        const request = pendingRequests.get(data.requestId);
+        if (request) {
+            clearTimeout(request.timeoutId);
+            pendingRequests.delete(data.requestId);
+            request.reject(new Error(data.error));
+        }
+    } else if (data.type === 'connection') {
+        // 处理连接消息
+        updateConnectionStatus('已连接', 'success');
+        updateTabCount(data.count);
+        updateCachedRequests(data.cachedRequests);
+    }
+};
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="usage-tab">
+                    <h3>完整使用示例</h3>
+                    <p>在页面中使用内联SharedWorker调用DeepSeek API的完整示例：</p>
+                    <div class="code-block">
+// 页面初始化
+let sharedWorker;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 创建内联SharedWorker
+    const workerCode = `
+        // SharedWorker代码在这里
+        // ...
+    `;
+    
+    // 创建Blob和Object URL
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    const workerUrl = URL.createObjectURL(blob);
+    
+    // 初始化SharedWorker
+    if (window.SharedWorker) {
+        try {
+            sharedWorker = new SharedWorker(workerUrl);
+            
+            // 设置消息处理
+            sharedWorker.port.onmessage = function(e) {
+                // 处理消息...
+            };
+            
+            // 启动端口
+            sharedWorker.port.start();
+            
+        } catch (error) {
+            console.error('SharedWorker初始化错误:', error);
+        }
+    } else {
+        console.error('浏览器不支持SharedWorker');
+    }
+    
+    // 设置发送按钮事件
+    document.getElementById('sendRequestBtn').addEventListener('click', sendAPIRequest);
+});
+
+// 发送API请求
+async function sendAPIRequest() {
+    const prompt = document.getElementById('apiPrompt').value;
+    const model = document.getElementById('apiModel').value;
+    
+    try {
+        const response = await callDeepSeekAPI(prompt, model);
+        displayAPIResponse(response);
+        addToHistory(prompt, response);
+    } catch (error) {
+        displayAPIError(error);
+    }
+}
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>© 2023 DeepSeek API集成示例 | 内联SharedWorker实现</p>
+        </footer>
+    </div>
+
+    <script>
+        // 创建内联SharedWorker的代码
+        const workerCode = `
+// SharedWorker中存储的数据和连接
+const ports = [];
+const requestCache = new Map();
+const pendingRequests = new Map();
+
+self.addEventListener('connect', function(e) {
+    const port = e.ports[0];
+    ports.push(port);
+    
+    // 通知所有端口连接数更新
+    function updateAllPorts() {
+        ports.forEach(p => {
+            p.postMessage({
+                type: 'connection',
+                count: ports.length,
+                cachedRequests: requestCache.size
+            });
+        });
+    }
+    
+    port.addEventListener('message', async function(e) {
+        const data = e.data;
+        
+        // 处理DeepSeek API请求
+        if (data.type === 'deepseek_request') {
+            const { prompt, model, requestId } = data;
+            const cacheKey = \`\${model}-\${prompt}\`;
+            
+            // 检查缓存
+            if (requestCache.has(cacheKey)) {
+                port.postMessage({
+                    type: 'deepseek_response',
+                    requestId,
+                    data: requestCache.get(cacheKey),
+                    cached: true,
+                    prompt: prompt
+                });
+                return;
+            }
+            
+            // 检查是否有相同的请求正在处理
+            if (pendingRequests.has(cacheKey)) {
+                pendingRequests.get(cacheKey).push({ port, requestId });
+                return;
+            }
+            
+            // 创建新的待处理请求列表
+            pendingRequests.set(cacheKey, [{ port, requestId }]);
+            
+            try {
+                // 模拟API调用延迟
+                await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+                
+                // 模拟API响应 - 根据提示生成不同的响应
+                let responseContent = "";
+                
+                if (prompt.includes("作用") || prompt.includes("功能") || prompt.includes("用途")) {
+                    responseContent = "SharedWorker是Web Workers的一种，允许多个浏览器上下文（如多个标签页、iframe或窗口）共享同一个Worker实例。这使您可以在多个页面间共享状态、通信和资源，而无需使用服务器作为中间人。使用SharedWorker调用DeepSeek API的优势包括：集中管理API密钥、请求去重、响应缓存和共享，以及更好的资源管理。";
+                } else if (prompt.includes("如何") || prompt.includes("怎样") || prompt.includes("怎么")) {
+                    responseContent = "要在项目中使用SharedWorker，首先创建一个SharedWorker对象，然后通过port进行通信。您可以使用postMessage发送请求，并通过onmessage事件监听响应。对于API调用，可以实现请求-响应模式，使用唯一ID来匹配请求和响应。";
+                } else if (prompt.includes("示例") || prompt.includes("例子") || prompt.includes("demo")) {
+                    responseContent = "一个SharedWorker的示例用法是：在多标签页应用中，当用户在一个标签页中获取了某些数据，其他标签页可以通过SharedWorker共享这些数据，而不需要每个标签页都单独请求。另一个示例是使用SharedWorker管理WebSocket连接，所有标签页共享同一个连接。";
+                } else {
+                    responseContent = "关于" + prompt + "的模拟响应。SharedWorker是HTML5提供的一种高级特性，允许不同的浏览器上下文共享同一个后台线程。这对于提高性能、减少资源使用和实现多标签页协同工作非常有用。在实际项目中，您可以使用SharedWorker来集中处理API调用、管理状态同步或执行计算密集型任务。";
+                }
+                
+                // 构建完整的响应对象
+                const result = {
+                    id: "chatcmpl-" + Math.random().toString(36).substr(2, 9),
+                    object: "chat.completion",
+                    created: Math.floor(Date.now() / 1000),
+                    model: model,
+                    choices: [{
+                        message: {
+                            role: "assistant",
+                            content: responseContent
+                        },
+                        finish_reason: "stop",
+                        index: 0
+                    }],
+                    usage: {
+                        prompt_tokens: prompt.length / 4,
+                        completion_tokens: responseContent.length / 4,
+                        total_tokens: prompt.length / 4 + responseContent.length / 4
+                    }
+                };
+                
+                // 缓存结果
+                requestCache.set(cacheKey, result);
+                
+                // 通知所有等待此请求的端口
+                const waitingPorts = pendingRequests.get(cacheKey);
+                waitingPorts.forEach(({ port, requestId }) => {
+                    port.postMessage({
+                        type: 'deepseek_response',
+                        requestId,
+                        data: result,
+                        cached: false,
+                        prompt: prompt
+                    });
+                });
+                
+                // 清除待处理请求
+                pendingRequests.delete(cacheKey);
+                
+                // 更新所有端口的缓存计数
+                updateAllPorts();
+                
+            } catch (error) {
+                // 通知所有等待此请求的端口
+                const waitingPorts = pendingRequests.get(cacheKey);
+                waitingPorts.forEach(({ port, requestId }) => {
+                    port.postMessage({
+                        type: 'deepseek_error',
+                        requestId,
+                        error: error.message
+                    });
+                });
+                
+                // 清除待处理请求
+                pendingRequests.delete(cacheKey);
+            }
+        }
+        
+        // 处理清除缓存请求
+        else if (data.type === 'clear_cache') {
+            requestCache.clear();
+            port.postMessage({
+                type: 'cache_cleared',
+                success: true
+            });
+            updateAllPorts();
+        }
+    });
+    
+    port.start();
+    
+    // 发送初始连接信息
+    port.postMessage({
+        type: 'connection',
+        count: ports.length,
+        cachedRequests: requestCache.size
+    });
+});
+`;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 标签切换功能
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+                });
+            });
+            
+            // SharedWorker和API调用演示
+            let sharedWorker;
+            const apiPrompt = document.getElementById('apiPrompt');
+            const apiModel = document.getElementById('apiModel');
+            const sendApiRequestBtn = document.getElementById('sendApiRequestBtn');
+            const clearApiResponseBtn = document.getElementById('clearApiResponseBtn');
+            const apiRequestStatus = document.getElementById('apiRequestStatus');
+            const apiResponse = document.getElementById('apiResponse');
+            const requestHistory = document.getElementById('requestHistory');
+            const connectionStatus = document.getElementById('connectionStatus');
+            const tabCount = document.getElementById('tabCount');
+            const cachedRequests = document.getElementById('cachedRequests');
+            const workerCodeStatus = document.getElementById('workerCodeStatus');
+            
+            // 存储待处理的请求
+            const pendingRequests = new Map();
+            let requestCounter = 0;
+            
+            // 生成唯一请求ID
+            function generateRequestId() {
+                return `req_${Date.now()}_${++requestCounter}`;
+            }
+            
+            // 更新连接状态
+            function updateConnectionStatus(message, type) {
+                let html = message;
+                if (type === 'success') {
+                    html = `<span class="success">${message}</span>`;
+                } else if (type === 'error') {
+                    html = `<span class="warning">${message}</span>`;
+                }
+                connectionStatus.innerHTML = html;
+            }
+            
+            // 更新标签页计数
+            function updateTabCount(count) {
+                tabCount.textContent = count;
+            }
+            
+            // 更新缓存请求数
+            function updateCachedRequests(count) {
+                cachedRequests.textContent = count;
+            }
+            
+            // 更新请求状态
+            function updateRequestStatus(message, type) {
+                let html = message;
+                if (type === 'success') {
+                    html = `<span class="success">${message}</span>`;
+                } else if (type === 'error') {
+                    html = `<span class="warning">${message}</span>`;
+                } else if (type === 'info') {
+                    html = `<span class="info">${message}</span>`;
+                }
+                apiRequestStatus.innerHTML = html;
+            }
+            
+            // 初始化SharedWorker
+            function initSharedWorker() {
+                if (window.SharedWorker) {
+                    try {
+                        // 创建Blob和Object URL
+                        const blob = new Blob([workerCode], { type: 'application/javascript' });
+                        const workerUrl = URL.createObjectURL(blob);
+                        
+                        // 创建SharedWorker
+                        sharedWorker = new SharedWorker(workerUrl);
+                        
+                        // 处理来自SharedWorker的消息
+                        sharedWorker.port.onmessage = function(e) {
+                            const data = e.data;
+                            
+                            if (data.type === 'connection') {
+                                updateConnectionStatus('已连接', 'success');
+                                updateTabCount(data.count);
+                                updateCachedRequests(data.cachedRequests || 0);
+                            } 
+                            else if (data.type === 'deepseek_response') {
+                                handleAPIResponse(data);
+                            } 
+                            else if (data.type === 'deepseek_error') {
+                                handleAPIError(data.error, data.requestId);
+                            }
+                            else if (data.type === 'cache_cleared') {
+                                updateCachedRequests(0);
+                                apiRequestStatus.innerHTML = '<span class="success">缓存已清除</span>';
+                            }
+                        };
+                        
+                        // 启动端口
+                        sharedWorker.port.start();
+                        
+                        workerCodeStatus.innerHTML = '<span class="success">内联SharedWorker已创建并运行</span>';
+                        
+                    } catch (error) {
+                        updateConnectionStatus('SharedWorker初始化失败', 'error');
+                        workerCodeStatus.innerHTML = '<span class="warning">SharedWorker创建失败: ' + error.message + '</span>';
+                        console.error('SharedWorker初始化错误:', error);
+                    }
+                } else {
+                    updateConnectionStatus('浏览器不支持SharedWorker', 'error');
+                    workerCodeStatus.innerHTML = '<span class="warning">浏览器不支持SharedWorker</span>';
+                    sendApiRequestBtn.disabled = true;
+                }
+            }
+            
+            // 调用DeepSeek API的async函数
+            async function callDeepSeekAPI(prompt, model = 'deepseek-chat') {
+                const requestId = generateRequestId();
+                
+                return new Promise((resolve, reject) => {
+                    // 设置超时
+                    const timeoutId = setTimeout(() => {
+                        pendingRequests.delete(requestId);
+                        reject(new Error('请求超时'));
+                    }, 30000); // 30秒超时
+                    
+                    // 存储待处理请求
+                    pendingRequests.set(requestId, { resolve, reject, timeoutId });
+                    
+                    // 发送请求到SharedWorker
+                    sharedWorker.port.postMessage({
+                        type: 'deepseek_request',
+                        prompt,
+                        model,
+                        requestId
+                    });
+                });
+            }
+            
+            // 处理API响应
+            function handleAPIResponse(response) {
+                const request = pendingRequests.get(response.requestId);
+                if (request) {
+                    clearTimeout(request.timeoutId);
+                    pendingRequests.delete(response.requestId);
+                    request.resolve(response);
+                    
+                    // 显示响应
+                    displayAPIResponse(response);
+                    
+                    // 添加到历史记录
+                    addToHistory(response.prompt, response);
+                    
+                    updateRequestStatus(`请求成功! ${response.cached ? '(来自缓存)' : ''}`, 'success');
+                }
+            }
+            
+            // 处理API错误
+            function handleAPIError(error, requestId) {
+                const request = pendingRequests.get(requestId);
+                if (request) {
+                    clearTimeout(request.timeoutId);
+                    pendingRequests.delete(requestId);
+                    request.reject(new Error(error));
+                    
+                    // 显示错误
+                    displayAPIError(error);
+                    updateRequestStatus(`请求失败: ${error}`, 'error');
+                }
+            }
+            
+            // 显示API响应
+            function displayAPIResponse(response) {
+                const content = response.data.choices[0].message.content;
+                const totalTokens = response.data.usage.total_tokens;
+                
+                apiResponse.innerHTML = `
+                    <div class="result-item">
+                        <strong>模型:</strong> ${response.data.model} | 
+                        <strong>Tokens:</strong> ${totalTokens} | 
+                        <strong>缓存:</strong> ${response.cached ? '是' : '否'}
+                    </div>
+                    <div class="result-item" style="white-space: pre-wrap;">${content}</div>
+                `;
+            }
+            
+            // 显示API错误
+            function displayAPIError(error) {
+                apiResponse.innerHTML = `
+                    <div class="result-item warning">
+                        <strong>错误:</strong> ${error}
+                    </div>
+                `;
+            }
+            
+            // 添加到历史记录
+            function addToHistory(prompt, response) {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'result-item';
+                historyItem.innerHTML = `
+                    <strong>${new Date().toLocaleTimeString()}</strong>: 
+                    ${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}
+                    <span class="info">(${response.data.model})</span>
+                `;
+                
+                // 添加到顶部
+                if (requestHistory.firstChild) {
+                    requestHistory.insertBefore(historyItem, requestHistory.firstChild);
+                } else {
+                    requestHistory.appendChild(historyItem);
+                }
+                
+                // 限制历史记录数量
+                if (requestHistory.children.length > 10) {
+                    requestHistory.removeChild(requestHistory.lastChild);
+                }
+            }
+            
+            // 发送API请求
+            sendApiRequestBtn.addEventListener('click', async function() {
+                const prompt = apiPrompt.value.trim();
+                const model = apiModel.value;
+                
+                if (!prompt) {
+                    alert('请输入提示词');
+                    return;
+                }
+                
+                updateRequestStatus('发送请求中...', 'info');
+                
+                try {
+                    await callDeepSeekAPI(prompt, model);
+                } catch (error) {
+                    // 错误处理在handleAPIError中完成
+                }
+            });
+            
+            // 清空响应
+            clearApiResponseBtn.addEventListener('click', function() {
+                apiResponse.innerHTML = '<div class="result-item">已清空响应</div>';
+                apiRequestStatus.innerHTML = '等待操作...';
+            });
+            
+            // 初始化
+            initSharedWorker();
+        });
+    </script>
+</body>
+</html>

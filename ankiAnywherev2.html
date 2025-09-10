@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语单词闪卡学习</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+Thai+Looped:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-weight: 700;
+            color: #3498db;
+            font-size: 1.2rem;
+        }
+        
+        .flashcard-container {
+            perspective: 1000px;
+            margin-bottom: 15px;
+            height: 380px;
+        }
+        
+        .flashcard {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-front {
+            background: linear-gradient(145deg, #3498db, #2c3e50);
+            color: white;
+        }
+        
+        .card-back {
+            background: white;
+            color: #333;
+            transform: rotateY(180deg);
+            overflow-y: auto;
+            justify-content: flex-start;
+        }
+        
+        .thai-word {
+            font-family: 'Noto Sans Thai Looped', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .pronunciation {
+            font-size: 1.4rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 5px;
+        }
+        
+        .hint {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .definition {
+            margin-bottom: 12px;
+            text-align: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            width: 100%;
+        }
+        
+        .definition-en {
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 3px;
+            font-size: 0.95rem;
+        }
+        
+        .definition-zh {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .synonyms, .antonyms, .phrases {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            color: #3498db;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .synonym, .antonym {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin: 3px;
+            font-family: 'Noto Sans Thai Looped', sans-serif;
+            font-size: 0.9rem;
+        }
+        
+        .synonym {
+            background: #e3f2fd;
+            color: #0d47a1;
+        }
+        
+        .antonym {
+            background: #ffebee;
+            color: #b71c1c;
+        }
+        
+        .phrase {
+            margin-bottom: 6px;
+            padding: 5px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .thai-phrase {
+            font-family: 'Noto Sans Thai Looped', sans-serif;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .phrase-translation {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .rating-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            gap: 5px;
+        }
+        
+        .rating-btn {
+            flex: 1;
+            padding: 8px 3px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+            min-width: 0;
+        }
+        
+        .rating-1 {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .rating-2 {
+            background: #e67e22;
+            color: white;
+        }
+        
+        .rating-3 {
+            background: #f1c40f;
+            color: white;
+        }
+        
+        .rating-4 {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .rating-5 {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .rating-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .nav-btn {
+            flex: 1;
+            padding: 8px 5px;
+            border: none;
+            border-radius: 6px;
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .nav-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            background: #ecf0f1;
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .thai-word {
+                font-size: 2.6rem;
+            }
+            
+            .flashcard-container {
+                height: 380px;
+            }
+            
+            .rating-btn {
+                padding: 8px 2px;
+                font-size: 0.8rem;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .thai-word {
+                font-size: 2.2rem;
+            }
+            
+            .pronunciation {
+                font-size: 1.1rem;
+            }
+            
+            .flashcard-container {
+                height: 400px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .rating-container {
+                flex-wrap: wrap;
+            }
+            
+            .rating-btn {
+                flex: 1;
+                min-width: 55px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>泰语单词闪卡学习</h1>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">剩余单词</div>
+                    <div class="stat-value" id="remaining-count">5</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">已学单词</div>
+                    <div class="stat-value" id="learned-count">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">掌握程度</div>
+                    <div class="stat-value" id="mastery-level">0%</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="flashcard-container">
+            <div class="flashcard" id="flashcard">
+                <div class="card-front">
+                    <div class="thai-word" id="thai-word">ช่วยเหลือ</div>
+                    <div class="pronunciation" id="pronunciation">chûay-lĕua</div>
+                    <div class="hint">点击卡片查看释义</div>
+                </div>
+                <div class="card-back">
+                    <div class="definition">
+                        <div class="definition-en" id="definition-en">to help, assist, or aid someone</div>
+                        <div class="definition-zh" id="definition-zh">帮助，援助，协助</div>
+                    </div>
+                    
+                    <div class="synonyms">
+                        <div class="section-title">同义词</div>
+                        <div id="synonyms-container">
+                            <span class="synonym">สนับสนุน</span>
+                            <span class="synonym">เอื้อเฟื้อ</span>
+                            <span class="synonym">อุปถัมภ์</span>
+                        </div>
+                    </div>
+                    
+                    <div class="antonyms">
+                        <div class="section-title">反义词</div>
+                        <div id="antonyms-container">
+                            <span class="antonym">ขัดขวาง</span>
+                            <span class="antonym">เป็นอุปสรรค</span>
+                        </div>
+                    </div>
+                    
+                    <div class="phrases">
+                        <div class="section-title">常用短语</div>
+                        <div id="phrases-container">
+                            <div class="phrase">
+                                <div class="thai-phrase">ช่วยเหลือตัวเอง</div>
+                                <div class="phrase-translation">自助</div>
+                            </div>
+                            <div class="phrase">
+                                <div class="thai-phrase">ช่วยเหลือซึ่งกันและกัน</div>
+                                <div class="phrase-translation">互相帮助</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <div class="rating-container" id="rating-container">
+                <button class="rating-btn rating-1" data-rating="1">1<br><span>不认识</span></button>
+                <button class="rating-btn rating-2" data-rating="2">2<br><span>有点印象</span></button>
+                <button class="rating-btn rating-3" data-rating="3">3<br><span>一般熟悉</span></button>
+                <button class="rating-btn rating-4" data-rating="4">4<br><span>比较熟悉</span></button>
+                <button class="rating-btn rating-5" data-rating="5">5<br><span>完全掌握</span></button>
+            </div>
+            
+            <div class="navigation">
+                <button class="nav-btn" id="prev-btn" disabled>
+                    <i class="fas fa-arrow-left"></i> 上一个
+                </button>
+                <button class="nav-btn" id="next-btn">
+                    下一个 <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress-bar"></div>
+        </div>
+    </div>
+
+    <script>
+        // 示例单词数据
+        const wordList = [
+            {
+                thai: "ช่วยเหลือ",
+                pronunciation: "chûay-lĕua",
+                definitions: [
+                    { en: "to help, assist, or aid someone", zh: "帮助，援助，协助" },
+                    { en: "to support or lend a hand", zh: "支持，帮忙" }
+                ],
+                synonyms: ["สนับสนุน", "เอื้อเฟื้อ", "อุปถัมภ์", "เกื้อกูล"],
+                antonyms: ["ขัดขวาง", "เป็นอุปสรรค", "ทำลาย"],
+                common_phrases: [
+                    { phrase: "ช่วยเหลือตัวเอง", translation: "自助" },
+                    { phrase: "ช่วยเหลือซึ่งกันและกัน", translation: "互相帮助" },
+                    { phrase: "ขอความช่วยเหลือ", translation: "请求帮助" }
+                ]
+            },
+            {
+                thai: "สวย",
+                pronunciation: "sǔuay",
+                definitions: [
+                    { en: "beautiful, pretty", zh: "美丽，漂亮" }
+                ],
+                synonyms: ["งาม", "น่ามอง", "หล่อ"],
+                antonyms: ["น่าเกลียด", "อัปลักษณ์"],
+                common_phrases: [
+                    { phrase: "สวยงาม", translation: "美丽" },
+                    { phrase: "คนสวย", translation: "美女" }
+                ]
+            },
+            {
+                thai: "เดิน",
+                pronunciation: "doen",
+                definitions: [
+                    { en: "to walk", zh: "走路，行走" }
+                ],
+                synonyms: ["ก้าว", "เคลื่อน"],
+                antonyms: ["หยุด", "นั่ง"],
+                common_phrases: [
+                    { phrase: "เดินทาง", translation: "旅行" },
+                    { phrase: "เดินเล่น", translation: "散步" }
+                ]
+            },
+            {
+                thai: "กิน",
+                pronunciation: "gin",
+                definitions: [
+                    { en: "to eat, to consume", zh: "吃，食用" }
+                ],
+                synonyms: ["รับประทาน", "ทาน"],
+                antonyms: ["อาเจียน", "ถอน"],
+                common_phrases: [
+                    { phrase: "กินข้าว", translation: "吃饭" },
+                    { phrase: "กินน้ำ", translation: "喝水" }
+                ]
+            },
+            {
+                thai: "นอน",
+                pronunciation: "nawn",
+                definitions: [
+                    { en: "to sleep, to lie down", zh: "睡觉，躺下" }
+                ],
+                synonyms: ["หลับ", "พัก"],
+                antonyms: ["ตื่น", "ลุก"],
+                common_phrases: [
+                    { phrase: "นอนหลับ", translation: "睡觉" },
+                    { phrase: "ที่นอน", translation: "床" }
+                ]
+            }
+        ];
+
+        // 应用状态
+        let currentIndex = 0;
+        let learnedWords = [];
+        
+        // 从localStorage加载已学习数据
+        function loadProgress() {
+            const savedProgress = localStorage.getItem('thaiFlashcardProgress');
+            if (savedProgress) {
+                learnedWords = JSON.parse(savedProgress);
+            }
+            updateStats();
+        }
+        
+        // 保存进度到localStorage
+        function saveProgress() {
+            localStorage.setItem('thaiFlashcardProgress', JSON.stringify(learnedWords));
+            updateStats();
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            const remainingCount = wordList.length - learnedWords.length;
+            const learnedCount = learnedWords.length;
+            const masteryLevel = learnedWords.length > 0 ? 
+                Math.round((learnedWords.reduce((sum, word) => sum + word.rating, 0) / (learnedWords.length * 5)) * 100) : 0;
+            
+            document.getElementById('remaining-count').textContent = remainingCount;
+            document.getElementById('learned-count').textContent = learnedCount;
+            document.getElementById('mastery-level').textContent = `${masteryLevel}%`;
+            
+            // 更新进度条
+            const progressPercent = (learnedCount / wordList.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+        }
+        
+        // 显示当前单词
+        function showCurrentWord() {
+            const word = wordList[currentIndex];
+            
+            // 更新卡片正面
+            document.getElementById('thai-word').textContent = word.thai;
+            document.getElementById('pronunciation').textContent = word.pronunciation;
+            
+            // 更新卡片背面
+            document.getElementById('definition-en').textContent = word.definitions[0].en;
+            document.getElementById('definition-zh').textContent = word.definitions[0].zh;
+            
+            // 更新同义词
+            const synonymsContainer = document.getElementById('synonyms-container');
+            synonymsContainer.innerHTML = '';
+            word.synonyms.slice(0, 3).forEach(synonym => {
+                const span = document.createElement('span');
+                span.className = 'synonym';
+                span.textContent = synonym;
+                synonymsContainer.appendChild(span);
+            });
+            
+            // 更新反义词
+            const antonymsContainer = document.getElementById('antonyms-container');
+            antonymsContainer.innerHTML = '';
+            word.antonyms.slice(0, 2).forEach(antonym => {
+                const span = document.createElement('span');
+                span.className = 'antonym';
+                span.textContent = antonym;
+                antonymsContainer.appendChild(span);
+            });
+            
+            // 更新常用短语
+            const phrasesContainer = document.getElementById('phrases-container');
+            phrasesContainer.innerHTML = '';
+            word.common_phrases.slice(0, 2).forEach(phrase => {
+                const div = document.createElement('div');
+                div.className = 'phrase';
+                div.innerHTML = `
+                    <div class="thai-phrase">${phrase.phrase}</div>
+                    <div class="phrase-translation">${phrase.translation}</div>
+                `;
+                phrasesContainer.appendChild(div);
+            });
+            
+            // 重置卡片状态
+            document.getElementById('flashcard').classList.remove('flipped');
+            
+            // 更新导航按钮状态
+            document.getElementById('prev-btn').disabled = currentIndex === 0;
+            document.getElementById('next-btn').disabled = currentIndex === wordList.length - 1;
+            
+            // 检查是否已经评分
+            const existingRating = learnedWords.findIndex(w => w.index === currentIndex);
+            if (existingRating !== -1) {
+                document.querySelectorAll('.rating-btn').forEach(btn => {
+                    btn.disabled = true;
+                });
+            } else {
+                document.querySelectorAll('.rating-btn').forEach(btn => {
+                    btn.disabled = false;
+                });
+            }
+        }
+        
+        // 初始化应用
+        function initApp() {
+            loadProgress();
+            showCurrentWord();
+            
+            // 添加事件监听器
+            document.getElementById('flashcard').addEventListener('click', function() {
+                this.classList.toggle('flipped');
+            });
+            
+            document.getElementById('prev-btn').addEventListener('click', function() {
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    showCurrentWord();
+                }
+            });
+            
+            document.getElementById('next-btn').addEventListener('click', function() {
+                if (currentIndex < wordList.length - 1) {
+                    currentIndex++;
+                    showCurrentWord();
+                }
+            });
+            
+            // 评分按钮事件
+            document.querySelectorAll('.rating-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const rating = parseInt(this.getAttribute('data-rating'));
+                    
+                    // 检查是否已经评分
+                    const existingIndex = learnedWords.findIndex(w => w.index === currentIndex);
+                    if (existingIndex !== -1) {
+                        learnedWords[existingIndex].rating = rating;
+                    } else {
+                        learnedWords.push({
+                            index: currentIndex,
+                            word: wordList[currentIndex].thai,
+                            rating: rating,
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                    
+                    // 保存进度
+                    saveProgress();
+                    
+                    // 禁用评分按钮
+                    document.querySelectorAll('.rating-btn').forEach(btn => {
+                        btn.disabled = true;
+                    });
+                    
+                    // 自动前进到下一个单词（如果不是最后一个）
+                    if (currentIndex < wordList.length - 1) {
+                        setTimeout(() => {
+                            currentIndex++;
+                            showCurrentWord();
+                        }, 800);
+                    }
+                });
+            });
+        }
+        
+        // 启动应用
+        initApp();
+    </script>
+</body>
+</html>

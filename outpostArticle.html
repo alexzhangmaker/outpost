@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Paragraph Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        .left {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .right {
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .left h2, .right h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .paragraph {
+            font-size: 18px;
+            line-height: 1.8;
+        }
+        sentence {
+            display: inline;
+            position: relative;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        word {
+            display: inline;
+            position: relative;
+            cursor: pointer;
+            border-bottom: 1px dotted #ccc;
+            transition: background-color 0.2s, border-bottom-color 0.2s;
+        }
+        word:hover {
+            background-color: #ffcccb; /* Distinct pink for word hover */
+            border-bottom-color: #ff4500; /* Orange-red underline */
+        }
+        word .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 10;
+            font-size: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none;
+            margin-bottom: 5px;
+        }
+        word:hover .tooltip {
+            display: block;
+        }
+        sentence:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+        .sentence-icon {
+            display: inline-block;
+            font-size: 10px;
+            color: #007bff;
+            cursor: pointer;
+            margin-left: 2px;
+            text-decoration: none;
+            border: none;
+            background: none;
+            position: relative;
+        }
+        .sentence-icon::before {
+            content: '†';
+            vertical-align: super;
+            font-weight: normal;
+            line-height: 0;
+        }
+        .translation-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            font-style: italic;
+        }
+        .translation-item.highlight {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+        }
+        .translation-item:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left">
+            <h2>Thai Paragraph</h2>
+            <div id="paragraph-container" class="paragraph"></div>
+        </div>
+        <div class="right">
+            <h2>Translations</h2>
+            <div id="translations-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data with audio fields
+        const sentencesData = [
+            {
+                "original_sentence": "ซึ่งเราได้ยินคำว่า อะ...",
+                "english_translation": "We have heard the phrase \"We campaign for Thai culture to inherit Thai culture.\" I've heard it since I was a child until I'm grown up and about to get old, and I haven't really seen anything clear.",
+                "audio": "https://example.com/sentence1.mp3",
+                "word_array": [
+                    { "thai": "ซึ่ง", "meaning": "which", "audio": "https://example.com/which.mp3" },
+                    { "thai": "เรา", "meaning": "we", "audio": "https://example.com/we.mp3" },
+                    { "thai": "ได้ยิน", "meaning": "have heard", "audio": "https://example.com/have_heard.mp3" },
+                    { "thai": "คำ", "meaning": "word", "audio": "https://example.com/word.mp3" },
+                    { "thai": "ว่า", "meaning": "that", "audio": "https://example.com/that.mp3" },
+                    { "thai": "อะ", "meaning": "ah...", "audio": "https://example.com/ah.mp3" }
+                ]
+            },
+            {
+                "original_sentence": "ตัวอย่างประโยคที่สอง",
+                "english_translation": "Example second sentence.",
+                "audio": "https://example.com/sentence2.mp3",
+                "word_array": [
+                    { "thai": "ตัวอย่าง", "meaning": "example", "audio": "https://example.com/example.mp3" },
+                    { "thai": "ประโยค", "meaning": "sentence", "audio": "https://example.com/sentence.mp3" },
+                    { "thai": "ที่สอง", "meaning": "second", "audio": "https://example.com/second.mp3" }
+                ]
+            }
+        ];
+
+        function renderParagraph(sentencesData) {
+            const paragraphContainer = document.getElementById('paragraph-container');
+            const translationsContainer = document.getElementById('translations-container');
+            
+            sentencesData.forEach((sentenceData, index) => {
+                // Render sentence on left
+                const sentenceElement = document.createElement('sentence');
+                sentenceElement.setAttribute('data-sentence-index', index);
+                
+                // Render words
+                sentenceData.word_array.forEach(wordData => {
+                    const wordElement = document.createElement('word');
+                    wordElement.textContent = wordData.thai;
+                    wordElement.setAttribute('data-audio', wordData.audio);
+
+                    // Create tooltip for word meaning
+                    const tooltip = document.createElement('span');
+                    tooltip.className = 'tooltip';
+                    tooltip.textContent = wordData.meaning;
+                    wordElement.appendChild(tooltip);
+                    
+                    // Add click event for word audio
+                    wordElement.addEventListener('click', () => {
+                        const audio = new Audio(wordData.audio);
+                        audio.play().catch(error => console.error('Error playing word audio:', error));
+                    });
+                    
+                    sentenceElement.appendChild(wordElement);
+                });
+
+                // Add ellipsis or punctuation
+                if (sentenceData.original_sentence.includes('...')) {
+                    const ellipsis = document.createTextNode('...');
+                    sentenceElement.appendChild(ellipsis);
+                }
+
+                // Add superscript icon for sentence audio
+                const icon = document.createElement('span');
+                icon.className = 'sentence-icon';
+                icon.setAttribute('data-audio', sentenceData.audio);
+                icon.addEventListener('click', () => {
+                    const audio = new Audio(sentenceData.audio);
+                    audio.play().catch(error => console.error('Error playing sentence audio:', error));
+                });
+                sentenceElement.appendChild(icon);
+
+                // Add space between sentences
+                if (index < sentencesData.length - 1) {
+                    sentenceElement.appendChild(document.createTextNode(' '));
+                }
+
+                paragraphContainer.appendChild(sentenceElement);
+
+                // Render translation on right
+                const translationDiv = document.createElement('div');
+                translationDiv.className = 'translation-item';
+                translationDiv.id = `trans-${index}`;
+                translationDiv.textContent = sentenceData.english_translation;
+                translationsContainer.appendChild(translationDiv);
+            });
+
+            // Add hover event listeners for sentence-translation connection
+            const sentences = document.querySelectorAll('sentence');
+            sentences.forEach((sentence, index) => {
+                sentence.addEventListener('mouseenter', () => {
+                    const transDiv = document.getElementById(`trans-${index}`);
+                    if (transDiv) {
+                        transDiv.classList.add('highlight');
+                    }
+                });
+                
+                sentence.addEventListener('mouseleave', () => {
+                    const transDiv = document.getElementById(`trans-${index}`);
+                    if (transDiv) {
+                        transDiv.classList.remove('highlight');
+                    }
+                });
+            });
+        }
+
+        // Render on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderParagraph(sentencesData);
+        });
+    </script>
+</body>
+</html>

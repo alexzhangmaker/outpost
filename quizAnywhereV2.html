@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Word Quiz - แบบทดสอบคำศัพท์ภาษาไทย</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+        <!-- Quiz Card -->
+        <div id="quiz-card" class="bg-white rounded-xl shadow-lg p-6 md:p-8 transition-all duration-500">
+            <div id="quiz-content">
+                <p id="question-counter" class="text-sm text-gray-500 mb-2">คำถาม 1 / 10</p>
+                <h2 id="question-text" class="text-2xl font-bold text-gray-800 mb-6"></h2>
+                <div id="options-container" class="space-y-3">
+                    <!-- Options will be dynamically inserted here -->
+                </div>
+                <div id="feedback-container" class="mt-4 text-center">
+                    <!-- Feedback (correct/incorrect) will be shown here -->
+                </div>
+            </div>
+            <button id="next-button" class="mt-6 w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 hidden">
+                คำถามถัดไป
+            </button>
+        </div>
+
+        <!-- Results Card -->
+        <div id="results-card" class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center hidden">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">เสร็จสิ้น!</h2>
+            <p class="text-gray-600 mb-6">นี่คือผลลัพธ์ของคุณ:</p>
+            <div class="bg-blue-50 p-6 rounded-lg mb-6">
+                <p class="text-lg text-gray-700">คุณตอบถูก</p>
+                <p id="final-score" class="text-5xl font-bold text-blue-600 my-2">0/0</p>
+                <p id="final-percentage" class="text-xl font-semibold text-blue-500">0%</p>
+            </div>
+             <div id="previous-score-container" class="text-left mb-6 p-4 border rounded-lg bg-gray-50 hidden">
+                <h3 class="font-bold text-gray-700 mb-2">ผลลัพธ์ครั้งก่อน:</h3>
+                <p id="previous-score-text" class="text-gray-600"></p>
+            </div>
+            <button id="restart-button" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                ทำแบบทดสอบอีกครั้ง
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            { "question": "คำว่า 'ตรงข้าม' หมายความว่าอย่างไร?", "options": [{ "id": "A", "text": "สิ่งที่อยู่คนละด้านหรือมีลักษณะตรงกันข้าม" }, { "id": "B", "text": "สิ่งที่เหมือนกันทุกประการ" }, { "id": "C", "text": "สิ่งที่อยู่ใกล้กันและช่วยเหลือกัน" }, { "id": "D", "text": "สิ่งที่ซับซ้อนและเข้าใจยาก" }], "correct_answer": "A" },
+            { "question": "คำว่า 'วิจารณ์' มีความหมายตรงกับข้อใด?", "options": [{ "id": "A", "text": "การชื่นชมยินดี" }, { "id": "B", "text": "การให้คำติชมหรือข้อคิดเห็น" }, { "id": "C", "text": "การเลียนแบบพฤติกรรม" }, { "id": "D", "text": "การเพิกเฉยไม่สนใจ" }], "correct_answer": "B" },
+            { "question": "'นวัตกรรม' หมายถึงอะไร?", "options": [{ "id": "A", "text": "สิ่งของโบราณที่มีค่า" }, { "id": "B", "text": "ประเพณีที่สืบทอดกันมานาน" }, { "id": "C", "text": "การกระทำหรือสิ่งที่ทำขึ้นใหม่หรือแปลกจากเดิม" }, { "id": "D", "text": "กฎหมายและข้อบังคับ" }], "correct_answer": "C" },
+            { "question": "ข้อใดคือความหมายของคำว่า 'อุปสรรค'?", "options": [{ "id": "A", "text": "ความสำเร็จที่ยิ่งใหญ่" }, { "id": "B", "text": "เครื่องกีดขวาง, ความขัดข้อง" }, { "id": "C", "text": "เพื่อนสนิทหรือผู้ช่วยเหลือ" }, { "id": "D", "text": "โอกาสที่ดีในการเริ่มต้น" }], "correct_answer": "B" },
+            { "question": "คำว่า 'มัธยัสถ์' สัมพันธ์กับข้อใดมากที่สุด?", "options": [{ "id": "A", "text": "การใช้จ่ายอย่างฟุ่มเฟือย" }, { "id": "B", "text": "การเดินทางไปต่างประเทศ" }, { "id": "C", "text": "การเก็บออมและใช้จ่ายเท่าที่จำเป็น" }, { "id": "D", "text": "การลงทุนที่มีความเสี่ยงสูง" }], "correct_answer": "C" },
+            { "question": "'เจรจา' หมายความว่าอะไร?", "options": [{ "id": "A", "text": "การต่อสู้โดยใช้กำลัง" }, { "id": "B", "text": "การพูดคุยหรือหารือกันเพื่อตกลงกัน" }, { "id": "C", "text": "การเขียนจดหมายเพื่อร้องเรียน" }, { "id": "D", "text": "การเดินทางคนเดียว" }], "correct_answer": "B" },
+            { "question": "คำว่า 'ประสิทธิภาพ' หมายถึงข้อใด?", "options": [{ "id": "A", "text": "ความสามารถที่ทำให้เกิดผลในงาน" }, { "id": "B", "text": "ความรู้สึกท้อแท้สิ้นหวัง" }, { "id": "C", "text": "ความสวยงามภายนอก" }, { "id": "D", "text": "ความแข็งแรงของร่างกาย" }], "correct_answer": "A" },
+            { "question": "ข้อใดคือความหมายของ 'เอกฉันท์'?", "options": [{ "id": "A", "text": "ความคิดเห็นที่แตกต่างกันอย่างมาก" }, { "id": "B", "text": "การตัดสินใจโดยคนเพียงคนเดียว" }, { "id": "C", "text": "ความลับที่ไม่สามารถเปิดเผยได้" }, { "id": "D", "text": "มีความเห็นเป็นอย่างเดียวกันทั้งหมด" }], "correct_answer": "D" }
+        ];
+
+        // DOM Elements
+        const quizCard = document.getElementById('quiz-card');
+        const resultsCard = document.getElementById('results-card');
+        const questionCounter = document.getElementById('question-counter');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackContainer = document.getElementById('feedback-container');
+        const nextButton = document.getElementById('next-button');
+        const restartButton = document.getElementById('restart-button');
+
+        // Quiz State
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answerSelected = false;
+
+        // --- Core Functions ---
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            answerSelected = false;
+            resultsCard.classList.add('hidden');
+            quizCard.classList.remove('hidden');
+            loadQuestion();
+            checkPreviousScores();
+        }
+
+        function loadQuestion() {
+            answerSelected = false;
+            feedbackContainer.innerHTML = '';
+            nextButton.classList.add('hidden');
+            optionsContainer.innerHTML = '';
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionCounter.textContent = `คำถาม ${currentQuestionIndex + 1} / ${quizData.length}`;
+            questionText.textContent = currentQuestion.question;
+
+            // Shuffle options for variety
+            const shuffledOptions = [...currentQuestion.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.innerHTML = `<span class="bg-gray-200 text-gray-700 font-bold w-8 h-8 flex items-center justify-center rounded-md mr-4">${option.id}</span> <span class="text-left flex-1">${option.text}</span>`;
+                button.className = 'w-full flex items-center text-left p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200';
+                button.onclick = () => selectAnswer(option.id, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectAnswer(selectedId, buttonElement) {
+            if (answerSelected) return; // Prevent changing answer
+            answerSelected = true;
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            const isCorrect = selectedId === currentQuestion.correct_answer;
+
+            // Update score
+            if (isCorrect) {
+                score++;
+                buttonElement.classList.remove('bg-gray-50', 'hover:bg-blue-100');
+                buttonElement.classList.add('bg-green-500', 'text-white', 'border-green-600');
+                feedbackContainer.innerHTML = `<p class="text-green-600 font-bold">ถูกต้อง!</p>`;
+            } else {
+                buttonElement.classList.remove('bg-gray-50', 'hover:bg-blue-100');
+                buttonElement.classList.add('bg-red-500', 'text-white', 'border-red-600');
+                feedbackContainer.innerHTML = `<p class="text-red-600 font-bold">ผิด! คำตอบที่ถูกต้องคือ: ${currentQuestion.correct_answer}</p>`;
+                // Highlight the correct answer
+                const correctButton = Array.from(optionsContainer.children).find(btn => btn.innerText.startsWith(currentQuestion.correct_answer));
+                if (correctButton) {
+                    correctButton.classList.remove('bg-gray-50', 'hover:bg-blue-100');
+                    correctButton.classList.add('bg-green-200', 'border-green-400');
+                }
+            }
+
+            // Disable all option buttons
+            Array.from(optionsContainer.children).forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('cursor-not-allowed');
+                btn.classList.remove('hover:bg-blue-100', 'hover:border-blue-300');
+            });
+
+            nextButton.classList.remove('hidden');
+        }
+
+        function showResults() {
+            quizCard.classList.add('hidden');
+            resultsCard.classList.remove('hidden');
+            
+            const percentage = ((score / quizData.length) * 100).toFixed(0);
+            document.getElementById('final-score').textContent = `${score}/${quizData.length}`;
+            document.getElementById('final-percentage').textContent = `${percentage}%`;
+
+            // Save results to LocalForage
+            localforage.setItem('thaiQuizLastResult', {
+                score: score,
+                total: quizData.length,
+                percentage: percentage,
+                timestamp: new Date().toLocaleString('th-TH')
+            }).catch(err => {
+                console.error("Error saving to LocalForage:", err);
+            });
+        }
+        
+        async function checkPreviousScores() {
+            const previousScoreContainer = document.getElementById('previous-score-container');
+            try {
+                const lastResult = await localforage.getItem('thaiQuizLastResult');
+                if (lastResult) {
+                    document.getElementById('previous-score-text').textContent = 
+                        `คะแนน: ${lastResult.score}/${lastResult.total} (${lastResult.percentage}%) - เมื่อ: ${lastResult.timestamp}`;
+                    previousScoreContainer.classList.remove('hidden');
+                } else {
+                    previousScoreContainer.classList.add('hidden');
+                }
+            } catch (err) {
+                 console.error("Error reading from LocalForage:", err);
+                 previousScoreContainer.classList.add('hidden');
+            }
+        }
+
+
+        // --- Event Listeners ---
+
+        nextButton.addEventListener('click', () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        restartButton.addEventListener('click', startQuiz);
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', startQuiz);
+    </script>
+
+</body>
+</html>
