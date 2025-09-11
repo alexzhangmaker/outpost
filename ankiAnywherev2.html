@@ -29,6 +29,7 @@
         .container {
             width: 100%;
             max-width: 600px;
+            height:90vh;
             background-color: white;
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
@@ -71,7 +72,7 @@
         .flashcard-container {
             perspective: 1000px;
             margin-bottom: 15px;
-            height: 380px;
+            height: 580px;
         }
         
         .flashcard {
@@ -220,13 +221,13 @@
         
         .rating-btn {
             flex: 1;
-            padding: 8px 3px;
+            padding: 10px 3px;
             border: none;
             border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             min-width: 0;
         }
         
@@ -260,38 +261,6 @@
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
         }
         
-        .navigation {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        
-        .nav-btn {
-            flex: 1;
-            padding: 8px 5px;
-            border: none;
-            border-radius: 6px;
-            background: #3498db;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-        }
-        
-        .nav-btn:hover {
-            background: #2980b9;
-            transform: translateY(-2px);
-        }
-        
-        .nav-btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
         .progress-bar {
             width: 100%;
             background: #ecf0f1;
@@ -308,6 +277,38 @@
             transition: width 0.3s;
         }
         
+        .completion-message {
+            text-align: center;
+            padding: 30px;
+            display: none;
+        }
+        
+        .completion-message h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .completion-message p {
+            margin-bottom: 20px;
+            color: #7f8c8d;
+        }
+        
+        .reset-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .reset-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -318,7 +319,7 @@
             }
             
             .flashcard-container {
-                height: 380px;
+                height: 580px;
             }
             
             .rating-btn {
@@ -346,11 +347,7 @@
             }
             
             .flashcard-container {
-                height: 400px;
-            }
-            
-            .button-group {
-                flex-direction: column;
+                height: 580px;
             }
             
             .rating-container {
@@ -370,8 +367,8 @@
             <h1>泰语单词闪卡学习</h1>
             <div class="stats">
                 <div class="stat-item">
-                    <div class="stat-label">剩余单词</div>
-                    <div class="stat-value" id="remaining-count">5</div>
+                    <div class="stat-label">进度</div>
+                    <div class="stat-value" id="progress-count">1/5</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">已学单词</div>
@@ -384,7 +381,7 @@
             </div>
         </header>
         
-        <div class="flashcard-container">
+        <div class="flashcard-container" id="flashcard-container">
             <div class="flashcard" id="flashcard">
                 <div class="card-front">
                     <div class="thai-word" id="thai-word">ช่วยเหลือ</div>
@@ -439,25 +436,23 @@
                 <button class="rating-btn rating-4" data-rating="4">4<br><span>比较熟悉</span></button>
                 <button class="rating-btn rating-5" data-rating="5">5<br><span>完全掌握</span></button>
             </div>
-            
-            <div class="navigation">
-                <button class="nav-btn" id="prev-btn" disabled>
-                    <i class="fas fa-arrow-left"></i> 上一个
-                </button>
-                <button class="nav-btn" id="next-btn">
-                    下一个 <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
         </div>
         
         <div class="progress-bar">
             <div class="progress" id="progress-bar"></div>
+        </div>
+        
+        <div class="completion-message" id="completion-message">
+            <h2>恭喜！您已完成所有单词的学习</h2>
+            <p>您已经学习了 <span id="total-learned">0</span> 个单词，掌握程度为 <span id="final-mastery">0%</span></p>
+            <button class="reset-btn" id="reset-btn">重新开始</button>
         </div>
     </div>
 
     <script>
         // 示例单词数据
         const wordList = [
+            /*
             {
                 thai: "ช่วยเหลือ",
                 pronunciation: "chûay-lĕua",
@@ -525,6 +520,7 @@
                     { phrase: "ที่นอน", translation: "床" }
                 ]
             }
+            */
         ];
 
         // 应用状态
@@ -536,6 +532,14 @@
             const savedProgress = localStorage.getItem('thaiFlashcardProgress');
             if (savedProgress) {
                 learnedWords = JSON.parse(savedProgress);
+                // 找到第一个未学习的单词
+                const learnedIndices = learnedWords.map(w => w.index);
+                for (let i = 0; i < wordList.length; i++) {
+                    if (!learnedIndices.includes(i)) {
+                        currentIndex = i;
+                        break;
+                    }
+                }
             }
             updateStats();
         }
@@ -548,20 +552,125 @@
         
         // 更新统计信息
         function updateStats() {
-            const remainingCount = wordList.length - learnedWords.length;
+            const progressText = `${currentIndex + 1}/${wordList.length}`;
             const learnedCount = learnedWords.length;
             const masteryLevel = learnedWords.length > 0 ? 
                 Math.round((learnedWords.reduce((sum, word) => sum + word.rating, 0) / (learnedWords.length * 5)) * 100) : 0;
             
-            document.getElementById('remaining-count').textContent = remainingCount;
+            document.getElementById('progress-count').textContent = progressText;
             document.getElementById('learned-count').textContent = learnedCount;
             document.getElementById('mastery-level').textContent = `${masteryLevel}%`;
             
             // 更新进度条
-            const progressPercent = (learnedCount / wordList.length) * 100;
+            const progressPercent = (currentIndex / wordList.length) * 100;
             document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+            
+            // 检查是否已完成所有单词
+            if (learnedWords.length >= wordList.length) {
+                showCompletionMessage();
+            }
         }
         
+        // 显示完成消息
+        async function showCompletionMessage() {
+            document.querySelector('.flashcard-container').style.display = 'none';
+            document.getElementById('rating-container').style.display = 'none';
+            document.getElementById('progress-bar').style.display = 'none';
+            
+            const learnedCount = learnedWords.length;
+            const masteryLevel = learnedWords.length > 0 ? 
+                Math.round((learnedWords.reduce((sum, word) => sum + word.rating, 0) / (learnedWords.length * 5)) * 100) : 0;
+            
+            document.getElementById('total-learned').textContent = learnedCount;
+            document.getElementById('final-mastery').textContent = `${masteryLevel}%`;
+            document.getElementById('completion-message').style.display = 'block';
+
+            //await uploadAnkiRecord() ;
+        }
+        
+
+        // Supermemo SM2 algorithm implementation (as SM18 is proprietary, using SM2 as a base which is inspired by Ebbinghaus and Supermemo principles)
+        function supermemo(item, grade) {
+            let { interval, repetition, efactor } = item;
+            if (grade >= 3) { // Pass
+                if (repetition === 0) {
+                    interval = 1;
+                } else if (repetition === 1) {
+                    interval = 6;
+                } else {
+                    interval = Math.round(interval * efactor);
+                }
+                repetition += 1;
+                efactor += (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
+                if (efactor < 1.3) efactor = 1.3;
+            } else { // Fail
+                repetition = 0;
+                interval = 1;
+                efactor = Math.max(1.3, efactor - 0.2); // Optional decay on fail
+            }
+            return { interval, repetition, efactor };
+        }
+
+        let bUploaded = false ;
+        async function uploadAnkiRecord(){
+            if(bUploaded == true) return ;
+
+            let cDate = new Date() ;
+            let nextDate = new Date() ;
+
+            console.log(learnedWords) ;
+            for(let i=0;i<learnedWords.length;i++){
+                let encodeWord = encodeURIComponent(learnedWords[i].word) ;
+                let sm2RecordURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/SM2Records/${encodeWord}.json` ;
+                let response = await fetch(sm2RecordURL) ;
+                let jsonResult = await response.json() ;
+
+
+                let jsonSM2 = {
+                    "efactor": 2.5,
+                    "interval": 0,
+                    "repetition": 0
+                };
+                let jsonRecord={
+                    "efactor": 2.5,
+                    "interval": 0,
+                    "repetition": 0,
+                    "id": learnedWords[i].word,
+                    "next_review": cDate.toDateString(),
+                };
+
+                console.log(jsonResult) ;
+                if(jsonResult==null){
+                    jsonSM2= supermemo(jsonSM2,learnedWords[i].rating) ;
+                    console.log(jsonSM2)  ;
+                    nextDate.setDate(cDate.getDate()+jsonSM2.interval) ;
+                    jsonRecord.next_review = nextDate.toDateString() ;
+                    jsonRecord.efactor = jsonSM2.efactor ;
+                    jsonRecord.interval = jsonSM2.interval ;
+                    jsonRecord.repetition = jsonSM2.repetition ;
+                    
+                }else{
+                    jsonSM2= supermemo(jsonResult,learnedWords[i].rating) ;
+                    console.log(jsonSM2)  ;
+
+                    nextDate.setDate(cDate.getDate()+jsonSM2.interval) ;
+                    jsonRecord.next_review = nextDate.toDateString() ;
+                    jsonRecord.interval = jsonSM2.interval ;
+                    jsonRecord.repetition = jsonSM2.repetition ;
+                }
+                console.log(jsonRecord) ;
+                await fetch(sm2RecordURL, {
+                    method: "PUT", // Use PATCH to update specific fields
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(jsonRecord),
+                }) ;
+            }
+            bUploaded = true ;
+        }
+
+
         // 显示当前单词
         function showCurrentWord() {
             const word = wordList[currentIndex];
@@ -610,10 +719,6 @@
             // 重置卡片状态
             document.getElementById('flashcard').classList.remove('flipped');
             
-            // 更新导航按钮状态
-            document.getElementById('prev-btn').disabled = currentIndex === 0;
-            document.getElementById('next-btn').disabled = currentIndex === wordList.length - 1;
-            
             // 检查是否已经评分
             const existingRating = learnedWords.findIndex(w => w.index === currentIndex);
             if (existingRating !== -1) {
@@ -625,30 +730,63 @@
                     btn.disabled = false;
                 });
             }
+            
+            updateStats();
         }
         
+        // 前进到下一个单词
+        async function nextWord() {
+            // 找到下一个未学习的单词
+            const learnedIndices = learnedWords.map(w => w.index);
+            for (let i = currentIndex + 1; i < wordList.length; i++) {
+                if (!learnedIndices.includes(i)) {
+                    currentIndex = i;
+                    showCurrentWord();
+                    return;
+                }
+            }
+            
+            // 如果后面没有未学习的单词，从开头找
+            for (let i = 0; i < currentIndex; i++) {
+                if (!learnedIndices.includes(i)) {
+                    currentIndex = i;
+                    showCurrentWord();
+                    return;
+                }
+            }
+            
+            // 如果所有单词都已学习，显示完成消息
+            showCompletionMessage();
+            await uploadAnkiRecord() ;
+        }
+        
+        // 重置应用
+        function resetApp() {
+            learnedWords = [];
+            currentIndex = 0;
+            localStorage.removeItem('thaiFlashcardProgress');
+            
+            document.getElementById('flashcard-container').style.display = 'block';
+            document.getElementById('rating-container').style.display = 'flex';
+            document.getElementById('progress-bar').style.display = 'block';
+            document.getElementById('completion-message').style.display = 'none';
+            
+            showCurrentWord();
+        }
+        
+
+        let tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/B1_Work_Social.json` ;
+
         // 初始化应用
-        function initApp() {
+        async function initApp() {
+            await _loadFireBaseWordSet(tWordSetURL) ;
+
             loadProgress();
             showCurrentWord();
             
             // 添加事件监听器
             document.getElementById('flashcard').addEventListener('click', function() {
                 this.classList.toggle('flipped');
-            });
-            
-            document.getElementById('prev-btn').addEventListener('click', function() {
-                if (currentIndex > 0) {
-                    currentIndex--;
-                    showCurrentWord();
-                }
-            });
-            
-            document.getElementById('next-btn').addEventListener('click', function() {
-                if (currentIndex < wordList.length - 1) {
-                    currentIndex++;
-                    showCurrentWord();
-                }
             });
             
             // 评分按钮事件
@@ -677,17 +815,74 @@
                         btn.disabled = true;
                     });
                     
-                    // 自动前进到下一个单词（如果不是最后一个）
-                    if (currentIndex < wordList.length - 1) {
-                        setTimeout(() => {
-                            currentIndex++;
-                            showCurrentWord();
-                        }, 800);
-                    }
+                    // 自动前进到下一个单词
+                    setTimeout(nextWord, 500);
                 });
             });
+            
+            // 重置按钮事件
+            document.getElementById('reset-btn').addEventListener('click', resetApp);
         }
         
+
+        async function _loadFireBaseWordSet(url){
+            let response = await fetch(url) ;
+            let jsonWordSet = await response.json() ;
+            console.log(jsonWordSet) ;
+
+            for(let i=0;i<jsonWordSet.words.length;i++){
+                let word = jsonWordSet.words[i] ;
+                wordURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiDictionary/${word}.json` ;
+                response = await fetch(wordURL) ;
+                let jsonWord = await response.json() ;
+                let ankiWord={
+                    thai:jsonWord.thai.word,
+                    pronunciation:jsonWord.thai.pronunciation,
+                    definitions:jsonWord.definitions,
+                    synonyms:jsonWord.synonyms,
+                    antonyms:jsonWord.antonyms,
+                    common_phrases:jsonWord.common_phrases
+                };
+                wordList.push(ankiWord) ;
+            }
+            /*
+            {
+                thai: "ช่วยเหลือ",
+                pronunciation: "chûay-lĕua",
+                definitions: [
+                    { en: "to help, assist, or aid someone", zh: "帮助，援助，协助" },
+                    { en: "to support or lend a hand", zh: "支持，帮忙" }
+                ],
+                synonyms: ["สนับสนุน", "เอื้อเฟื้อ", "อุปถัมภ์", "เกื้อกูล"],
+                antonyms: ["ขัดขวาง", "เป็นอุปสรรค", "ทำลาย"],
+                common_phrases: [
+                    { phrase: "ช่วยเหลือตัวเอง", translation: "自助" },
+                    { phrase: "ช่วยเหลือซึ่งกันและกัน", translation: "互相帮助" },
+                    { phrase: "ขอความช่วยเหลือ", translation: "请求帮助" }
+                ]
+            }
+            */
+
+        }
+
+        //?wordSet=
+        //?reviewSet=
+        const queryString = window.location.search; // "?color=purple&size=M&size=L"
+        const urlParams = new URLSearchParams(queryString);
+        const wordSetKey = urlParams.get('wordSet'); // "purple"
+        if(wordSetKey==null){
+            console.log('no wordSet specified');
+            const reviewSetKey = urlParams.get('reviewSet'); // "purple"
+            let keyEncode = encodeURIComponent(reviewSetKey) ;
+            tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/DailyReview/${keyEncode}.json` ;
+        }else{
+            console.log(wordSetKey) ;
+            let keyEncode = encodeURIComponent(wordSetKey) ;
+            tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${keyEncode}.json` ;
+        }
+
+        //const sizes = urlParams.getAll('size'); // ["M", "L"]
+        //const pageExists = urlParams.has('page'); // false
         // 启动应用
         initApp();
     </script>

@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 控制台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 导航区样式 */
+        .sidebar {
+            width: 250px;
+            background-color: #252526;
+            border-right: 1px solid #3e3e42;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #3e3e42;
+            margin-bottom: 20px;
+        }
+        
+        .logo h1 {
+            font-size: 18px;
+            color: #ffffff;
+        }
+        
+        .nav-item {
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .nav-item:hover {
+            background-color: #2a2d2e;
+        }
+        
+        .nav-item.active {
+            background-color: #37373d;
+        }
+        
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* 内容区样式 */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 15px 20px;
+            background-color: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h2 {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+        }
+        
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #252526;
+            border: 1px solid #3e3e42;
+        }
+        
+        .data-table th {
+            background-color: #2d2d30;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 500;
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .data-table tr:hover {
+            background-color: #2a2d2e;
+        }
+        
+        /* 操作图标样式 */
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .action-icon {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        
+        .action-icon.delete:hover {
+            color: #f85149;
+            background-color: rgba(248, 81, 73, 0.1);
+        }
+        
+        .action-icon.publish:hover {
+            color: #3fb950;
+            background-color: rgba(63, 185, 80, 0.1);
+        }
+        
+        /* 按钮样式 */
+        button {
+            background-color: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #1177bb;
+        }
+        
+        button.secondary {
+            background-color: #4f4f51;
+        }
+        
+        button.secondary:hover {
+            background-color: #5a5a5c;
+        }
+        
+        /* 加载和错误状态 */
+        .status-message {
+            padding: 20px;
+            text-align: center;
+            color: #cccccc;
+        }
+        
+        .error {
+            color: #f85149;
+        }
+        
+        /* 视图控制 */
+        .view {
+            display: none;
+        }
+        
+        .view.active {
+            display: block;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+            
+            .logo h1, .nav-item span {
+                display: none;
+            }
+            
+            .nav-item {
+                justify-content: center;
+            }
+            
+            .nav-item i {
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航区 -->
+    <div class="sidebar">
+        <div class="logo">
+            <h1>Firebase 控制台</h1>
+        </div>
+        <div class="nav-item active" data-view="data-management">
+            <i class="fas fa-database"></i>
+            <span>数据管理</span>
+        </div>
+        <div class="nav-item" data-view="published-data">
+            <i class="fas fa-share-square"></i>
+            <span>已发布数据管理</span>
+        </div>
+        <div class="nav-item">
+            <i class="fas fa-cog"></i>
+            <span>设置</span>
+        </div>
+        <div class="nav-item">
+            <i class="fas fa-question-circle"></i>
+            <span>帮助</span>
+        </div>
+    </div>
+    
+    <!-- 内容区 -->
+    <div class="content">
+        <div class="header">
+            <h2 id="view-title">数据管理</h2>
+            <button id="refresh-btn" class="refresh-btn">
+                <i class="fas fa-sync-alt"></i> 刷新数据
+            </button>
+        </div>
+        
+        <div class="main-content">
+            <!-- 数据管理视图 -->
+            <div id="data-management" class="view active">
+                <div id="status-message-1" class="status-message">
+                    正在加载数据...
+                </div>
+                
+                <table id="data-table-1" class="data-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th width="30%">键名</th>
+                            <th width="50%">单词</th>
+                            <th width="20%">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body-1">
+                        <!-- 数据将通过JavaScript动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 已发布数据管理视图 -->
+            <div id="published-data" class="view">
+                <div id="status-message-2" class="status-message">
+                    正在加载已发布数据...
+                </div>
+                
+                <table id="data-table-2" class="data-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th width="30%">键名</th>
+                            <th width="50%">单词</th>
+                            <th width="20%">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body-2">
+                        <!-- 数据将通过JavaScript动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <script>
+        // Firebase配置 - 需要替换为您的实际配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // 当前活动视图
+        let currentView = 'data-management';
+        
+        // DOM元素
+        const viewTitle = document.getElementById('view-title');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const navItems = document.querySelectorAll('.nav-item');
+        const views = document.querySelectorAll('.view');
+        
+        // 从Firebase获取数据
+        function fetchData(view) {
+            const statusMessage = document.getElementById(`status-message-${view === 'data-management' ? 1 : 2}`);
+            const dataTable = document.getElementById(`data-table-${view === 'data-management' ? 1 : 2}`);
+            
+            statusMessage.textContent = view === 'data-management' ? "正在加载数据..." : "正在加载已发布数据...";
+            statusMessage.classList.remove('error');
+            dataTable.style.display = 'none';
+            statusMessage.style.display = 'block';
+            
+            // 根据视图选择不同的数据库路径
+            const dbPath = view === 'data-management' ? '/thaiWordList' : '/thaiAnki/reviewSets';
+            const dbRef = database.ref(dbPath);
+            
+            dbRef.once('value')
+                .then((snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        renderTable(data, view);
+                        statusMessage.style.display = 'none';
+                        dataTable.style.display = 'table';
+                    } else {
+                        statusMessage.textContent = "没有找到数据";
+                        statusMessage.style.display = 'block';
+                    }
+                })
+                .catch((error) => {
+                    console.error("获取数据出错:", error);
+                    statusMessage.textContent = "获取数据出错: " + error.message;
+                    statusMessage.classList.add('error');
+                    statusMessage.style.display = 'block';
+                });
+        }
+        
+        // 渲染数据表格
+        function renderTable(data, view) {
+            const tableBody = document.getElementById(`table-body-${view === 'data-management' ? 1 : 2}`);
+            tableBody.innerHTML = '';
+            
+            Object.entries(data).forEach(([key, value]) => {
+                const row = document.createElement('tr');
+                
+                // 键名单元格
+                const keyCell = document.createElement('td');
+                keyCell.textContent = key;
+                row.appendChild(keyCell);
+                
+                // 单词数组单元格
+                const wordsCell = document.createElement('td');
+                if (value.words && Array.isArray(value.words)) {
+                    wordsCell.textContent = value.words.join(', ');
+                } else {
+                    wordsCell.textContent = '无数据';
+                    wordsCell.style.color = '#888';
+                }
+                row.appendChild(wordsCell);
+                
+                // 操作图标单元格
+                const actionsCell = document.createElement('td');
+                actionsCell.innerHTML = `
+                    <div class="actions">
+                        <i class="fas fa-trash action-icon delete" data-key="${key}" data-view="${view}"></i>
+                        ${view === 'data-management' ? 
+                          `<i class="fas fa-share action-icon publish" data-key="${key}" data-view="${view}"></i>` : 
+                          `<i class="fas fa-undo action-icon unpublish" data-key="${key}" data-view="${view}"></i>`}
+                    </div>
+                `;
+                row.appendChild(actionsCell);
+                
+                tableBody.appendChild(row);
+            });
+            
+            // 添加事件监听器
+            document.querySelectorAll('.action-icon.delete').forEach(icon => {
+                icon.addEventListener('click', handleDelete);
+            });
+            
+            document.querySelectorAll('.action-icon.publish').forEach(icon => {
+                icon.addEventListener('click', handlePublish);
+            });
+            
+            document.querySelectorAll('.action-icon.unpublish').forEach(icon => {
+                icon.addEventListener('click', handleUnpublish);
+            });
+        }
+        
+        // 处理删除操作
+        function handleDelete(event) {
+            const key = event.target.getAttribute('data-key');
+            const view = event.target.getAttribute('data-view');
+            if (confirm(`确定要删除 "${key}" 吗？`)) {
+                // 在实际应用中，这里应该调用Firebase的删除API
+                console.log(`删除项目: ${key} (来自: ${view})`);
+                // 示例: database.ref(`您的数据路径/${key}`).remove();
+                alert(`已删除: ${key}`);
+                // 刷新当前视图
+                fetchData(currentView);
+            }
+        }
+        
+        // 处理发布操作
+        // 处理发布操作
+        async function handlePublish(event) {
+            const key = event.target.getAttribute('data-key');
+            let keyEncode =encodeURIComponent(key) ;
+
+            let cDate = new Date() ;
+            let urlReviewSet = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/reviewSets/${keyEncode}.json`;
+            let urlWordSet = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${keyEncode}.json` ;
+            let jsonReviewSet={
+                "createdAt":cDate.toDateString(),
+                "nextReview":cDate.toDateString(),
+                "wordSetID":key,
+                "title":key,
+                "wordSetURL":urlWordSet
+            };
+            // 在实际应用中，这里应该调用Firebase的发布API
+            console.log(`发布项目: ${key}`);
+            await fetch(urlReviewSet, {
+                method: "PUT", // Use PATCH to update specific fields
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(jsonReviewSet),
+            }) ;
+            alert(`已发布: ${key}`);
+        }
+        
+        // 处理取消发布操作
+        function handleUnpublish(event) {
+            const key = event.target.getAttribute('data-key');
+            // 在实际应用中，这里应该调用Firebase的取消发布API
+            console.log(`取消发布项目: ${key}`);
+            let urlAnki = `http://localhost:3010/ankiAnywhereV2.html?wordSet=${key}` ;
+            window.open(urlAnki, '_blank');
+            //alert(`已取消发布: ${key}`);
+            // 刷新当前视图
+            //fetchData(currentView);
+        }
+        
+        // 切换视图
+        function switchView(viewName) {
+            // 更新导航状态
+            navItems.forEach(item => {
+                if (item.getAttribute('data-view') === viewName) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+            
+            // 更新视图显示
+            views.forEach(view => {
+                if (view.id === viewName) {
+                    view.classList.add('active');
+                } else {
+                    view.classList.remove('active');
+                }
+            });
+            
+            // 更新标题
+            viewTitle.textContent = viewName === 'data-management' ? '数据管理' : '已发布数据管理';
+            
+            // 设置当前视图
+            currentView = viewName;
+            
+            // 加载数据
+            fetchData(viewName);
+        }
+        
+        // 初始化事件监听器
+        function initEventListeners() {
+            // 刷新按钮事件监听
+            refreshBtn.addEventListener('click', () => fetchData(currentView));
+            
+            // 导航项点击事件
+            navItems.forEach(item => {
+                const viewName = item.getAttribute('data-view');
+                if (viewName) {
+                    item.addEventListener('click', () => switchView(viewName));
+                }
+            });
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initEventListeners();
+            fetchData(currentView);
+        });
+    </script>
+</body>
+</html>
