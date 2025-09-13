@@ -3,17 +3,17 @@
   "name": "outpost,to the world!",
   "icons": [
     {
-      "src": "/outpost/images/outpost180.png",
+      "src": "/outpost/images/noted180.png",
       "type": "image/png",
       "sizes": "180x180"
     },
     {
-      "src": "/outpost/images/outpost192.png",
+      "src": "/outpost/images/noted192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/outpost/images/outpost512.png",
+      "src": "/outpost/images/noted512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
