@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>outpost.Portfolio 数据库管理控制台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet">
+    <!-- Lucide图标 -->
+    <link rel="stylesheet" href="https://unpkg.com/lucide@latest/dist/iconfont/icons.css">
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --sidebar-collapsed-width: 70px;
+            --header-height: 60px;
+            --primary-color: #4285F4;
+            --secondary-color: #34A853;
+            --accent-color: #EA4335;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+            --transition-speed: 0.3s;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7f9;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            width: var(--sidebar-collapsed-width);
+            background: var(--dark-bg);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: all var(--transition-speed) ease;
+            z-index: 1000;
+            padding-top: 20px;
+        }
+        
+        .sidebar:hover {
+            width: var(--sidebar-width);
+        }
+        
+        .sidebar:hover .logo-text,
+        .sidebar:hover .nav-text,
+        .sidebar:hover .nav-title,
+        .sidebar:hover .accordion-nav,
+        .sidebar:hover .ms-auto {
+            display: block !important;
+            opacity: 1;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+        
+        .logo i {
+            color: var(--primary-color);
+            font-size: 24px;
+            min-width: 24px;
+        }
+        
+        .logo h2 {
+            font-size: 20px;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .logo-text {
+            display: none;
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+        }
+        
+        .nav-section {
+            margin-top: 20px;
+        }
+        
+        .nav-title {
+            padding: 10px 20px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 1px;
+            display: none;
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+            white-space: nowrap;
+        }
+        
+        .nav-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            white-space: nowrap;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            border-left-color: var(--primary-color);
+        }
+        
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+            min-width: 20px;
+        }
+        
+        .nav-text {
+            display: none;
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+        }
+        
+        .accordion-nav {
+            margin-left: 20px;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+        }
+        
+        .accordion-nav.show {
+            display: block;
+        }
+        
+        .accordion-item {
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .accordion-item:hover, .accordion-item.active {
+            color: white;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .ms-auto {
+            display: none !important;
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+        }
+        
+        /* 主内容区样式 */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-collapsed-width);
+            padding: 20px;
+            transition: margin-left var(--transition-speed) ease;
+        }
+        
+        .sidebar:hover ~ .main-content {
+            margin-left: var(--sidebar-width);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .page-title h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .page-title p {
+            color: #666;
+            margin-bottom: 0;
+        }
+        
+        .tools {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: #3367d6;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-box input {
+            width: 250px;
+        }
+        
+        /* 表格样式 */
+        .gridjs-container {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .sidebar.mobile-open {
+                width: var(--sidebar-width);
+            }
+            
+            .sidebar.mobile-open .logo-text,
+            .sidebar.mobile-open .nav-text,
+            .sidebar.mobile-open .nav-title,
+            .sidebar.mobile-open .accordion-nav,
+            .sidebar.mobile-open .ms-auto {
+                display: block !important;
+                opacity: 1;
+            }
+            
+            .menu-toggle {
+                display: block !important;
+            }
+            
+            .sidebar:hover ~ .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .firebase-badge {
+            background: #FFCA28;
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        /* Lucide图标样式调整 */
+        .icon {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+        
+        /* 滚动条样式 */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边导航栏 -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="icon" data-lucide="database"></i>
+                    <span class="logo-text">Firebase Console</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">主要导航</div>
+                <a href="#" class="nav-item active">
+                    <i class="icon" data-lucide="home"></i>
+                    <span class="nav-text">仪表盘</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="icon" data-lucide="bar-chart-3"></i>
+                    <span class="nav-text">分析</span>
+                </a>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">数据管理</div>
+                
+                <a href="#" class="nav-item" id="idBTNTracker">
+                    <i class="icon" data-lucide="users"></i>
+                    <span class="nav-text">Tracker</span>
+                </a>
+                
+                <a href="#" class="nav-item accordion-toggle" data-target="products">
+                    <i class="icon" data-lucide="shopping-cart"></i>
+                    <span class="nav-text">产品管理</span>
+                    <i class="icon ms-auto" data-lucide="chevron-down"></i>
+                </a>
+                <div class="accordion-nav" id="products">
+                    <a href="#" class="accordion-item">
+                        <i class="icon" data-lucide="list"></i>
+                        <span class="nav-text">产品列表</span>
+                    </a>
+                    <a href="#" class="accordion-item">
+                        <i class="icon" data-lucide="tag"></i>
+                        <span class="nav-text">分类管理</span>
+                    </a>
+                    <a href="#" class="accordion-item">
+                        <i class="icon" data-lucide="star"></i>
+                        <span class="nav-text">评价管理</span>
+                    </a>
+                </div>
+                
+                <a href="#" class="nav-item accordion-toggle" data-target="orders">
+                    <i class="icon" data-lucide="file-text"></i>
+                    <span class="nav-text">订单管理</span>
+                    <i class="icon ms-auto" data-lucide="chevron-down"></i>
+                </a>
+                <div class="accordion-nav" id="orders">
+                    <a href="#" class="accordion-item">
+                        <i class="icon" data-lucide="list"></i>
+                        <span class="nav-text">所有订单</span>
+                    </a>
+                    <a href="#" class="accordion-item">
+                        <i class="icon" data-lucide="truck"></i>
+                        <span class="nav-text">配送中</span>
+                    </a>
+                    <a href="#" class="accordion-item">
+                        <i class="icon" data-lucide="check-circle"></i>
+                        <span class="nav-text">已完成</span>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">配置</div>
+                <a href="#" class="nav-item">
+                    <i class="icon" data-lucide="settings"></i>
+                    <span class="nav-text">设置</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="icon" data-lucide="shield"></i>
+                    <span class="nav-text">权限管理</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="icon" data-lucide="history"></i>
+                    <span class="nav-text">日志</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <div class="header">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="icon" data-lucide="menu"></i>
+                </button>
+                <div class="page-title">
+                    <h1>outpost.Portfolio 数据库管理控制台 <span class="firebase-badge">Realtime Database</span></h1>
+                </div>
+                <div class="tools">
+                    <button class="btn btn-primary">
+                        <i class="icon" data-lucide="plus"></i> 添加数据
+                    </button>
+                    <button class="btn btn-outline-secondary">
+                        <i class="icon" data-lucide="refresh-cw"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            
+            <div class="content-card">
+                <div class="card-header">
+                    <h3 class="card-title">用户数据</h3>
+                    <div class="search-box">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="icon" data-lucide="search"></i>
+                            </span>
+                            <input type="text" class="form-control" placeholder="搜索用户...">
+                        </div>
+                        <button class="btn btn-outline-secondary">
+                            <i class="icon" data-lucide="filter"></i> 筛选
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="users-table"></div>
+            </div>
+            
+            <div class="content-card">
+                <div class="card-header">
+                    <h3 class="card-title">产品数据</h3>
+                    <div class="search-box">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="icon" data-lucide="search"></i>
+                            </span>
+                            <input type="text" class="form-control" placeholder="搜索产品...">
+                        </div>
+                        <button class="btn btn-outline-secondary">
+                            <i class="icon" data-lucide="filter"></i> 筛选
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="products-table"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 必要的JavaScript库 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <script>
+        // 初始化Lucide图标
+        lucide.createIcons();
+        
+        // 初始化侧边栏交互
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 移动端菜单切换
+            document.getElementById('menuToggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('mobile-open');
+            });
+            
+            // 手风琴菜单切换
+            const accordionToggles = document.querySelectorAll('.accordion-toggle');
+            accordionToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = this.getAttribute('data-target');
+                    const accordion = document.getElementById(target);
+                    accordion.classList.toggle('show');
+                    
+                    // 切换图标
+                    const icon = this.querySelector('.icon:last-child');
+                    if (accordion.classList.contains('show')) {
+                        icon.setAttribute('data-lucide', 'chevron-up');
+                    } else {
+                        icon.setAttribute('data-lucide', 'chevron-down');
+                    }
+                    lucide.createIcons();
+                });
+            });
+            
+            
+            
+            // 模拟用户数据
+            const mockUsers = [
+                { id: 1, name: '张三', email: 'zhangsan@example.com', role: '管理员', joinDate: '2023-01-15' },
+                { id: 2, name: '李四', email: 'lisi@example.com', role: '编辑', joinDate: '2023-02-20' },
+                { id: 3, name: '王五', email: 'wangwu@example.com', role: '用户', joinDate: '2023-03-10' },
+                { id: 4, name: '赵六', email: 'zhaoliu@example.com', role: '用户', joinDate: '2023-04-05' },
+                { id: 5, name: '钱七', email: 'qianqi@example.com', role: '编辑', joinDate: '2023-05-12' }
+            ];
+            
+            // 模拟产品数据
+            const mockProducts = [
+                { id: 101, name: '智能手机', category: '电子产品', price: 2999, stock: 45 },
+                { id: 102, name: '笔记本电脑', category: '电子产品', price: 5999, stock: 22 },
+                { id: 103, name: '咖啡机', category: '家用电器', price: 899, stock: 15 },
+                { id: 104, name: '运动鞋', category: '服装', price: 399, stock: 78 },
+                { id: 105, name: '书籍', category: '文化用品', price: 59, stock: 120 }
+            ];
+            
+            const inputData = {
+                "0696_HK": {
+                    alertBuy: 10.85,
+                    alertHandled: false,
+                    alertSell: 15,
+                    buy: 10.5,
+                    sell: 16
+                },
+                "BN": {
+                    alertBuy: 36.15,
+                    alertHandled: false,
+                    alertSell: 48.5,
+                    buy: 35,
+                    sell: 50.25
+                }
+            };
+
+            const gridJsData = convertToGridJsData(inputData);
+            console.log(gridJsData);
+            // 初始化用户表格
+            new gridjs.Grid({
+                columns: gridJsData.columns,
+                data: gridJsData.data,
+                search: true,
+                pagination: {
+                    limit: 5
+                },
+                sort: true,
+                resizable: true
+            }).render(document.getElementById('users-table'));
+            /*
+            // 初始化用户表格
+            new gridjs.Grid({
+                columns: [
+                    { id: 'id', name: 'ID', width: '80px' },
+                    { id: 'name', name: '姓名' },
+                    { id: 'email', name: '邮箱' },
+                    { id: 'role', name: '角色' },
+                    { id: 'joinDate', name: '加入日期' },
+                    { 
+                        name: '操作',
+                        width: '120px',
+                        formatter: (cell, row) => {
+                            return gridjs.h('div', { className: 'btn-group' },
+                                gridjs.h('button', { 
+                                    className: 'btn btn-sm btn-outline-primary',
+                                    onClick: () => editItem('user', row.cells[0].data)
+                                }, '编辑'),
+                                gridjs.h('button', { 
+                                    className: 'btn btn-sm btn-outline-danger',
+                                    onClick: () => deleteItem('user', row.cells[0].data)
+                                }, '删除')
+                            );
+                        }
+                    }
+                ],
+                data: mockUsers,
+                search: true,
+                pagination: {
+                    limit: 5
+                },
+                sort: true,
+                resizable: true
+            }).render(document.getElementById('users-table'));
+            */
+            
+            /*
+            // 初始化产品表格
+            new gridjs.Grid({
+                columns: [
+                    { id: 'id', name: 'ID', width: '80px' },
+                    { id: 'name', name: '产品名称' },
+                    { id: 'category', name: '分类' },
+                    { id: 'price', name: '价格' },
+                    { id: 'stock', name: '库存' },
+                    { 
+                        name: '操作',
+                        width: '120px',
+                        formatter: (cell, row) => {
+                            return gridjs.h('div', { className: 'btn-group' },
+                                gridjs.h('button', { 
+                                    className: 'btn btn-sm btn-outline-primary',
+                                    onClick: () => editItem('product', row.cells[0].data)
+                                }, '编辑'),
+                                gridjs.h('button', { 
+                                    className: 'btn btn-sm btn-outline-danger',
+                                    onClick: () => deleteItem('product', row.cells[0].data)
+                                }, '删除')
+                            );
+                        }
+                    }
+                ],
+                data: mockProducts,
+                search: true,
+                pagination: {
+                    limit: 5
+                },
+                sort: true,
+                resizable: true
+            }).render(document.getElementById('products-table'));
+            */
+            //https://aesop-portfolio.asia-southeast1.firebasedatabase.app/AggregatedHoldings
+
+            let holdings = await fetchDataFromFirebase("AggregatedHoldings") ;
+            const gridDataHoldings = convertToGridJsData(holdings);
+            console.log(gridDataHoldings);
+            // 初始化用户表格
+            new gridjs.Grid({
+                columns: gridDataHoldings.columns,
+                data: gridDataHoldings.data,
+                search: true,
+                pagination: {
+                    limit: 5
+                },
+                sort: true,
+                resizable: true
+            }).render(document.getElementById('products-table'));
+            
+            // 示例函数
+            function editItem(type, id) {
+                alert(`将编辑${type === 'user' ? '用户' : '产品'} ID: ${id}`);
+            }
+            
+            function deleteItem(type, id) {
+                if (confirm(`确定要删除${type === 'user' ? '用户' : '产品'} ID: ${id}吗？`)) {
+                    alert(`已删除${type === 'user' ? '用户' : '产品'} ID: ${id}`);
+                }
+            }
+            
+            
+            
+        });
+    </script>
+    <script>
+        document.querySelector('#idBTNTracker').addEventListener('click',async (event)=>{
+            alert('fdsfds') ;
+            let cPath = 'tickerTrackers' ;
+            let jsonTrackers = await fetchDataFromFirebase(cPath) ;
+            console.log(jsonTrackers) ;
+        }) ;
+    </script>
+    <script>
+        // 在实际应用中，您可以使用以下代码从Firebase获取数据
+        // 模拟Firebase配置 - 在实际应用中替换为您的配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://aesop-portfolio.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // 获取数据库引用
+        const database = firebase.database();
+        function fetchDataFromFirebase(path) {
+            return new Promise((resolve, reject) => {
+                const ref = database.ref(path);
+                ref.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    //resolve(data ? Object.values(data) : []);
+                    resolve(data);
+                }, (error) => {
+                    reject(error);
+                });
+            });
+        }
+
+        function convertToGridJsData(jsonData) {
+            // Define column names based on the properties of the first object
+            const columns = Object.keys(Object.values(jsonData)[0]).map(key => ({
+                id: key,
+                name: key.charAt(0).toUpperCase() + key.slice(1) // Capitalize first letter for display
+            }));
+
+            // Convert JSON data to array of rows
+            const data = Object.entries(jsonData).map(([key, values]) => ({
+                id: key, // Use the key as row identifier
+                ...values // Spread the values for other columns
+            }));
+
+            return {
+                columns: [
+                { id: 'id', name: 'Symbol' }, // Use 'Symbol' as header for the key
+                ...columns
+                ],
+                data
+            };
+        }
+        
+            
+    </script>
+</body>
+</html>

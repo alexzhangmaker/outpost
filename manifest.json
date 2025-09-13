@@ -2,14 +2,18 @@
   "short_name": "outpost",
   "name": "outpost,to the world!",
   "icons": [
-    
     {
-      "src": "/outpost/images/lark192.png",
+      "src": "/outpost/images/outpost180.png",
+      "type": "image/png",
+      "sizes": "180x180"
+    },
+    {
+      "src": "/outpost/images/outpost192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/outpost/images/lark512.png",
+      "src": "/outpost/images/outpost512.png",
       "type": "image/png",
       "sizes": "512x512"
     }

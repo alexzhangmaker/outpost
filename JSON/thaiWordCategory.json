@@ -1,0 +1,863 @@
+[
+    {
+        "code": "A1.C0.D0",
+        "上一级title": "基本问候语和日常用语",
+        "本级title": "问候与告别",
+        "words": [
+            "สวัสดี (sà-wàt-dee, Hello/Goodbye)",
+            "ลาก่อน (laa gòn, Goodbye)"
+        ]
+    },
+    {
+        "code": "A1.C0.D1",
+        "上一级title": "基本问候语和日常用语",
+        "本级title": "感谢与道歉",
+        "words": [
+            "ขอบคุณ (khòp khun, Thank you)",
+            "ขอโทษ (khǎw thôot, Sorry)"
+        ]
+    },
+    {
+        "code": "A1.C0.D2",
+        "上一级title": "基本问候语和日常用语",
+        "本级title": "礼貌助词",
+        "words": [
+            "ครับ (khráp, Polite particle male)",
+            "ค่ะ (khâ, Polite particle female)"
+        ]
+    },
+    {
+        "code": "A1.C1.D0",
+        "上一级title": "人称代词",
+        "本级title": "第一人称",
+        "words": [
+            "ฉัน (chǎn, I, female)",
+            "ผม (phǒm, I, male)"
+        ]
+    },
+    {
+        "code": "A1.C1.D1",
+        "上一级title": "人称代词",
+        "本级title": "第二/三人称",
+        "words": [
+            "คุณ (khun, You)",
+            "เขา (khǎo, He/She)"
+        ]
+    },
+    {
+        "code": "A1.C1.D2",
+        "上一级title": "人称代词",
+        "本级title": "所有格形式",
+        "words": [
+            "ของฉัน (khǒng chǎn, Mine)"
+        ]
+    },
+    {
+        "code": "A1.C2.D0",
+        "上一级title": "数字和时间",
+        "本级title": "基数词",
+        "words": [
+            "หนึ่ง (nèung, One)",
+            "สอง (sǎawng, Two)",
+            "สิบ (sìp, Ten)"
+        ]
+    },
+    {
+        "code": "A1.C2.D1",
+        "上一级title": "数字和时间",
+        "本级title": "时间表达",
+        "words": [
+            "โมงเช้า (môong-cháo, Morning o'clock)",
+            "บ่าย (bài, Afternoon)"
+        ]
+    },
+    {
+        "code": "A1.C2.D2",
+        "上一级title": "数字和时间",
+        "本级title": "日期与星期",
+        "words": [
+            "วันจันทร์ (wan-jà-nǒn, Monday)",
+            "เดือน (deuan, Month)"
+        ]
+    },
+    {
+        "code": "A1.C3.D0",
+        "上一级title": "家庭成员",
+        "本级title": "直系亲属",
+        "words": [
+            "พ่อ (phɔ̂ɔ, Father)",
+            "แม่ (mɛ̂ɛ, Mother)"
+        ]
+    },
+    {
+        "code": "A1.C3.D1",
+        "上一级title": "家庭成员",
+        "本级title": "兄弟姐妹",
+        "words": [
+            "พี่ชาย (phîi-chái, Older brother)",
+            "น้องสาว (nɔ́ɔng-sǎao, Younger sister)"
+        ]
+    },
+    {
+        "code": "A1.C3.D2",
+        "上一级title": "家庭成员",
+        "本级title": "扩展家庭",
+        "words": [
+            "ปู่ (bpùu, Grandfather)",
+            "ย่า (yâa, Paternal grandmother)"
+        ]
+    },
+    {
+        "code": "A1.C4.D0",
+        "上一级title": "食物和饮料",
+        "本级title": "主食与菜肴",
+        "words": [
+            "ข้าว (khǎao, Rice)",
+            "ผัดไทย (phàt thai, Pad Thai)"
+        ]
+    },
+    {
+        "code": "A1.C4.D1",
+        "上一级title": "食物和饮料",
+        "本级title": "水果与蔬菜",
+        "words": [
+            "มะม่วง (má-muang, Mango)",
+            "ผัก (phàk, Vegetable)"
+        ]
+    },
+    {
+        "code": "A1.C4.D2",
+        "上一级title": "食物和饮料",
+        "本级title": "饮料",
+        "words": [
+            "น้ำ (nám, Water)",
+            "กาแฟ (gaa-fae, Coffee)"
+        ]
+    },
+    {
+        "code": "A1.C5.D0",
+        "上一级title": "颜色",
+        "本级title": "基本颜色",
+        "words": [
+            "แดง (daeng, Red)",
+            "น้ำเงิน (nám-ngən, Blue)"
+        ]
+    },
+    {
+        "code": "A1.C5.D1",
+        "上一级title": "颜色",
+        "本级title": "中性/自然色",
+        "words": [
+            "ขาว (khǎao, White)",
+            "ดำ (dam, Black)"
+        ]
+    },
+    {
+        "code": "A1.C5.D2",
+        "上一级title": "颜色",
+        "本级title": "复合描述",
+        "words": [
+            "สีเขียว (sǐi khǐaw, Green)"
+        ]
+    },
+    {
+        "code": "A1.C6.D0",
+        "上一级title": "基本动词",
+        "本级title": "动作动词",
+        "words": [
+            "กิน (kin, Eat)",
+            "ดื่ม (dùem, Drink)",
+            "ดู (du, Look)"
+        ]
+    },
+    {
+        "code": "A1.C6.D1",
+        "上一级title": "基本动词",
+        "本级title": "状态动词",
+        "words": [
+            "มี (mǐi, Have)",
+            "เป็น (bpen, Be)",
+            "รู้ (rúu, Know)"
+        ]
+    },
+    {
+        "code": "A1.C6.D2",
+        "上一级title": "基本动词",
+        "本级title": "移动动词",
+        "words": [
+            "ไป (bpai, Go)",
+            "มา (mâa, Come)",
+            "นั่ง (nâng, Sit)"
+        ]
+    },
+    {
+        "code": "A1.C7.D0",
+        "上一级title": "地点",
+        "本级title": "家居与室内",
+        "words": [
+            "บ้าน (bâan, House)",
+            "ห้องนอน (hông-nɔɔn, Bedroom)"
+        ]
+    },
+    {
+        "code": "A1.C7.D1",
+        "上一级title": "地点",
+        "本级title": "公共场所",
+        "words": [
+            "โรงเรียน (roong-rîan, School)",
+            "ตลาด (dtà-làat, Market)"
+        ]
+    },
+    {
+        "code": "A1.C7.D2",
+        "上一级title": "地点",
+        "本级title": "方向与位置",
+        "words": [
+            "ซ้าย (sái, Left)",
+            "ขวา (khwǎa, Right)"
+        ]
+    },
+    {
+        "code": "A2.C0.D0",
+        "上一级title": "基本问候语和日常用语",
+        "本级title": "社交表达",
+        "words": [
+            "ยินดีที่ได้รู้จัก (yindee thîi dâi rúu jàk, Nice to meet you)"
+        ]
+    },
+    {
+        "code": "A2.C0.D1",
+        "上一级title": "基本问候语和日常用语",
+        "本级title": "请求与建议",
+        "words": [
+            "ช่วยด้วย (chûay dûay, Help!)",
+            "ได้ไหม (dâi mǎi, Can I?)"
+        ]
+    },
+    {
+        "code": "A2.C0.D2",
+        "上一级title": "基本问候语和日常用语",
+        "本级title": "情感表达",
+        "words": [
+            "ดีใจ (dee jai, Happy)",
+            "เสียใจ (sǐa jai, Sorry/Sad)"
+        ]
+    },
+    {
+        "code": "A2.C1.D0",
+        "上一级title": "人称代词",
+        "本级title": "复数代词",
+        "words": [
+            "เรา (rao, We)",
+            "พวกเขา (phûak khǎo, They)"
+        ]
+    },
+    {
+        "code": "A2.C1.D1",
+        "上一级title": "人称代词",
+        "本级title": "非正式代词",
+        "words": [
+            "กู (guu, I, informal)",
+            "มึง (mueng, You, informal)"
+        ]
+    },
+    {
+        "code": "A2.C1.D2",
+        "上一级title": "人称代词",
+        "本级title": "尊称代词",
+        "words": [
+            "ท่าน (thân, You, formal)"
+        ]
+    },
+    {
+        "code": "A2.C2.D0",
+        "上一级title": "数字和时间",
+        "本级title": "序数词",
+        "words": [
+            "ที่หนึ่ง (thîi nèung, First)",
+            "ที่สอง (thîi sǎawng, Second)"
+        ]
+    },
+    {
+        "code": "A2.C2.D1",
+        "上一级title": "数字和时间",
+        "本级title": "频率",
+        "words": [
+            "บ่อย (bòi, Often)",
+            "บางครั้ง (bâng khrâng, Sometimes)"
+        ]
+    },
+    {
+        "code": "A2.C2.D2",
+        "上一级title": "数字和时间",
+        "本级title": "具体时间",
+        "words": [
+            "เมื่อวาน (mûea wân, Yesterday)",
+            "วันนี้ (wan nîi, Today)"
+        ]
+    },
+    {
+        "code": "A2.C3.D0",
+        "上一级title": "家庭与关系",
+        "本级title": "亲属扩展",
+        "words": [
+            "ลุง (lung, Uncle)",
+            "ป้า (bpâa, Aunt)"
+        ]
+    },
+    {
+        "code": "A2.C3.D1",
+        "上一级title": "家庭与关系",
+        "本级title": "人际关系",
+        "words": [
+            "เพื่อน (phûean, Friend)",
+            "แฟน (fǎen, Boyfriend/Girlfriend)"
+        ]
+    },
+    {
+        "code": "A2.C3.D2",
+        "上一级title": "家庭与关系",
+        "本级title": "职业",
+        "words": [
+            "ครู (khruu, Teacher)",
+            "หมอ (mǎaw, Doctor)"
+        ]
+    },
+    {
+        "code": "A2.C4.D0",
+        "上一级title": "食物和饮料",
+        "本级title": "烹饪方式",
+        "words": [
+            "ทอด (thôt, Fry)",
+            "ต้ม (tôm, Boil)"
+        ]
+    },
+    {
+        "code": "A2.C4.D1",
+        "上一级title": "食物和饮料",
+        "本级title": "餐具与用餐",
+        "words": [
+            "ช้อน (chôn, Spoon)",
+            "จาน (jaan, Plate)"
+        ]
+    },
+    {
+        "code": "A2.C4.D2",
+        "上一级title": "食物和饮料",
+        "本级title": "饮食习惯",
+        "words": [
+            "มังสวิรัติ (mang sà wiràt, Vegetarian)"
+        ]
+    },
+    {
+        "code": "A2.C5.D0",
+        "上一级title": "颜色与描述",
+        "本级title": "明暗与色调",
+        "words": [
+            "สว่าง (sà-wàang, Bright)",
+            "มืด (mùet, Dark)"
+        ]
+    },
+    {
+        "code": "A2.C5.D1",
+        "上一级title": "颜色与描述",
+        "本级title": "形状",
+        "words": [
+            "กลม (klôm, Round)",
+            "เหลี่ยม (lìam, Square)"
+        ]
+    },
+    {
+        "code": "A2.C5.D2",
+        "上一级title": "颜色与描述",
+        "本级title": "大小",
+        "words": [
+            "ใหญ่ (yài, Big)",
+            "เล็ก (lék, Small)"
+        ]
+    },
+    {
+        "code": "A2.C6.D0",
+        "上一级title": "动词与动作",
+        "本级title": "扩展动作",
+        "words": [
+            "ร้องเพลง (rông phloeng, Sing)",
+            "เต้น (tên, Dance)"
+        ]
+    },
+    {
+        "code": "A2.C6.D1",
+        "上一级title": "动词与动作",
+        "本级title": "感官动词",
+        "words": [
+            "ได้ยิน (dâi yin, Hear)",
+            "มองเห็น (mông hěn, See)"
+        ]
+    },
+    {
+        "code": "A2.C6.D2",
+        "上一级title": "动词与动作",
+        "本级title": "日常活动",
+        "words": [
+            "ตื่น (dtùen, Wake up)",
+            "อาบน้ำ (àap nám, Shower)"
+        ]
+    },
+    {
+        "code": "A2.C7.D0",
+        "上一级title": "地点与交通",
+        "本级title": "具体场所",
+        "words": [
+            "โรงพยาบาล (roong phá yaa baan, Hospital)",
+            "ร้านอาหาร (ráan aa-hǎan, Restaurant)"
+        ]
+    },
+    {
+        "code": "A2.C7.D1",
+        "上一级title": "地点与交通",
+        "本级title": "交通工具",
+        "words": [
+            "รถยนต์ (rót yon, Car)",
+            "รถไฟ (rót fai, Train)"
+        ]
+    },
+    {
+        "code": "A2.C7.D2",
+        "上一级title": "地点与交通",
+        "本级title": "方位",
+        "words": [
+            "ข้างหน้า (khâang nâa, In front)",
+            "ข้างหลัง (khâang lǎng, Behind)"
+        ]
+    },
+    {
+        "code": "B1.C0.D0",
+        "上一级title": "社交与礼仪",
+        "本级title": "正式表达",
+        "words": [
+            "ขอแสดงความยินดี (khǎw sàdaeng khwaam yindee, Congratulations)"
+        ]
+    },
+    {
+        "code": "B1.C0.D1",
+        "上一级title": "社交与礼仪",
+        "本级title": "邀请与拒绝",
+        "words": [
+            "เชิญ (choen, Invite)",
+            "ปฏิเสธ (bpàdtìsèet, Decline)"
+        ]
+    },
+    {
+        "code": "B1.C0.D2",
+        "上一级title": "社交与礼仪",
+        "本级title": "情感细化",
+        "words": [
+            "ตื่นเต้น (dtùen dtên, Excited)",
+            "กังวล (gang won, Worried)"
+        ]
+    },
+    {
+        "code": "B1.C1.D0",
+        "上一级title": "代词与语法",
+        "本级title": "反身代词",
+        "words": [
+            "ตัวเอง (dtua eng, Oneself)"
+        ]
+    },
+    {
+        "code": "B1.C1.D1",
+        "上一级title": "代词与语法",
+        "本级title": "疑问代词",
+        "words": [
+            "อะไร (àrai, What)",
+            "ใคร (khrai, Who)"
+        ]
+    },
+    {
+        "code": "B1.C1.D2",
+        "上一级title": "代词与语法",
+        "本级title": "指示代词",
+        "words": [
+            "นี้ (nîi, This)",
+            "นั้น (nán, That)"
+        ]
+    },
+    {
+        "code": "B1.C2.D0",
+        "上一级title": "时间与日程",
+        "本级title": "时间段",
+        "words": [
+            "สัปดาห์ (sàp-dâa, Week)",
+            "ศตวรรษ (sàtàwát, Century)"
+        ]
+    },
+    {
+        "code": "B1.C2.D1",
+        "上一级title": "时间与日程",
+        "本级title": "日程安排",
+        "words": [
+            "นัด (nát, Appointment)",
+            "กำหนดการ (gàmnòt gaan, Schedule)"
+        ]
+    },
+    {
+        "code": "B1.C2.D2",
+        "上一级title": "时间与日程",
+        "本级title": "过去与将来",
+        "words": [
+            "เมื่อก่อน (mûea gòn, Before)",
+            "ในอนาคต (nai anâkhót, In the future)"
+        ]
+    },
+    {
+        "code": "B1.C3.D0",
+        "上一级title": "人际关系与职业",
+        "本级title": "社会关系",
+        "words": [
+            "เพื่อนร่วมงาน (phûean rûam ngaan, Colleague)",
+            "เจ้านาย (jâo nâai, Boss)"
+        ]
+    },
+    {
+        "code": "B1.C3.D1",
+        "上一级title": "人际关系与职业",
+        "本级title": "职业细节",
+        "words": [
+            "วิศวกร (wít sà wá gôn, Engineer)",
+            "พยาบาล (phá yaa baan, Nurse)"
+        ]
+    },
+    {
+        "code": "B1.C3.D2",
+        "上一级title": "人际关系与职业",
+        "本级title": "个人描述",
+        "words": [
+            "นิสัย (ní sǎi, Personality)",
+            "งานอดิเรก (ngaan àdireek, Hobby)"
+        ]
+    },
+    {
+        "code": "B1.C4.D0",
+        "上一级title": "饮食与文化",
+        "本级title": "地方美食",
+        "words": [
+            "ส้มตำ (sôm dtâm, Papaya salad)",
+            "แกงเขียวหวาน (gaeng khǐaw wǎan, Green curry)"
+        ]
+    },
+    {
+        "code": "B1.C4.D1",
+        "上一级title": "饮食与文化",
+        "本级title": "饮食偏好",
+        "words": [
+            "เผ็ด (phèt, Spicy)",
+            "หวาน (wǎan, Sweet)"
+        ]
+    },
+    {
+        "code": "B1.C4.D2",
+        "上一级title": "饮食与文化",
+        "本级title": "餐饮场景",
+        "words": [
+            "สั่งอาหาร (sàng aa-hǎan, Order food)",
+            "จ่ายเงิน (jài ngən, Pay money)"
+        ]
+    },
+    {
+        "code": "B1.C5.D0",
+        "上一级title": "形容词与描述",
+        "本级title": "品质",
+        "words": [
+            "ใจดี (jai dee, Kind)",
+            "ขยัน (khà yǎn, Diligent)"
+        ]
+    },
+    {
+        "code": "B1.C5.D1",
+        "上一级title": "形容词与描述",
+        "本级title": "数量",
+        "words": [
+            "มาก (mâak, Many)",
+            "น้อย (nói, Few)"
+        ]
+    },
+    {
+        "code": "B1.C5.D2",
+        "上一级title": "形容词与描述",
+        "本级title": "程度",
+        "words": [
+            "มากเกินไป (mâak goen bpai, Too much)",
+            "เพียงพอ (phiang phôo, Enough)"
+        ]
+    },
+    {
+        "code": "B1.C6.D0",
+        "上一级title": "动词与短语",
+        "本级title": "复杂动作",
+        "words": [
+            "แนะนำ (nǎe nam, Recommend)",
+            "จัดการ (jàt gaan, Manage)"
+        ]
+    },
+    {
+        "code": "B1.C6.D1",
+        "上一级title": "动词与短语",
+        "本级title": "情态动词",
+        "words": [
+            "สามารถ (sǎamâat, Can)",
+            "ควร (khuan, Should)"
+        ]
+    },
+    {
+        "code": "B1.C6.D2",
+        "上一级title": "动词与短语",
+        "本级title": "复合动词",
+        "words": [
+            "ตกลง (dtôk long, Agree)",
+            "เปลี่ยนแปลง (bplìan bplaeng, Change)"
+        ]
+    },
+    {
+        "code": "B1.C7.D0",
+        "上一级title": "地点与环境",
+        "本级title": "城市设施",
+        "words": [
+            "ธนาคาร (thá naa khaan, Bank)",
+            "สถานีตำรวจ (sàthǎanii dtâm rùat, Police station)"
+        ]
+    },
+    {
+        "code": "B1.C7.D1",
+        "上一级title": "地点与环境",
+        "本级title": "自然环境",
+        "words": [
+            "ภูเขา (phuu khǎo, Mountain)",
+            "แม่น้ำ (mɛ̂ɛ nám, River)"
+        ]
+    },
+    {
+        "code": "B1.C7.D2",
+        "上一级title": "地点与环境",
+        "本级title": "地理描述",
+        "words": [
+            "ใกล้ (glâi, Near)",
+            "ไกล (glai, Far)"
+        ]
+    },
+    {
+        "code": "B2.C0.D0",
+        "上一级title": "社交与沟通",
+        "本级title": "辩论与观点",
+        "words": [
+            "เห็นด้วย (hěn dûay, Agree)",
+            "คัดค้าน (khàt khâan, Oppose)"
+        ]
+    },
+    {
+        "code": "B2.C0.D1",
+        "上一级title": "社交与沟通",
+        "本级title": "建议与劝告",
+        "words": [
+            "แนะนำให้ (nǎe nam hâi, Suggest)",
+            "ห้าม (hâam, Forbid)"
+        ]
+    },
+    {
+        "code": "B2.C0.D2",
+        "上一级title": "社交与沟通",
+        "本级title": "文化表达",
+        "words": [
+            "ประเพณี (bprà phé nii, Tradition)",
+            "ศาสนา (sàat sà nǎa, Religion)"
+        ]
+    },
+    {
+        "code": "B2.C1.D0",
+        "上一级title": "代词与复杂语法",
+        "本级title": "关系代词",
+        "words": [
+            "ซึ่ง (sûeng, Which)",
+            "ที่ (thîi, That)"
+        ]
+    },
+    {
+        "code": "B2.C1.D1",
+        "上一级title": "代词与复杂语法",
+        "本级title": "强调代词",
+        "words": [
+            "เอง (eng, Itself)",
+            "ทั้งหมด (tháng mòt, All)"
+        ]
+    },
+    {
+        "code": "B2.C1.D2",
+        "上一级title": "代词与复杂语法",
+        "本级title": "抽象代词",
+        "words": [
+            "บางอย่าง (bâng yàang, Something)",
+            "ทุกอย่าง (thúk yàang, Everything)"
+        ]
+    },
+    {
+        "code": "B2.C2.D0",
+        "上一级title": "时间与事件",
+        "本级title": "时间细节",
+        "words": [
+            "ทันที (thán thii, Immediately)",
+            "ชั่วคราว (chûa khrâo, Temporary)"
+        ]
+    },
+    {
+        "code": "B2.C2.D1",
+        "上一级title": "时间与事件",
+        "本级title": "历史与节日",
+        "words": [
+            "วันสงกรานต์ (wan sǒng grâan, Songkran)",
+            "วันลอยกระทง (wan lôi grà thong, Loy Krathong)"
+        ]
+    },
+    {
+        "code": "B2.C2.D2",
+        "上一级title": "时间与事件",
+        "本级title": "持续性",
+        "words": [
+            "ต่อเนื่อง (dtô neùang, Continuous)",
+            "ถาวร (thǎa won, Permanent)"
+        ]
+    },
+    {
+        "code": "B2.C3.D0",
+        "上一级title": "社会与职业",
+        "本级title": "社会角色",
+        "words": [
+            "ประชาชน (bprà chaa chon, Citizen)",
+            "ผู้นำ (phûu nám, Leader)"
+        ]
+    },
+    {
+        "code": "B2.C3.D1",
+        "上一级title": "社会与职业",
+        "本级title": "专业领域",
+        "words": [
+            "การเงิน (gaan ngən, Finance)",
+            "เทคโนโลยี (thék nó loo yii, Technology)"
+        ]
+    },
+    {
+        "code": "B2.C3.D2",
+        "上一级title": "社会与职业",
+        "本级title": "工作场景",
+        "words": [
+            "สัมภาษณ์ (sǎm phâat, Interview)",
+            "เลื่อนตำแหน่ง (lûean dtâm nàeng, Promotion)"
+        ]
+    },
+    {
+        "code": "B2.C4.D0",
+        "上一级title": "饮食与健康",
+        "本级title": "健康饮食",
+        "words": [
+            "โภชนาการ (phôot sà naa gaan, Nutrition)",
+            "วิตามิน (wí thaa min, Vitamin)"
+        ]
+    },
+    {
+        "code": "B2.C4.D1",
+        "上一级title": "饮食与健康",
+        "本级title": "疾病与症状",
+        "words": [
+            "ไข้หวัด (khâi wàt, Flu)",
+            "ปวดหัว (bpùat hǔa, Headache)"
+        ]
+    },
+    {
+        "code": "B2.C4.D2",
+        "上一级title": "饮食与健康",
+        "本级title": "医疗场景",
+        "words": [
+            "พบหมอ (phóp mǎaw, See a doctor)",
+            "ยา (yaa, Medicine)"
+        ]
+    },
+    {
+        "code": "B2.C5.D0",
+        "上一级title": "形容词与复杂描述",
+        "本级title": "情感与态度",
+        "words": [
+            "มั่นใจ (mân jai, Confident)",
+            "สับสน (sàp sǒn, Confused)"
+        ]
+    },
+    {
+        "code": "B2.C5.D1",
+        "上一级title": "形容词与复杂描述",
+        "本级title": "比较级",
+        "words": [
+            "ดีกว่า (dee gwàa, Better)",
+            "แย่กว่า (yɛ̂ɛ gwàa, Worse)"
+        ]
+    },
+    {
+        "code": "B2.C5.D2",
+        "上一级title": "形容词与复杂描述",
+        "本级title": "抽象描述",
+        "words": [
+            "น่าสนใจ (nâa sǒn jai, Interesting)",
+            "ซับซ้อน (sáp sôn, Complex)"
+        ]
+    },
+    {
+        "code": "B2.C6.D0",
+        "上一级title": "动词与表达",
+        "本级title": "高级动作",
+        "words": [
+            "พัฒนา (phát thá naa, Develop)",
+            "วิเคราะห์ (wí khrɔ́, Analyze)"
+        ]
+    },
+    {
+        "code": "B2.C6.D1",
+        "上一级title": "动词与表达",
+        "本级title": "因果表达",
+        "words": [
+            "เพราะว่า (phró wâa, Because)",
+            "ดังนั้น (dâng nán, Therefore)"
+        ]
+    },
+    {
+        "code": "B2.C6.D2",
+        "上一级title": "动词与表达",
+        "本级title": "条件动词",
+        "words": [
+            "ถ้า (thâa, If)",
+            "สมมติว่า (sòm mùt wâa, Suppose)"
+        ]
+    },
+    {
+        "code": "B2.C7.D0",
+        "上一级title": "地点与文化",
+        "本级title": "旅游景点",
+        "words": [
+            "วัด (wát, Temple)",
+            "อุทยาน (ùt thá yaan, National park)"
+        ]
+    },
+    {
+        "code": "B2.C7.D1",
+        "上一级title": "地点与文化",
+        "本级title": "文化活动",
+        "words": [
+            "งานเทศกาล (ngaan thêt sà gaan, Festival)",
+            "พิธี (phí thii, Ceremony)"
+        ]
+    },
+    {
+        "code": "B2.C7.D2",
+        "上一级title": "地点与文化",
+        "本级title": "地理与环境",
+        "words": [
+            "สภาพอากาศ (sàphâap aa gâat, Weather)",
+            "มลพิษ (mon lá phít, Pollution)"
+        ]
+    }
+]

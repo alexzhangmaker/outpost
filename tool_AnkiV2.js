@@ -1,3 +1,4 @@
+const fs = require('fs') ;
 
 
 function formatDateToYYYYMMDD(date) {
@@ -38,31 +39,44 @@ async function _dailyBuildAnki(){
     } ;
 
     //
-    Object.entries(jsonSM2Records).forEach(([word, jsonSM2]) => {
-        console.log(`${word}: ${jsonSM2}`);
-        
-        let cNextDate = new Date(jsonSM2.next_review) ;
-        if(isSameDay(cDate,cNextDate)==true){
-            jsonDalyReview.words.push(word) ;
-        }
-    });
-    console.log(jsonDalyReview) ;
-
-    console.log("============>>>>")
-    const reviewEntries = Object.entries(jsonReviewSets) ;
-    for(let i=0;i<reviewEntries.length;i++){
-        let wordSetID = reviewEntries[i][0] ; 
-        let jsonReview = reviewEntries[i][1] ; 
-        let cNextDate = new Date(jsonReview.nextReview) ;
-        if(isSameDay(cDate,cNextDate)==true){
-            let wordSetURL = jsonReview.wordSetURL ;
-            let resp = await fetch(wordSetURL) ;
-            let jsonWordSet = await resp.json() ;
-            let combinedSet = new Set([...jsonWordSet.words, ...jsonDalyReview.words]);
-            jsonDalyReview.words = [...combinedSet];
-            console.log(jsonDalyReview.words) ;
+    if(jsonSM2Records!=null){
+        const sm2Entries = Object.entries(jsonSM2Records) ;
+        for(let i=0;i<sm2Entries.length;i++){
+            let word = sm2Entries[i][0] ; 
+            let jsonSM2 = sm2Entries[i][1] ; 
+            console.log(word) ;
+            console.log(jsonSM2) ;
+    
+            let cNextDate = new Date(jsonSM2.next_review) ;
+            if(isSameDay(cDate,cNextDate)==true){
+                jsonDalyReview.words.push(word) ;
+            }
         }
     }
+    
+    
+    console.log(jsonDalyReview) ;
+
+    if(jsonReviewSets!=null){
+        console.log("============>>>>")
+        const reviewEntries = Object.entries(jsonReviewSets) ;
+        for(let i=0;i<reviewEntries.length;i++){
+            let wordSetID = reviewEntries[i][0] ; 
+            let jsonReview = reviewEntries[i][1] ; 
+            console.log(wordSetID);
+            console.log(jsonReview) ;
+            let cNextDate = new Date(jsonReview.nextReview) ;
+            if(isSameDay(cDate,cNextDate)==true){
+                let wordSetURL = jsonReview.wordSetURL ;
+                let resp = await fetch(wordSetURL) ;
+                let jsonWordSet = await resp.json() ;
+                let combinedSet = new Set([...jsonWordSet.words, ...jsonDalyReview.words]);
+                jsonDalyReview.words = [...combinedSet];
+                console.log(jsonDalyReview.words) ;
+            }
+        }
+    }
+    
     console.log(jsonDalyReview) ;
 
 
@@ -81,3 +95,13 @@ async function _toolMain(){
 }
 
 _toolMain() ;
+
+/*
+const cron = require('node-cron');
+
+cron.schedule("0 7 * * *", async () => {
+    let cDate = new Date() ;
+    console.log('running a task at 7AM:'+ cDate.toLocaleTimeString());
+    await _dailyBuildAnki() ;
+});
+*/
