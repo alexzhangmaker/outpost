@@ -35,6 +35,10 @@
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
             overflow: hidden;
             padding: 20px;
+
+            display: flex;
+            flex-direction: column;
+
         }
         
         header {
@@ -52,11 +56,11 @@
         .stats {
             display: flex;
             justify-content: space-around;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
             background: #f8f9fa;
-            padding: 12px;
+            padding: 5px;
             border-radius: 10px;
-            font-size: 0.9rem;
+            font-size: 14px;
         }
         
         .stat-item {
@@ -66,13 +70,13 @@
         .stat-value {
             font-weight: 700;
             color: #3498db;
-            font-size: 1.2rem;
+            font-size: 16px;
         }
         
         .flashcard-container {
             perspective: 1000px;
-            margin-bottom: 15px;
-            height: 580px;
+            margin-bottom: 5px;
+            height: 80%/*580px*/;
         }
         
         .flashcard {
@@ -149,23 +153,26 @@
             color: #2c3e50;
             margin-bottom: 3px;
             font-size: 0.95rem;
+            text-align:start ;
         }
         
         .definition-zh {
             color: #7f8c8d;
             font-size: 0.9rem;
+            text-align:start ;
+
         }
         
         .synonyms, .antonyms, .phrases {
             width: 100%;
-            margin-bottom: 12px;
+            margin-bottom: 2px;
         }
         
         .section-title {
             font-weight: 600;
             color: #3498db;
-            margin-bottom: 6px;
-            font-size: 0.95rem;
+            margin-bottom: 2px;
+            font-size: 0.6rem;
         }
         
         .synonym, .antonym {
@@ -209,7 +216,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-top: 15px;
+            margin-top: 5px;
         }
         
         .rating-container {
@@ -221,13 +228,13 @@
         
         .rating-btn {
             flex: 1;
-            padding: 10px 3px;
+            padding: 5px 3px;
             border: none;
             border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 0.9rem;
+            font-size: 0.6rem;
             min-width: 0;
         }
         
@@ -364,7 +371,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>泰语单词闪卡学习</h1>
+            <h3>泰语单词闪卡学习</h3>
             <div class="stats">
                 <div class="stat-item">
                     <div class="stat-label">进度</div>
@@ -450,78 +457,12 @@
     </div>
 
     <script>
+        let gWordSetKey = 'B1_Work_Social' ;
+        let tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${gWordSetKey}.json` ;
+
+
         // 示例单词数据
-        const wordList = [
-            /*
-            {
-                thai: "ช่วยเหลือ",
-                pronunciation: "chûay-lĕua",
-                definitions: [
-                    { en: "to help, assist, or aid someone", zh: "帮助，援助，协助" },
-                    { en: "to support or lend a hand", zh: "支持，帮忙" }
-                ],
-                synonyms: ["สนับสนุน", "เอื้อเฟื้อ", "อุปถัมภ์", "เกื้อกูล"],
-                antonyms: ["ขัดขวาง", "เป็นอุปสรรค", "ทำลาย"],
-                common_phrases: [
-                    { phrase: "ช่วยเหลือตัวเอง", translation: "自助" },
-                    { phrase: "ช่วยเหลือซึ่งกันและกัน", translation: "互相帮助" },
-                    { phrase: "ขอความช่วยเหลือ", translation: "请求帮助" }
-                ]
-            },
-            {
-                thai: "สวย",
-                pronunciation: "sǔuay",
-                definitions: [
-                    { en: "beautiful, pretty", zh: "美丽，漂亮" }
-                ],
-                synonyms: ["งาม", "น่ามอง", "หล่อ"],
-                antonyms: ["น่าเกลียด", "อัปลักษณ์"],
-                common_phrases: [
-                    { phrase: "สวยงาม", translation: "美丽" },
-                    { phrase: "คนสวย", translation: "美女" }
-                ]
-            },
-            {
-                thai: "เดิน",
-                pronunciation: "doen",
-                definitions: [
-                    { en: "to walk", zh: "走路，行走" }
-                ],
-                synonyms: ["ก้าว", "เคลื่อน"],
-                antonyms: ["หยุด", "นั่ง"],
-                common_phrases: [
-                    { phrase: "เดินทาง", translation: "旅行" },
-                    { phrase: "เดินเล่น", translation: "散步" }
-                ]
-            },
-            {
-                thai: "กิน",
-                pronunciation: "gin",
-                definitions: [
-                    { en: "to eat, to consume", zh: "吃，食用" }
-                ],
-                synonyms: ["รับประทาน", "ทาน"],
-                antonyms: ["อาเจียน", "ถอน"],
-                common_phrases: [
-                    { phrase: "กินข้าว", translation: "吃饭" },
-                    { phrase: "กินน้ำ", translation: "喝水" }
-                ]
-            },
-            {
-                thai: "นอน",
-                pronunciation: "nawn",
-                definitions: [
-                    { en: "to sleep, to lie down", zh: "睡觉，躺下" }
-                ],
-                synonyms: ["หลับ", "พัก"],
-                antonyms: ["ตื่น", "ลุก"],
-                common_phrases: [
-                    { phrase: "นอนหลับ", translation: "睡觉" },
-                    { phrase: "ที่นอน", translation: "床" }
-                ]
-            }
-            */
-        ];
+        const wordList = [];
 
         // 应用状态
         let currentIndex = 0;
@@ -529,7 +470,7 @@
         
         // 从localStorage加载已学习数据
         function loadProgress() {
-            const savedProgress = localStorage.getItem('thaiFlashcardProgress');
+            const savedProgress = localStorage.getItem(`thaiFlashcardProgress_${gWordSetKey}`);
             if (savedProgress) {
                 learnedWords = JSON.parse(savedProgress);
                 // 找到第一个未学习的单词
@@ -546,7 +487,7 @@
         
         // 保存进度到localStorage
         function saveProgress() {
-            localStorage.setItem('thaiFlashcardProgress', JSON.stringify(learnedWords));
+            localStorage.setItem(`thaiFlashcardProgress_${gWordSetKey}`, JSON.stringify(learnedWords));
             updateStats();
         }
         
@@ -625,7 +566,6 @@
                 let response = await fetch(sm2RecordURL) ;
                 let jsonResult = await response.json() ;
 
-
                 let jsonSM2 = {
                     "efactor": 2.5,
                     "interval": 0,
@@ -680,8 +620,10 @@
             document.getElementById('pronunciation').textContent = word.pronunciation;
             
             // 更新卡片背面
-            document.getElementById('definition-en').textContent = word.definitions[0].en;
-            document.getElementById('definition-zh').textContent = word.definitions[0].zh;
+            let en= word.definitions[0].hasOwnProperty("en")?word.definitions[0].en:word.definitions[0].english ;
+            let zh= word.definitions[0].hasOwnProperty("zh")?word.definitions[0].zh:word.definitions[0].chinese ;
+            document.getElementById('definition-en').textContent = en;
+            document.getElementById('definition-zh').textContent = zh;
             
             // 更新同义词
             const synonymsContainer = document.getElementById('synonyms-container');
@@ -694,14 +636,17 @@
             });
             
             // 更新反义词
-            const antonymsContainer = document.getElementById('antonyms-container');
-            antonymsContainer.innerHTML = '';
-            word.antonyms.slice(0, 2).forEach(antonym => {
-                const span = document.createElement('span');
-                span.className = 'antonym';
-                span.textContent = antonym;
-                antonymsContainer.appendChild(span);
-            });
+            if(word.hasOwnProperty("antonyms")==true && word.antonyms!=undefined){
+                const antonymsContainer = document.getElementById('antonyms-container');
+                antonymsContainer.innerHTML = '';
+                word.antonyms.slice(0, 2).forEach(antonym => {
+                    const span = document.createElement('span');
+                    span.className = 'antonym';
+                    span.textContent = antonym;
+                    antonymsContainer.appendChild(span);
+                });
+            }
+            
             
             // 更新常用短语
             const phrasesContainer = document.getElementById('phrases-container');
@@ -775,8 +720,6 @@
         }
         
 
-        let tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/B1_Work_Social.json` ;
-
         // 初始化应用
         async function initApp() {
             await _loadFireBaseWordSet(tWordSetURL) ;
@@ -824,17 +767,43 @@
             document.getElementById('reset-btn').addEventListener('click', resetApp);
         }
         
+        function formatDateToYYYYMMDD(date) {
+            // Ensure input is a Date object
+            const d = new Date(date);
+            
+            // Validate date
+            if (isNaN(d)) {
+                throw new Error('Invalid date input');
+            }
+            
+            // Get year, month, and day
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+            const day = String(d.getDate()).padStart(2, '0');
+            
+            // Return formatted string
+            return `${year}${month}${day}`;
+        }
 
         async function _loadFireBaseWordSet(url){
             let response = await fetch(url) ;
             let jsonWordSet = await response.json() ;
             console.log(jsonWordSet) ;
+            if(jsonWordSet==null)return ;
 
+            
             for(let i=0;i<jsonWordSet.words.length;i++){
                 let word = jsonWordSet.words[i] ;
+                console.log(word) ;
                 wordURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiDictionary/${word}.json` ;
+                console.log(wordURL) ;
                 response = await fetch(wordURL) ;
                 let jsonWord = await response.json() ;
+                console.log(jsonWord) ;
+                if(jsonWord==null){
+                    console.log(`${word} not in DB,something wrong`) ;
+                    continue ;
+                }
                 let ankiWord={
                     thai:jsonWord.thai.word,
                     pronunciation:jsonWord.thai.pronunciation,
@@ -845,24 +814,6 @@
                 };
                 wordList.push(ankiWord) ;
             }
-            /*
-            {
-                thai: "ช่วยเหลือ",
-                pronunciation: "chûay-lĕua",
-                definitions: [
-                    { en: "to help, assist, or aid someone", zh: "帮助，援助，协助" },
-                    { en: "to support or lend a hand", zh: "支持，帮忙" }
-                ],
-                synonyms: ["สนับสนุน", "เอื้อเฟื้อ", "อุปถัมภ์", "เกื้อกูล"],
-                antonyms: ["ขัดขวาง", "เป็นอุปสรรค", "ทำลาย"],
-                common_phrases: [
-                    { phrase: "ช่วยเหลือตัวเอง", translation: "自助" },
-                    { phrase: "ช่วยเหลือซึ่งกันและกัน", translation: "互相帮助" },
-                    { phrase: "ขอความช่วยเหลือ", translation: "请求帮助" }
-                ]
-            }
-            */
-
         }
 
         //?wordSet=
@@ -872,17 +823,22 @@
         const wordSetKey = urlParams.get('wordSet'); // "purple"
         if(wordSetKey==null){
             console.log('no wordSet specified');
-            const reviewSetKey = urlParams.get('reviewSet'); // "purple"
-            let keyEncode = encodeURIComponent(reviewSetKey) ;
+            let cDate = new Date() ;
+
+            let reviewSetKey = urlParams.get('reviewSet'); // "purple"
+            if(reviewSetKey== null){
+                reviewSetKey = `DailyAnki.${formatDateToYYYYMMDD(cDate)}` ;
+            }
+            let keyEncode = encodeURIComponent(formatDateToYYYYMMDD(cDate)) ;
+            gWordSetKey = reviewSetKey ;
             tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/DailyReview/${keyEncode}.json` ;
         }else{
             console.log(wordSetKey) ;
             let keyEncode = encodeURIComponent(wordSetKey) ;
+            gWordSetKey = wordSetKey ;
             tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${keyEncode}.json` ;
         }
 
-        //const sizes = urlParams.getAll('size'); // ["M", "L"]
-        //const pageExists = urlParams.has('page'); // false
         // 启动应用
         initApp();
     </script>

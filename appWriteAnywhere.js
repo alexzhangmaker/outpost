@@ -229,6 +229,10 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
     height: '90%', 
     initialEditType: 'markdown', 
     previewStyle: 'vertical', 
+    sanitizer: {
+      allowedTags: ['p', 'strong', 'br', 'div'],
+      allowedAttributes: {}
+    },
     initialValue: initialMDContent, 
     addons: ['math'], 
     toolbarItems: [ 
@@ -255,6 +259,29 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
         MathJax.Hub.Queue(['Typeset', MathJax.Hub, document.querySelector('.toastui-editor-contents')]); 
       }
     } 
+  });
+
+  // Add custom paste handling
+  editor.on('paste', (data) => {
+    // Get the pasted plain text
+    const pastedText = data.text || data.clipboardData.getData('text/plain');
+
+    // In Markdown mode, \n\n is sufficient for paragraphs, so insert as-is
+    if (editor.getCurrentMode() === 'markdown') {
+        editor.insertText(pastedText);
+    } else if (editor.getCurrentMode() === 'wysiwyg') {
+        // In WYSIWYG mode, convert \n\n to <p> tags and preserve Markdown
+        let htmlText = pastedText
+            .split('\n\n') // Split by double line breaks
+            .map(paragraph => `<p>${paragraph}</p>`) // Wrap each in <p> tags
+            .join(''); // Join back together
+
+        // Insert the HTML content
+        editor.exec('paste', { content: htmlText });
+    }
+
+    // Prevent default paste behavior
+    data.preventDefault();
   });
   
 

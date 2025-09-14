@@ -57,3 +57,34 @@ self.addEventListener('fetch', event => {
   );
 });
 */
+
+self.addEventListener("install", event => {
+  console.log("Service Worker installed");
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", event => {
+  console.log("Service Worker activated");
+  return self.clients.claim();
+});
+
+// 接收推送消息
+self.addEventListener("push", event => {
+  const data = event.data ? event.data.text() : "No payload";
+  console.log("Push received:", data);
+
+  event.waitUntil(
+    self.registration.showNotification("PWA Push Test", {
+      body: data,
+      icon: "https://via.placeholder.com/192.png"
+    })
+  );
+});
+
+// 点击通知
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow("/")
+  );
+});

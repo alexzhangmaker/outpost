@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语阅读练习应用</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+Thai+Looped:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans Thai', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .toolbar {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .toolbar h1 {
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+        
+        .toolbar button {
+            background-color: #2E7D32;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+        }
+        
+        .toolbar button:hover {
+            background-color: #1B5E20;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background-color: white;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .sidebar h2 {
+            margin-bottom: 20px;
+            color: #4CAF50;
+            font-weight: 500;
+        }
+        
+        .article-list {
+            list-style: none;
+        }
+        
+        .article-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-radius: 4px;
+        }
+        
+        .article-item:hover {
+            background-color: #f0f7ff;
+        }
+        
+        .article-item.active {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .article-content {
+            flex: 3;
+            padding: 25px;
+            overflow-y: auto;
+            background-color: white;
+            margin: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .article-content h1 {
+            color: #2E7D32;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E8F5E9;
+        }
+        
+        .article-content p {
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+        }
+        
+        .assistant-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin: 15px 15px 15px 0;
+            min-width: 300px;
+        }
+        
+        .questions-section, .vocabulary-section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background-color: #2196F3;
+            color: white;
+            padding: 12px 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-content {
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .question-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .question-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .vocabulary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .vocabulary-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .thai-word {
+            font-weight: 700;
+            color: #2E7D32;
+        }
+        
+        .meaning {
+            text-align: right;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 1.2rem;
+            color: #666;
+        }
+        
+        @media (max-width: 992px) {
+            .content-area {
+                flex-direction: column;
+            }
+            
+            .assistant-panel {
+                margin: 0 15px 15px 15px;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.css">
+    <style>
+        
+        
+        /* 打印样式 */
+        @media print {
+            .no-print, .toolbar, .sidebar, .assistant-panel {
+                display: none !important;
+            }
+            
+            .article-content {
+                margin: 0 !important;
+                padding: 15px !important;
+                box-shadow: none !important;
+                width: 100% !important;
+            }
+            
+            body, html {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+            }
+        }
+        
+        .print-dialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            width: 300px;
+        }
+        
+        .print-options {
+            margin: 15px 0;
+        }
+        
+        .print-options label {
+            display: block;
+            margin: 8px 0;
+        }
+        
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <h1>泰语阅读练习</h1>
+        <button id="printBtn">
+            <i class="fas fa-print"></i>
+            打印当前文章
+        </button>
+        <button id="fontIncrease">
+            <i class="fas fa-text-height"></i>
+            增大字体
+        </button>
+        <button id="fontDecrease">
+            <i class="fas fa-text-height"></i>
+            减小字体
+        </button>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <h2>文章列表</h2>
+            <ul class="article-list" id="articleList">
+                <li class="article-item active">加载中...</li>
+            </ul>
+        </div>
+        
+        <div class="content-area">
+            <div class="article-content" id="articleContent">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> 请从左侧选择文章
+                </div>
+            </div>
+            
+            <div class="assistant-panel">
+                <div class="questions-section">
+                    <div class="section-header">
+                        <i class="fas fa-question-circle"></i>
+                        <span>阅读理解问题</span>
+                    </div>
+                    <div class="section-content" id="questionsContent">
+                        <p class="info-text">问题将显示在这里</p>
+                    </div>
+                </div>
+                
+                <div class="vocabulary-section">
+                    <div class="section-header">
+                        <i class="fas fa-book"></i>
+                        <span>词汇表</span>
+                    </div>
+                    <div class="section-content" id="vocabularyContent">
+                        <p class="info-text">词汇将显示在这里</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <script>
+        // 配置Markdown渲染器，确保正确处理换行
+        marked.setOptions({
+            breaks: true,  // 将\n转换为<br>
+            gfm: true      // 使用GitHub风格的Markdown
+        });
+
+
+        // Firebase配置（实际使用时替换为你的配置）
+        // 在实际应用中，您可以使用以下代码从Firebase获取数据
+        // 模拟Firebase配置 - 在实际应用中替换为您的配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-articles-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        
+        const path025233="025233" ;
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // 获取数据库引用
+        const database = firebase.database();
+        function fetchDataFromFirebase(path) {
+            return new Promise((resolve, reject) => {
+                const ref = database.ref(path);
+                ref.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    //resolve(data ? Object.values(data) : []);
+                    resolve(data);
+                }, (error) => {
+                    reject(error);
+                });
+            });
+        }
+        
+       
+        // DOM元素
+        const articleList = document.getElementById('articleList');
+        const articleContent = document.getElementById('articleContent');
+        const questionsContent = document.getElementById('questionsContent');
+        const vocabularyContent = document.getElementById('vocabularyContent');
+        const printBtn = document.getElementById('printBtn');
+        const fontIncrease = document.getElementById('fontIncrease');
+        const fontDecrease = document.getElementById('fontDecrease');
+
+        // 当前字体大小
+        let currentFontSize = 16;
+        let currentArticleData = null;
+
+        // 初始化应用
+        function initApp() {
+            // 实际应用中这里应该从Firebase获取数据
+            // 模拟从Firebase获取数据
+            loadArticles();
+            
+            // 添加打印功能
+            printBtn.addEventListener('click', openPrintTab);
+            fontIncrease.addEventListener('click', increaseFontSize);
+            fontDecrease.addEventListener('click', decreaseFontSize);
+        }
+        
+        let gArticle025233;
+        // 加载文章列表
+        async function loadArticles() {
+            articleList.innerHTML = '';
+            
+            gArticle025233 = await fetchDataFromFirebase(path025233) ;
+            if(gArticle025233==null)return ;
+
+            console.log(gArticle025233) ;
+            Object.keys(gArticle025233).forEach((key, index) => {
+                const article = gArticle025233[key];
+                const li = document.createElement('li');
+                li.className = 'article-item';
+                if (index === 0) li.classList.add('active');
+                li.textContent = article.article_title;
+                li.addEventListener('click', () => displayArticle(key, article));
+                articleList.appendChild(li);
+            });
+            
+            // 默认显示第一篇文章
+            if (Object.keys(gArticle025233).length > 0) {
+                const firstKey = Object.keys(gArticle025233)[0];
+                displayArticle(firstKey, gArticle025233[firstKey]);
+            }
+        }
+        
+        // 显示文章内容
+        function displayArticle(articleId, articleData) {
+            // 更新活动文章项
+            document.querySelectorAll('.article-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.article-item').forEach(item => {
+                if (item.textContent === articleData.article_title) {
+                    item.classList.add('active');
+                }
+            });
+            
+            currentArticleData = articleData;
+
+            // 渲染文章内容
+            const thaiText = articleData.article_thai_content;
+            const cleanedText = thaiText.replace(/\\n\\n/g, '\n\n'); // Replace escaped newlines
+
+            let htmlContent = marked.parse(cleanedText) ;
+
+            
+            console.log(htmlContent) ;
+            articleContent.innerHTML = `
+                <h1>${articleData.article_title}</h1>
+                <div>${htmlContent}</div>
+                <div class="translation">
+                    <h3>英文翻译:</h3>
+                    <p>${articleData.article_english_translation}</p>
+                </div>
+            `;
+            
+            // 显示问题
+            questionsContent.innerHTML = '';
+            articleData.comprehension_questions.forEach((question, index) => {
+                const questionEl = document.createElement('div');
+                questionEl.className = 'question-item';
+                questionEl.innerHTML = `
+                    <p><strong>${index + 1}. ${question.question_thai}</strong></p>
+                    <p>${question.question_english}</p>
+                    <p><em>类型: ${question.type}</em></p>
+                `;
+                questionsContent.appendChild(questionEl);
+            });
+            
+            // 显示词汇表
+            vocabularyContent.innerHTML = '';
+            articleData.vocabulary_list.forEach(vocab => {
+                const vocabEl = document.createElement('div');
+                vocabEl.className = 'vocabulary-item';
+                vocabEl.innerHTML = `
+                    <div class="thai-word">${vocab.thai_word} <em>(${vocab.part_of_speech})</em></div>
+                    <div class="meaning">
+                        <div>${vocab.english_meaning}</div>
+                        <div>${vocab.chinese_meaning_characters} (${vocab.chinese_meaning_pinyin})</div>
+                    </div>
+                `;
+                vocabularyContent.appendChild(vocabEl);
+            });
+        }
+        
+        // 打印当前文章
+        // 打开打印标签页
+        function openPrintTab() {
+            if (!currentArticleData) {
+                alert('请先选择一篇文章');
+                return;
+            }
+            
+            // 将文章数据编码为JSON字符串
+            const articleDataStr = encodeURIComponent(JSON.stringify(currentArticleData));
+            
+            // 打开新标签页
+            const printWindow = window.open('', '_blank');
+            
+            // 写入打印页面的HTML内容
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="zh">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>打印: ${currentArticleData.article_title}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&display=swap" rel="stylesheet">
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                    <style>
+                        body {
+                            line-height: 1.4;
+                            color: #333;
+                            max-width: 800px;
+                            margin: 0 auto;
+                            padding: 15px;
+                            font-size: 16px;
+                        }
+                        .print-header {
+                            text-align: center;
+                            margin-bottom: 20px;
+                            padding-bottom: 10px;
+                            border-bottom: 2px solid #4CAF50;
+                        }
+                        .print-header h1 {
+                            font-size: 18px;
+                            margin: 0 0 5px 0;
+                            color: #2E7D32;
+                        }
+                        .print-header p {
+                            font-size: 12px;
+                            margin: 0;
+                            color: #666;
+                        }
+                        .print-options {
+                            background-color: #f5f7fa;
+                            padding: 12px;
+                            border-radius: 6px;
+                            margin-bottom: 15px;
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 12px;
+                            font-size: 12px;
+                        }
+                        .option-group {
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                        }
+                        .article-content {
+                            margin-bottom: 20px;
+                            font-size:20px;
+                        }
+                        .article-content h1 {
+                            color: #2E7D32;
+                            margin-bottom: 12px;
+                            font-size: 16px;
+                            padding-bottom: 6px;
+                            border-bottom: 1px solid #E8F5E9;
+                        }
+                        .article-content p {
+                            margin-bottom: 10px;
+                            text-align: justify;
+                            line-height: 1.5;
+                        }
+                        .article-content br {
+                            margin-bottom: 8px;
+                            display: block;
+                            content: "";
+                        }
+                        .translation {
+                            margin-top: 15px;
+                            padding-top: 10px;
+                            border-top: 1px dashed #ddd;
+                        }
+                        .translation h3 {
+                            font-size: 13px;
+                            margin: 0 0 8px 0;
+                            color: #2196F3;
+                        }
+                        .translation p {
+                            font-style: italic;
+                            color: #555;
+                            margin: 0;
+                        }
+                        .questions-section, .vocabulary-section {
+                            margin-bottom: 20px;
+                        }
+                        .section-header {
+                            background-color: #2196F3;
+                            color: white;
+                            padding: 8px 12px;
+                            border-radius: 4px;
+                            margin-bottom: 10px;
+                            font-size: 13px;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                        }
+                        .question-item {
+                            margin-bottom: 10px;
+                            padding-bottom: 10px;
+                            border-bottom: 1px solid #eee;
+                            line-height: 1.4;
+                        }
+                        .question-item:last-child {
+                            margin-bottom: 0;
+                            padding-bottom: 0;
+                            border-bottom: none;
+                        }
+                        .question-item strong {
+                            color: #2E7D32;
+                        }
+                        .question-item em {
+                            color: #666;
+                            font-size: 11px;
+                        }
+                        /* 词汇表两列布局 */
+                        .vocabulary-grid {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 8px;
+                            margin-bottom: 15px;
+                        }
+                        .vocabulary-item {
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 6px 8px;
+                            border-bottom: 1px solid #f0f0f0;
+                            font-size: 12px;
+                            line-height: 1.3;
+                        }
+                        .vocabulary-item:nth-child(2n) {
+                            background-color: #f9f9f9;
+                        }
+                        .thai-word {
+                            font-weight: 700;
+                            color: #2E7D32;
+                            flex: 1;
+                        }
+                        .vocab-meaning {
+                            text-align: right;
+                            flex: 1;
+                        }
+                        .vocab-english {
+                            display: block;
+                            color: #1976D2;
+                        }
+                        .vocab-chinese {
+                            display: block;
+                            color: #666;
+                            font-size: 11px;
+                        }
+                        .part-of-speech {
+                            font-size: 10px;
+                            color: #999;
+                            font-style: italic;
+                        }
+                        button {
+                            background-color: #4CAF50;
+                            color: white;
+                            border: none;
+                            padding: 8px 12px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                            font-size: 12px;
+                        }
+                        button:hover {
+                            background-color: #2E7D32;
+                        }
+                        @media print {
+                            .print-options, button {
+                                display: none;
+                            }
+                            body {
+                                padding: 0;
+                                font-size: 12px;
+                                line-height: 1.3;
+                            }
+                            .print-header {
+                                margin-bottom: 15px;
+                            }
+                            .print-header h1 {
+                                font-size: 16px;
+                            }
+                            .article-content h1 {
+                                font-size: 14px;
+                            }
+                            .vocabulary-item {
+                                page-break-inside: avoid;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">
+                        <!---
+                        <h4>泰语阅读练习打印版</h4>
+                        -->
+                        <p style="font-size:12px;">打印日期: ${new Date().toLocaleDateString()} | 文章: ${currentArticleData.article_title}</p>
+                    </div>
+                    
+                    <div class="print-options">
+                        <div class="option-group">
+                            <input type="checkbox" id="showTranslation" checked>
+                            <label for="showTranslation">显示英文翻译</label>
+                        </div>
+                        <div class="option-group">
+                            <input type="checkbox" id="showQuestions" checked>
+                            <label for="showQuestions">显示问题</label>
+                        </div>
+                        <div class="option-group">
+                            <input type="checkbox" id="showVocabulary" checked>
+                            <label for="showVocabulary">显示词汇表</label>
+                        </div>
+                        <button onclick="window.print()">
+                            <i class="fas fa-print"></i>
+                            打印
+                        </button>
+                    </div>
+                    
+                    <div id="printContent">
+                        <!-- 内容将由JavaScript动态生成 -->
+                    </div>
+                    
+                    <script>
+                        // 获取文章数据
+                        const articleData = JSON.parse(decodeURIComponent("${articleDataStr}"));
+                        
+                        // 修复换行问题
+                        function fixNewlines(text) {
+                            return text.replace(/\\\\n\\\\n/g, '\\n\\n');
+                        }
+                        
+                        // 简单Markdown解析实现
+                        function renderMarkdown(text) {
+                            let html = text.replace(/\\n\\n/g, '<br><br>');
+                            html = html.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
+                            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+                            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+                            return html;
+                        }
+                        
+                        // 生成打印内容
+                        function generatePrintContent() {
+                            const showTranslation = document.getElementById('showTranslation').checked;
+                            const showQuestions = document.getElementById('showQuestions').checked;
+                            const showVocabulary = document.getElementById('showVocabulary').checked;
+                            
+                            const fixedContent = fixNewlines(articleData.article_thai_content);
+                            const renderedContent = renderMarkdown(fixedContent);
+                            
+                            let contentHTML = \`
+                                <div class="article-content">
+                                    <h1>\${articleData.article_title}</h1>
+                                    <div>\${renderedContent}</div>
+                            \`;
+                            
+                            if (showTranslation) {
+                                contentHTML += \`
+                                    <div class="translation">
+                                        <h3>英文翻译:</h3>
+                                        <p>\${articleData.article_english_translation}</p>
+                                    </div>
+                                \`;
+                            }
+                            
+                            contentHTML += '</div>';
+                            
+                            if (showQuestions && articleData.comprehension_questions.length > 0) {
+                                contentHTML += \`
+                                    <div class="questions-section">
+                                        <div class="section-header">
+                                            <i class="fas fa-question-circle"></i>
+                                            阅读理解问题
+                                        </div>
+                                \`;
+                                
+                                articleData.comprehension_questions.forEach((question, index) => {
+                                    contentHTML += \`
+                                        <div class="question-item">
+                                            <p><strong>\${index + 1}. \${question.question_thai}</strong></p>
+                                            <!---
+                                            <p>\${question.question_english}</p>
+                                            <p><em>类型: \${question.type}</em></p>
+                                            --->
+                                        </div>
+                                    \`;
+                                });
+                                
+                                contentHTML += '</div>';
+                            }
+                            
+                            if (showVocabulary && articleData.vocabulary_list.length > 0) {
+                                contentHTML += \`
+                                    <div class="vocabulary-section">
+                                        <div class="section-header">
+                                            <i class="fas fa-book"></i>
+                                            词汇表
+                                        </div>
+                                        <div class="vocabulary-grid">
+                                \`;
+                                
+                                articleData.vocabulary_list.forEach(vocab => {
+                                    contentHTML += \`
+                                        <div class="vocabulary-item">
+                                            <div class="thai-word">
+                                                \${vocab.thai_word} <span class="part-of-speech">(\${vocab.part_of_speech})</span>
+                                            </div>
+                                            <div class="vocab-meaning">
+                                                <span class="vocab-english">\${vocab.english_meaning}</span>
+                                                <span class="vocab-chinese">\${vocab.chinese_meaning_characters} (\${vocab.chinese_meaning_pinyin})</span>
+                                            </div>
+                                        </div>
+                                    \`;
+                                });
+                                
+                                contentHTML += \`
+                                        </div>
+                                    </div>
+                                \`;
+                            }
+                            
+                            document.getElementById('printContent').innerHTML = contentHTML;
+                        }
+                        
+                        // 初始生成内容
+                        generatePrintContent();
+                        
+                        // 添加选项更改监听
+                        document.getElementById('showTranslation').addEventListener('change', generatePrintContent);
+                        document.getElementById('showQuestions').addEventListener('change', generatePrintContent);
+                        document.getElementById('showVocabulary').addEventListener('change', generatePrintContent);
+                    <\/script>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+        }
+       // 打开打印标签页
+       function openPrintTabV0() {
+            if (!currentArticleData) {
+                alert('请先选择一篇文章');
+                return;
+            }
+            
+            // 将文章数据编码为JSON字符串
+            const articleDataStr = encodeURIComponent(JSON.stringify(currentArticleData));
+            
+            // 打开新标签页
+            const printWindow = window.open('', '_blank');
+            
+            // 写入打印页面的HTML内容
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="zh">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>打印: ${currentArticleData.article_title}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&display=swap" rel="stylesheet">
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                    <style>
+                        body {
+                            line-height: 1.6;
+                            color: #333;
+                            max-width: 800px;
+                            margin: 0 auto;
+                            padding: 20px;
+                        }
+                        .print-header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            padding-bottom: 15px;
+                            border-bottom: 2px solid #4CAF50;
+                        }
+                        .print-options {
+                            background-color: #f5f7fa;
+                            padding: 15px;
+                            border-radius: 8px;
+                            margin-bottom: 20px;
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 15px;
+                        }
+                        .option-group {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        }
+                        .article-content {
+                            margin-bottom: 30px;
+                        }
+                        .article-content h1 {
+                            color: #2E7D32;
+                            margin-bottom: 20px;
+                        }
+                        .article-content p {
+                            margin-bottom: 16px;
+                            text-align: justify;
+                        }
+                        .questions-section, .vocabulary-section {
+                            margin-bottom: 30px;
+                        }
+                        .section-header {
+                            background-color: #2196F3;
+                            color: white;
+                            padding: 10px 15px;
+                            border-radius: 4px;
+                            margin-bottom: 15px;
+                        }
+                        .question-item {
+                            margin-bottom: 15px;
+                            padding-bottom: 15px;
+                            border-bottom: 1px solid #eee;
+                        }
+                        .vocabulary-item {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 12px;
+                            padding-bottom: 12px;
+                            border-bottom: 1px solid #eee;
+                        }
+                        .thai-word {
+                            font-weight: 700;
+                            color: #2E7D32;
+                        }
+                        button {
+                            background-color: #4CAF50;
+                            color: white;
+                            border: none;
+                            padding: 10px 15px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        }
+                        button:hover {
+                            background-color: #2E7D32;
+                        }
+                        @media print {
+                            .print-options, button {
+                                display: none;
+                            }
+                            body {
+                                padding: 0;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">
+                        <h4>泰语阅读练习打印版</h4>
+                        <p style="font-size:16px;">打印日期: ${new Date().toLocaleDateString()}</p>
+                    </div>
+                    
+                    <div class="print-options">
+                        <div class="option-group">
+                            <input type="checkbox" id="showTranslation" checked>
+                            <label for="showTranslation">显示英文翻译</label>
+                        </div>
+                        <div class="option-group">
+                            <input type="checkbox" id="showQuestions" checked>
+                            <label for="showQuestions">显示问题</label>
+                        </div>
+                        <div class="option-group">
+                            <input type="checkbox" id="showVocabulary" checked>
+                            <label for="showVocabulary">显示词汇表</label>
+                        </div>
+                        <button onclick="window.print()">
+                            <i class="fas fa-print"></i>
+                            打印
+                        </button>
+                    </div>
+                    
+                    <div id="printContent">
+                        <!-- 内容将由JavaScript动态生成 -->
+                    </div>
+                    
+                    <script>
+                        // 获取文章数据
+                        const articleData = JSON.parse(decodeURIComponent("${articleDataStr}"));
+                        
+                        // 修复换行问题
+                        function fixNewlines(text) {
+                            return text.replace(/\\\\n\\\\n/g, '\\n\\n');
+                        }
+                        
+                        // 简单Markdown解析实现
+                        function renderMarkdown(text) {
+                            // 先处理换行
+                            let html = text.replace(/\\n\\n/g, '<br><br>');
+                            // 处理加粗
+                            html = html.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
+                            // 处理标题
+                            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+                            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+                            return html;
+                        }
+                        
+                        // 生成打印内容
+                        function generatePrintContent() {
+                            const showTranslation = document.getElementById('showTranslation').checked;
+                            const showQuestions = document.getElementById('showQuestions').checked;
+                            const showVocabulary = document.getElementById('showVocabulary').checked;
+                            
+                            const fixedContent = fixNewlines(articleData.article_thai_content);
+                            const renderedContent = renderMarkdown(fixedContent);
+                            
+                            let contentHTML = \`
+                                <div class="article-content">
+                                    <h1>\${articleData.article_title}</h1>
+                                    <div>\${renderedContent}</div>
+                            \`;
+                            
+                            if (showTranslation) {
+                                contentHTML += \`
+                                    <div class="translation">
+                                        <h3>英文翻译:</h3>
+                                        <p>\${articleData.article_english_translation}</p>
+                                    </div>
+                                \`;
+                            }
+                            
+                            contentHTML += '</div>';
+                            
+                            if (showQuestions && articleData.comprehension_questions.length > 0) {
+                                contentHTML += \`
+                                    <div class="questions-section">
+                                        <div class="section-header">
+                                            <i class="fas fa-question-circle"></i>
+                                            阅读理解问题
+                                        </div>
+                                \`;
+                                
+                                articleData.comprehension_questions.forEach((question, index) => {
+                                    contentHTML += \`
+                                        <div class="question-item">
+                                            <p><strong>\${index + 1}. \${question.question_thai}</strong></p>
+                                            <!---
+                                            <p>\${question.question_english}</p>
+                                            <p><em>类型: \${question.type}</em></p>
+                                            --->
+                                        </div>
+                                    \`;
+                                });
+                                
+                                contentHTML += '</div>';
+                            }
+                            
+                            if (showVocabulary && articleData.vocabulary_list.length > 0) {
+                                contentHTML += \`
+                                    <div class="vocabulary-section">
+                                        <div class="section-header">
+                                            <i class="fas fa-book"></i>
+                                            词汇表
+                                        </div>
+                                \`;
+                                
+                                articleData.vocabulary_list.forEach(vocab => {
+                                    contentHTML += \`
+                                        <div class="vocabulary-item">
+                                            <div class="thai-word">\${vocab.thai_word} <em>(\${vocab.part_of_speech})</em></div>
+                                            <div class="meaning">
+                                                <div>\${vocab.english_meaning}</div>
+                                                <div>\${vocab.chinese_meaning_characters} (\${vocab.chinese_meaning_pinyin})</div>
+                                            </div>
+                                        </div>
+                                    \`;
+                                });
+                                
+                                contentHTML += '</div>';
+                            }
+                            
+                            document.getElementById('printContent').innerHTML = contentHTML;
+                        }
+                        
+                        // 初始生成内容
+                        generatePrintContent();
+                        
+                        // 添加选项更改监听
+                        document.getElementById('showTranslation').addEventListener('change', generatePrintContent);
+                        document.getElementById('showQuestions').addEventListener('change', generatePrintContent);
+                        document.getElementById('showVocabulary').addEventListener('change', generatePrintContent);
+                    <\/script>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+        }
+        
+        
+        // 增大字体
+        function increaseFontSize() {
+            if (currentFontSize < 24) {
+                currentFontSize += 2;
+                articleContent.style.fontSize = `${currentFontSize}px`;
+            }
+        }
+        
+        // 减小字体
+        function decreaseFontSize() {
+            if (currentFontSize > 12) {
+                currentFontSize -= 2;
+                articleContent.style.fontSize = `${currentFontSize}px`;
+            }
+        }
+        // 初始化应用
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+
+    <!-- 打印对话框 -->
+    <div class="overlay" id="printOverlay"></div>
+    <div class="print-dialog" id="printDialog">
+        <h3>打印选项</h3>
+        <div class="print-options">
+            <label>
+                <input type="checkbox" id="includeQuestions" checked> 包含问题
+            </label>
+            <label>
+                <input type="checkbox" id="includeVocabulary" checked> 包含词汇表
+            </label>
+            <label>
+                <input type="checkbox" id="includeTranslation" checked> 包含英文翻译
+            </label>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <button onclick="hidePrintDialog()">取消</button>
+            <button onclick="confirmPrint()" style="background: #4CAF50; color: white;">打印</button>
+        </div>
+    </div>
+
+    <script>
+        // 显示打印对话框
+        function showPrintDialog() {
+            document.getElementById('printOverlay').style.display = 'block';
+            document.getElementById('printDialog').style.display = 'block';
+        }
+        
+        // 隐藏打印对话框
+        function hidePrintDialog() {
+            document.getElementById('printOverlay').style.display = 'none';
+            document.getElementById('printDialog').style.display = 'none';
+        }
+        
+        // 确认打印
+        function confirmPrint() {
+            const includeQuestions = document.getElementById('includeQuestions').checked;
+            const includeVocabulary = document.getElementById('includeVocabulary').checked;
+            const includeTranslation = document.getElementById('includeTranslation').checked;
+            
+            // 创建打印内容
+            let printContent = document.getElementById('articleContent').innerHTML;
+            
+            if (includeQuestions) {
+                printContent += '<h2>阅读理解问题</h2>' + document.getElementById('questionsContent').innerHTML;
+            }
+            
+            if (includeVocabulary) {
+                printContent += '<h2>词汇表</h2>' + document.getElementById('vocabularyContent').innerHTML;
+            }
+            
+            // 使用Print.js打印
+            printJS({
+                printable: printContent,
+                type: 'html',
+                header: '泰语阅读材料 - ' + new Date().toLocaleDateString(),
+                headerStyle: 'font-size: 20px; text-align: center; font-family: "Noto Sans Thai", sans-serif;',
+                css: [
+                    'https://fonts.googleapis.com/css2?family=Noto+Sans+Thai&display=swap',
+                    'body { font-family: "Noto Sans Thai", sans-serif; line-height: 1.6; }',
+                    'h1, h2, h3 { color: #2E7D32; }',
+                    '.thai-word { font-weight: bold; color: #2E7D32; }'
+                ],
+                style: 'body { padding: 20px; }'
+            });
+            
+            hidePrintDialog();
+        }
+        
+        // 绑定打印按钮事件
+        //document.getElementById('printBtn').addEventListener('click', showPrintDialog);
+    </script>
+</body>
+</html>

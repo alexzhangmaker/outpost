@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语阅读练习应用</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .toolbar {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .toolbar h1 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toolbar-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .toolbar button {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .toolbar button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: linear-gradient(to bottom, #f9fafb, #f1f5f9);
+            border-right: 1px solid #e2e8f0;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar h2 {
+            margin-bottom: 20px;
+            color: #3b82f6;
+            font-weight: 500;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #dbeafe;
+        }
+        
+        .article-list {
+            list-style: none;
+            flex: 1;
+        }
+        
+        .article-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        
+        .article-item:hover {
+            background-color: #dbeafe;
+            transform: translateX(5px);
+        }
+        
+        .article-item.active {
+            background-color: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            font-weight: 500;
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .article-content {
+            flex: 3;
+            padding: 25px;
+            overflow-y: auto;
+            background-color: white;
+            margin: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        }
+        
+        .article-content h1 {
+            color: #1e40af;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #dbeafe;
+        }
+        
+        .article-content p {
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            text-align: justify;
+        }
+        
+        .assistant-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin: 15px 15px 15px 0;
+            min-width: 300px;
+            gap: 15px;
+        }
+        
+        .questions-section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            overflow: hidden;
+            flex: 1;
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 12px 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-content {
+            padding: 15px;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+        
+        .question-part {
+            margin-bottom: 20px;
+        }
+        
+        .question-part h3 {
+            color: #1e40af;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .question-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .question-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .question-text {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #334155;
+        }
+        
+        .answer-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-family: 'Roboto', sans-serif;
+            margin-bottom: 8px;
+            resize: vertical;
+            min-height: 40px;
+        }
+        
+        .answer-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .check-btn {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+        }
+        
+        .check-btn:hover {
+            background-color: #059669;
+        }
+        
+        .answer-feedback {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .correct {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .incorrect {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .answer-key {
+            background-color: #f0f9ff;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+            border-left: 3px solid #3b82f6;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 1.2rem;
+            color: #666;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .loading i {
+            font-size: 2rem;
+        }
+        
+        @media (max-width: 992px) {
+            .content-area {
+                flex-direction: column;
+            }
+            
+            .assistant-panel {
+                margin: 0 15px 15px 15px;
+            }
+        }
+        
+        .score-section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin-top: 15px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .score-display {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #3b82f6;
+        }
+        
+        .check-all-btn {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        
+        .check-all-btn:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <h1><i class="fas fa-book-reader"></i> 英语阅读练习</h1>
+        <div class="toolbar-buttons">
+            <button id="printBtn">
+                <i class="fas fa-print"></i>
+                打印
+            </button>
+            <button id="fontIncrease">
+                <i class="fas fa-text-height"></i>
+                增大字体
+            </button>
+            <button id="fontDecrease">
+                <i class="fas fa-text-height"></i>
+                减小字体
+            </button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <h2><i class="fas fa-list"></i> 文章列表</h2>
+            <ul class="article-list" id="articleList">
+                <li class="article-item active">加载中...</li>
+            </ul>
+        </div>
+        
+        <div class="content-area">
+            <div class="article-content" id="articleContent">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <div>请从左侧选择文章</div>
+                </div>
+            </div>
+            
+            <div class="assistant-panel">
+                <div class="questions-section">
+                    <div class="section-header">
+                        <i class="fas fa-question-circle"></i>
+                        <span>阅读理解问题</span>
+                    </div>
+                    <div class="section-content" id="questionsContent">
+                        <p class="info-text">问题将显示在这里</p>
+                    </div>
+                </div>
+                
+                <div class="score-section">
+                    <div class="score-display" id="scoreDisplay">得分: 0/0</div>
+                    <button class="check-all-btn" id="checkAllBtn">检查所有答案</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <script>
+// Firebase配置（实际使用时替换为你的配置）
+        // 在实际应用中，您可以使用以下代码从Firebase获取数据
+        // 模拟Firebase配置 - 在实际应用中替换为您的配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-articles-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        
+        const path001223="001223" ;
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // 获取数据库引用
+        const database = firebase.database();
+        function fetchDataFromFirebase(path) {
+            return new Promise((resolve, reject) => {
+                const ref = database.ref(path);
+                ref.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    //resolve(data ? Object.values(data) : []);
+                    resolve(data);
+                }, (error) => {
+                    reject(error);
+                });
+            });
+        }
+
+        // 模拟数据
+        const mockArticles = {
+            "article1": {
+                "topic": "The Rise of Urban Air Pollution and Possible Remedies",
+                "reading_text": "In recent decades, urban centres around the world have witnessed a significant deterioration in air quality. This escalating problem poses serious risks to public health and threatens sustainable urban development. Unless urgent measures are taken, cities may become increasingly uninhabitable, forcing residents to contend with chronic illnesses and economic decline.\n\nThis alarming trend is primarily due to two interrelated causes. First, the rapid growth of private vehicle ownership has generated unprecedented levels of exhaust emissions. As populations expand and incomes rise, more individuals rely on cars and motorbikes, which release nitrogen oxides and fine particulate matter into the atmosphere. Second, industrialisation has contributed heavily to the crisis. Factories located near residential areas often operate with outdated technology, emitting harmful substances without sufficient regulation. As a consequence, urban residents are continually exposed to a mixture of pollutants that can damage both respiratory and cardiovascular systems.\n\nOne proposed remedy is the promotion of cleaner transportation options. Governments could expand public transit networks and incentivise the use of electric vehicles by offering subsidies or tax reductions. While this solution addresses the root cause of traffic-related pollution, its success may be limited by high infrastructure costs and the slow pace of technological adoption. Another approach is stricter enforcement of environmental regulations for industries. By imposing penalties on companies that exceed emission limits and encouraging the installation of pollution-control equipment, authorities could reduce the volume of harmful gases released into the atmosphere. However, this strategy may face resistance from industries concerned about higher production expenses.\n\nIn conclusion, urban air pollution stems largely from increased vehicle use and unchecked industrial activity. Although cleaner transport systems and stronger regulations present viable solutions, their effectiveness will depend on political will and public cooperation. If governments fail to act decisively, the long-term consequences may include higher healthcare costs and declining quality of life. Conversely, proactive measures could transform cities into healthier, more sustainable environments for future generations.",
+                "comprehension_questions": {
+                    "part_a": [
+                        "What is the main problem discussed in the passage?",
+                        "Why has vehicle ownership contributed to worsening air quality?",
+                        "How do factories contribute to the pollution problem?",
+                        "What solution does the text suggest for reducing traffic-related pollution?",
+                        "Who might resist the enforcement of stricter environmental regulations?"
+                    ],
+                    "part_b": [
+                        "According to the text, what are the two main causes of urban air pollution?",
+                        "What are the potential limitations of promoting cleaner transportation as a solution?",
+                        "How does the author suggest that governments could address industrial pollution? Use your own words."
+                    ]
+                },
+                "answer_key": {
+                    "part_a": [
+                        "The main problem is the rise of urban air pollution.",
+                        "Because cars and motorbikes release nitrogen oxides and fine particulate matter into the atmosphere.",
+                        "Factories often use outdated technology and release harmful substances without enough regulation.",
+                        "Expanding public transit networks and encouraging electric vehicle use through subsidies or tax reductions.",
+                        "Industries, because they are worried about increased production costs."
+                    ],
+                    "part_b": [
+                        "The two main causes are the rapid growth of private vehicle ownership and industrial emissions.",
+                        "They may be limited by high infrastructure costs and slow technological adoption.",
+                        "By setting stricter rules, penalising companies that exceed emission limits, and encouraging pollution-control equipment."
+                    ]
+                }
+            },
+            "article2": {
+                "topic": "Climate Change and Global Food Security",
+                "reading_text": "Climate change represents one of the most significant challenges to global food security in the 21st century. Rising temperatures, changing precipitation patterns, and increased frequency of extreme weather events are already affecting agricultural productivity worldwide. These changes threaten to undermine decades of progress in reducing hunger and malnutrition.\n\nThe impact of climate change on agriculture is multifaceted. Higher temperatures can reduce crop yields by accelerating plant development, which shortens the growing season. Changes in rainfall patterns may lead to droughts in some regions and floods in others, both of which can devastate crops. Additionally, increased levels of carbon dioxide, while potentially boosting plant growth for some crops, can reduce the nutritional quality of staple foods like wheat and rice.\n\nAdaptation strategies are essential to mitigate these effects. Farmers can adopt climate-resilient agricultural practices such as crop diversification, improved water management, and the use of drought-tolerant crop varieties. At the policy level, governments need to invest in agricultural research and development, strengthen early warning systems for extreme weather events, and support rural infrastructure that enhances resilience to climate shocks.\n\nInternational cooperation is also crucial. Climate change is a global problem that requires coordinated action. Developed countries should support developing nations in building adaptive capacity through technology transfer, financial assistance, and knowledge sharing. Without such cooperation, the goal of achieving global food security will become increasingly difficult to attain.",
+                "comprehension_questions": {
+                    "part_a": [
+                        "What is the main challenge discussed in the passage?",
+                        "How do higher temperatures affect crop yields?",
+                        "What are two types of extreme weather events mentioned?",
+                        "What adaptation strategy can farmers use?",
+                        "Why is international cooperation important?"
+                    ],
+                    "part_b": [
+                        "According to the text, what are three impacts of climate change on agriculture?",
+                        "What role should developed countries play according to the passage?",
+                        "How might increased carbon dioxide levels affect food nutrition?"
+                    ]
+                },
+                "answer_key": {
+                    "part_a": [
+                        "Climate change's impact on global food security.",
+                        "They can reduce yields by shortening the growing season.",
+                        "Droughts and floods.",
+                        "Crop diversification, improved water management, and using drought-tolerant varieties.",
+                        "Because climate change is a global problem requiring coordinated action."
+                    ],
+                    "part_b": [
+                        "Reduced crop yields, changed precipitation patterns, and reduced nutritional quality of foods.",
+                        "They should support developing nations through technology transfer, financial assistance, and knowledge sharing.",
+                        "It can reduce the nutritional quality of staple foods like wheat and rice."
+                    ]
+                }
+            }
+        };
+        
+        // DOM元素
+        const articleList = document.getElementById('articleList');
+        const articleContent = document.getElementById('articleContent');
+        const questionsContent = document.getElementById('questionsContent');
+        const printBtn = document.getElementById('printBtn');
+        const fontIncrease = document.getElementById('fontIncrease');
+        const fontDecrease = document.getElementById('fontDecrease');
+        const checkAllBtn = document.getElementById('checkAllBtn');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        
+        // 当前字体大小和文章数据
+        let currentFontSize = 16;
+        let currentArticleData = null;
+        let userAnswers = {};
+        
+        // 初始化应用
+        function initApp() {
+            loadArticles();
+            
+            // 添加事件监听器
+            printBtn.addEventListener('click', openPrintTab);
+            fontIncrease.addEventListener('click', increaseFontSize);
+            fontDecrease.addEventListener('click', decreaseFontSize);
+            checkAllBtn.addEventListener('click', checkAllAnswers);
+        }
+        
+        let gArticle001223;
+
+        // 加载文章列表
+        async function loadArticles() {
+            articleList.innerHTML = '';
+            
+            gArticle001223 = await fetchDataFromFirebase(path001223) ;
+            if(gArticle001223==null)return ;
+
+            Object.keys(gArticle001223).forEach((key, index) => {
+                const article = gArticle001223[key];
+                const li = document.createElement('li');
+                li.className = 'article-item';
+                if (index === 0) li.classList.add('active');
+                li.textContent = article.topic;
+                li.addEventListener('click', () => displayArticle(key, article));
+                articleList.appendChild(li);
+            });
+            
+            // 默认显示第一篇文章
+            if (Object.keys(gArticle001223).length > 0) {
+                const firstKey = Object.keys(gArticle001223)[0];
+                displayArticle(firstKey, gArticle001223[firstKey]);
+            }
+        }
+        
+        // 显示文章内容
+        function displayArticle(articleId, articleData) {
+            // 更新活动文章项
+            document.querySelectorAll('.article-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.article-item').forEach(item => {
+                if (item.textContent === articleData.topic) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // 保存当前文章数据
+            currentArticleData = articleData;
+            userAnswers = {}; // 重置用户答案
+            
+            // 渲染文章内容
+            articleContent.innerHTML = `
+                <h1>${articleData.topic}</h1>
+                <div>${formatTextWithParagraphs(articleData.reading_text)}</div>
+            `;
+            
+            // 应用当前字体大小
+            articleContent.style.fontSize = `${currentFontSize}px`;
+            
+            // 显示问题
+            displayQuestions(articleData);
+            
+            // 重置得分
+            scoreDisplay.textContent = "得分: 0/0";
+        }
+        
+        // 格式化文本，保留段落结构
+        function formatTextWithParagraphs(text) {
+            return text.split('\n\n').map(paragraph => {
+                return `<p>${paragraph}</p>`;
+            }).join('');
+        }
+        
+        // 显示问题
+        function displayQuestions(articleData) {
+            const questions = articleData.comprehension_questions;
+            const answerKey = articleData.answer_key;
+            
+            let questionsHTML = `
+                <div class="question-part">
+                    <h3>Part A: 简答题</h3>
+            `;
+            
+            // Part A 问题
+            questions.part_a.forEach((question, index) => {
+                const questionId = `part_a_${index}`;
+                questionsHTML += `
+                    <div class="question-item">
+                        <div class="question-text">${index + 1}. ${question}</div>
+                        <textarea class="answer-input" id="${questionId}" placeholder="输入你的答案..." rows="2"></textarea>
+                        <button class="check-btn" data-question="${questionId}" data-answer="${answerKey.part_a[index]}">检查答案</button>
+                        <div class="answer-feedback" id="feedback_${questionId}"></div>
+                    </div>
+                `;
+                
+                // 初始化用户答案
+                userAnswers[questionId] = "";
+            });
+            
+            questionsHTML += `
+                </div>
+                <div class="question-part">
+                    <h3>Part B: 详细回答题</h3>
+            `;
+            
+            // Part B 问题
+            questions.part_b.forEach((question, index) => {
+                const questionId = `part_b_${index}`;
+                questionsHTML += `
+                    <div class="question-item">
+                        <div class="question-text">${index + 1}. ${question}</div>
+                        <textarea class="answer-input" id="${questionId}" placeholder="输入你的答案..." rows="3"></textarea>
+                        <button class="check-btn" data-question="${questionId}" data-answer="${answerKey.part_b[index]}">检查答案</button>
+                        <div class="answer-feedback" id="feedback_${questionId}"></div>
+                    </div>
+                `;
+                
+                // 初始化用户答案
+                userAnswers[questionId] = "";
+            });
+            
+            questionsHTML += `</div>`;
+            
+            questionsContent.innerHTML = questionsHTML;
+            
+            // 添加答案检查事件监听
+            document.querySelectorAll('.check-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const questionId = this.getAttribute('data-question');
+                    const correctAnswer = this.getAttribute('data-answer');
+                    const userAnswer = document.getElementById(questionId).value.trim();
+                    checkAnswer(questionId, userAnswer, correctAnswer);
+                });
+            });
+            
+            // 添加输入变化监听
+            document.querySelectorAll('.answer-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    userAnswers[this.id] = this.value;
+                });
+            });
+        }
+        
+        // 检查答案
+        function checkAnswer(questionId, userAnswer, correctAnswer) {
+            const feedbackElement = document.getElementById(`feedback_${questionId}`);
+            
+            if (!userAnswer) {
+                feedbackElement.textContent = "请先输入你的答案";
+                feedbackElement.className = "answer-feedback incorrect";
+                feedbackElement.style.display = "block";
+                return;
+            }
+            
+            // 简单答案检查（实际应用中可能需要更复杂的自然语言处理）
+            const isCorrect = userAnswer.toLowerCase().includes(correctAnswer.toLowerCase()) || 
+                             correctAnswer.toLowerCase().includes(userAnswer.toLowerCase());
+            
+            if (isCorrect) {
+                feedbackElement.innerHTML = `
+                    <div class="correct">✓ 正确！</div>
+                `;
+            } else {
+                feedbackElement.innerHTML = `
+                    <div class="incorrect">✗ 不正确。参考答案: </div>
+                    <div class="answer-key">${correctAnswer}</div>
+                `;
+            }
+            
+            feedbackElement.style.display = "block";
+            updateScore();
+        }
+        
+        // 检查所有答案
+        function checkAllAnswers() {
+            let totalQuestions = 0;
+            let correctAnswers = 0;
+            
+            document.querySelectorAll('.check-btn').forEach(button => {
+                const questionId = button.getAttribute('data-question');
+                const correctAnswer = button.getAttribute('data-answer');
+                const userAnswer = document.getElementById(questionId).value.trim();
+                
+                totalQuestions++;
+                
+                if (userAnswer && 
+                   (userAnswer.toLowerCase().includes(correctAnswer.toLowerCase()) || 
+                    correctAnswer.toLowerCase().includes(userAnswer.toLowerCase()))) {
+                    correctAnswers++;
+                }
+                
+                // 触发检查以显示反馈
+                checkAnswer(questionId, userAnswer, correctAnswer);
+            });
+            
+            scoreDisplay.textContent = `得分: ${correctAnswers}/${totalQuestions}`;
+        }
+        
+        // 更新得分
+        function updateScore() {
+            let totalQuestions = 0;
+            let correctAnswers = 0;
+            
+            document.querySelectorAll('.check-btn').forEach(button => {
+                const questionId = button.getAttribute('data-question');
+                const feedbackElement = document.getElementById(`feedback_${questionId}`);
+                
+                if (feedbackElement.style.display === "block") {
+                    totalQuestions++;
+                    if (feedbackElement.querySelector('.correct')) {
+                        correctAnswers++;
+                    }
+                }
+            });
+            
+            scoreDisplay.textContent = `得分: ${correctAnswers}/${totalQuestions}`;
+        }
+        
+        // 打开打印标签页
+        function openPrintTab() {
+            if (!currentArticleData) {
+                alert('请先选择一篇文章');
+                return;
+            }
+            
+            // 将文章数据编码为JSON字符串
+            const articleDataStr = encodeURIComponent(JSON.stringify(currentArticleData));
+            
+            // 打开新标签页
+            const printWindow = window.open('', '_blank');
+            
+            // 写入打印页面的HTML内容
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>打印: ${currentArticleData.topic}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+                    <style>
+                        body {
+                            font-family: 'Roboto', sans-serif;
+                            line-height: 1.6;
+                            color: #334155;
+                            max-width: 800px;
+                            margin: 0 auto;
+                            padding: 20px;
+                        }
+                        .print-header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            padding-bottom: 15px;
+                            border-bottom: 2px solid #3b82f6;
+                        }
+                        .article-content h1 {
+                            color: #1e40af;
+                            margin-bottom: 20px;
+                        }
+                        .article-content p {
+                            margin-bottom: 16px;
+                            text-align: justify;
+                        }
+                        .questions-section {
+                            margin-top: 30px;
+                        }
+                        .question-part {
+                            margin-bottom: 25px;
+                        }
+                        .question-part h3 {
+                            color: #1e40af;
+                            margin-bottom: 15px;
+                            padding-bottom: 5px;
+                            border-bottom: 1px solid #e2e8f0;
+                        }
+                        .question-item {
+                            margin-bottom: 15px;
+                        }
+                        .question-text {
+                            font-weight: 500;
+                            margin-bottom: 8px;
+                        }
+                        .answer-space {
+                            min-height: 40px;
+                            border-bottom: 1px dashed #d1d5db;
+                            margin-bottom: 15px;
+                        }
+                        @media print {
+                            body {
+                                padding: 0;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">
+                        <h1>英语阅读练习打印版</h1>
+                        <p>打印日期: ${new Date().toLocaleDateString()} | 文章: ${currentArticleData.topic}</p>
+                    </div>
+                    
+                    <div class="article-content">
+                        <h1>${currentArticleData.topic}</h1>
+                        <div>${formatTextWithParagraphs(currentArticleData.reading_text)}</div>
+                    </div>
+                    
+                    <div class="questions-section">
+                        <div class="question-part">
+                            <h3>Part A: 简答题</h3>
+                            ${currentArticleData.comprehension_questions.part_a.map((question, index) => `
+                                <div class="question-item">
+                                    <div class="question-text">${index + 1}. ${question}</div>
+                                    <div class="answer-space"></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="question-part">
+                            <h3>Part B: 详细回答题</h3>
+                            ${currentArticleData.comprehension_questions.part_b.map((question, index) => `
+                                <div class="question-item">
+                                    <div class="question-text">${index + 1}. ${question}</div>
+                                    <div class="answer-space" style="min-height: 60px;"></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+        }
+        
+        // 增大字体
+        function increaseFontSize() {
+            if (currentFontSize < 24) {
+                currentFontSize += 2;
+                articleContent.style.fontSize = `${currentFontSize}px`;
+            }
+        }
+        
+        // 减小字体
+        function decreaseFontSize() {
+            if (currentFontSize > 12) {
+                currentFontSize -= 2;
+                articleContent.style.fontSize = `${currentFontSize}px`;
+            }
+        }
+        
+        // 初始化应用
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
