@@ -742,7 +742,7 @@
                     <style>
                         body {
                             font-family: 'Roboto', sans-serif;
-                            line-height: 1.6;
+                            line-height: 1.2;
                             color: #334155;
                             max-width: 800px;
                             margin: 0 auto;
@@ -766,11 +766,11 @@
                             margin-top: 30px;
                         }
                         .question-part {
-                            margin-bottom: 25px;
+                            margin-bottom: 5px;
                         }
                         .question-part h3 {
                             color: #1e40af;
-                            margin-bottom: 15px;
+                            margin-bottom: 10px;
                             padding-bottom: 5px;
                             border-bottom: 1px solid #e2e8f0;
                         }
@@ -780,6 +780,7 @@
                         .question-text {
                             font-weight: 500;
                             margin-bottom: 8px;
+                            font-size:18px ;
                         }
                         .answer-space {
                             min-height: 40px;
@@ -794,13 +795,15 @@
                     </style>
                 </head>
                 <body>
+                    <!---
                     <div class="print-header">
                         <h1>英语阅读练习打印版</h1>
                         <p>打印日期: ${new Date().toLocaleDateString()} | 文章: ${currentArticleData.topic}</p>
                     </div>
+                    -->
                     
                     <div class="article-content">
-                        <h1>${currentArticleData.topic}</h1>
+                        <h4>${currentArticleData.topic}</h4>
                         <div>${formatTextWithParagraphs(currentArticleData.reading_text)}</div>
                     </div>
                     
