@@ -7,14 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://unpkg.com/wavesurfer.js@7"></script>
-    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
-    <!-----
-    <script src="https://unpkg.com/wavesurfer.js@7.10.1/dist/plugins/timeline.esm.js"></script>
--->
-
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=enable" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=install_desktop" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/6.6.3/wavesurfer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/6.6.3/plugins/regions.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -216,15 +210,13 @@
         }
         
         .thai-text {
-            /*font-family: 'Noto Sans Thai', sans-serif;*/
-            font-size: 22px;
-            width:50%;
+            font-family: 'Noto Sans Thai', sans-serif;
+            font-size: 16px;
         }
         
         .translation {
             color: #7f8c8d;
             font-style: italic;
-            font-size:14px;
         }
         
         .action-btn {
@@ -267,16 +259,7 @@
 <body>
     <!-- 左侧导航区 -->
     <div class="sidebar">
-        <div class="app-title">
-            <span>泰语学习音频应用</span>
-            <span class="material-symbols-outlined" id="idToggleNav">install_desktop</span>
-
-        </div>
-        <script>
-            document.querySelector("#idToggleNav").addEventListener('click',(event)=>{
-                document.querySelector('.sidebar').style.display = "none" ;
-            }) ;
-        </script>
+        <div class="app-title">泰语学习音频应用</div>
         
         <div class="nav-section">
             <div class="nav-header">音频课件</div>
@@ -309,10 +292,7 @@
     <div class="content-area">
         <!-- 播放器区域 -->
         <div class="player-section">
-            <div class="section-title">
-                <span class="material-symbols-outlined" id="idSaveChange">install_desktop</span>
-                <span id="currentLessonTitle">选择左侧音频课件开始学习</span>
-            </div> 
+            <div class="section-title" id="currentLessonTitle">选择左侧音频课件开始学习</div>
             <div id="waveform"></div>
             <div class="player-controls">
                 <button id="playPauseBtn" class="btn" disabled>播放</button>
@@ -330,11 +310,11 @@
                 <table id="timestampsTable">
                     <thead>
                         <tr>
-                            <th width="100" style="font-size: 18px;">开始</th>
-                            <th width="100" style="font-size: 18px;">结束</th>
-                            <th width="35%" style="font-size: 18px;">泰语句子</th>
-                            <th style="font-size: 18px;">英文翻译</th>
-                            <th width="100" style="font-size: 18px;">操作</th>
+                            <th width="100">开始时间</th>
+                            <th width="100">结束时间</th>
+                            <th width="35%">泰语句子</th>
+                            <th>英文翻译</th>
+                            <th width="100">操作</th>
                         </tr>
                     </thead>
                     <tbody id="timestampsBody">
@@ -348,37 +328,70 @@
     </div>
 
     <script>
-        // Firebase配置 - 需要替换为实际配置
-        const firebaseConfig = {
-            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
-            authDomain: "outpost-8d74e.firebaseapp.com",
-            databaseURL: "https://outpost-audible-8d74e-6ba9c.asia-southeast1.firebasedatabase.app/",
-            projectId: "outpost-8d74e",
-            storageBucket: "outpost-8d74e.firebasestorage.app",
-            messagingSenderId: "724993324937",
-            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
-            measurementId: "G-QPHWRTH6BH"
+        // 模拟数据 - 在实际应用中应从Firebase获取
+        const mockLessons = {
+            "lesson1": {
+                "title": "ThaiPBS-001",
+                "audioURL": "https://firebasestorage.googleapis.com/v0/b/outpost-8d74e.firebasestorage.app/o/audible%2FThaiPod101_ThaiBookstore.mp3?alt=media&token=2e38913a-0d66-473b-a061-74e41e387a77",
+                "timeStamps": [
+                    {
+                        "thai_text": "ผู้หญิงคนหนึ่งกำลังถามพนักงานในร้านหนังสือ",
+                        "english_translation": "A woman is asking an employee in a bookstore.",
+                        "start": 28.61,
+                        "end": 31.42
+                    },
+                    {
+                        "thai_text": "หนังสือเล่มนี้ราคาเท่าไหร่คะ",
+                        "english_translation": "How much does this book cost?",
+                        "start": 32.15,
+                        "end": 34.27
+                    },
+                    {
+                        "thai_text": "เล่มหนึ่งร้อยยี่สิบบาทค่ะ",
+                        "english_translation": "It's one hundred and twenty baht.",
+                        "start": 35.80,
+                        "end": 38.50
+                    },
+                    {
+                        "thai_text": "มีส่วนลดไหมคะ",
+                        "english_translation": "Is there a discount?",
+                        "start": 39.20,
+                        "end": 41.10
+                    },
+                    {
+                        "thai_text": "ขอโทษค่ะไม่มีส่วนลด",
+                        "english_translation": "Sorry, there is no discount.",
+                        "start": 42.30,
+                        "end": 44.80
+                    }
+                ]
+            },
+            "lesson2": {
+                "title": "ThaiPBS-002",
+                "audioURL": "https://example.com/audio2.mp3",
+                "timeStamps": [
+                    {
+                        "thai_text": "สวัสดีครับ",
+                        "english_translation": "Hello.",
+                        "start": 1.20,
+                        "end": 2.50
+                    },
+                    {
+                        "thai_text": "คุณชื่ออะไรครับ",
+                        "english_translation": "What is your name?",
+                        "start": 3.10,
+                        "end": 5.20
+                    }
+                ]
+            }
         };
         
-        // 初始化Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        
-
         // Wavesurfer实例
         let wavesurfer = null;
         let currentRegions = [];
         let currentLesson = null;
         let currentRegionIndex = -1;
-        let regionsPlugin = WaveSurfer.Regions.create() ;
-        //let regions = RegionsPlugin.create() ;
-
         
-        let activeRegion = null ;
-
-        let activeLesson  ;
-        
-
         // DOM元素
         const lessonList = document.getElementById('lessonList');
         const currentLessonTitle = document.getElementById('currentLessonTitle');
@@ -387,59 +400,41 @@
         const nextRegionBtn = document.getElementById('nextRegionBtn');
         const timestampsBody = document.getElementById('timestampsBody');
         const autoPlayNext = document.getElementById('autoPlayNext');
+        const completedLessons = document.getElementById('completedLessons');
+        const totalLessons = document.getElementById('totalLessons');
         
-        // 从Firebase获取课件列表
+        // 从模拟数据获取课件列表
         function loadLessons() {
-            const lessonsRef = database.ref('audibles');
+            lessonList.innerHTML = '';
+            totalLessons.textContent = Object.keys(mockLessons).length;
             
-            lessonsRef.on('value', (snapshot) => {
-                const lessons = snapshot.val();
-                console.log(lessons) ;
-                lessonList.innerHTML = '';
-                
-                if (lessons) {
-                    Object.keys(lessons).forEach(key => {
-                        const lesson = lessons[key];
-                        const li = document.createElement('li');
-                        li.className = 'lesson-item';
-                        li.textContent = lesson.title;
-                        li.dataset.key = key;
-                        li.addEventListener('click', () => {
-                            loadLesson(lesson) ;
-                            activeLesson = lesson ;
-                            activeLesson.key = key ;
-                        });
-                        lessonList.appendChild(li);
-                    });
-                    
-                    document.getElementById('totalLessons').textContent = Object.keys(lessons).length;
-                } else {
+            if (mockLessons) {
+                Object.keys(mockLessons).forEach(key => {
+                    const lesson = mockLessons[key];
                     const li = document.createElement('li');
                     li.className = 'lesson-item';
-                    li.textContent = '没有找到音频课件';
+                    li.textContent = lesson.title;
+                    li.dataset.key = key;
+                    li.addEventListener('click', () => loadLesson(lesson, key));
                     lessonList.appendChild(li);
-                }
-            }, (error) => {
-                console.error('加载课件列表失败:', error);
-                lessonList.innerHTML = '<li class="lesson-item">加载失败，请刷新重试</li>';
-            });
+                });
+            } else {
+                const li = document.createElement('li');
+                li.className = 'lesson-item';
+                li.textContent = '没有找到音频课件';
+                lessonList.appendChild(li);
+            }
         }
         
-
-
-        // Give regions a random color when they are created
-        const random = (min, max) => Math.random() * (max - min) + min
-        const randomColor = () => `rgba(${random(0, 255)}, ${random(0, 255)}, ${random(0, 255)}, 0.5)`
-
         // 加载选定的课件
-        function loadLesson(lesson) {
+        function loadLesson(lesson, key) {
             currentLesson = lesson;
             currentRegionIndex = -1;
             
             // 更新UI
             document.querySelectorAll('.lesson-item').forEach(item => {
                 item.classList.remove('active');
-                if (item.dataset.key === lesson.key) {
+                if (item.dataset.key === key) {
                     item.classList.add('active');
                 }
             });
@@ -449,9 +444,9 @@
             // 初始化或重置wavesurfer
             if (wavesurfer) {
                 wavesurfer.destroy();
-                regionsPlugin.clearRegions();
             }
             
+            // 正确初始化Wavesurfer和区域插件
             wavesurfer = WaveSurfer.create({
                 container: '#waveform',
                 waveColor: '#3498db',
@@ -462,7 +457,7 @@
                 barGap: 2,
                 height: 180,
                 normalize: true,
-                plugins: [regionsPlugin/*,TimelinePlugin.create()*/]
+                plugins: [WaveSurfer.Regions.create()]
             });
             
             // 加载音频
@@ -481,7 +476,7 @@
                 // 创建区域
                 if (lesson.timeStamps && lesson.timeStamps.length > 0) {
                     lesson.timeStamps.forEach((stamp, index) => {
-                        const region = regionsPlugin.addRegion({
+                        const region = wavesurfer.addRegion({
                             start: stamp.start,
                             end: stamp.end,
                             color: `rgba(52, 152, 219, 0.3)`,
@@ -519,31 +514,6 @@
             wavesurfer.on('finish', () => {
                 playPauseBtn.textContent = '播放';
             });
-
-            regionsPlugin.on('region-in', (region) => {
-                console.log('region-in', region)
-                activeRegion = region
-            })
-            regionsPlugin.on('region-out', (region) => {
-                console.log('region-out', region)
-                if (activeRegion === region) {
-                    if (autoPlayNext.checked) {
-                        region.play()
-                    } else {
-                        activeRegion = null
-                    }
-                }
-            })
-            regionsPlugin.on('region-clicked', (region, e) => {
-                e.stopPropagation() // prevent triggering a click on the waveform
-                activeRegion = region
-                region.play(true)
-                region.setOptions({ color: randomColor() })
-            })
-            // Reset the active region when the user clicks anywhere in the waveform
-            wavesurfer.on('interaction', () => {
-                activeRegion = null
-            }) ;
             
             // 播放/暂停按钮事件
             playPauseBtn.addEventListener('click', () => {
@@ -576,29 +546,26 @@
                 
                 row.innerHTML = `
                     <td>
-                        <input type="number" class="time-input start-time" value="${stamp.start.toFixed(2)}" step="0.1">
+                        <input type="number" class="time-input start-time" value="${stamp.start.toFixed(2)}" step="0.01">
                     </td>
                     <td>
-                        <input type="number" class="time-input end-time" value="${stamp.end.toFixed(2)}" step="0.1">
+                        <input type="number" class="time-input end-time" value="${stamp.end.toFixed(2)}" step="0.01">
                     </td>
                     <td class="thai-text">${stamp.thai_text}</td>
                     <td class="translation">${stamp.english_translation}</td>
                     <td>
                         <button class="action-btn play-row">▶️</button>
-                        <button class="action-btn delete-row">❌</button>
                     </td>
                 `;
                 
                 timestampsBody.appendChild(row);
                 
-                /*
                 // 行点击事件
                 row.addEventListener('click', (e) => {
                     if (!e.target.matches('button')) {
                         playRegion(index);
                     }
                 });
-                */
                 
                 // 播放按钮事件
                 row.querySelector('.play-row').addEventListener('click', (e) => {
@@ -606,18 +573,11 @@
                     playRegion(index);
                 });
                 
-                // 删除按钮事件
-                row.querySelector('.delete-row').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    deleteRegion(index);
-                });
-                
                 // 开始时间输入事件
                 row.querySelector('.start-time').addEventListener('change', (e) => {
                     const newStart = parseFloat(e.target.value);
                     if (!isNaN(newStart) && newStart < currentRegions[index].end) {
-                        currentRegions[index].setOptions({ start: newStart });
-                        //currentRegions[index].start = newStart ;
+                        currentRegions[index].update({ start: newStart });
                         updateTimestampTable(index, newStart, currentRegions[index].end);
                     } else {
                         e.target.value = currentRegions[index].start.toFixed(2);
@@ -628,7 +588,7 @@
                 row.querySelector('.end-time').addEventListener('change', (e) => {
                     const newEnd = parseFloat(e.target.value);
                     if (!isNaN(newEnd) && newEnd > currentRegions[index].start) {
-                        currentRegions[index].setOptions({ end: newEnd });
+                        currentRegions[index].update({ end: newEnd });
                         updateTimestampTable(index, currentRegions[index].start, newEnd);
                     } else {
                         e.target.value = currentRegions[index].end.toFixed(2);
@@ -643,11 +603,10 @@
             
             const region = currentRegions[index];
             wavesurfer.pause();
-            //wavesurfer.setCurrentTime(region.start);
-            region.play() ;
-            //wavesurfer.play();
+            wavesurfer.setCurrentTime(region.start);
+            wavesurfer.play();
             
-            //region.play();
+            region.play();
             
             // 高亮当前行
             document.querySelectorAll('#timestampsBody tr').forEach(row => {
@@ -660,7 +619,7 @@
             // 区域播放结束事件
             region.once('out', () => {
                 if (autoPlayNext.checked) {
-                    playNextRegion();
+                    setTimeout(playNextRegion, 300);
                 }
             });
         }
@@ -694,49 +653,13 @@
             }
         }
         
-        // 删除区域
-        function deleteRegion(index) {
-            if (index < 0 || index >= currentRegions.length) return;
-            
-            currentRegions[index].remove();
-            currentRegions.splice(index, 1);
-            
-            // 重新生成表格
-            generateTimestampsTable(currentLesson.timeStamps);
-        }
-        
         // 初始化应用
         document.addEventListener('DOMContentLoaded', () => {
             loadLessons();
+            
+            // 模拟完成课程数
+            completedLessons.textContent = "1";
         });
-    </script>
-    <script>
-        let btnSaveChange = document.querySelector("#idSaveChange") ;
-
-        btnSaveChange.addEventListener('click',async (event)=>{
-            //alert("todo save")
-            console.log(activeLesson);
-
-            for(let i=0;i<currentRegions.length;i++){
-                console.log(currentRegions[i]);
-                activeLesson.timeStamps[i].start = currentRegions[i].start ;
-                activeLesson.timeStamps[i].end = currentRegions[i].end ;
-                console.log(activeLesson.timeStamps[i]) ;                
-            }
-
-            let key = activeLesson.key ;
-            delete activeLesson.key ;
-            database.ref(`audibles/${key}`).set(activeLesson)
-                .then(() => {
-                    console.log("Data written successfully!");
-                    alert("Data written to Firebase!");
-                })
-                .catch((error) => {
-                    console.error("Error writing data: ", error);
-                    alert("Error writing data: " + error.message);
-            });
-
-        }) ;
     </script>
 </body>
 </html>

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间戳转换工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #2c3e50, #4a6491);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .content {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        @media (max-width: 900px) {
+            .content {
+                flex-direction: column;
+            }
+        }
+        
+        .input-section, .output-section {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        h2 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eaeaea;
+            color: #2c3e50;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 15px;
+            transition: background 0.3s;
+            display: block;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #1565c0;
+        }
+        
+        .output {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        
+        .instructions {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #1976d2;
+        }
+        
+        .instructions ul {
+            margin-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .copy-btn {
+            background: #388e3c;
+            margin-top: 10px;
+        }
+        
+        .copy-btn:hover {
+            background: #2e7d32;
+        }
+        
+        .timestamp-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .timestamp-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>时间戳转换工具</h1>
+            <p class="description">将时间戳从秒格式转换为MM:SS格式的工具</p>
+        </header>
+        
+        <div class="content">
+            <div class="input-section">
+                <h2>输入JSON数据</h2>
+                <textarea id="inputJson" placeholder="请粘贴JSON数据...">
+{
+  "text": "สวัสดีครับกี่ท่านครับ4 คนค่ะ แต่อีก 2 คนจะตามมาด้องขออาภาลจิงๆนะครับ แต่ตอนนี้ร้านคนแน่นมาก ถ้านั่งรวมกับลูกค้าคนอื่นจะได้ไหมครับแล้วถ้ารออีกหน่อยนะคะอืม...ผมว่าโต๊วใกล้เบีย alignment ตรงนั้น อีกสักพักน่าจะว่างแล้วนะคะอืม ค่ะ แล้วมีโตที่ไกล จากเปียโน์หน่อยไหมคะ พอดีว่าจะต้องคุยธุรากันนิดหน่อยนะค่ะคauftครับ งั้นตรงนั้นละครับ ด้านซ้ายของเค้าเตอ bonoอาจจะเล็กไปสักหน่อย แต่เดี๋ยวผมเอาก็อี้ มาเสริมอีกตัว ให้นั่งได้สีคนดีไหมครับอืม ที่แคบจังเลยค่ะ แล้วตรงไกลกล้ห้องน่ามนั้นไม่ได้หรอคะอ่า ตรงนั้นมีคนจองไว้นะครับเหรอค่ะ อืม แต่ระหว่างนี้อีก 2 คนยังไม่มางั้นเราไปรอที่เคาวเตอร์ก่อนก็ได้ค่ะโอเคครับคุณครับ ลูกค้าที่จองโต้นั้นไว้เพิ่งจะแคนเซินไป คุณจะยายไปนั่งตรงนั้นไหมครับค่ะ ดีเลยค่ะเธอจะนั่งตรงไหน?ผู้หญิงคนหนึ่งกำลังคุยกับบริกรเธอจะนั่งตรงไหน?สวัสดีครับ กี่ท่านครับสี่คนค่ะ แต่อีก 2 คนจะตามมาอ่า ต้องขออภายจริงๆนะครับ แต่ตอนนี้ร้านคนแน่นมากถ้านั่งรวมกับลูกค้าคนอื่นจะได้ไหมครับแล้วถ้ารออีกหน่อยละคะผมว่าโดยกลายเปียโนวตรงนั้นอีกสักพักหน้าจะว้างแล้วนะครับเอาอืม..ค่ะแล้วมีโตยที่ไกลยักครีกลายон่อยไหมคะ?พอดีว่าจะต้องคุยทุระกันนิดหน่อยนะคะเพื่อร่ะครับโกย還有มันด้านซ้ายของเควเตอร์อาจจะเลกไปสักหน่อยแต่เดี๋ยวผมเอาก้ะอีกมาเสริมอีกตัวให้นั่งได้สี่คนดีไหมครับเออ...ที่แคบจังเลยлыค่ะแล้วตรง그래�—Der× całeγ้างน้ำนั่นไม่ได้หรอคะอ่า...ตรงนั้นมีคนจองไว้นะครับเยอคะ....แต่ระหว่างนี้อีกสองคนยังไม่มางั้นเราไปรอที่ encourager ก่อนก็ได้ค่ะโอเคครับคนครับลูกค้าที่จองโตreditนั้นิ問เพิ่งเจอร์ไปคุณจะยายไปนั่ lazy  Jamieารณ์ตรงนั้นไหมครับคา....ดีเลยค่ะแล้ว  aristงั้นคุย เข้าความควิดovanอีก然 WE have any questions see you next time",
+  "timestamps": [
+    {
+      "thai_text": "สวัสดีครับ",
+      "timestamp": 0,
+      "end": 29.26
+    },
+    {
+      "thai_text": "กี่ท่านครับ",
+      "timestamp": 29.26,
+      "end": 31.28
+    },
+    {
+      "thai_text": "4 คนค่ะ แต่อีก 2 คนจะตามมา",
+      "timestamp": 31.28,
+      "end": 34.84
+    },
+    {
+      "thai_text": "ด้องขออาภาลจิงๆนะครับ แต่ตอนนี้ร้านคนแน่นมาก ถ้านั่งรวมกับลูกค้าคนอื่นจะได้ไหมครับ",
+      "timestamp": 34.84,
+      "end": 42.42
+    },
+    {
+      "thai_text": "แล้วถ้ารออีกหน่อยนะคะ",
+      "timestamp": 42.42,
+      "end": 45.24
+    },
+    {
+      "thai_text": "อืม...ผมว่าโต๊วใกล้เบีย alignment ตรงนั้น อีกสักพักน่าจะว่างแล้วนะคะ",
+      "timestamp": 45.24,
+      "end": 49.88
+    },
+    {
+      "thai_text": "อืม ค่ะ แล้วมีโตที่ไกล จากเปียโน์หน่อยไหมคะ พอดีว่าจะต้องคุยธุรากันนิดหน่อยนะค่ะ",
+      "timestamp": 49.88,
+      "end": 56.96
+    },
+    {
+      "thai_text": "คauftครับ งั้นตรงนั้นละครับ ด้านซ้ายของเค้าเตอ bono",
+      "timestamp": 57.68,
+      "end": 63.72
+    },
+    {
+      "thai_text": "อาจจะเล็กไปสักหน่อย แต่เดี๋ยวผมเอาก็อี้ มาเสริมอีกตัว ให้นั่งได้สีคนดีไหมครับ",
+      "timestamp": 63.72,
+      "end": 68.82000000000001
+    },
+    {
+      "thai_text": "อืม ที่แคบจังเลยค่ะ แล้วตรงไกลกล้ห้องน่ามนั้นไม่ได้หรอคะ",
+      "timestamp": 68.82000000000001,
+      "end": 74.2
+    },
+    {
+      "thai_text": "อ่า ตรงนั้นมีคนจองไว้นะครับ",
+      "timestamp": 74.2,
+      "end": 77.2
+    },
+    {
+      "thai_text": "เหรอค่ะ อืม แต่ระหว่างนี้อีก 2 คนยังไม่มา",
+      "timestamp": 77.2,
+      "end": 82.2
+    },
+    {
+      "thai_text": "งั้นเราไปรอที่เคาวเตอร์ก่อนก็ได้ค่ะ",
+      "timestamp": 82.2,
+      "end": 85.2
+    },
+    {
+      "thai_text": "โอเคครับ",
+      "timestamp": 85.2,
+      "end": 87.2
+    },
+    {
+      "thai_text": "คุณครับ ลูกค้าที่จองโต้นั้นไว้",
+      "timestamp": 87.2,
+      "end": 90.2
+    },
+    {
+      "thai_text": "เพิ่งจะแคนเซินไป คุณจะยายไปนั่งตรงนั้นไหมครับ",
+      "timestamp": 90.2,
+      "end": 94.2
+    },
+    {
+      "thai_text": "ค่ะ ดีเลยค่ะ",
+      "timestamp": 94.2,
+      "end": 97.2
+    },
+    {
+      "thai_text": "เธอจะนั่งตรงไหน?",
+      "timestamp": 98.2,
+      "end": 102.2
+    },
+    {
+      "thai_text": "ผู้หญิงคนหนึ่งกำลังคุยกับบริกร",
+      "timestamp": 104.2,
+      "end": 110.2
+    },
+    {
+      "thai_text": "เธอจะนั่งตรงไหน?",
+      "timestamp": 110.2,
+      "end": 112.2
+    },
+    {
+      "thai_text": "สวัสดีครับ กี่ท่านครับ",
+      "timestamp": 112.2,
+      "end": 115.2
+    },
+    {
+      "thai_text": "สี่คนค่ะ แต่อีก 2 คนจะตามมา",
+      "timestamp": 115.2,
+      "end": 119.2
+    },
+    {
+      "thai_text": "อ่า ต้องขออภายจริงๆนะครับ แต่ตอนนี้ร้านคนแน่นมาก",
+      "timestamp": 119.2,
+      "end": 123.2
+    },
+    {
+      "thai_text": "ถ้านั่งรวมกับลูกค้าคนอื่น会得吗",
+      "timestamp": 123.2,
+      "end": 126.2
+    },
+    {
+      "thai_text": "แล้วถ้ารออีกหน่อยละคะ",
+      "timestamp": 126.2,
+      "end": 129.2
+    },
+    {
+      "thai_text": "ผมว่าโดยกลายเปียโนวตรงนั้นอีกสักพักหน้าจะว้างแล้วนะครับ",
+      "timestamp": 129.2,
+      "end": 134.2
+    },
+    {
+      "thai_text": "เอาอืม..ค่ะ",
+      "timestamp": 134.2,
+      "end": 136.2
+    },
+    {
+      "thai_text": "แล้วมีโตยที่ไกลยักครีกลายон่อยไหมคะ?",
+      "timestamp": 136.2,
+      "end": 138.2
+    },
+    {
+      "thai_text": "พอดีว่าจะต้องคุยทุระกันนิดหน่อยนะคะ",
+      "timestamp": 138.2,
+      "end": 141.2
+    },
+    {
+      "thai_text": "เพื่อร่ะครับ",
+      "timestamp": 141.2,
+      "end": 143.2
+    },
+    {
+      "thai_text": "โกย還有มัน",
+      "timestamp": 143.2,
+      "end": 144.95999999999998
+    },
+    {
+      "thai_text": "ด้านซ้ายของเควเตอร์",
+      "timestamp": 144.95999999999998,
+      "end": 146.2
+    },
+    {
+      "thai_text": "อาจจะเลกไปสักหน่อย",
+      "timestamp": 146.2,
+      "end": 148.2
+    },
+    {
+      "thai_text": "แต่เดี๋ยวผมเอาก้ะอีกมาเสริมอีกตัว",
+      "timestamp": 148.2,
+      "end": 150.2
+    },
+    {
+      "thai_text": "ให้นั่งได้สี่คนดีไหมครับ",
+      "timestamp": 150.2,
+      "end": 153.2
+    },
+    {
+      "thai_text": "เออ...ที่แคบจังเลยлыค่ะ",
+      "timestamp": 153.2,
+      "end": 155.83999999999997
+    },
+    {
+      "thai_text": "แล้วตรง그래�—Der× całeγ้างน้ำนั่นไม่ได้หรอคะ",
+      "timestamp": 155.83999999999997,
+      "end": 158.6
+    },
+    {
+      "thai_text": "อ่า...ตรงนั้นมีคนจองไว้นะครับ",
+      "timestamp": 159.42,
+      "end": 161.85999999999999
+    },
+    {
+      "thai_text": "เยอคะ....",
+      "timestamp": 162.35999999999999,
+      "end": 163.44
+    },
+    {
+      "thai_text": "แต่ระหว่างนี้อีกสองคนยังไม่มา",
+      "timestamp": 164.44,
+      "end": 166.64
+    },
+    {
+      "thai_text": "งั้นเราไปรอที่ encourager ก่อนก็ได้ค่ะ",
+      "timestamp": 166.64,
+      "end": 169.42
+    },
+    {
+      "thai_text": "โอเคครับ",
+      "timestamp": 170.32,
+      "end": 171.44
+    },
+    {
+      "thai_text": "คนครับ",
+      "timestamp": 172.2,
+      "end": 173.04
+    },
+    {
+      "thai_text": "ลูกค้าที่จองโตreditนั้นิ問",
+      "timestamp": 173.04,
+      "end": 174.82
+    },
+    {
+      "thai_text": "เพิ่งเจอร์ไป",
+      "timestamp": 174.82,
+      "end": 176.17999999999998
+    },
+    {
+      "thai_text": "คุณจะยายไปนั่ lazy  Jamieารณ์ตรงนั้นไหมครับ",
+      "timestamp": 176.35999999999999,
+      "end": 178.35999999999999
+    },
+    {
+      "thai_text": "คa....ดีเลยค่ะ",
+      "timestamp": 178.54,
+      "end": 180.35999999999999
+    },
+    {
+      "thai_text": "แล้ว  aristงั้นคุย เข้าความควิดovanอีก",
+      "timestamp": 180.36,
+      "end": 186.44000000000003
+    },
+    {
+      "thai_text": "然 WE have any questions see you next time",
+      "timestamp": 186.44000000000003,
+      "end": 188.32000000000002
+    }
+  ]
+}</textarea>
+                <button id="convertBtn">转换时间戳</button>
+            </div>
+            
+            <div class="output-section">
+                <h2>转换结果</h2>
+                <div class="output" id="outputResult">
+                    转换结果将显示在这里...
+                </div>
+                <button id="copyBtn" class="copy-btn">复制到剪贴板</button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>使用说明</h3>
+            <ul>
+                <li>将包含时间戳的JSON数据粘贴到左侧文本区域</li>
+                <li>点击"转换时间戳"按钮将秒格式的时间戳转换为MM:SS格式</li>
+                <li>转换后的结果将显示在右侧，您可以复制使用</li>
+                <li>转换后的格式示例：00:00, 01:30, 10:05</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const convertBtn = document.getElementById('convertBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const inputJson = document.getElementById('inputJson');
+            const outputResult = document.getElementById('outputResult');
+            
+            // 转换秒数为MM:SS格式
+            function secondsToMMSS(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            // 转换时间戳
+            function convertTimestamps() {
+                try {
+                    const data = JSON.parse(inputJson.value);
+                    
+                    if (!data.timestamps || !Array.isArray(data.timestamps)) {
+                        outputResult.textContent = "错误：JSON数据中没有找到timestamps数组";
+                        return;
+                    }
+                    
+                    // 创建转换后的数据副本
+                    const convertedData = {
+                        text: data.text,
+                        timestamps: data.timestamps.map(item => ({
+                            thai_text: item.thai_text,
+                            timestamp: secondsToMMSS(item.timestamp),
+                            end: secondsToMMSS(item.end)
+                        }))
+                    };
+                    
+                    // 格式化输出
+                    outputResult.textContent = JSON.stringify(convertedData, null, 2);
+                } catch (error) {
+                    outputResult.textContent = "错误：无效的JSON格式 - " + error.message;
+                }
+            }
+            
+            // 复制到剪贴板
+            function copyToClipboard() {
+                const text = outputResult.textContent;
+                if (text && text !== "转换结果将显示在这里..." && !text.startsWith("错误")) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = "已复制!";
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('无法复制文本: ', err);
+                    });
+                }
+            }
+            
+            // 添加事件监听器
+            convertBtn.addEventListener('click', convertTimestamps);
+            copyBtn.addEventListener('click', copyToClipboard);
+            
+            // 初始加载时自动转换
+            convertTimestamps();
+        });
+    </script>
+</body>
+</html>

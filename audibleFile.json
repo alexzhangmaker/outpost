@@ -1,0 +1,127 @@
+请编写一个通过播放mp3格式音频文件来学习泰语的HTML/JS APP，要求的功能：
+1.通过访问Firebase Realtime Database指定路径获得音频课件清单.这些音频课件的JSON中包括title,url以及时间戳JSON数组.其中每个时间戳对象JSON包括泰文句子,英文翻译,句子开始时间和结束时间；
+    Firebase数据库中一个视频课件对应的JSON数据格式示范如下：
+    {
+        "title": "ThaiPBS-001",
+        "audioURL": "https://firebasestorage.googleapis.com/v0/b/outpost-8d74e.firebasestorage.app/o/audible%2FThaiPod101_ThaiBookstore.mp3?alt=media&token=2e38913a-0d66-473b-a061-74e41e387a77",
+        "timeStamps": [
+            {
+            "thai_text": "ผู้หญิงคนหนึ่งกำลังถามพนักงานในร้านหนังสือ",
+            "english_translation": "A woman is asking an employee in a bookstore.",
+            "start": 28.61,
+            "end": 31.42
+            },
+            //...
+        ]
+    }
+2.APP的UI风格是左右布局，左侧是导航区，右侧是内容区
+3.导航区就类似通常的Console的导航界面类似，除了常规的导航界面元素外，中间是视频课件列表，就是APP从Firebase数据库中读取得到的清单渲染得到。当用户点击一个视频课件条目后，在右侧内容区展示
+4.内容区分为上下两部分，上部是音频播放器区域，下部是时间戳展示交互区域。这两个区域都占据屏幕的固定位置。其中播放器区域不可以scroll滚动。时间戳交互区支持垂直滚动
+5.播放器区域通过使用wavesurfer.js来展示音频文件的波形图，并支持用户通过界面增加/删除wavesurfer的region或者移动/改变选中的region的开始与结束的时间坐标。region最初来源于时间戳JSON数据，一个时间戳对应一个region
+6.时间戳交互区通过表格形式展示每个时间戳的数据，包括开始和结束坐标，对应的泰语文字和相应的英语翻译。用户点击表格的每一行则开始播放对应的region的内容。同时，用户可以通过上下箭头播放前后的region
+7.用户可以编辑时间戳表格中的开始和结束时间坐标，这些变动需要同步在音频播放区反映出来。同样，在wavesurfer播放器部分对region的变动也需要反映到表格部分
+
+{
+    "title": "ThaiPBS-001",
+    "audioURL": "https://firebasestorage.googleapis.com/v0/b/outpost-8d74e.firebasestorage.app/o/audible%2FThaiPod101_ThaiBookstore.mp3?alt=media&token=2e38913a-0d66-473b-a061-74e41e387a77",
+    "timeStamps": [
+        {
+            "thai_text": "ผู้หญิงคนหนึ่งกำลังถามพนักงานในร้านหนังสือ",
+            "english_translation": "A woman is asking an employee in a bookstore.",
+            "timestamp": "00:28",
+            "start": 28.61,
+            "end": 31.42
+        },
+        {
+            "thai_text": "ผู้หญิงคนนี้อยากดูหนังสือเล่มไหน",
+            "english_translation": "Which book does this woman want to see?",
+            "timestamp": "00:32",
+            "start": 32.22,
+            "end": 34.99
+        },
+        {
+            "thai_text": "ขอโทษค่ะ ฉันอยากดูหนังสือเล่มหนึ่งบนชั้นนั้น",
+            "english_translation": "Excuse me. I want to see a book on that shelf.",
+            "timestamp": "00:40",
+            "start": 40.09,
+            "end": 43.43
+        },
+        {
+            "thai_text": "คุณอยากดูหนังสือเล่มไหนครับ",
+            "english_translation": "Which book would you like to see?",
+            "timestamp": "00:44",
+            "start": 44.2,
+            "end": 46.22
+        },
+        {
+            "thai_text": "เล่มที่เกี่ยวกับรถยนต์ค่ะ",
+            "english_translation": "The one about cars.",
+            "timestamp": "00:46",
+            "start": 46.85,
+            "end": 48.91
+        },
+        {
+            "thai_text": "รอสักครู่นะครับ เล่มนี้เหรอครับ",
+            "english_translation": "Just a moment. This one?",
+            "timestamp": "00:49",
+            "start": 49.63,
+            "end": 52.33
+        },
+        {
+            "thai_text": "ใช่แล้ว เล่มนี้แหละค่ะ",
+            "english_translation": "Yes, that's the one.",
+            "timestamp": "00:53",
+            "start": 53.21,
+            "end": 55.42
+        },
+        {
+            "thai_text": "เชิญครับ",
+            "english_translation": "Here you are.",
+            "timestamp": "00:56",
+            "start": 56.12,
+            "end": 56.88
+        },
+        {
+            "thai_text": "ผู้หญิงคนนี้อยากดูหนังสือเล่มไหน",
+            "english_translation": "Which book does this woman want to see?",
+            "timestamp": "01:02",
+            "start": 62.1,
+            "end": 64.88
+        },
+        {
+            "thai_text": "ผู้หญิงคนหนึ่งกำลังถามพนักงานในร้านหนังสือ",
+            "english_translation": "A woman is asking an employee in a bookstore.",
+            "timestamp": "01:10",
+            "start": 70.08,
+            "end": 73.18
+        },
+        {
+            "thai_text": "ผู้หญิงคนนี้อยากดูหนังสือเล่มไหน",
+            "english_translation": "Which book does this woman want to see?",
+            "timestamp": "01:14",
+            "start": 74.07,
+            "end": 76.88
+        },
+        {
+            "thai_text": "ขอโทษค่ะ ฉันอยากดูหนังสือเล่มหนึ่งบนชั้นนั้น",
+            "english_translation": "Excuse me. I want to see a book on that shelf.",
+            "timestamp": "01:17",
+            "start": 77.63,
+            "end": 80.89
+        },
+        {
+            "thai_text": "คุณอยากดูหนังสือเล่มไหนครับ",
+            "english_translation": "Which book would you like to see?",
+            "timestamp": "01:21",
+            "start": 81.65,
+            "end": 83.56
+        },
+        {
+            "thai_text": "เล่มที่เกี่ยวกับรถยนต์ค่ะ",
+            "english_translation": "The one about cars.",
+            "timestamp": "01:24",
+            "start": 84.18,
+            "end": 86.27
+        }
+    ]
+}

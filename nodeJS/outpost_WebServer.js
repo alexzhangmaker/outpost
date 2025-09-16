@@ -8,6 +8,8 @@ const request = require('request');
 
 const app = express();
 app.use(express.static('/Users/alexszhanggmail.com/github/outpost')) ;
+app.use(express.static('/Users/alexszhanggmail.com/github/yt-dlp')) ;
+
 app.use('/node_modules', express.static('node_modules'));
 app.use(express.json());
 app.use(cors()) ;

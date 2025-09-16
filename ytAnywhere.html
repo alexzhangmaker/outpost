@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube字幕学习工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        #main-container {
+            height: 100vh;
+            padding: 0;
+        }
+        #sidebar {
+            background-color: #f1f3f5;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        #content-area {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #video-container {
+            height: 40%;
+            background-color: #000;
+        }
+        #transcript-container {
+            height: 60%;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .video-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .video-item:hover {
+            background-color: #e9ecef;
+        }
+        .video-item.active {
+            background-color: #e2e8f0;
+            border-left: 4px solid #0d6efd;
+        }
+        .timestamp {
+            cursor: pointer;
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        .timestamp:hover {
+            background-color: #f0f5ff;
+        }
+        .timestamp.active {
+            background-color: #e6f0ff;
+            font-weight: bold;
+        }
+        #player {
+            width: 100%;
+            height: 100%;
+        }
+        .header {
+            padding: 15px 20px;
+            background-color: #fff;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid" id="main-container">
+        <div class="row">
+            <!-- 左侧导航区 -->
+            <div class="col-md-3 col-lg-2 p-0" id="sidebar">
+                <div class="header">
+                    <h5>YouTube视频列表</h5>
+                </div>
+                <div id="video-list">
+                    <div class="loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧内容区 -->
+            <div class="col-md-9 col-lg-10 p-0" id="content-area">
+                <div id="video-container">
+                    <div id="player"></div>
+                </div>
+                <div id="transcript-container">
+                    <h5>视频字幕</h5>
+                    <p class="text-muted">选择左侧视频后，字幕将显示在这里</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase App SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    
+    <script>
+        // Firebase配置（您需要替换为实际的配置）
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-video116208.asia-southeast1.firebasedatabase.app",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 全局变量
+        let player;
+        let currentVideoId = '';
+        let transcripts = [];
+        let currentTranscriptIndex = -1;
+
+        // 从Firebase获取视频列表
+        function loadVideoList() {
+            const videoListRef = database.ref('videos');
+            
+            videoListRef.on('value', (snapshot) => {
+                const videos = snapshot.val();
+                const videoListContainer = document.getElementById('video-list');
+                
+                if (videos && Object.keys(videos).length > 0) {
+                    videoListContainer.innerHTML = '';
+                    
+                    Object.entries(videos).forEach(([id, video]) => {
+                        const videoElement = document.createElement('div');
+                        videoElement.className = 'video-item';
+                        videoElement.dataset.videoId = id;
+                        videoElement.innerHTML = `
+                            <h6>${video.title || '无标题视频'}</h6>
+                            <small class="text-muted">ID: ${id}</small>
+                        `;
+                        
+                        videoElement.addEventListener('click', () => {
+                            document.querySelectorAll('.video-item').forEach(item => {
+                                item.classList.remove('active');
+                            });
+                            videoElement.classList.add('active');
+                            loadVideo(id);
+                        });
+                        
+                        videoListContainer.appendChild(videoElement);
+                    });
+                } else {
+                    videoListContainer.innerHTML = '<div class="p-3 text-center">没有找到视频数据</div>';
+                }
+            }, (error) => {
+                console.error('读取视频列表失败:', error);
+                document.getElementById('video-list').innerHTML = '<div class="p-3 text-center">加载视频列表失败</div>';
+            });
+        }
+
+        // 加载YouTube视频
+        function loadVideo(videoId) {
+            currentVideoId = videoId;
+            
+            if (player) {
+                player.loadVideoById(videoId);
+            } else {
+                player = new YT.Player('player', {
+                    height: '100%',
+                    width: '100%',
+                    videoId: videoId,
+                    playerVars: {
+                        'playsinline': 1,
+                        'rel': 0
+                    },
+                    events: {
+                        'onReady': onPlayerReady,
+                        'onStateChange': onPlayerStateChange
+                    }
+                });
+            }
+            
+            // 获取字幕数据
+            fetchTranscripts(videoId);
+        }
+
+        // 播放器准备就绪
+        function onPlayerReady(event) {
+            console.log('播放器准备就绪');
+        }
+
+        // 播放器状态变化
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                // 视频开始播放时启动检查
+                checkTranscriptProgress();
+            }
+        }
+
+        // 检查字幕进度
+        function checkTranscriptProgress() {
+            if (player && player.getPlayerState() === YT.PlayerState.PLAYING && transcripts.length > 0) {
+                const currentTime = player.getCurrentTime();
+                
+                // 查找下一个时间戳
+                let nextIndex = -1;
+                for (let i = 0; i < transcripts.length; i++) {
+                    if (transcripts[i].start > currentTime) {
+                        nextIndex = i;
+                        break;
+                    }
+                }
+                
+                // 如果找到下一个时间戳并且不是当前激活的
+                if (nextIndex !== -1 && nextIndex !== currentTranscriptIndex) {
+                    // 检查是否接近下一个时间戳（提前0.5秒暂停）
+                    if (transcripts[nextIndex].start - currentTime <= 0.5) {
+                        player.pauseVideo();
+                        highlightTranscript(nextIndex);
+                    }
+                }
+                
+                // 继续检查
+                setTimeout(checkTranscriptProgress, 100);
+            }
+        }
+
+        // 获取视频字幕
+        function fetchTranscripts(videoId) {
+            const transcriptContainer = document.getElementById('transcript-container');
+            transcriptContainer.innerHTML = '<div class="loading"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">加载字幕中...</span></div></div>';
+            
+            // 在实际应用中，您需要通过服务器端代理获取字幕数据
+            // 这里使用模拟数据作为示例
+            setTimeout(() => {
+                // 模拟字幕数据
+                transcripts = [
+                    { start: 5, text: "欢迎使用YouTube字幕学习工具" },
+                    { start: 10, text: "这个工具可以帮助您通过字幕学习视频内容" },
+                    { start: 15, text: "点击任意时间戳可以跳转到视频的特定位置" },
+                    { start: 20, text: "视频播放到下一个时间戳时会自动暂停" },
+                    { start: 25, text: "这样您就可以仔细学习每一部分内容" },
+                    { start: 30, text: "左侧导航栏中的视频列表来自Firebase实时数据库" },
+                    { start: 35, text: "您可以轻松切换不同的学习视频" },
+                    { start: 40, text: "希望这个工具对您的学习有所帮助" },
+                    { start: 45, text: "祝您学习愉快！" }
+                ];
+                
+                renderTranscripts();
+            }, 1500);
+        }
+
+        // 渲染字幕表格
+        function renderTranscripts() {
+            const transcriptContainer = document.getElementById('transcript-container');
+            
+            if (transcripts.length === 0) {
+                transcriptContainer.innerHTML = '<p class="text-center">该视频没有可用的字幕</p>';
+                return;
+            }
+            
+            let html = `
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">时间戳</th>
+                            <th>内容</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            transcripts.forEach((transcript, index) => {
+                const minutes = Math.floor(transcript.start / 60);
+                const seconds = Math.floor(transcript.start % 60);
+                const timeString = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                
+                html += `
+                    <tr class="timestamp" data-index="${index}">
+                        <td>${timeString}</td>
+                        <td>${transcript.text}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `</tbody></table>`;
+            transcriptContainer.innerHTML = html;
+            
+            // 添加时间戳点击事件
+            document.querySelectorAll('.timestamp').forEach(row => {
+                row.addEventListener('click', () => {
+                    const index = parseInt(row.dataset.index);
+                    seekToTranscript(index);
+                });
+            });
+        }
+
+        // 跳转到指定时间戳
+        function seekToTranscript(index) {
+            if (player && transcripts[index]) {
+                player.seekTo(transcripts[index].start);
+                player.playVideo();
+                highlightTranscript(index);
+            }
+        }
+
+        // 高亮当前时间戳
+        function highlightTranscript(index) {
+            document.querySelectorAll('.timestamp').forEach(row => {
+                row.classList.remove('active');
+            });
+            
+            const activeRow = document.querySelector(`.timestamp[data-index="${index}"]`);
+            if (activeRow) {
+                activeRow.classList.add('active');
+                activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            currentTranscriptIndex = index;
+        }
+
+        // 初始化应用
+        function initApp() {
+            loadVideoList();
+        }
+
+        // 当YouTube IFrame API准备好时初始化应用
+        window.onYouTubeIframeAPIReady = function() {
+            initApp();
+        };
+    </script>
+</body>
+</html>
