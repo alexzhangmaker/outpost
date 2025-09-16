@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语言学习应用 - 最终版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* 左侧导航样式 */
+        .sidebar {
+            width: 60px;
+            background: linear-gradient(135deg, #2c3e50, #4a6491);
+            color: white;
+            overflow: hidden;
+            transition: width 0.3s ease;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .sidebar:hover {
+            width: 300px;
+        }
+        
+        .hamburger {
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar-content {
+            width: 300px;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .sidebar:hover .sidebar-content {
+            opacity: 1;
+        }
+        
+        .app-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+        
+        .video-list {
+            list-style: none;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+        
+        .video-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .video-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .video-item {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .video-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .video-item.active {
+            background: rgba(255, 255, 255, 0.25);
+            border-left: 4px solid #ff7043;
+        }
+        
+        /* 右侧内容区样式 */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .video-container {
+            background: white;
+            overflow: hidden;
+            flex-shrink: 0;
+            height: 400px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        
+        #player {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .timestamp-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .timestamp-header {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            font-weight: 600;
+            border-bottom: 1px solid #eaeaea;
+            display: grid;
+            grid-template-columns: 80px 1fr 1fr 80px;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+        
+        .timestamp-table-container {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr {
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: grid;
+            grid-template-columns: 80px 1fr 1fr 80px;
+        }
+        
+        tr:hover {
+            background-color: #f1f8ff;
+        }
+        
+        tr.active {
+            background-color: #e3f2fd;
+        }
+        
+        tr.hidden {
+            display: none;
+        }
+        
+        .timestamp {
+            font-weight: 600;
+            color: #1976d2;
+        }
+        
+        .timestamp.editable {
+            border: 1px dashed #1976d2;
+            border-radius: 4px;
+            padding: 4px 8px;
+            background: #f8fdff;
+            outline: none;
+        }
+        
+        .actions {
+            text-align: center;
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+        
+        .action-btn:hover {
+            color: #1976d2;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 0;
+            }
+            
+            .sidebar:hover {
+                width: 250px;
+            }
+            
+            .video-container {
+                height: 300px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .video-container {
+                height: 250px;
+            }
+            
+            th, td {
+                padding: 10px 15px;
+            }
+            
+            .timestamp-header, tr {
+                grid-template-columns: 70px 1fr 1fr 50px;
+            }
+        }
+        
+        .key-hint {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 0.9rem;
+            color: #666;
+            z-index: 20;
+        }
+        
+        .status-bar {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #eaeaea;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 1.2rem;
+            color: #666;
+        }
+        
+        .video-controls {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eaeaea;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .control-btn {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .control-btn:hover {
+            background: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧导航区 -->
+        <div class="sidebar">
+            <div class="hamburger">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="sidebar-content">
+                <h1 class="app-title">语言学习应用</h1>
+                <ul class="video-list">
+                    <li class="video-item active">泰语商务会议演示</li>
+                    <li class="video-item">泰语日常对话</li>
+                    <li class="video-item">泰语发音教程</li>
+                    <li class="video-item">泰语语法解析</li>
+                    <li class="video-item">泰语听力练习</li>
+                    <li class="video-item">泰语商务用语</li>
+                    <li class="video-item">泰语旅行短语</li>
+                    <li class="video-item">泰语数字学习</li>
+                    <li class="video-item">泰语时间表达</li>
+                    <li class="video-item">泰语美食词汇</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 右侧内容区 -->
+        <div class="content">
+            <div class="video-container">
+                <div id="player"></div>
+            </div>
+            
+            <div class="video-controls">
+                <button class="control-btn" id="play-pause">
+                    <i class="fas fa-play"></i> 播放/暂停
+                </button>
+                <button class="control-btn" id="replay">
+                    <i class="fas fa-redo"></i> 重新播放当前句
+                </button>
+                <button class="control-btn" id="slower">
+                    <i class="fas fa-tachometer-alt"></i> 减慢速度
+                </button>
+            </div>
+            
+            <div class="timestamp-container">
+                <div class="timestamp-header">
+                    <div>时间戳</div>
+                    <div>泰语文本</div>
+                    <div>英文翻译</div>
+                    <div class="actions">操作</div>
+                </div>
+                
+                <div class="timestamp-table-container">
+                    <table>
+                        <tbody id="timestamp-body">
+                            <!-- 时间戳内容将由JavaScript生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="status-bar">
+                    <div id="current-time">当前时间: 00:00</div>
+                    <div id="hidden-count">已隐藏 0 行</div>
+                    <div id="playback-rate">播放速度: 1.0x</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="key-hint">
+        <div>↑ 上一行 | ↓ 下一行 | Enter 保存编辑 | Space 播放/暂停</div>
+    </div>
+
+    <!-- YouTube IFrame API -->
+    <script>
+        // 测试数据
+        const timestampData = [
+            {
+                "timestamp": "00:00",
+                "thai_text": "คุณกำลังฟัง Learn Thai with ThaiPod101.com",
+                "english_translation": "You are listening to Learn Thai with ThaiPod101.com"
+            },
+            {
+                "timestamp": "02:00",
+                "thai_text": "ผู้ชายคนหนึ่งกำลังรายงานเกี่ยวกับผลการดำเนินงานของบริษัทในที่ประชุม",
+                "english_translation": "A man is reporting on the company's performance in a meeting."
+            },
+            {
+                "timestamp": "02:07",
+                "thai_text": "เขาใช้แผนภาพ 2 อันไหนในการนำเสนอ งาน",
+                "english_translation": "Which 2 diagrams does he use in his presentation?"
+            },
+            {
+                "timestamp": "02:11",
+                "thai_text": "ขอให้ดูในเอกสารที่แจกไปนะครับ",
+                "english_translation": "Please look at the handout."
+            },
+            {
+                "timestamp": "02:15",
+                "thai_text": "แผนภาพทางซ้ายแสดงยอดขายของบริษัทในช่วงสามปีที่ผ่านมา",
+                "english_translation": "The diagram on the left shows the company's sales over the past three years."
+            },
+            {
+                "timestamp": "02:20",
+                "thai_text": "รวมทั้งประมาณการยอดขายสำหรับปีปัจจุบันด้วย",
+                "english_translation": "It also includes the sales forecast for the current year."
+            },
+            {
+                "timestamp": "02:27",
+                "thai_text": "ส่วนแผนภาพทางขวาแสดงยอดขายแบบแยกเป็นรายเดือนจนถึงเดือนตุลาคมปีนี้",
+                "english_translation": "The diagram on the right shows the monthly sales up to October of this year."
+            },
+            {
+                "timestamp": "02:32",
+                "thai_text": "คราวนี้ขอให้ดูแผนภาพทางซ้ายนะครับ",
+                "english_translation": "Now, please look at the diagram on the left."
+            },
+            {
+                "timestamp": "02:36",
+                "thai_text": "จะเห็นว่ายอดขายเพิ่มขึ้นอย่างต่อเนื่องในช่วงสามปีที่經過",
+                "english_translation": "You can see that sales have been increasing steadily over the past three years."
+            },
+            {
+                "timestamp": "02:40",
+                "thai_text": "และถ้าเรายังทำยอดขายเพิ่มขึ้นต่อไปได้",
+                "english_translation": "And if we can continue to increase sales,"
+            },
+            {
+                "timestamp": "02:45",
+                "thai_text": "ยอดขายรวมในปีนี้ก็จะเพิ่มขึ้นมากกว่าปีที่แล้วครับ",
+                "english_translation": "total sales for this year will be higher than last year."
+            },
+            {
+                "timestamp": "02:48",
+                "thai_text": "ต่อไปดูที่แผนภาพทางขวาครับ",
+                "english_translation": "Next, let's look at the diagram on the right."
+            },
+            {
+                "timestamp": "02:54",
+                "thai_text": "แผนภาพทางขวาแสดงให้เห็นว่าการรณรงค์ที่เราทำในเดือนเมษายน",
+                "english_translation": "The diagram on the right shows that the campaigns we ran in April"
+            },
+            {
+                "timestamp": "02:58",
+                "thai_text": "และเดือนสิงหาคมค่อนข้างมีประสิทธิภาพทีเดียว",
+                "english_translation": "and August were quite effective."
+            },
+            {
+                "timestamp": "03:01",
+                "thai_text": "เข้าใจแล้วค่ะ",
+                "english_translation": "I see."
+            },
+            {
+                "timestamp": "03:06",
+                "thai_text": "แต่ยอดขายในเดือนพฤษภาคมและกันยายนลดลงหลังจากรณรงค์นะคะ",
+                "english_translation": "But sales in May and September decreased after the campaign."
+            },
+            {
+                "timestamp": "03:08",
+                "thai_text": "ใช่ครับ",
+                "english_translation": "Yes, that's right."
+            },
+            {
+                "timestamp": "03:11",
+                "thai_text": "แต่หลีกเลี่ยงไม่ได้ที่ยอดขายจะต้องดีดตัวกลับแบบนี้ครับ",
+                "english_translation": "But it's inevitable that sales will rebound like this."
+            },
+            {
+                "timestamp": "03:18",
+                "thai_text": "ผมคาดว่ายอดขายประจำปีในปีนี้จะเพิ่มขึ้นกว่าปีที่แล้วถ้าเรายังทำยอดขายเพิ่มขึ้นได้ต่อเนื่องครับ",
+                "english_translation": "I expect that this year's annual sales will be higher than last year's if we can continue to increase sales."
+            },
+            {
+                "timestamp": "03:22",
+                "thai_text": "เขาใช้แผนภาพ 2 อันไหนในการนำเสนอ งาน",
+                "english_translation": "Which 2 diagrams does he use in his presentation?"
+            }
+        ];
+
+        // 全局变量
+        let player;
+        let currentTimestampIndex = 0;
+        let timer;
+        let hiddenRowsCount = 0;
+        let playbackRate = 1.0;
+
+        // 将时间字符串转换为秒
+        function parseTime(timeStr) {
+            const [minutes, seconds] = timeStr.split(':').map(Number);
+            return minutes * 60 + seconds;
+        }
+
+        // 将秒转换为时间字符串
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 更新状态栏
+        function updateStatusBar() {
+            if (player && player.getCurrentTime) {
+                document.getElementById('current-time').textContent = `当前时间: ${formatTime(player.getCurrentTime())}`;
+            }
+            document.getElementById('hidden-count').textContent = `已隐藏 ${hiddenRowsCount} 行`;
+            document.getElementById('playback-rate').textContent = `播放速度: ${playbackRate.toFixed(1)}x`;
+        }
+
+        // 初始化YouTube播放器
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '400',
+                width: '100%',
+                videoId: '-EFraXOwgdY',
+                playerVars: {
+                    'playsinline': 1,
+                    'modestbranding': 1,
+                    'rel': 0
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        // 播放器准备就绪
+        function onPlayerReady(event) {
+            // 生成时间戳表格
+            populateTimestampTable();
+            
+            // 添加控制按钮事件监听
+            document.getElementById('play-pause').addEventListener('click', togglePlayPause);
+            document.getElementById('replay').addEventListener('click', replayCurrent);
+            document.getElementById('slower').addEventListener('click', slowerSpeed);
+            
+            // 添加点击事件监听
+            document.querySelectorAll('#timestamp-body tr').forEach((row, index) => {
+                // 跳过显示所有行的按钮
+                if (row.classList.contains('show-all-row')) return;
+                
+                // 点击行跳转到时间戳
+                row.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('action-btn')) {
+                        seekToTimestamp(index);
+                    }
+                });
+                
+                // 隐藏按钮点击事件
+                const hideBtn = row.querySelector('.hide-btn');
+                if (hideBtn) {
+                    hideBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        row.classList.add('hidden');
+                        hiddenRowsCount++;
+                        updateStatusBar();
+                    });
+                }
+                
+                // 时间戳编辑事件
+                const timestampCell = row.querySelector('.timestamp');
+                timestampCell.addEventListener('blur', (e) => {
+                    const newTime = e.target.textContent.trim();
+                    if (/^\d{2}:\d{2}$/.test(newTime)) {
+                        timestampData[index].timestamp = newTime;
+                    } else {
+                        e.target.textContent = timestampData[index].timestamp;
+                    }
+                });
+                
+                timestampCell.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.target.blur();
+                        e.preventDefault();
+                    }
+                });
+            });
+            
+            // 显示所有行按钮事件
+            const showAllBtn = document.querySelector('.show-btn');
+            if (showAllBtn) {
+                showAllBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('#timestamp-body tr.hidden').forEach(hiddenRow => {
+                        hiddenRow.classList.remove('hidden');
+                    });
+                    hiddenRowsCount = 0;
+                    updateStatusBar();
+                });
+            }
+            
+            // 添加键盘事件监听
+            document.addEventListener('keydown', handleKeyDown);
+            
+            // 开始更新时间
+            setInterval(updateStatusBar, 1000);
+        }
+
+        // 播放/暂停切换
+        function togglePlayPause() {
+            if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
+        }
+
+        // 重新播放当前句
+        function replayCurrent() {
+            if (currentTimestampIndex > 0) {
+                seekToTimestamp(currentTimestampIndex - 1);
+            } else {
+                seekToTimestamp(0);
+            }
+        }
+
+        // 减慢播放速度
+        function slowerSpeed() {
+            playbackRate = playbackRate === 0.5 ? 1.0 : Math.max(0.5, playbackRate - 0.25);
+            player.setPlaybackRate(playbackRate);
+            updateStatusBar();
+        }
+
+        // 键盘事件处理
+        function handleKeyDown(e) {
+            if (e.key === 'ArrowUp') {
+                // 上箭头键 - 跳转到上一行
+                e.preventDefault();
+                if (currentTimestampIndex > 0) {
+                    seekToTimestamp(currentTimestampIndex - 1);
+                }
+            } else if (e.key === 'ArrowDown') {
+                // 下箭头键 - 跳转到下一行
+                e.preventDefault();
+                if (currentTimestampIndex < timestampData.length - 1) {
+                    seekToTimestamp(currentTimestampIndex + 1);
+                }
+            } else if (e.key === ' ') {
+                // 空格键 - 播放/暂停
+                e.preventDefault();
+                togglePlayPause();
+            }
+        }
+
+        // 播放器状态变化
+        function onPlayerStateChange(event) {
+            // 如果正在播放，开始检查时间戳
+            if (event.data === YT.PlayerState.PLAYING) {
+                checkTimestamp();
+            } else {
+                clearTimeout(timer);
+            }
+        }
+
+        // 检查当前时间戳
+        function checkTimestamp() {
+            const currentTime = player.getCurrentTime();
+            const nextTimestampIndex = findNextTimestampIndex(currentTime);
+            
+            if (nextTimestampIndex > currentTimestampIndex) {
+                // 更新当前时间戳索引
+                currentTimestampIndex = nextTimestampIndex;
+                
+                // 高亮当前行
+                highlightCurrentRow();
+                
+                if (currentTimestampIndex < timestampData.length - 1) {
+                    // 计算到下一个时间戳的时间
+                    const nextTimestampTime = parseTime(timestampData[currentTimestampIndex + 1].timestamp);
+                    const timeUntilNext = nextTimestampTime - currentTime;
+                    
+                    // 设置定时器在下一个时间戳处暂停
+                    timer = setTimeout(() => {
+                        if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                            player.pauseVideo();
+                        }
+                    }, timeUntilNext * 1000);
+                }
+            }
+            
+            // 继续检查
+            if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                setTimeout(checkTimestamp, 500);
+            }
+        }
+
+        // 查找下一个时间戳索引
+        function findNextTimestampIndex(currentTime) {
+            for (let i = timestampData.length - 1; i >= 0; i--) {
+                if (parseTime(timestampData[i].timestamp) <= currentTime) {
+                    return i;
+                }
+            }
+            return 0;
+        }
+
+        // 跳转到指定时间戳
+        function seekToTimestamp(index) {
+            const time = parseTime(timestampData[index].timestamp);
+            player.seekTo(time, true);
+            
+            if (player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                player.playVideo();
+            }
+            
+            currentTimestampIndex = index;
+            highlightCurrentRow();
+            
+            // 滚动到当前行
+            const visibleRows = Array.from(document.querySelectorAll('#timestamp-body tr:not(.hidden)')).filter(row => !row.classList.contains('show-all-row'));
+            if (visibleRows[index]) {
+                visibleRows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // 高亮当前时间戳行
+        function highlightCurrentRow() {
+            document.querySelectorAll('#timestamp-body tr').forEach((row, idx) => {
+                if (idx === currentTimestampIndex) {
+                    row.classList.add('active');
+                } else {
+                    row.classList.remove('active');
+                }
+            });
+        }
+
+        // 生成时间戳表格
+        function populateTimestampTable() {
+            const tableBody = document.getElementById('timestamp-body');
+            tableBody.innerHTML = '';
+            
+            timestampData.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="timestamp" contenteditable="true">${item.timestamp}</td>
+                    <td>${item.thai_text}</td>
+                    <td>${item.english_translation}</td>
+                    <td class="actions">
+                        <button class="action-btn hide-btn" title="隐藏此行">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // 添加显示所有行的按钮
+            const showAllRow = document.createElement('tr');
+            showAllRow.classList.add('show-all-row');
+            showAllRow.innerHTML = `
+                <td colspan="3" style="text-align: center; font-style: italic; color: #666;">
+                    显示所有隐藏的行
+                </td>
+                <td class="actions">
+                    <button class="action-btn show-btn" title="显示所有行">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(showAllRow);
+        }
+
+        // 加载YouTube IFrame API
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    </script>
+</body>
+</html>

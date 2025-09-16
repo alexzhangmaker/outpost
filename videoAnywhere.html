@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语言学习应用 - Firebase集成版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* 左侧导航样式 */
+        .sidebar {
+            width: 60px;
+            background: linear-gradient(135deg, #2c3e50, #4a6491);
+            color: white;
+            overflow: hidden;
+            transition: width 0.3s ease;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .sidebar:hover {
+            width: 300px;
+        }
+        
+        .hamburger {
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar-content {
+            width: 300px;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .sidebar:hover .sidebar-content {
+            opacity: 1;
+        }
+        
+        .app-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+        
+        .video-list {
+            list-style: none;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+        
+        .video-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .video-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .video-item {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .video-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .video-item.active {
+            background: rgba(255, 255, 255, 0.25);
+            border-left: 4px solid #ff7043;
+        }
+        
+        /* 右侧内容区样式 */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .video-container {
+            background: white;
+            overflow: hidden;
+            flex-shrink: 0;
+            height: 400px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        
+        #player {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .timestamp-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .timestamp-header {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            font-weight: 600;
+            border-bottom: 1px solid #eaeaea;
+            display: grid;
+            grid-template-columns: 80px 1fr 1fr 80px;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+        
+        .timestamp-table-container {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr {
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: grid;
+            grid-template-columns: 80px 1fr 1fr 80px;
+        }
+        
+        tr:hover {
+            background-color: #f1f8ff;
+        }
+        
+        tr.active {
+            background-color: #e3f2fd;
+        }
+        
+        tr.hidden {
+            display: none;
+        }
+        
+        .timestamp {
+            font-weight: 600;
+            color: #1976d2;
+        }
+        
+        .timestamp.editable {
+            border: 1px dashed #1976d2;
+            border-radius: 4px;
+            padding: 4px 8px;
+            background: #f8fdff;
+            outline: none;
+        }
+        
+        .actions {
+            text-align: center;
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+        
+        .action-btn:hover {
+            color: #1976d2;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 0;
+            }
+            
+            .sidebar:hover {
+                width: 250px;
+            }
+            
+            .video-container {
+                height: 300px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .video-container {
+                height: 250px;
+            }
+            
+            th, td {
+                padding: 10px 15px;
+            }
+            
+            .timestamp-header, tr {
+                grid-template-columns: 70px 1fr 1fr 50px;
+            }
+        }
+        
+        .key-hint {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 0.9rem;
+            color: #666;
+            z-index: 20;
+        }
+        
+        .status-bar {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #eaeaea;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 1.2rem;
+            color: #666;
+        }
+        
+        .video-controls {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eaeaea;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .control-btn {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .control-btn:hover {
+            background: #1565c0;
+        }
+        
+        .firebase-config {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .config-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .config-btn {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Firebase配置面板 -->
+    <div class="firebase-config" id="firebase-config">
+        <h3>Firebase 配置</h3>
+        <input type="text" id="firebase-path" class="config-input" placeholder="数据库路径 (例如: lessons/thai)" value="youtube">
+        <button id="load-firebase" class="config-btn">从Firebase加载数据</button>
+    </div>
+
+    <div class="container">
+        <!-- 左侧导航区 -->
+        <div class="sidebar">
+            <div class="hamburger">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="sidebar-content">
+                <h1 class="app-title">语言学习应用</h1>
+                <ul class="video-list" id="video-list">
+                    <li class="video-item loading">加载中...</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 右侧内容区 -->
+        <div class="content">
+            <div class="video-container">
+                <div id="player"></div>
+            </div>
+            
+            <div class="video-controls">
+                <button class="control-btn" id="play-pause">
+                    <i class="fas fa-play"></i> 播放/暂停
+                </button>
+                <button class="control-btn" id="replay">
+                    <i class="fas fa-redo"></i> 重新播放当前句
+                </button>
+                <button class="control-btn" id="slower">
+                    <i class="fas fa-tachometer-alt"></i> 减慢速度
+                </button>
+            </div>
+            
+            <div class="timestamp-container">
+                <div class="timestamp-header">
+                    <div>时间戳</div>
+                    <div>泰语文本</div>
+                    <div>英文翻译</div>
+                    <div class="actions">操作</div>
+                </div>
+                
+                <div class="timestamp-table-container">
+                    <table>
+                        <tbody id="timestamp-body">
+                            <tr>
+                                <td colspan="4" class="loading">请从左侧选择一个视频</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="status-bar">
+                    <div id="current-time">当前时间: 00:00</div>
+                    <div id="hidden-count">已隐藏 0 行</div>
+                    <div id="playback-rate">播放速度: 1.0x</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="key-hint">
+        <div>↑ 上一行 | ↓ 下一行 | Enter 保存编辑 | Space 播放/暂停</div>
+    </div>
+
+    <!-- YouTube IFrame API -->
+    <script>
+        // Firebase配置 - 需要替换为您的实际配置
+        //https://outpost-8d74e-video116208.asia-southeast1.firebasedatabase.app/youtube/video002
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-video116208.asia-southeast1.firebasedatabase.app",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // 全局变量
+        let player;
+        let currentTimestampIndex = 0;
+        let timer;
+        let hiddenRowsCount = 0;
+        let playbackRate = 1.0;
+        let currentVideoData = null;
+        let videoList = {};
+
+        // 从Firebase加载视频列表
+        function loadVideoListFromFirebase(path) {
+            const videoListElement = document.getElementById('video-list');
+            videoListElement.innerHTML = '<li class="video-item loading">加载中...</li>';
+            
+            database.ref(path).once('value')
+                .then((snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        videoList = data;
+                        renderVideoList(data);
+                    } else {
+                        videoListElement.innerHTML = '<li class="video-item">没有找到视频数据</li>';
+                    }
+                })
+                .catch((error) => {
+                    console.error('从Firebase加载数据出错:', error);
+                    videoListElement.innerHTML = '<li class="video-item">加载失败</li>';
+                });
+        }
+
+        // 渲染视频列表
+        function renderVideoList(videos) {
+            const videoListElement = document.getElementById('video-list');
+            videoListElement.innerHTML = '';
+            
+            Object.keys(videos).forEach(key => {
+                const video = videos[key];
+                const listItem = document.createElement('li');
+                listItem.className = 'video-item';
+                listItem.dataset.videoId = key;
+                listItem.textContent = video.title || '未命名视频';
+                
+                listItem.addEventListener('click', () => {
+                    // 移除其他项目的active类
+                    document.querySelectorAll('.video-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // 添加active类到当前项目
+                    listItem.classList.add('active');
+                    
+                    // 加载选中的视频
+                    loadVideo(video);
+                });
+                
+                videoListElement.appendChild(listItem);
+            });
+            
+            // 默认选择第一个视频
+            if (Object.keys(videos).length > 0) {
+                const firstKey = Object.keys(videos)[0];
+                const firstVideo = videos[firstKey];
+                document.querySelector(`.video-item[data-video-id="${firstKey}"]`).classList.add('active');
+                loadVideo(firstVideo);
+            }
+        }
+
+        // 加载视频
+        function loadVideo(videoData) {
+            currentVideoData = videoData;
+            
+            // 更新页面标题
+            document.title = `${videoData.title} - 语言学习应用`;
+            
+            // 提取YouTube视频ID
+            let videoId = null;
+            if (videoData.videoURL) {
+                const match = videoData.videoURL.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+                videoId = match ? match[1] : null;
+            }
+            
+            if (player && videoId) {
+                player.loadVideoById(videoId);
+                populateTimestampTable(videoData.timeStamps || []);
+            } else if (videoId) {
+                // 如果播放器尚未初始化，先存储视频ID，等待播放器初始化
+                window.pendingVideoId = videoId;
+                window.pendingTimeStamps = videoData.timeStamps || [];
+            }
+        }
+
+        // 将时间字符串转换为秒
+        function parseTime(timeStr) {
+            const [minutes, seconds] = timeStr.split(':').map(Number);
+            return minutes * 60 + seconds;
+        }
+
+        // 将秒转换为时间字符串
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 更新状态栏
+        function updateStatusBar() {
+            if (player && player.getCurrentTime) {
+                document.getElementById('current-time').textContent = `当前时间: ${formatTime(player.getCurrentTime())}`;
+            }
+            document.getElementById('hidden-count').textContent = `已隐藏 ${hiddenRowsCount} 行`;
+            document.getElementById('playback-rate').textContent = `播放速度: ${playbackRate.toFixed(1)}x`;
+        }
+
+        // 初始化YouTube播放器
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '400',
+                width: '100%',
+                playerVars: {
+                    'playsinline': 1,
+                    'modestbranding': 1,
+                    'rel': 0
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        // 播放器准备就绪
+        function onPlayerReady(event) {
+            // 如果有等待加载的视频，加载它
+            if (window.pendingVideoId) {
+                player.loadVideoById(window.pendingVideoId);
+                populateTimestampTable(window.pendingTimeStamps);
+                delete window.pendingVideoId;
+                delete window.pendingTimeStamps;
+            }
+            
+            // 添加控制按钮事件监听
+            document.getElementById('play-pause').addEventListener('click', togglePlayPause);
+            document.getElementById('replay').addEventListener('click', replayCurrent);
+            document.getElementById('slower').addEventListener('click', slowerSpeed);
+            
+            // 添加Firebase加载按钮事件
+            document.getElementById('load-firebase').addEventListener('click', () => {
+                const path = document.getElementById('firebase-path').value;
+                if (path) {
+                    loadVideoListFromFirebase(path);
+                    document.getElementById("firebase-config").style.display="none" ;
+                }
+            });
+            
+            // 开始更新时间
+            setInterval(updateStatusBar, 1000);
+        }
+
+        // 播放/暂停切换
+        function togglePlayPause() {
+            if (player && player.getPlayerState() === YT.PlayerState.PLAYING) {
+                player.pauseVideo();
+            } else if (player) {
+                player.playVideo();
+            }
+        }
+
+        // 重新播放当前句
+        function replayCurrent() {
+            if (currentTimestampIndex > 0) {
+                seekToTimestamp(currentTimestampIndex - 1);
+            } else {
+                seekToTimestamp(0);
+            }
+        }
+
+        // 减慢播放速度
+        function slowerSpeed() {
+            if (!player) return;
+            
+            playbackRate = playbackRate === 0.5 ? 1.0 : Math.max(0.5, playbackRate - 0.25);
+            player.setPlaybackRate(playbackRate);
+            updateStatusBar();
+        }
+
+        // 键盘事件处理
+        function handleKeyDown(e) {
+            if (e.key === 'ArrowUp') {
+                // 上箭头键 - 跳转到上一行
+                e.preventDefault();
+                if (currentTimestampIndex > 0) {
+                    seekToTimestamp(currentTimestampIndex - 1);
+                }
+            } else if (e.key === 'ArrowDown') {
+                // 下箭头键 - 跳转到下一行
+                e.preventDefault();
+                if (currentTimestampIndex < (currentVideoData?.timeStamps?.length || 0) - 1) {
+                    seekToTimestamp(currentTimestampIndex + 1);
+                }
+            } else if (e.key === ' ') {
+                // 空格键 - 播放/暂停
+                e.preventDefault();
+                togglePlayPause();
+            }
+        }
+
+        // 播放器状态变化
+        function onPlayerStateChange(event) {
+            // 如果正在播放，开始检查时间戳
+            if (event.data === YT.PlayerState.PLAYING) {
+                checkTimestamp();
+            } else {
+                clearTimeout(timer);
+            }
+        }
+
+        // 检查当前时间戳
+        function checkTimestamp() {
+            if (!player || !currentVideoData || !currentVideoData.timeStamps) return;
+            
+            const currentTime = player.getCurrentTime();
+            const nextTimestampIndex = findNextTimestampIndex(currentTime);
+            
+            if (nextTimestampIndex > currentTimestampIndex) {
+                // 更新当前时间戳索引
+                currentTimestampIndex = nextTimestampIndex;
+                
+                // 高亮当前行
+                highlightCurrentRow();
+                
+                if (currentTimestampIndex < currentVideoData.timeStamps.length - 1) {
+                    // 计算到下一个时间戳的时间
+                    const nextTimestampTime = parseTime(currentVideoData.timeStamps[currentTimestampIndex + 1].timestamp);
+                    const timeUntilNext = nextTimestampTime - currentTime;
+                    
+                    // 设置定时器在下一个时间戳处暂停
+                    timer = setTimeout(() => {
+                        if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                            player.pauseVideo();
+                        }
+                    }, timeUntilNext * 1000);
+                }
+            }
+            
+            // 继续检查
+            if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                setTimeout(checkTimestamp, 500);
+            }
+        }
+
+        // 查找下一个时间戳索引
+        function findNextTimestampIndex(currentTime) {
+            if (!currentVideoData || !currentVideoData.timeStamps) return 0;
+            
+            for (let i = currentVideoData.timeStamps.length - 1; i >= 0; i--) {
+                if (parseTime(currentVideoData.timeStamps[i].timestamp) <= currentTime) {
+                    return i;
+                }
+            }
+            return 0;
+        }
+
+        // 跳转到指定时间戳
+        function seekToTimestamp(index) {
+            if (!player || !currentVideoData || !currentVideoData.timeStamps) return;
+            
+            const time = parseTime(currentVideoData.timeStamps[index].timestamp);
+            player.seekTo(time, true);
+            
+            if (player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                player.playVideo();
+            }
+            
+            currentTimestampIndex = index;
+            highlightCurrentRow();
+            
+            // 滚动到当前行
+            const visibleRows = Array.from(document.querySelectorAll('#timestamp-body tr:not(.hidden)')).filter(row => !row.classList.contains('show-all-row'));
+            if (visibleRows[index]) {
+                visibleRows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // 高亮当前时间戳行
+        function highlightCurrentRow() {
+            document.querySelectorAll('#timestamp-body tr').forEach((row, idx) => {
+                if (idx === currentTimestampIndex) {
+                    row.classList.add('active');
+                } else {
+                    row.classList.remove('active');
+                }
+            });
+        }
+
+        // 生成时间戳表格
+        function populateTimestampTable(timeStamps) {
+            const tableBody = document.getElementById('timestamp-body');
+            tableBody.innerHTML = '';
+            
+            if (!timeStamps || timeStamps.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="loading">此视频没有时间戳数据</td></tr>';
+                return;
+            }
+            
+            timeStamps.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="timestamp" contenteditable="true">${item.timestamp}</td>
+                    <td>${item.thai_text}</td>
+                    <td>${item.english_translation}</td>
+                    <td class="actions">
+                        <button class="action-btn hide-btn" title="隐藏此行">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                // 添加点击事件监听
+                row.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('action-btn')) {
+                        seekToTimestamp(index);
+                    }
+                });
+                
+                // 隐藏按钮点击事件
+                const hideBtn = row.querySelector('.hide-btn');
+                hideBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    row.classList.add('hidden');
+                    hiddenRowsCount++;
+                    updateStatusBar();
+                });
+                
+                // 时间戳编辑事件
+                const timestampCell = row.querySelector('.timestamp');
+                timestampCell.addEventListener('blur', (e) => {
+                    const newTime = e.target.textContent.trim();
+                    if (/^\d{2}:\d{2}$/.test(newTime)) {
+                        timeStamps[index].timestamp = newTime;
+                    } else {
+                        e.target.textContent = timeStamps[index].timestamp;
+                    }
+                });
+                
+                timestampCell.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.target.blur();
+                        e.preventDefault();
+                    }
+                });
+                
+                tableBody.appendChild(row);
+            });
+            
+            // 添加显示所有行的按钮
+            const showAllRow = document.createElement('tr');
+            showAllRow.classList.add('show-all-row');
+            showAllRow.innerHTML = `
+                <td colspan="3" style="text-align: center; font-style: italic; color: #666;">
+                    显示所有隐藏的行
+                </td>
+                <td class="actions">
+                    <button class="action-btn show-btn" title="显示所有行">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            `;
+            
+            // 显示所有行按钮事件
+            const showAllBtn = showAllRow.querySelector('.show-btn');
+            showAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('#timestamp-body tr.hidden').forEach(hiddenRow => {
+                    hiddenRow.classList.remove('hidden');
+                });
+                hiddenRowsCount = 0;
+                updateStatusBar();
+            });
+            
+            tableBody.appendChild(showAllRow);
+            
+            // 重置隐藏行计数
+            hiddenRowsCount = 0;
+            updateStatusBar();
+        }
+
+        // 添加键盘事件监听
+        document.addEventListener('keydown', handleKeyDown);
+
+        // 加载YouTube IFrame API
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        
+        // 默认加载Firebase数据
+        document.addEventListener('DOMContentLoaded', () => {
+            const defaultPath = document.getElementById('firebase-path').value;
+            loadVideoListFromFirebase(defaultPath);
+        });
+    </script>
+</body>
+</html>

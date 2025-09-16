@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 数据管理控制台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        #sidebar {
+            min-width: 280px;
+            max-width: 280px;
+            background: #f8f9fa;
+            transition: all 0.3s;
+        }
+        #content {
+            width: 100%;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<nav id="sidebar" class="p-3">
+    <h4><i class="bi bi-fire"></i> Firebase 控制台</h4>
+    <hr>
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item">
+            <a href="#" class="nav-link active" aria-current="page">
+                <i class="bi bi-house-door-fill me-2"></i>主页
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-link link-dark">
+                <i class="bi bi-gear-fill me-2"></i>设置
+            </a>
+        </li>
+    </ul>
+    <hr>
+
+    <div class="accordion" id="nav-accordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    <i class="bi bi-journals me-2"></i> 内容管理
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#nav-accordion">
+                <div class="accordion-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action" data-path="thaiWordList" data-name="单词集管理">单词集管理</a>
+                        <a href="#" class="list-group-item list-group-item-action" data-path="flashcard-boxes" data-name="复习卡片盒管理">复习卡片盒管理</a>
+                        <a href="#" class="list-group-item list-group-item-action" data-path="dictionaries" data-name="字典管理">字典管理</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                    <i class="bi bi-clipboard-data me-2"></i> 应用数据
+                </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#nav-accordion">
+                 <div class="accordion-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action" data-path="tests" data-name="测试管理">测试管理</a>
+                        <a href="#" class="list-group-item list-group-item-action" data-path="reading-materials" data-name="阅读管理">阅读管理</a>
+                        <a href="#" class="list-group-item list-group-item-action" data-path="tasks" data-name="任务数据管理">任务数据管理</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main id="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 id="content-title">欢迎</h2>
+        <button id="add-new-btn" class="btn btn-primary" style="display: none;">
+            <i class="bi bi-plus-circle-fill me-1"></i> 新增
+        </button>
+    </div>
+    <div id="grid-wrapper">
+        <p>请从左侧导航栏选择一个数据集合进行管理。</p>
+    </div>
+</main>
+
+<div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="dataModalLabel">数据操作</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="dataForm">
+            </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+        <button type="submit" form="dataForm" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    // --- 1. Firebase 初始化 ---
+    // 警告：请将此处替换为您自己的Firebase项目配置！
+    const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+    // 初始化 Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // --- 2. 全局变量和DOM元素 ---
+    let currentGrid = null;
+    let currentPath = '';
+    let currentEditId = null;
+    let columnDefs = []; // 用于存储当前表格的列定义
+    
+    const gridWrapper = document.getElementById('grid-wrapper');
+    const contentTitle = document.getElementById('content-title');
+    const addNewBtn = document.getElementById('add-new-btn');
+    const dataModalEl = document.getElementById('dataModal');
+    const dataModal = new bootstrap.Modal(dataModalEl);
+    const dataForm = document.getElementById('dataForm');
+    const dataModalLabel = document.getElementById('dataModalLabel');
+
+    // --- 3. 导航逻辑 ---
+    const navLinks = document.querySelectorAll('.list-group-item-action');
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // 更新活动链接样式
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            
+            currentPath = e.target.dataset.path;
+            const name = e.target.dataset.name;
+            contentTitle.textContent = name;
+            addNewBtn.style.display = 'block';
+            loadGridData(currentPath);
+        });
+    });
+
+    // --- 4. Grid.js 数据加载与渲染 ---
+    async function loadGridData(path) {
+        gridWrapper.innerHTML = '正在加载数据...';
+        
+        const dataRef = database.ref(path);
+        try {
+            const snapshot = await dataRef.once('value');
+            const data = snapshot.val();
+
+            if (currentGrid) {
+                currentGrid.destroy();
+            }
+            
+            if (!data) {
+                gridWrapper.innerHTML = '<div class="alert alert-warning">此路径下没有数据。</div>';
+                columnDefs = []; // 清空列定义
+                return;
+            }
+
+            // 将Firebase对象转换为Grid.js所需的数组格式
+            const transformedData = Object.keys(data).map(key => {
+                return {
+                    id: key,
+                    ...data[key]
+                };
+            });
+            
+            // 动态生成列定义 (只在第一次加载或数据结构变化时)
+            if (transformedData.length > 0) {
+                 const firstItemKeys = Object.keys(transformedData[0]);
+                 columnDefs = firstItemKeys.map(key => ({ id: key, name: key.charAt(0).toUpperCase() + key.slice(1) }));
+            }
+            
+            // 添加操作列
+            const displayColumns = [...columnDefs, {
+                name: '操作',
+                formatter: (cell, row) => {
+                    const id = row.cells[0].data; // 假设第一列总是ID
+                    return gridjs.h('div', { className: 'btn-group' }, [
+                        gridjs.h('button', {
+                            className: 'btn btn-sm btn-outline-primary btn-edit',
+                            onClick: () => handleEdit(id)
+                        }, gridjs.h('i', { className: 'bi bi-pencil-fill' })),
+                        gridjs.h('button', {
+                            className: 'btn btn-sm btn-outline-danger btn-delete',
+                            onClick: () => handleDelete(id)
+                        }, gridjs.h('i', { className: 'bi bi-trash-fill' }))
+                    ]);
+                }
+            }];
+
+            currentGrid = new gridjs.Grid({
+                columns: displayColumns,
+                data: transformedData,
+                search: true,
+                sort: true,
+                pagination: {
+                    enabled: true,
+                    limit: 10
+                },
+                language: {
+                    'search': {
+                        'placeholder': '🔍 搜索...'
+                    },
+                    'pagination': {
+                        'previous': '上一页',
+                        'next': '下一页',
+                        'showing': '显示',
+                        'results': () => '条记录',
+                        'to': '到',
+                        'of': '共'
+                    }
+                }
+            }).render(gridWrapper);
+
+        } catch (error) {
+            console.error("从Firebase读取数据失败:", error);
+            gridWrapper.innerHTML = `<div class="alert alert-danger">数据加载失败: ${error.message}</div>`;
+        }
+    }
+
+    // --- 5. CRUD 操作处理 ---
+
+    // 处理删除
+    function handleDelete(id) {
+        if (confirm(`确定要删除 ID 为 ${id} 的记录吗？`)) {
+            database.ref(`${currentPath}/${id}`).remove()
+                .then(() => {
+                    console.log("删除成功!");
+                    loadGridData(currentPath); // 重新加载数据
+                })
+                .catch(error => {
+                    console.error("删除失败:", error);
+                    alert(`删除失败: ${error.message}`);
+                });
+        }
+    }
+
+    // 处理编辑（打开模态框）
+    async function handleEdit(id) {
+        currentEditId = id;
+        try {
+            const snapshot = await database.ref(`${currentPath}/${id}`).once('value');
+            const data = snapshot.val();
+            openModal('edit', data);
+        } catch (error) {
+            console.error("获取待编辑数据失败:", error);
+            alert("加载数据失败，无法编辑。");
+        }
+    }
+
+    // 处理新增（打开模态框）
+    addNewBtn.addEventListener('click', () => {
+        currentEditId = null;
+        openModal('add');
+    });
+
+    // 打开模态框并动态生成表单
+    function openModal(mode, data = {}) {
+        dataModalLabel.textContent = mode === 'edit' ? `修改记录 (ID: ${currentEditId})` : '新增记录';
+        dataForm.innerHTML = ''; // 清空旧表单
+
+        // 使用 columnDefs 生成表单字段（不包括ID和操作列）
+        const fields = columnDefs.filter(c => c.id !== 'id');
+        
+        fields.forEach(col => {
+            const fieldName = col.id;
+            const value = data[fieldName] || '';
+            
+            const formGroup = document.createElement('div');
+            formGroup.className = 'mb-3';
+
+            const label = document.createElement('label');
+            label.htmlFor = `field-${fieldName}`;
+            label.className = 'form-label';
+            label.textContent = col.name;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+            input.id = `field-${fieldName}`;
+            input.name = fieldName;
+            input.value = value;
+            
+            formGroup.appendChild(label);
+            formGroup.appendChild(input);
+            dataForm.appendChild(formGroup);
+        });
+
+        dataModal.show();
+    }
+
+    // 处理表单提交（新增或更新）
+    dataForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(dataForm);
+        const newData = {};
+        for (let [key, value] of formData.entries()) {
+            newData[key] = value;
+        }
+
+        let dbOperation;
+        if (currentEditId) {
+            // 更新模式
+            dbOperation = database.ref(`${currentPath}/${currentEditId}`).update(newData);
+        } else {
+            // 新增模式
+            dbOperation = database.ref(currentPath).push(newData);
+        }
+
+        dbOperation
+            .then(() => {
+                console.log("数据保存成功!");
+                dataModal.hide();
+                loadGridData(currentPath);
+            })
+            .catch(error => {
+                console.error("数据保存失败:", error);
+                alert(`保存失败: ${error.message}`);
+            });
+    });
+    
+    // 清理模态框状态
+    dataModalEl.addEventListener('hidden.bs.modal', function () {
+        currentEditId = null;
+        dataForm.reset();
+    });
+});
+</script>
+
+</body>
+</html>

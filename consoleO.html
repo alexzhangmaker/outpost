@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Firebase Realtime Database — 管理控制台 (Demo)</title>
+  <!-- Grid.js -->
+  <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+  <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+  <!-- Firebase (compat SDK for easier Realtime Database usage in a single file) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <!-- Icons (simple) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{ --nav-width:260px; --gap:16px; --accent:#3b82f6 }
+    *{box-sizing:border-box}
+    body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;margin:0;height:100vh;display:flex}
+    /* Left navigation */
+    .nav{width:var(--nav-width);background:#0f172a;color:#e6eef8;padding:16px;overflow:auto}
+    .brand{font-weight:700;margin-bottom:12px;font-size:16px}
+    .icon-btn{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;margin-bottom:8px;color:inherit;text-decoration:none;cursor:pointer}
+    .icon-btn:hover{background:rgba(255,255,255,0.03)}
+    .accordion{margin-top:12px}
+    .accordion-item{background:transparent;border-radius:8px;margin-bottom:8px}
+    .accordion-title{display:flex;justify-content:space-between;align-items:center;padding:10px;cursor:pointer;border-radius:6px}
+    .accordion-title:hover{background:rgba(255,255,255,0.02)}
+    .accordion-content{display:none;padding-left:8px;padding-top:6px}
+    .accordion-content .link{display:block;padding:8px;border-radius:6px;margin-bottom:6px;cursor:pointer}
+    .accordion-content .link:hover{background:rgba(255,255,255,0.02)}
+    /* Main content */
+    .main{flex:1;padding:18px;overflow:auto;background:linear-gradient(180deg,#0b1220 0%, #061425 100%);color:#e6eef8}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .panel{background:rgba(255,255,255,0.03);padding:12px;border-radius:10px}
+    .grid-wrap{margin-top:12px}
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center}
+    .modal{background:#fff;color:#111;border-radius:10px;padding:18px;min-width:360px;max-width:90%;box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+    .form-row{margin-bottom:8px}
+    label{display:block;font-size:13px;margin-bottom:4px}
+    input[type=text], textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #ddd}
+    .btn{display:inline-block;padding:8px 12px;border-radius:8px;cursor:pointer}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-ghost{background:transparent;border:1px solid rgba(0,0,0,0.06)}
+    .actions{display:flex;gap:8px}
+    .small-ic{cursor:pointer;margin-left:8px}
+    /* responsive */
+    @media (max-width:800px){.nav{display:none}}
+  </style>
+</head>
+<body>
+  <aside class="nav">
+    <div class="brand">RTDB 管理控制台</div>
+    <div class="icon-btn" id="homeBtn"><i class="fa fa-home"></i> Home</div>
+    <div class="icon-btn" id="settingBtn"><i class="fa fa-gear"></i> Settings</div>
+
+    <div class="accordion">
+      <!-- Accordion: Data management groups -->
+      <div class="accordion-item">
+        <div class="accordion-title">学/练习类数据 <i class="fa fa-chevron-down"></i></div>
+        <div class="accordion-content">
+          <div class="link" data-path="thaiWordList">单词集管理</div>
+          <div class="link" data-path="thaiAnki/reviewSets">复习卡片盒管理</div>
+          <div class="link" data-path="thaiDictionary">字典管理</div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <div class="accordion-title">测评与阅读 <i class="fa fa-chevron-down"></i></div>
+        <div class="accordion-content">
+          <div class="link" data-path="tests">测试管理</div>
+          <div class="link" data-path="readings">阅读管理</div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <div class="accordion-title">任务与其它 <i class="fa fa-chevron-down"></i></div>
+        <div class="accordion-content">
+          <div class="link" data-path="tasks">任务数据管理</div>
+          <div class="link" data-path="misc">其它</div>
+        </div>
+      </div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+    <div style="font-size:12px;opacity:0.8">提示：点击左侧菜单载入对应 RTDB 路径下的数据（JSON object）。</div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <h2 id="title">请选择左侧菜单项</h2>
+      <div>
+        <button class="btn btn-primary" id="addRowBtn" style="display:none"><i class="fa fa-plus"></i> 新增</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div id="info" style="font-size:13px;opacity:0.9">控制台准备就绪。</div>
+      <div class="grid-wrap" id="gridWrap"></div>
+    </div>
+  </main>
+
+  <!-- Modal backdrop -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3 id="modalTitle">编辑</h3>
+      <form id="modalForm">
+        <div id="modalFields"></div>
+        <div style="text-align:right;margin-top:10px">
+          <button type="button" class="btn" id="modalCancel">取消</button>
+          <button type="submit" class="btn btn-primary" id="modalSave">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    /*****************************************************************
+     * 配置（必须）：将下面 firebaseConfig 替换成你自己的项目配置
+     *****************************************************************/
+     const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+    if (!firebaseConfig.databaseURL) {
+      document.getElementById('info').innerText = '请在代码中填写 firebaseConfig.databaseURL (Realtime Database URL) 与其他字段，然后刷新页面。';
+    }
+
+    // init firebase (compat)
+    if (Object.keys(firebaseConfig).length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
+    // UI elements
+    const accordionTitles = document.querySelectorAll('.accordion-title');
+    accordionTitles.forEach(t => t.addEventListener('click', () => {
+      const content = t.nextElementSibling;
+      content.style.display = (content.style.display === 'block') ? 'none' : 'block';
+    }));
+
+    const links = document.querySelectorAll('.accordion-content .link');
+    let currentPath = null;
+    let currentGrid = null; // gridjs instance
+
+    links.forEach(link => link.addEventListener('click', async (e) => {
+      const path = link.getAttribute('data-path');
+      currentPath = path;
+      document.getElementById('title').innerText = link.innerText + ' — /' + path;
+      document.getElementById('addRowBtn').style.display = 'inline-block';
+      await loadAndRenderGrid(path);
+    }));
+
+    document.getElementById('homeBtn').addEventListener('click', ()=>{
+      document.getElementById('title').innerText = 'Home';
+      document.getElementById('gridWrap').innerHTML = '';
+      document.getElementById('addRowBtn').style.display = 'none';
+    });
+
+    document.getElementById('addRowBtn').addEventListener('click', ()=>openModalForNew());
+
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalFields = document.getElementById('modalFields');
+    const modalTitle = document.getElementById('modalTitle');
+
+    document.getElementById('modalCancel').addEventListener('click', ()=>{closeModal();});
+    document.getElementById('modalForm').addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const formData = new FormData(ev.target);
+      const obj = {};
+      for (let [k,v] of formData.entries()) {
+        // try to parse JSON values to preserve objects/arrays if user typed JSON
+        let parsed = v;
+        try { parsed = JSON.parse(v); } catch(e) {}
+        obj[k] = parsed;
+      }
+
+      const mode = modalBackdrop.getAttribute('data-mode');
+      const key = modalBackdrop.getAttribute('data-key');
+
+      if (!currentPath) { alert('请选择一个路径'); return; }
+
+      if (mode === 'edit') {
+        await db.ref(`${currentPath}/${key}`).set(obj);
+      } else {
+        // push new
+        await db.ref(currentPath).push(obj);
+      }
+
+      closeModal();
+      await loadAndRenderGrid(currentPath);
+    });
+
+    function openModal(fields={}, mode='edit', key=''){
+      modalFields.innerHTML = '';
+      // Generate inputs based on keys in fields (if empty, provide one sample input)
+      const keys = Object.keys(fields).length ? Object.keys(fields) : ['title'];
+      keys.forEach(k=>{
+        const div = document.createElement('div'); div.className='form-row';
+        const label = document.createElement('label'); label.innerText = k; label.htmlFor = 'f_'+k;
+        const inp = document.createElement('input'); inp.type='text'; inp.name = k; inp.id='f_'+k;
+        const val = fields[k];
+        if (typeof val === 'object') inp.value = JSON.stringify(val);
+        else if (val !== undefined) inp.value = String(val);
+        div.appendChild(label); div.appendChild(inp);
+        modalFields.appendChild(div);
+      });
+      modalTitle.innerText = (mode === 'edit') ? '编辑条目' : '新增条目';
+      modalBackdrop.style.display = 'flex';
+      modalBackdrop.setAttribute('data-mode', mode);
+      modalBackdrop.setAttribute('data-key', key || '');
+    }
+    function openModalForNew(){ openModal({}, 'new', ''); }
+    function closeModal(){ modalBackdrop.style.display='none'; modalFields.innerHTML=''; }
+
+    async function loadAndRenderGrid(path){
+      document.getElementById('info').innerText = '正在从 /' + path + ' 加载数据...';
+      const snap = await db.ref(path).get();
+      const val = snap.exists() ? snap.val() : null;
+
+      if (!val) {
+        document.getElementById('info').innerText = '/'+path + ' 下没有数据（空对象）。你可以点击 新增 来添加条目。';
+        document.getElementById('gridWrap').innerHTML = '';
+        return;
+      }
+
+      // val expected to be an object of objects: {key1: {...}, key2: {...}}
+      if (typeof val !== 'object') {
+        document.getElementById('info').innerText = '数据不是对象格式，无法转换为表格。';
+        document.getElementById('gridWrap').innerHTML = '<pre>'+JSON.stringify(val, null, 2)+'</pre>';
+        return;
+      }
+
+      // collect union of keys across objects
+      const rows = [];
+      const columnsSet = new Set(['_id']);
+      Object.entries(val).forEach(([k,v])=>{
+        if (v && typeof v === 'object') {
+          Object.keys(v).forEach(f => columnsSet.add(f));
+        }
+      });
+      const columns = Array.from(columnsSet);
+
+      Object.entries(val).forEach(([k,v])=>{
+        const row = { _id: k };
+        columns.slice(1).forEach(col => {
+          row[col] = (v && v[col] !== undefined) ? v[col] : '';
+        });
+        rows.push(row);
+      });
+
+      // Build gridjs columns definition (dynamic)
+      const gridColumns = columns.map(col=>{
+        if (col === '_id') return {id: '_id', name: 'id', formatter: (cell)=>gridjs.html(`<code style="font-size:12px">${cell}</code>`) };
+        return {id: col, name: col, sortable: true, formatter: (cell)=>{
+          // render objects as JSON
+          if (typeof cell === 'object' && cell !== null) return gridjs.html(`<pre style="white-space:pre-wrap;margin:0">${escapeHtml(JSON.stringify(cell))}</pre>`);
+          return gridjs.html(escapeHtml(String(cell === null ? '' : cell)));
+        }};
+      });
+
+      // add actions column
+      gridColumns.push({
+        id: 'actions', name: '操作', width: '150px',
+        formatter: (cell, row) => {
+          const id = row.cells[0].data; // _id
+          return gridjs.html(`
+            <div class="actions">
+              <button class="btn-ghost" data-act="edit" data-key="${id}" title="编辑"><i class="fa fa-pen"></i></button>
+              <button class="btn-ghost" data-act="del" data-key="${id}" title="删除"><i class="fa fa-trash"></i></button>
+            </div>
+          `);
+        }
+      });
+
+      // prepare data rows arrays in column order
+      const dataForGrid = rows.map(r => columns.map(c => r[c]));
+
+      // destroy old grid if exists
+      if (currentGrid && currentGrid.destroy) { try { currentGrid.updateConfig({data:[]}).forceRender(); } catch(e){} }
+
+      // instantiate grid
+      currentGrid = new gridjs.Grid({
+        columns: gridColumns,
+        data: dataForGrid,
+        search: true,
+        pagination: { limit: 10, enabled: true },
+        sort: true,
+        resizable: true,
+        style: { table: { 'font-size': '13px' } },
+        className: { table: 'gridjs-table' }
+      }).render(document.getElementById('gridWrap'));
+
+      document.getElementById('info').innerText = '/'+path + ' 数据加载完成，共 ' + rows.length + ' 条。';
+
+      // attach listeners for action buttons after a short delay (gridjs renders async)
+      setTimeout(()=>attachGridActionHandlers(path, val), 300);
+    }
+
+    function attachGridActionHandlers(path, rawVal){
+      const editBtns = document.querySelectorAll('[data-act="edit"]');
+      editBtns.forEach(b => b.onclick = ()=>{
+        const key = b.getAttribute('data-key');
+        const data = rawVal[key] || {};
+        openModal(data, 'edit', key);
+      });
+      const delBtns = document.querySelectorAll('[data-act="del"]');
+      delBtns.forEach(b => b.onclick = async ()=>{
+        const key = b.getAttribute('data-key');
+        if (!confirm('确认删除 id=' + key + ' ?')) return;
+        await db.ref(path + '/' + key).remove();
+        await loadAndRenderGrid(path);
+      });
+    }
+
+    function escapeHtml(unsafe) {
+      return (''+unsafe)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // auto open sample if firebaseConfig present
+    (async ()=>{
+      if (firebaseConfig.databaseURL) {
+        // try to show root keys as quick shortcuts
+        try {
+          const rootSnap = await db.ref('/').get();
+          const val = rootSnap.exists() ? rootSnap.val() : {};
+          // if there are keys, show first group
+          const keys = Object.keys(val || {});
+          // don't auto-load anything to avoid surprise; but you could uncomment below to auto-load first path
+          // if (keys.length) { document.querySelector('[data-path="'+keys[0]+'"]')?.click(); }
+        } catch(e){ console.warn(e); }
+      }
+    })();
+
+  </script>
+</body>
+</html>

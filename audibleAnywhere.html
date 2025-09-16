@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语言学习音频标记工具</title>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 25px;
+            overflow: hidden;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        h1 {
+            color: #5a67d8;
+            margin-bottom: 10px;
+        }
+        .description {
+            color: #666;
+            font-size: 1.1em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        .wave-container {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #waveform {
+            height: 200px;
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 25px;
+            background: #5a67d8;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button:hover {
+            background: #4c51bf;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button.play {
+            background: #48bb78;
+        }
+        button.play:hover {
+            background: #38a169;
+        }
+        button.pause {
+            background: #ed8936;
+        }
+        button.pause:hover {
+            background: #dd7724;
+        }
+        button.mark {
+            background: #9f7aea;
+        }
+        button.mark:hover {
+            background: #805ad5;
+        }
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            font-size: 16px;
+            color: #555;
+        }
+        .markers-container {
+            margin-top: 30px;
+        }
+        h2 {
+            color: #5a67d8;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .markers-list {
+            list-style-type: none;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .marker-item {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        .marker-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        .marker-time {
+            font-weight: bold;
+            color: #5a67d8;
+        }
+        .marker-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .marker-actions button {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        .instructions {
+            background: #e9f5ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 25px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .instructions h3 {
+            color: #3182ce;
+            margin-bottom: 10px;
+        }
+        .instructions ul {
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            #waveform {
+                height: 150px;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>语言学习音频标记工具</h1>
+            <p class="description">使用Wavesurfer.js开发的交互式音频标记应用，可用于语言学习中的听力练习，标记重要时间戳并重复播放特定段落。</p>
+        </header>
+
+        <div class="wave-container">
+            <div id="waveform"></div>
+        </div>
+
+        <div class="timeline">
+            <span id="current-time">0:00</span>
+            <span id="total-time">0:00</span>
+        </div>
+
+        <div class="controls">
+            <button id="play-btn" class="play">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M3 2v12l10-6-10-6z"/>
+                </svg>
+                播放
+            </button>
+            <button id="pause-btn" class="pause">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M2 2h4v12H2V2zm8 0h4v12h-4V2z"/>
+                </svg>
+                暂停
+            </button>
+            <button id="mark-btn" class="mark">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 14a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/>
+                    <path d="M10 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+                </svg>
+                标记时间戳
+            </button>
+        </div>
+
+        <div class="markers-container">
+            <h2>标记列表</h2>
+            <ul id="markers-list" class="markers-list">
+                <li class="marker-item">
+                    <span>示例标记 1</span>
+                    <div>
+                        <span class="marker-time">0:15</span>
+                        <div class="marker-actions">
+                            <button>播放</button>
+                            <button>删除</button>
+                        </div>
+                    </div>
+                </li>
+                <li class="marker-item">
+                    <span>示例标记 2</span>
+                    <div>
+                        <span class="marker-time">0:42</span>
+                        <div class="marker-actions">
+                            <button>播放</button>
+                            <button>删除</button>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="instructions">
+            <h3>使用说明</h3>
+            <ul>
+                <li>点击<strong>播放</strong>按钮开始播放音频</li>
+                <li>点击<strong>暂停</strong>按钮暂停音频播放</li>
+                <li>点击<strong>标记时间戳</strong>按钮在当前播放位置添加标记</li>
+                <li>点击波形图上的任意位置可以跳转到指定时间点</li>
+                <li>在标记列表中点击<strong>播放</strong>可以从标记处开始播放</li>
+                <li>在标记列表中点击<strong>删除</strong>可以移除标记</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化Wavesurfer
+            const wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: '#718096',
+                progressColor: '#4c51bf',
+                cursorColor: '#4c51bf',
+                cursorWidth: 2,
+                height: 200,
+                barWidth: 3,
+                barRadius: 3,
+                barGap: 2
+            });
+
+            // 加载示例音频（实际应用中替换为您的音频URL）
+            wavesurfer.load('https://ia902606.us.archive.org/35/items/shortpoetry_047_librivox/uponthefloor_kb_128kb.mp3');
+
+            // 获取DOM元素
+            const playBtn = document.getElementById('play-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            const markBtn = document.getElementById('mark-btn');
+            const currentTimeEl = document.getElementById('current-time');
+            const totalTimeEl = document.getElementById('total-time');
+            const markersList = document.getElementById('markers-list');
+
+            // 播放按钮事件
+            playBtn.addEventListener('click', () => {
+                wavesurfer.play();
+            });
+
+            // 暂停按钮事件
+            pauseBtn.addEventListener('click', () => {
+                wavesurfer.pause();
+            });
+
+            // 标记按钮事件
+            markBtn.addEventListener('click', () => {
+                const time = wavesurfer.getCurrentTime();
+                addMarker(time, `标记于 ${formatTime(time)}`);
+            });
+
+            // 更新音频时间显示
+            wavesurfer.on('audioprocess', function() {
+                currentTimeEl.textContent = formatTime(wavesurfer.getCurrentTime());
+            });
+
+            wavesurfer.on('ready', function() {
+                totalTimeEl.textContent = formatTime(wavesurfer.getDuration());
+            });
+
+            // 格式化时间函数
+            function formatTime(time) {
+                const minutes = Math.floor(time / 60);
+                const seconds = Math.floor(time % 60);
+                return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }
+
+            // 添加标记函数
+            function addMarker(time, text) {
+                const markerItem = document.createElement('li');
+                markerItem.className = 'marker-item';
+                markerItem.innerHTML = `
+                    <span>${text}</span>
+                    <div>
+                        <span class="marker-time">${formatTime(time)}</span>
+                        <div class="marker-actions">
+                            <button>播放</button>
+                            <button>删除</button>
+                        </div>
+                    </div>
+                `;
+                
+                // 播放标记事件
+                markerItem.querySelector('.marker-actions button:first-child').addEventListener('click', () => {
+                    wavesurfer.setCurrentTime(time);
+                    wavesurfer.play();
+                });
+                
+                // 删除标记事件
+                markerItem.querySelector('.marker-actions button:last-child').addEventListener('click', () => {
+                    markerItem.remove();
+                });
+                
+                markersList.appendChild(markerItem);
+            }
+
+            // 添加区域标记功能（用于标记时间段而非时间点）
+            wavesurfer.on('ready', function() {
+                // 添加示例区域
+                wavesurfer.addRegion({
+                    start: 5,
+                    end: 10,
+                    color: 'rgba(76, 81, 191, 0.3)'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

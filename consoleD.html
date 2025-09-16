@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 数据库管理控制台</title>
+    <!-- 引入 Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入 grid.js CSS -->
+    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet">
+    <!-- 引入 Font Awesome 图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --header-height: 60px;
+            --primary-color: #4e73df;
+            --secondary-color: #6c757d;
+            --light-bg: #f8f9fa;
+        }
+        
+        body {
+            overflow-x: hidden;
+            background-color: #f8f9fa;
+        }
+        
+        #sidebar {
+            position: fixed;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: #fff;
+            border-right: 1px solid #e3e6f0;
+            padding-top: var(--header-height);
+            z-index: 100;
+            transition: all 0.3s;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        #content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            padding-top: calc(var(--header-height) + 20px);
+            min-height: 100vh;
+        }
+        
+        #header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: #fff;
+            z-index: 101;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .nav-item {
+            margin-bottom: 5px;
+        }
+        
+        .nav-link {
+            color: #6c757d;
+            padding: 10px 15px;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary-color);
+            background-color: var(--light-bg);
+        }
+        
+        .nav-link.active {
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .accordion-button {
+            padding: 10px 15px;
+            font-weight: 600;
+        }
+        
+        .accordion-button:not(.collapsed) {
+            color: var(--primary-color);
+            background-color: rgba(78, 115, 223, 0.1);
+        }
+        
+        .card {
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            border: 1px solid #e3e6f0;
+        }
+        
+        .gridjs-container {
+            border-radius: 0.35rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .edit-btn {
+            color: var(--primary-color);
+        }
+        
+        .delete-btn {
+            color: #e74a3b;
+        }
+        
+        .section-title {
+            margin-bottom: 20px;
+            color: #5a5c69;
+        }
+        
+        .add-btn {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header id="header">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-sm btn-primary me-3" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h5 class="mb-0">Firebase 数据库管理控制台</h5>
+        </div>
+        <div class="ms-auto d-flex align-items-center">
+            <button class="btn btn-sm btn-outline-secondary me-2">
+                <i class="fas fa-home"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 左侧导航栏 -->
+    <aside id="sidebar">
+        <div class="accordion accordion-flush" id="sidebarAccordion">
+            <!-- 单词集管理 -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWordSets">
+                        <i class="fas fa-book me-2"></i> 单词集管理
+                    </button>
+                </h2>
+                <div id="collapseWordSets" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                    <div class="accordion-body p-0">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="thaiWordList">
+                                    <i class="fas fa-list me-2"></i> 所有单词集
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="word-set-categories">
+                                    <i class="fas fa-folder me-2"></i> 单词集分类
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 复习卡片盒管理 -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFlashcards">
+                        <i class="fas fa-sticky-note me-2"></i> 复习卡片盒管理
+                    </button>
+                </h2>
+                <div id="collapseFlashcards" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                    <div class="accordion-body p-0">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="thaiAnki/reviewSets">
+                                    <i class="fas fa-table me-2"></i> 所有卡片盒
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="flashcard-stats">
+                                    <i class="fas fa-chart-bar me-2"></i> 学习统计
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 字典管理 -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDictionary">
+                        <i class="fas fa-book-open me-2"></i> 字典管理
+                    </button>
+                </h2>
+                <div id="collapseDictionary" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                    <div class="accordion-body p-0">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="dictionary-entries">
+                                    <i class="fas fa-list-ol me-2"></i> 字典条目
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="dictionary-languages">
+                                    <i class="fas fa-language me-2"></i> 支持语言
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 测试管理 -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTests">
+                        <i class="fas fa-tasks me-2"></i> 测试管理
+                    </button>
+                </h2>
+                <div id="collapseTests" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                    <div class="accordion-body p-0">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="tests">
+                                    <i class="fas fa-question-circle me-2"></i> 测试题目
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="test-results">
+                                    <i class="fas fa-chart-line me-2"></i> 测试结果
+                                </a>
+            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 阅读管理 -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReading">
+                        <i class="fas fa-book-reader me-2"></i> 阅读管理
+                    </button>
+                </h2>
+                <div id="collapseReading" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                    <div class="accordion-body p-0">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="reading-materials">
+                                    <i class="fas fa-file-alt me-2"></i> 阅读材料
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="reading-progress">
+                                    <i class="fas fa-forward me-2"></i> 阅读进度
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务数据管理 -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTasks">
+                        <i class="fas fa-clipboard-list me-2"></i> 任务数据管理
+                    </button>
+                </h2>
+                <div id="collapseTasks" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                    <div class="accordion-body p-0">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="tasks">
+                                    <i class="fas fa-list-check me-2"></i> 所有任务
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="task-categories">
+                                    <i class="fas fa-tags me-2"></i> 任务分类
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 主内容区域 -->
+    <main id="content">
+        <div class="container-fluid">
+            <h4 class="section-title" id="current-section">选择左侧菜单项开始管理数据</h4>
+            
+            <div id="grid-container" class="card">
+                <div class="card-body">
+                    <div id="data-grid"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 编辑数据的模态框 -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">编辑数据</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modal-form">
+                    <!-- 表单内容将通过JavaScript动态生成 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="save-changes">保存更改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加数据的模态框 -->
+    <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addModalLabel">添加新数据</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="add-modal-form">
+                    <!-- 表单内容将通过JavaScript动态生成 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="add-data">添加数据</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入必要的JavaScript库 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+    <!-- 引入Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
+    <script>
+        // Firebase配置 - 需要替换为您的实际配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // 当前选中的部分和网格实例
+        let currentSection = null;
+        let grid = null;
+        
+        // 侧边栏切换
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            
+            if (sidebar.style.marginLeft === '0px' || sidebar.style.marginLeft === '') {
+                sidebar.style.marginLeft = `-${getComputedStyle(sidebar).width}`;
+                content.style.marginLeft = '0';
+            } else {
+                sidebar.style.marginLeft = '0';
+                content.style.marginLeft = getComputedStyle(sidebar).width;
+            }
+        });
+        
+        // 导航链接点击事件
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // 更新活动链接
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 获取数据部分
+                const section = this.getAttribute('data-section');
+                loadSection(section);
+            });
+        });
+        
+        // 加载数据部分
+        function loadSection(section) {
+            currentSection = section;
+            document.getElementById('current-section').textContent = 
+                document.querySelector(`.nav-link[data-section="${section}"]`).textContent.trim();
+            
+            // 显示添加按钮
+            const addButton = document.createElement('button');
+            addButton.className = 'btn btn-primary add-btn';
+            addButton.innerHTML = '<i class="fas fa-plus me-2"></i>添加新数据';
+            addButton.id = 'add-data-btn';
+            addButton.onclick = showAddModal;
+            
+            // 清除之前的添加按钮
+            const existingBtn = document.getElementById('add-data-btn');
+            if (existingBtn) {
+                existingBtn.remove();
+            }
+            
+            document.getElementById('current-section').after(addButton);
+            
+            // 从Firebase加载数据
+            loadDataFromFirebase(section);
+        }
+        
+        // 从Firebase加载数据
+        function loadDataFromFirebase(section) {
+            // 显示加载中
+            if (grid){
+                grid.updateConfig({data: []}).forceRender();
+            }
+            
+            // 获取数据引用
+            const ref = database.ref(section);
+            ref.once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (!data) {
+                    // 如果没有数据，显示空表格
+                    renderGrid(section, []);
+                    return;
+                }
+                
+                // 转换数据为数组
+                const dataArray = [];
+                const columns = [];
+                
+                // 获取第一个对象来提取列名
+                const firstKey = Object.keys(data)[0];
+                const firstItem = data[firstKey];
+                
+                // 添加ID列
+                columns.push({
+                    id: 'id',
+                    name: 'ID',
+                    width: '80px'
+                });
+                
+                // 添加数据列
+                for (const key in firstItem) {
+                    if (firstItem.hasOwnProperty(key)) {
+                        columns.push({
+                            id: key,
+                            name: key.charAt(0).toUpperCase() + key.slice(1),
+                            sort: true
+                        });
+                    }
+                }
+                
+                // 添加操作列
+                columns.push({
+                    id: 'actions',
+                    name: '操作',
+                    width: '100px',
+                    sort: false,
+                    formatter: (cell, row) => {
+                        return gridjs.html(`
+                            <div class="action-buttons">
+                                <i class="fas fa-edit edit-btn action-btn" data-id="${row.cells[0].data}"></i>
+                                <i class="fas fa-trash delete-btn action-btn" data-id="${row.cells[0].data}"></i>
+                            </div>
+                        `);
+                    }
+                });
+                
+                // 准备行数据
+                for (const id in data) {
+                    if (data.hasOwnProperty(id)) {
+                        const item = data[id];
+                        const row = [id];
+                        
+                        for (const key in firstItem) {
+                            if (firstItem.hasOwnProperty(key)) {
+                                row.push(item[key] || '');
+                            }
+                        }
+                        
+                        dataArray.push(row);
+                    }
+                }
+                
+                // 渲染表格
+                renderGrid(section, columns, dataArray);
+                
+            }).catch(error => {
+                console.error('从Firebase加载数据时出错:', error);
+                alert('加载数据时出错: ' + error.message);
+            });
+        }
+        
+        // 使用grid.js渲染表格
+        function renderGrid(section, columns, data) {
+            // 销毁现有的网格（如果存在）
+            if (grid) {
+                grid.destroy();
+            }
+            
+            // 创建新的网格
+            grid = new gridjs.Grid({
+                columns: columns,
+                data: data,
+                pagination: {
+                    limit: 10
+                },
+                search: true,
+                sort: true,
+                language: {
+                    'search': {
+                        'placeholder': '搜索...'
+                    },
+                    'pagination': {
+                        'previous': '上一页',
+                        'next': '下一页',
+                        'showing': '显示',
+                        'results': () => '条记录'
+                    }
+                }
+            }).render(document.getElementById('data-grid'));
+            
+            // 添加事件监听器到操作按钮
+            grid.on('ready', () => {
+                // 编辑按钮事件
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        showEditModal(section, id);
+                    });
+                });
+                
+                // 删除按钮事件
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteData(section, id);
+                    });
+                });
+            });
+        }
+        
+        // 显示编辑模态框
+        function showEditModal(section, id) {
+            const ref = database.ref(`${section}/${id}`);
+            
+            ref.once('value').then(snapshot => {
+                const data = snapshot.val();
+                
+                if (!data) {
+                    alert('未找到数据!');
+                    return;
+                }
+                
+                // 生成表单
+                let formHtml = '';
+                for (const key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        formHtml += `
+                            <div class="mb-3">
+                                <label for="edit-${key}" class="form-label">${key.charAt(0).toUpperCase() + key.slice(1)}</label>
+                                <input type="text" class="form-control" id="edit-${key}" value="${data[key] || ''}">
+                            </div>
+                        `;
+                    }
+                }
+                
+                document.getElementById('modal-form').innerHTML = formHtml;
+                
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                modal.show();
+                
+                // 保存更改事件
+                document.getElementById('save-changes').onclick = function() {
+                    const updatedData = {};
+                    
+                    for (const key in data) {
+                        if (data.hasOwnProperty(key)) {
+                            updatedData[key] = document.getElementById(`edit-${key}`).value;
+                        }
+                    }
+                    
+                    // 更新数据
+                    ref.update(updatedData).then(() => {
+                        modal.hide();
+                        loadDataFromFirebase(section);
+                        alert('数据更新成功!');
+                    }).catch(error => {
+                        alert('更新数据时出错: ' + error.message);
+                    });
+                };
+                
+            }).catch(error => {
+                alert('加载数据时出错: ' + error.message);
+            });
+        }
+        
+        // 显示添加模态框
+        function showAddModal() {
+            // 获取当前部分的示例数据以了解结构
+            const ref = database.ref(currentSection);
+            
+            ref.limitToFirst(1).once('value').then(snapshot => {
+                const data = snapshot.val();
+                let formHtml = '';
+                
+                if (data) {
+                    const firstKey = Object.keys(data)[0];
+                    const firstItem = data[firstKey];
+                    
+                    for (const key in firstItem) {
+                        if (firstItem.hasOwnProperty(key)) {
+                            formHtml += `
+                                <div class="mb-3">
+                                    <label for="add-${key}" class="form-label">${key.charAt(0).toUpperCase() + key.slice(1)}</label>
+                                    <input type="text" class="form-control" id="add-${key}">
+                                </div>
+                            `;
+                        }
+                    }
+                } else {
+                    // 如果没有现有数据，创建一些默认字段
+                    formHtml = `
+                        <div class="mb-3">
+                            <label for="add-name" class="form-label">名称</label>
+                            <input type="text" class="form-control" id="add-name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="add-description" class="form-label">描述</label>
+                            <input type="text" class="form-control" id="add-description">
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('add-modal-form').innerHTML = formHtml;
+                
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('addModal'));
+                modal.show();
+                
+                // 添加数据事件
+                document.getElementById('add-data').onclick = function() {
+                    const newData = {};
+                    
+                    if (data) {
+                        const firstKey = Object.keys(data)[0];
+                        const firstItem = data[firstKey];
+                        
+                        for (const key in firstItem) {
+                            if (firstItem.hasOwnProperty(key)) {
+                                newData[key] = document.getElementById(`add-${key}`).value;
+                            }
+                        }
+                    } else {
+                        // 如果没有现有数据，使用默认字段
+                        newData['name'] = document.getElementById('add-name').value;
+                        newData['description'] = document.getElementById('add-description').value;
+                    }
+                    
+                    // 添加新数据
+                    ref.push(newData).then(() => {
+                        modal.hide();
+                        loadDataFromFirebase(currentSection);
+                        alert('数据添加成功!');
+                    }).catch(error => {
+                        alert('添加数据时出错: ' + error.message);
+                    });
+                };
+                
+            }).catch(error => {
+                alert('加载数据结构时出错: ' + error.message);
+            });
+        }
+        
+        // 删除数据
+        function deleteData(section, id) {
+            if (confirm('确定要删除这条数据吗？此操作不可撤销。')) {
+                const ref = database.ref(`${section}/${id}`);
+                
+                ref.remove().then(() => {
+                    loadDataFromFirebase(section);
+                    alert('数据删除成功!');
+                }).catch(error => {
+                    alert('删除数据时出错: ' + error.message);
+                });
+            }
+        }
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 默认展开第一个accordion
+            const firstAccordion = document.querySelector('.accordion-button');
+            if (firstAccordion) {
+                firstAccordion.click();
+            }
+        });
+    </script>
+</body>
+</html>

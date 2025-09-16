@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Learning Practice App</title>
+    <style>
+        /* General Styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Navigation Area (Left) */
+        .nav-container {
+            width: 60px;
+            background-color: #2c3e50;
+            color: white;
+            transition: width 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .nav-container:hover {
+            width: 250px;
+        }
+
+        .nav-icons {
+            padding: 15px;
+            text-align: center;
+        }
+
+        .nav-icons .icon {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .nav-content {
+            padding: 0 15px;
+            overflow-y: auto;
+            flex-grow: 1;
+            white-space: nowrap;
+        }
+
+        .nav-content h3 {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .nav-container:hover .nav-content h3 {
+            opacity: 1;
+        }
+        
+        .video-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .video-list li {
+            padding: 15px 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 0.2s ease, background-color 0.2s;
+        }
+        
+        .nav-container:hover .video-list li {
+           opacity: 1;
+        }
+
+        .video-list li:hover {
+            background-color: #34495e;
+        }
+
+        .video-list li.active {
+            background-color: #1abc9c;
+        }
+
+        /* Content Area (Right) */
+        .content-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .video-player-wrapper {
+            flex: 1;
+            background-color: #000;
+            position: relative; /* Needed for positioning the custom controls */
+        }
+
+        .video-player-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* --- NEW: Enhanced Custom Controls Styles --- */
+        .custom-controls-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background-image: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0));
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            box-sizing: border-box;
+        }
+
+        .time-display {
+            color: white;
+            font-size: 14px;
+            font-family: 'Courier New', Courier, monospace;
+            padding-right: 15px;
+        }
+
+        .progress-bar-container {
+            flex-grow: 1;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #e74c3c;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .progress-handle {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translate(50%, -50%);
+            width: 16px;
+            height: 16px;
+            background-color: white;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+        /* --- END NEW --- */
+
+
+        .timestamps-table-wrapper {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        thead th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        tr { cursor: pointer; }
+        tr.active-row { background-color: #e8f4fd; }
+        tr:hover { background-color: #f5f5f5; }
+        td:nth-child(1) { width: 10%; }
+        td:nth-child(2) { width: 40%; }
+        td:nth-child(3) { width: 40%; }
+        td:nth-child(4) { width: 10%; text-align: center; }
+        .hide-icon { cursor: pointer; color: #95a5a6; font-size: 18px; }
+        .hide-icon:hover { color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="nav-container">
+            <div class="nav-icons"><div class="icon">☰</div></div>
+            <div class="nav-content">
+                <h3>Video Lessons</h3>
+                <ul class="video-list">
+                    <li data-video-id="-EFraXOwgdY" class="active">Thai Language Lesson 1</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-container">
+            <div class="video-player-wrapper">
+                <div id="player"></div>
+                <div class="custom-controls-container">
+                    <div class="time-display">
+                        <span id="currentTime">00:00</span> / <span id="totalDuration">00:00</span>
+                    </div>
+                    <div class="progress-bar-container" id="progressBarContainer">
+                        <div class="progress-bar" id="progressBar">
+                           <div class="progress-handle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timestamps-table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Thai</th>
+                            <th>English</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timestamps-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const videoData = [
+            { "timestamp": "00:00", "thai_text": "คุณกำลังฟัง Learn Thai with ThaiPod101.com", "english_translation": "You are listening to Learn Thai with ThaiPod101.com" },
+            { "timestamp": "02:00", "thai_text": "ผู้ชายคนหนึ่งกำลังรายงานเกี่ยวกับผลการดำเนินงานของบริษัทในที่ประชุม", "english_translation": "A man is reporting on the company's performance in a meeting." },
+            { "timestamp": "02:07", "thai_text": "เขาใช้แผนภาพ 2 อันไหนในการนำเสนอ งาน", "english_translation": "Which 2 diagrams does he use in his presentation?" },
+            { "timestamp": "02:11", "thai_text": "ขอให้ดูในเอกสารที่แจกไปนะครับ", "english_translation": "Please look at the handout." },
+            { "timestamp": "02:15", "thai_text": "แผนภาพทางซ้ายแสดงยอดขายของบริษัทในช่วงสามปีที่ผ่านมา", "english_translation": "The diagram on the left shows the company's sales over the past three years." },
+            { "timestamp": "02:20", "thai_text": "รวมทั้งประมาณการยอดขายสำหรับปีปัจจุบันด้วย", "english_translation": "It also includes the sales forecast for the current year." },
+            { "timestamp": "02:27", "thai_text": "ส่วนแผนภาพทางขวาแสดงยอดขายแบบแยกเป็นรายเดือนจนถึงเดือนตุลาคมปีนี้", "english_translation": "The diagram on the right shows the monthly sales up to October of this year." },
+            { "timestamp": "02:32", "thai_text": "คราวนี้ขอให้ดูแผนภาพทางซ้ายนะครับ", "english_translation": "Now, please look at the diagram on the left." },
+            { "timestamp": "02:36", "thai_text": "จะเห็นว่ายอดขายเพิ่มขึ้นอย่างต่อเนื่องในช่วงสามปีที่ผ่านมา", "english_translation": "You can see that sales have been increasing steadily over the past three years." },
+            { "timestamp": "02:40", "thai_text": "และถ้าเรายังทำยอดขายเพิ่มขึ้นต่อไปได้", "english_translation": "And if we can continue to increase sales," },
+            { "timestamp": "02:45", "thai_text": "ยอดขายรวมในปีนี้ก็จะเพิ่มขึ้นมากกว่าปีที่แล้วครับ", "english_translation": "total sales for this year will be higher than last year." },
+            { "timestamp": "02:48", "thai_text": "ต่อไปดูที่แผนภาพทางขวาครับ", "english_translation": "Next, let's look at the diagram on the right." },
+            { "timestamp": "02:54", "thai_text": "แผนภาพทางขวาแสดงให้เห็นว่าการรณรงค์ที่เราทำในเดือนเมษายน", "english_translation": "The diagram on the right shows that the campaigns we ran in April" },
+            { "timestamp": "02:58", "thai_text": "และเดือนสิงหาคมค่อนข้างมีประสิทธิภาพทีเดียว", "english_translation": "and August were quite effective." },
+            { "timestamp": "03:01", "thai_text": "เข้าใจแล้วค่ะ", "english_translation": "I see." },
+            { "timestamp": "03:06", "thai_text": "แต่ยอดขายในเดือนพฤษภาคมและกันยายนลดลงหลังจากรณรงค์นะคะ", "english_translation": "But sales in May and September decreased after the campaign." },
+            { "timestamp": "03:08", "thai_text": "ใช่ครับ", "english_translation": "Yes, that's right." },
+            { "timestamp": "03:11", "thai_text": "แต่หลีกเลี่ยงไม่ได้ที่ยอดขายจะต้องดีดตัวกลับแบบนี้ครับ", "english_translation": "But it's inevitable that sales will rebound like this." },
+            { "timestamp": "03:18", "thai_text": "ผมคาดว่ายอดขายประจำปีในปีนี้จะเพิ่มขึ้นกว่าปีที่แล้วถ้าเรายังทำยอดขายเพิ่มขึ้นได้ต่อเนื่องครับ", "english_translation": "I expect that this year's annual sales will be higher than last year's if we can continue to increase sales." },
+            { "timestamp": "03:22", "thai_text": "เขาใช้แผนภาพ 2 อันไหนในการนำเสนอ งาน", "english_translation": "Which 2 diagrams does he use in his presentation?" }
+        ];
+
+        let player;
+        let stopInterval; 
+        let progressInterval;
+
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '100%',
+                width: '100%',
+                videoId: '-EFraXOwgdY',
+                playerVars: {
+                    'playsinline': 1,
+                    'modestbranding': 1,
+                    'rel': 0,
+                    'controls': 0, // 隐藏YouTube默认控制器
+                    'disablekb': 1
+                },
+                events: {
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+        
+        // NEW Helper function to format seconds into MM:SS
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        function onPlayerStateChange(event) {
+            if (progressInterval) clearInterval(progressInterval);
+            
+            if (event.data == YT.PlayerState.PLAYING) {
+                const duration = player.getDuration();
+                document.getElementById('totalDuration').textContent = formatTime(duration);
+
+                progressInterval = setInterval(() => {
+                    const currentTime = player.getCurrentTime();
+                    const progress = (currentTime / duration) * 100;
+                    document.getElementById('progressBar').style.width = progress + '%';
+                    document.getElementById('currentTime').textContent = formatTime(currentTime);
+                }, 250);
+            }
+        }
+
+        function timestampToSeconds(ts) {
+            const parts = ts.split(':').map(Number);
+            return parts.length === 2 ? parts[0] * 60 + parts[1] : 0;
+        }
+
+        function populateTable() {
+            const tbody = document.getElementById('timestamps-tbody');
+            tbody.innerHTML = '';
+            videoData.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.dataset.index = index;
+                row.innerHTML = `
+                    <td contenteditable="true">${item.timestamp}</td>
+                    <td>${item.thai_text}</td>
+                    <td>${item.english_translation}</td>
+                    <td style="text-align:center;">
+                        <span class="hide-icon" title="Hide this row">✕</span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function playRow(rowIndex) {
+             if (rowIndex < 0 || rowIndex >= videoData.length) return;
+
+            if (stopInterval) clearInterval(stopInterval);
+
+            const allRows = document.querySelectorAll('#timestamps-tbody tr');
+            allRows.forEach(r => r.classList.remove('active-row'));
+
+            const activeRow = allRows[rowIndex];
+            if (!activeRow) return;
+
+            activeRow.classList.add('active-row');
+            activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            const startTime = timestampToSeconds(activeRow.cells[0].textContent);
+            player.seekTo(startTime, true);
+            player.playVideo();
+
+            const nextRow = allRows[rowIndex + 1];
+            if (nextRow) {
+                const stopTime = timestampToSeconds(nextRow.cells[0].textContent);
+                stopInterval = setInterval(() => {
+                    if (player.getCurrentTime() >= stopTime) {
+                        player.pauseVideo();
+                        clearInterval(stopInterval);
+                    }
+                }, 250);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            populateTable();
+            const tbody = document.getElementById('timestamps-tbody');
+            const progressBarContainer = document.getElementById('progressBarContainer');
+
+            tbody.addEventListener('click', (event) => {
+                const row = event.target.closest('tr');
+                const icon = event.target.closest('.hide-icon');
+                if (icon) {
+                    row.style.display = 'none';
+                } else if (row) {
+                    playRow(parseInt(row.dataset.index, 10));
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                const activeRow = document.querySelector('.active-row');
+                if (!activeRow) return;
+                let currentIndex = parseInt(activeRow.dataset.index, 10);
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    if (currentIndex < videoData.length - 1) playRow(currentIndex + 1);
+                } else if (event.key === 'ArrowUp') {
+                     event.preventDefault();
+                    if (currentIndex > 0) playRow(currentIndex - 1);
+                }
+            });
+            
+            progressBarContainer.addEventListener('click', (event) => {
+                if(!player || typeof player.getDuration !== 'function') return;
+                const rect = progressBarContainer.getBoundingClientRect();
+                const clickX = event.clientX - rect.left;
+                const barWidth = progressBarContainer.clientWidth;
+                const seekFraction = clickX / barWidth;
+                const seekTime = player.getDuration() * seekFraction;
+                player.seekTo(seekTime, true);
+                player.playVideo();
+            });
+        });
+    </script>
+</body>
+</html>
