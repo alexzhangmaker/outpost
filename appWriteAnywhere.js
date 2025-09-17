@@ -261,6 +261,7 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
     } 
   });
 
+  /*
   // Add custom paste handling
   editor.on('paste', (data) => {
     // Get the pasted plain text
@@ -283,6 +284,7 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
     // Prevent default paste behavior
     data.preventDefault();
   });
+  */
   
 
 

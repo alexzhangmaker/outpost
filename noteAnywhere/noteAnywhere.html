@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Editor App</title>
+
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header id="top-bar">
+            <div class="app-info">
+                <img src="assets/icon.svg" alt="App Icon" class="app-icon">
+                <span class="app-title">MD Editor</span>
+            </div>
+            <div class="system-config">
+                <button id="print-btn" title="打印"><i class="fas fa-print"></i></button>
+                <button id="save-btn" title="保存到云端"><i class="fas fa-cloud-upload-alt"></i></button>
+                </div>
+        </header>
+
+        <main class="main-container">
+            <aside id="left-toolbar">
+                <div class="icon-bar">
+                    <div class="icon-item" data-tooltip="文档列表"><i class="fas fa-file-alt"></i></div>
+                    <div class="icon-item" data-tooltip="新建文档"><i class="fas fa-plus"></i></div>
+                </div>
+                <nav id="doc-sidebar">
+                    <h3>文档列表</h3>
+                    <div id="doc-list-accordion"></div>
+                </nav>
+            </aside>
+
+            <section id="main-content">
+                <div id="editor-wrapper"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/data-service.js"></script>
+    <script src="js/editor.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>

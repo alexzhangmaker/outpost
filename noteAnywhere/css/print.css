@@ -1,0 +1,21 @@
+@media print {
+    body {
+        font-family: 'Times New Roman', serif;
+    }
+    h1, h2, h3 {
+        break-after: avoid;
+    }
+    pre, blockquote {
+        border: 1px solid #999;
+        page-break-inside: avoid;
+    }
+    /* 隐藏不需要打印的元素 */
+    .no-print {
+        display: none;
+    }
+}
+
+body {
+    padding: 2cm;
+    line-height: 1.5;
+}

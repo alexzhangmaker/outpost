@@ -315,7 +315,7 @@
 
         // Initial render of the menu
         window.onload = function() {
-            renderMenu();
+            //renderMenu();
         }
   </script>
 
@@ -546,7 +546,7 @@ async function renderTreeNode(item,parentElement,onClickItem){
         const childrenContainer = document.createElement('div');
         childrenContainer.classList.add('accordion-children');
         contentDiv.appendChild(childrenContainer);
-        await renderNoteFolderAccordion(item.subFolders, childrenContainer);
+        await renderNoteFolderAccordion(item.subFolders, childrenContainer,_onClickAccordionBrowse);
     }
 
     // Add click listener to the header to toggle the accordion
@@ -605,9 +605,7 @@ async function renderDocumentList(documentIDs,tagListContainer){
         tagDocument.classList.add("truncate-li") ;
         tagDocument.classList.add("clickableLi") ;
 
-        //clickableLi
         tagDocument.addEventListener('click',async (event)=>{
-          //alert('documentID:'+documentIDs[i] ) ;
 
           let result = await _FetchDocumentSupabase(documentIDs[i]) ;
           console.log(result) ;

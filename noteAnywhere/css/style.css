@@ -1,0 +1,126 @@
+:root {
+    --toolbar-width-collapsed: 60px;
+    --toolbar-width-expanded: 280px;
+    --topbar-height: 50px;
+    --primary-bg: #f4f5f7;
+    --secondary-bg: #ffffff;
+    --border-color: #dfe1e6;
+    --text-color: #172b4d;
+    --hover-bg: #e9ecef;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Top Bar */
+#top-bar {
+    height: var(--topbar-height);
+    background-color: var(--secondary-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    flex-shrink: 0;
+}
+.app-info { display: flex; align-items: center; }
+.app-icon { height: 30px; margin-right: 10px; }
+.app-title { font-weight: bold; font-size: 1.2em; }
+#top-bar button {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    color: var(--text-color);
+    margin-left: 15px;
+}
+
+/* Main Layout */
+.main-container {
+    display: flex;
+    height: calc(100vh - var(--topbar-height));
+}
+
+/* Left Toolbar & Sidebar */
+#left-toolbar {
+    width: var(--toolbar-width-collapsed);
+    background-color: var(--primary-bg);
+    border-right: 1px solid var(--border-color);
+    transition: width 0.3s ease;
+    overflow: hidden;
+    display: flex;
+}
+#left-toolbar:hover {
+    width: var(--toolbar-width-expanded);
+}
+
+.icon-bar {
+    width: var(--toolbar-width-collapsed);
+    padding-top: 15px;
+    flex-shrink: 0;
+}
+.icon-item {
+    font-size: 1.5em;
+    text-align: center;
+    padding: 15px 0;
+    cursor: pointer;
+    color: #42526e;
+}
+.icon-item:hover {
+    background-color: var(--hover-bg);
+}
+
+#doc-sidebar {
+    width: calc(var(--toolbar-width-expanded) - var(--toolbar-width-collapsed));
+    padding: 15px;
+    opacity: 0;
+    transition: opacity 0.2s 0.1s ease;
+}
+#left-toolbar:hover #doc-sidebar {
+    opacity: 1;
+}
+
+/* Accordion */
+#doc-list-accordion details {
+    margin-bottom: 10px;
+}
+#doc-list-accordion summary {
+    font-weight: bold;
+    cursor: pointer;
+    padding: 5px;
+}
+#doc-list-accordion ul {
+    list-style: none;
+    padding-left: 15px;
+    margin: 5px 0;
+}
+#doc-list-accordion li {
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+#doc-list-accordion li:hover {
+    background-color: var(--hover-bg);
+}
+#doc-list-accordion li.active {
+    background-color: #ddeafe;
+    font-weight: bold;
+}
+
+/* Main Content & Editor */
+#main-content {
+    flex-grow: 1;
+    overflow: auto;
+}
+#editor-wrapper {
+    height: 100%;
+}
