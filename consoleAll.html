@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outpost数据管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --navbar-height: 60px;
+            --primary-color: #4285F4;
+            --secondary-color: #34A853;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        
+        #navbar {
+            height: var(--navbar-height);
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        #sidebar {
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--navbar-height));
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+            padding-top: 20px;
+        }
+        
+        #main-content {
+            width: calc(100vw - var(--sidebar-width));
+            height: calc(100vh - var(--navbar-height));
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        
+        .database-card {
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+        
+        .database-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .table-item {
+            padding: 8px 15px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .table-item:hover {
+            background-color: #e9ecef;
+        }
+        
+        .table-item.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .gridjs-container {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn.edit {
+            color: var(--primary-color);
+        }
+        
+        .action-btn.delete {
+            color: #EA4335;
+        }
+        
+        .action-btn.custom {
+            color: var(--secondary-color);
+        }
+        
+        .action-btn:hover {
+            background-color: rgba(0,0,0,0.1);
+        }
+        
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .form-label {
+            font-weight: 500;
+        }
+        
+        .connection-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        .connected {
+            background-color: var(--secondary-color);
+        }
+        
+        .disconnected {
+            background-color: #EA4335;
+        }
+        
+        .tool-section {
+            margin-bottom: 20px;
+        }
+        
+        .tool-section-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-left: 15px;
+        }
+    </style>
+    <style>
+        .noShow{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav id="navbar" class="navbar navbar-expand navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-database-fill-gear"></i>Outpost数据管理
+            </a>
+            <div class="d-flex">
+                <div class="navbar-text me-3">
+                    <span class="connection-status" id="connection-status"></span>
+                    <span id="connection-text">未连接</span>
+                </div>
+                <button class="btn btn-outline-light btn-sm" id="connect-btn">
+                    <i class="bi bi-plug"></i> 连接数据库
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <!-- 左侧边栏 -->
+        <div id="sidebar">
+            <div class="tool-section">
+                <div class="tool-section-title">数据库连接</div>
+                <div class="px-3">
+                    <select class="form-select form-select-sm" id="database-select">
+                        <option value="dbThaiDictionary">泰语字典数据库</option>
+                        <option value="dbThaiAudible">泰语听力数据库</option>
+                        <option value="dbOutpostTask">任务管理数据库</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <div class="tool-section-title">数据表</div>
+                <div id="table-list" class="px-2">
+                    <div class="table-item active noShow">
+                        <i class="bi bi-table"></i> users
+                    </div>
+                    <div class="table-item noShow">
+                        <i class="bi bi-table"></i> products
+                    </div>
+                    <div class="table-item noShow">
+                        <i class="bi bi-table"></i> orders
+                    </div>
+                    <div class="table-item noShow">
+                        <i class="bi bi-table"></i> settings
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <div class="tool-section-title">工具</div>
+                <div class="px-2">
+                    <button class="btn btn-outline-primary btn-sm w-100 mb-2" id="idBTNPlusRecord">
+                        <i class="bi bi-plus-circle"></i> 新增记录
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                        <i class="bi bi-arrow-repeat"></i> 刷新数据
+                    </button>
+                    <button class="btn btn-outline-info btn-sm w-100 mb-2">
+                        <i class="bi bi-code-slash"></i> 查看结构
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm w-100">
+                        <i class="bi bi-trash"></i> 清空表格
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div id="main-content">
+            <div class="d-flex justify-content-between align-items-center mb-4 noShow">
+                <h4 class="noShow"><i class="bi bi-table noShow"></i> 用户数据管理</h4>
+                <div class="d-flex gap-2 noShow">
+                    <div class="input-group input-group-sm" style="width: 250px;">
+                        <input type="text" class="form-control noShow" placeholder="搜索..." id="search-input">
+                        <button class="btn btn-outline-secondary noShow" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    <button class="btn btn-primary btn-sm noShow">
+                        <i class="bi bi-plus-circle"></i> 新增用户
+                    </button>
+                </div>
+            </div>
+
+            <div id="data-grid-wrapper"></div>
+        </div>
+    </div>
+
+    <!-- 编辑数据模态框 -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑用户数据</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-form">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">姓名</label>
+                                <input type="text" class="form-control" id="name" value="张三">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">邮箱</label>
+                                <input type="email" class="form-control" id="email" value="zhangsan@example.com">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="age" class="form-label">年龄</label>
+                                <input type="number" class="form-control" id="age" value="28">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="status" class="form-label">状态</label>
+                                <select class="form-select" id="status">
+                                    <option value="active" selected>活跃</option>
+                                    <option value="inactive">非活跃</option>
+                                    <option value="suspended">已暂停</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">地址</label>
+                            <textarea class="form-control" id="address" rows="2">北京市海淀区中关村大街1号</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">权限</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="read-permission" checked>
+                                <label class="form-check-label" for="read-permission">
+                                    读取权限
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="write-permission" checked>
+                                <label class="form-check-label" for="write-permission">
+                                    写入权限
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="admin-permission">
+                                <label class="form-check-label" for="admin-permission">
+                                    管理员权限
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary">保存更改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase 和 GridJS 脚本 -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+    <script src="./js/modalFactoryV2.js"></script>
+    <script>
+        let gDatabase = null ;
+        let gDbName = "" ;
+        let gTblName = "" ;
+    </script>
+    <script>
+
+        const _funcDict_WordSet = (parameter) => {
+            alert("_funcDict_WordSet: " + parameter);
+        };
+
+        const _funcDict_PubAnki = async (rowCells) => {
+            console.log(rowCells) ;
+            let wordSetKey = rowCells[0].data ;
+            console.log(wordSetKey) ;
+            await _PublishWordSet2Anki(wordSetKey) ;
+        };
+
+        async function _PublishWordSet2Anki(wordSetKey) {
+            let keyEncode =encodeURIComponent(wordSetKey) ;
+            let cDate = new Date() ;
+            let urlReviewSet = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/reviewSets/${keyEncode}.json`;
+            let urlWordSet = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${keyEncode}.json` ;
+            let jsonReviewSet={
+                "createdAt":cDate.toDateString(),
+                "nextReview":cDate.toDateString(),
+                "wordSetID":wordSetKey,
+                "title":wordSetKey,
+                "wordSetURL":urlWordSet
+            };
+            // 在实际应用中，这里应该调用Firebase的发布API
+            console.log(`发布项目: ${wordSetKey}`);
+            await fetch(urlReviewSet, {
+                method: "PUT", // Use PATCH to update specific fields
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(jsonReviewSet),
+            }) ;
+            alert(`已发布: ${wordSetKey}`);
+        }
+
+
+        const actionTbl={
+            "dbThaiDictionary":{
+                "/thaiWordList":{
+                    actionEdit:_funcDict_WordSet,
+                    actionDelete:_funcDict_WordSet,
+                    actionClick:_funcDict_PubAnki
+                }
+            }
+        };
+
+        const tblModalSchema={
+            "dbThaiDictionary":{
+                "/thaiWordList":{
+                    "schema":[
+                        {"name":"key","type":"string"},
+                        {"name":"words","type":"array"},
+                        {"name":"大类title","type":"string"},
+                        {"name":"分类title","type":"string"},
+                        {"name":"级别","type":"string"}
+                    ],
+                    "callback":{
+                        onConfirm: async (formData) => {
+                            if(gDatabase==null)return ;
+
+                            let cKey = formData.key ;
+                            console.log("表单已确认, 接收到的数据:", formData);
+                            const ref = gDatabase.ref(`/thaiWordList/${formData.key}`);
+                            // Write data
+                            delete formData.key ;
+                            console.log(formData) ;
+                            ref.set(formData).then(() => {
+                                console.log('Data written successfully');
+                            }).catch((error) => {
+                                console.error('Error writing data:', error);
+                            });
+
+                            let cDate = new Date() ;
+                            let DateString = `${cDate.getFullYear()}${cDate.getMonth()+1}${cDate.getDate()}_${cDate.getTime()}` ;
+                            let urlTask = `https://outpost-asks-116208-c86c2-217ba.asia-southeast1.firebasedatabase.app/tasks/${DateString}.json` ;
+                            formData["Course"]="tdb" ;
+                            formData["taskStatus"]="pending" ;
+                            formData["wordSetID"]=`${cKey}` ;
+                            let putResponse = await fetch(urlTask, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(formData)
+                            });
+
+                            alert("数据已提交，请查看控制台！");
+                        },
+                        onCancel: () => {
+                            console.log("用户取消了操作。");
+                        }
+                    }
+                }
+            }
+        } ;
+
+        const dbTbls={
+            "dbThaiDictionary":[
+                {
+                    "title":"字典表",
+                    "dbPath":"/thaiDictionary"
+                },{
+                    "title":"单词集",
+                    "dbPath":"/thaiWordList"
+                },{
+                    "title":"Anki Decks",
+                    "dbPath":"/thaiAnki/reviewSets"
+                }
+            ],
+            "dbOutpostTask":[],
+            "dbThaiAudible":[]
+        } ;
+    </script>
+    <script>
+        // 模拟数据
+        const sampleData = {
+            users: [
+                { id: 1, name: '张三', email: 'zhangsan@example.com', age: 28, status: 'active', address: '北京市海淀区中关村大街1号' },
+                { id: 2, name: '李四', email: 'lisi@example.com', age: 32, status: 'active', address: '上海市浦东新区张江高科技园区' },
+                { id: 3, name: '王五', email: 'wangwu@example.com', age: 25, status: 'inactive', address: '广州市天河区天河路' },
+                { id: 4, name: '赵六', email: 'zhaoliu@example.com', age: 45, status: 'suspended', address: '深圳市南山区科技园' },
+                { id: 5, name: '钱七', email: 'qianqi@example.com', age: 29, status: 'active', address: '杭州市西湖区文三路' }
+            ],
+            products: [
+                { id: 101, name: '智能手机', price: 3999, category: '电子产品', stock: 45 },
+                { id: 102, name: '笔记本电脑', price: 8999, category: '电子产品', stock: 12 }
+            ],
+            orders: [
+                { id: 1001, userId: 1, productId: 101, quantity: 1, total: 3999, date: '2023-05-15' },
+                { id: 1002, userId: 2, productId: 102, quantity: 1, total: 8999, date: '2023-05-16' }
+            ]
+        };
+
+        // 初始化GridJS表格
+        let grid;
+        function jsonToArrays(obj) {
+            // 获取所有唯一的键（包括嵌套对象的键）
+            const allKeys = new Set();
+            
+            // 遍历对象的所有属性
+            Object.values(obj).forEach(item => {
+                Object.keys(item).forEach(key => {
+                    allKeys.add(key);
+                });
+            });
+            
+            // 将 Set 转换为数组
+            const keyArray = Array.from(allKeys);
+            
+            // 创建值数组
+            const valueArray = Object.entries(obj).map(([mainKey, item]) => {
+                // 为每个主键创建一个数组，包含主键本身和所有属性的值
+                const row = [mainKey];
+                
+                // 按照 keyArray 的顺序（除了第一个主键）添加值
+                keyArray.forEach(key => {
+                    if (key in item) {
+                        // 如果属性值是数组，转换为 JSON 字符串
+                        if (Array.isArray(item[key])) {
+                            row.push(JSON.stringify(item[key]));
+                        } else {
+                            row.push(item[key]);
+                        }
+                    } else {
+                        row.push(null); // 或者空字符串 ''，根据需要调整
+                    }
+                });
+                return row;
+            });
+            
+            // 将主键 'key' 添加到键数组的开头
+            keyArray.unshift('key');
+            
+            return {
+                keys: keyArray,
+                values: valueArray
+            };
+        }
+
+        function jsonToArraysV0(obj) {
+            // 获取所有唯一的键（包括嵌套对象的键）
+            const allKeys = new Set();
+            
+            // 遍历对象的所有属性
+            Object.values(obj).forEach(item => {
+                Object.keys(item).forEach(key => {
+                    allKeys.add(key);
+                });
+            });
+            
+            // 将 Set 转换为数组，并确保特定的顺序（如果需要的话）
+            const keyArray = Array.from(allKeys);
+
+            // 创建值数组
+            const valueArray = Object.entries(obj).map(([mainKey, item]) => {
+                // 为每个主键创建一个数组，包含主键本身和所有属性的值
+                const row = [mainKey];
+                
+                // 按照 keyArray 的顺序（除了第一个主键）添加值
+                keyArray.forEach(key => {
+                    if (key in item) {
+                        row.push(item[key]);
+                    } else {
+                        row.push(null); // 或者空字符串 ''，根据需要调整
+                    }
+                });
+                
+                return row;
+            });
+            
+            // 将主键 'key' 添加到键数组的开头
+            keyArray.unshift('key');
+            
+            return {
+                keys: keyArray,
+                values: valueArray
+            };
+        }
+
+        
+
+        
+
+        function initDataGrid(data,dbName,tblName) {
+            // 如果已有表格实例，先销毁
+            if (grid) {
+                grid.destroy();
+            }
+            
+            let keys=[] ;
+            let gridData = [] ;
+            if(Array.isArray(data)==false){
+                console.log(data) ;
+                let jSONkeys = Object.keys(data) ;
+                let jsonFirst = data[jSONkeys[0]] ;
+                keys = Object.keys(jsonFirst) ;
+                gridData = jsonToArrays(data).values ;
+            }else{
+                // 获取数据的schema（键）
+                keys = data.length > 0 ? Object.keys(data[0]) : [];
+                gridData = data.map(item => {
+                    const row = keys.map(key => item[key]);
+                    row.push(''); // 为空操作列占位
+                    return row;
+                }) ;
+            }
+            
+            console.log(gridData) ;
+            // 构建列定义
+            let columns = keys.map(key => ({
+                name: key.charAt(0).toUpperCase() + key.slice(1),
+                id: key
+            }));
+            columns.unshift("Key");
+            console.log(columns) ;
+
+            // 添加操作列
+            columns.push({
+                name: '操作',
+                id: 'actions',
+                sort: false,
+                formatter: (cell, row) => {
+                    return gridjs.h('div', { className: 'action-buttons' },
+                        gridjs.h('i', { 
+                            className: 'bi bi-pencil-square action-btn edit',
+                            onClick: (event) => {
+                                showEditModal(row.cells) ;
+                                let localFunc = actionTbl[dbName][tblName].actionClick ;
+                                localFunc('edit') ;
+                            }
+                        }),
+                        gridjs.h('i', { 
+                            className: 'bi bi-trash action-btn delete',
+                            onClick: (event) => {
+                                //deleteRecord(row.cells)
+                                let localFunc = actionTbl[dbName][tblName].actionDelete ;
+                                localFunc('delete') ;
+                            }
+                        }),
+                        gridjs.h('i', { 
+                            className: 'bi bi-eye action-btn custom',
+                            onClick: (event) => {
+                                //viewDetails(row.cells) ;
+                                console.log(row.cells) ;
+                                
+                                let localFunc = actionTbl[dbName][tblName].actionClick ;
+                                localFunc(row.cells) ;
+                            }
+                        })
+                    );
+                }
+            });
+            console.log(columns) ;
+            
+            // 创建Grid实例
+            grid = new gridjs.Grid({
+                columns: columns,
+                data: gridData,
+                pagination: {
+                    enabled: true,
+                    limit: 10
+                },
+                search: {
+                    enabled: true,
+                    selector: (cell, rowIndex, cellIndex) => {
+                        // 跳过操作列的搜索
+                        if (cellIndex === columns.length - 1) return null;
+                        return cell;
+                    }
+                },
+                sort: true,
+                resizable: true,
+                style: {
+                    table: {
+                        'font-size': '14px'
+                    }
+                }
+            }).render(document.getElementById('data-grid-wrapper'));
+        }
+
+        // 显示编辑模态框
+        function showEditModal(cells) {
+            // 在实际应用中，这里应该用单元格数据填充表单
+            const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            editModal.show();
+        }
+
+        // 删除记录
+        function deleteRecord(cells) {
+            if (confirm('确定要删除这条记录吗？此操作不可撤销。')) {
+                // 在实际应用中，这里应该调用Firebase API删除数据
+                console.log('删除记录:', cells);
+                alert('记录已删除（模拟操作）');
+            }
+        }
+
+        // 查看详情
+        function viewDetails(cells) {
+            // 在实际应用中，这里可以显示记录的详细视图
+            alert('查看详情: ' + JSON.stringify(cells.map(cell => cell.data)));
+        }
+
+        function renderTblList(dbName){
+            let tables = dbTbls[dbName] ;
+            if(tables==undefined || tables ==null)return ;
+
+            let tagTblList = document.querySelector("#table-list") ;
+            for(let i=0;i<tables.length;i++){
+                let tagTblItem = document.createElement('div') ;
+                tagTblList.appendChild(tagTblItem) ;
+                tagTblItem.dataset.dbName = dbName ;
+                
+                tagTblItem.classList.add("table-item") ;
+                tagTblItem.innerHTML = `<i class="bi bi-table"></i> ${tables[i].title}` ;
+                tagTblItem.dataset.dbPath = tables[i].dbPath ;
+                tagTblItem.addEventListener('click',async (event)=>{
+                    let tagActiveTbl = tagTblList.querySelector(".active") ;
+                    if(tagActiveTbl == tagTblItem)return ;
+
+                    let data = await readData(tagTblItem.dataset.dbPath) ;
+                    console.log(data) ;
+                    initDataGrid(data,dbName,tagTblItem.dataset.dbPath) ;
+                    tagTblItem.classList.add('active') ;
+                    tagActiveTbl.classList.remove('active') ;
+                    gTblName = tagTblItem.dataset.dbPath ;
+                }) ;
+            }
+            
+
+        }
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化数据表格
+            //initDataGrid(sampleData.users,true);
+            
+            // 模拟连接状态
+            const connectionStatus = document.getElementById('connection-status');
+            const connectionText = document.getElementById('connection-text');
+            const connectBtn = document.getElementById('connect-btn');
+            
+            connectBtn.addEventListener('click', function() {
+                if (connectionStatus.classList.contains('disconnected')) {
+                    connectionStatus.classList.remove('disconnected');
+                    connectionStatus.classList.add('connected');
+                    connectionText.textContent = '已连接';
+                    connectBtn.innerHTML = '<i class="bi bi-plug-fill"></i> 断开连接';
+
+                    let tagDBChoice = document.querySelector("#database-select");
+                    connectDB(tagDBChoice.value) ;
+                    renderTblList(tagDBChoice.value) ;
+                } else {
+                    connectionStatus.classList.remove('connected');
+                    connectionStatus.classList.add('disconnected');
+                    connectionText.textContent = '未连接';
+                    connectBtn.innerHTML = '<i class="bi bi-plug"></i> 连接数据库';
+                }
+            });
+            
+            // 初始状态为未连接
+            connectionStatus.classList.add('disconnected');
+            
+            // 表格列表项点击事件
+            const tableItems = document.querySelectorAll('.table-item');
+            tableItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    tableItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    /*
+                    // 在实际应用中，这里应该加载对应表格的数据
+                    const tableName = this.textContent.trim().split(' ')[1];
+                    if (sampleData[tableName]) {
+                        initDataGrid(sampleData[tableName],true);
+                    }
+                    */
+                });
+            });
+            
+            // 搜索功能
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', function() {
+                if (grid) {
+                    grid.search(this.value);
+                }
+            });
+        });
+
+        
+    </script>
+    <script>
+        const firebaseConfig_ThaiDict = {
+                apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+                authDomain: "outpost-8d74e.firebaseapp.com",
+                databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+                projectId: "outpost-8d74e",
+                storageBucket: "outpost-8d74e.firebasestorage.app",
+                messagingSenderId: "724993324937",
+                appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+                measurementId: "G-QPHWRTH6BH"
+        };
+
+        // Firebase configuration for the second database
+        const firebaseConfig_Task = {
+                apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+                authDomain: "outpost-8d74e.firebaseapp.com",
+                databaseURL: "https://outpost-asks-116208-c86c2-217ba.asia-southeast1.firebasedatabase.app/",
+                projectId: "outpost-8d74e",
+                storageBucket: "outpost-8d74e.firebasestorage.app",
+                messagingSenderId: "724993324937",
+                appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+                measurementId: "G-QPHWRTH6BH"
+        };
+
+        // Firebase configuration for the second database
+        const firebaseConfig_Audible = {
+                apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+                authDomain: "outpost-8d74e.firebaseapp.com",
+                databaseURL: "https://outpost-audible-8d74e-6ba9c.asia-southeast1.firebasedatabase.app/",
+                projectId: "outpost-8d74e",
+                storageBucket: "outpost-8d74e.firebasestorage.app",
+                messagingSenderId: "724993324937",
+                appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+                measurementId: "G-QPHWRTH6BH"
+        };
+
+
+
+
+        // Firebase初始化（示例代码）
+        function initializeFirebase() {
+            // 在实际应用中，这里应该初始化Firebase应用
+            // 初始化Firebase
+            firebase.initializeApp(firebaseConfig_ThaiDict);
+            // 获取数据库引用
+            //const database = firebase.database();
+        }
+
+        // Function to switch Firebase database
+        function switchDatabase(config) {
+            if(gDatabase==null){
+                firebase.initializeApp(config);
+                gDatabase = firebase.database();
+                console.log(`Switched to database: ${config.databaseURL}`);
+            }else{
+                // Check if a Firebase app is already initialized
+                if (firebase.apps.length) {
+                    // Delete the existing app instance
+                    return firebase.app().delete().then(() => {
+                        // Initialize Firebase with new config
+                        firebase.initializeApp(config);
+                        const database = firebase.database();
+                        console.log(`Switched to database: ${config.databaseURL}`);
+                        return database;
+                    }).catch(error => {
+                        console.error("Error switching database:", error);
+                        throw error;
+                    });
+                } else {
+                    // Initialize Firebase if no app exists
+                    firebase.initializeApp(config);
+                    const database = firebase.database();
+                    console.log(`Initialized database: ${config.databaseURL}`);
+                    return Promise.resolve(database);
+                }
+            }
+
+            
+        }
+
+        //dbThaiDictionary dbThaiAudible dbOutpostTask
+        function connectDB(dbName){
+            if(gDbName == dbName)return ;
+            switch(dbName){
+                case "dbThaiDictionary":
+                    switchDatabase(firebaseConfig_ThaiDict) ;
+                    gDbName = dbName ;
+                    break ;
+                case "dbThaiAudible":
+                    switchDatabase(firebaseConfig_Audible) ;
+                    gDbName = dbName ;
+                    break ;
+                case "dbOutpostTask":
+                    switchDatabase(firebaseConfig_Task) ;
+                    gDbName = dbName ;
+                    break ;
+            }
+        }
+
+        // Function to read data from a reference
+        function readData(path) {
+            if(gDatabase==null)return ;
+            const ref = gDatabase.ref(path);
+            return ref.get().then((snapshot) => {
+                if (snapshot.exists()) {
+                    return snapshot.val();
+                } else {
+                    console.log('No data available at this path');
+                    return null;
+                }
+            }).catch((error) => {
+                console.error('Error reading data:', error);
+                throw error;
+            });
+        }
+        
+    </script>
+    <script>
+        document.querySelector("#idBTNPlusRecord").addEventListener('click',async (event)=>{
+            alert(`idBTNPlusRecord:${gDbName}-${gTblName}`) ;
+            console.log(gDbName) ;
+            console.log(gTblName) ;
+            //tblModalSchema
+            let tblSchema = tblModalSchema[gDbName][gTblName].schema ;
+            console.log(tblSchema) ;
+
+            let tblModalCallback = tblModalSchema[gDbName][gTblName].callback ;
+            createFormModal('新建项目', tblSchema, tblModalCallback);
+
+        }) ;
+    </script>
+</body>
+</html>
