@@ -358,6 +358,15 @@
             alert(`已发布: ${wordSetKey}`);
         }
 
+        const _funcDoAnki = async (rowCells) => {
+
+            let reviewKey = rowCells[0].data ;
+            console.log(reviewKey) ;
+            //alert('will _funcDoAnki') ;
+            let urlAnki=`http://localhost:3010/ankiAnywhereV2.html?reviewSet=${reviewKey}` ;
+            window.open(urlAnki,"_blank") ;
+        }
+
 
         const actionTbl={
             "dbThaiDictionary":{
@@ -365,6 +374,11 @@
                     actionEdit:_funcDict_WordSet,
                     actionDelete:_funcDict_WordSet,
                     actionClick:_funcDict_PubAnki
+                },
+                "/thaiAnki/reviewSets":{
+                    actionEdit:_funcDict_WordSet,
+                    actionDelete:_funcDict_WordSet,
+                    actionClick:_funcDoAnki
                 }
             }
         };
@@ -410,6 +424,25 @@
                             });
 
                             alert("数据已提交，请查看控制台！");
+                        },
+                        onCancel: () => {
+                            console.log("用户取消了操作。");
+                        }
+                    }
+                },
+                "/thaiAnki/reviewSets":{
+                    "schema":[
+                        {"name":"key","type":"string"},
+                        {"name":"words","type":"array"},
+                        {"name":"大类title","type":"string"},
+                        {"name":"分类title","type":"string"},
+                        {"name":"级别","type":"string"}
+                    ],
+                    "callback":{
+                        onConfirm: async (formData) => {
+                            if(gDatabase==null)return ;
+
+                            alert("/thaiAnki/reviewSets 数据已提交，请查看控制台！");
                         },
                         onCancel: () => {
                             console.log("用户取消了操作。");

@@ -722,6 +722,37 @@
 
         // 初始化应用
         async function initApp() {
+            //?wordSet=
+            //?reviewSet=
+            const queryString = window.location.search; // "?color=purple&size=M&size=L"
+            const urlParams = new URLSearchParams(queryString);
+            let wordSetKey = urlParams.get('wordSet'); // "purple"
+            let reviewSetKey = urlParams.get('reviewSet'); // "purple"
+            let cDate = new Date() ;
+
+            if(wordSetKey!=null){
+                console.log(wordSetKey) ;
+                let keyEncode = encodeURIComponent(wordSetKey) ;
+                gWordSetKey = wordSetKey ;
+                tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${keyEncode}.json` ;
+            }else if(reviewSetKey!=null){
+                //let keyEncode = encodeURIComponent(formatDateToYYYYMMDD(cDate)) ;
+                gWordSetKey = reviewSetKey ;
+                let keyEncode = encodeURIComponent(reviewSetKey) ;
+                tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/reviewSets/${keyEncode}.json` ;
+                let respo = await fetch(tWordSetURL) ;
+                let jsonReviewSet = await respo.json() ;
+                console.log(jsonReviewSet) ;
+                tWordSetURL = jsonReviewSet.wordSetURL ;
+                gWordSetKey = jsonReviewSet.wordSetID ;
+            }else{
+                reviewSetKey = `DailyAnki.${formatDateToYYYYMMDD(cDate)}` ;
+                let keyEncode = encodeURIComponent(reviewSetKey) ;
+                gWordSetKey = reviewSetKey ;
+                tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/DailyReview/${keyEncode}.json` ;
+            }
+
+
             await _loadFireBaseWordSet(tWordSetURL) ;
 
             loadProgress();
@@ -816,29 +847,7 @@
             }
         }
 
-        //?wordSet=
-        //?reviewSet=
-        const queryString = window.location.search; // "?color=purple&size=M&size=L"
-        const urlParams = new URLSearchParams(queryString);
-        const wordSetKey = urlParams.get('wordSet'); // "purple"
-        if(wordSetKey==null){
-            console.log('no wordSet specified');
-            let cDate = new Date() ;
-
-            let reviewSetKey = urlParams.get('reviewSet'); // "purple"
-            if(reviewSetKey== null){
-                reviewSetKey = `DailyAnki.${formatDateToYYYYMMDD(cDate)}` ;
-            }
-            let keyEncode = encodeURIComponent(formatDateToYYYYMMDD(cDate)) ;
-            gWordSetKey = reviewSetKey ;
-            tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/DailyReview/${keyEncode}.json` ;
-        }else{
-            console.log(wordSetKey) ;
-            let keyEncode = encodeURIComponent(wordSetKey) ;
-            gWordSetKey = wordSetKey ;
-            tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${keyEncode}.json` ;
-        }
-
+        
         // 启动应用
         initApp();
     </script>
