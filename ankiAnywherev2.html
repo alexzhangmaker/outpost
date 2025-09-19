@@ -324,7 +324,7 @@
             .desktopOnly{
                 display: none;
             }
-            
+
             .container {
                 padding: 15px;
             }
@@ -758,7 +758,7 @@
                 tWordSetURL = jsonReviewSet.wordSetURL ;
                 gWordSetKey = jsonReviewSet.wordSetID ;
             }else{
-                reviewSetKey = `DailyAnki.${formatDateToYYYYMMDD(cDate)}` ;
+                reviewSetKey = `${formatDateToYYYYMMDD(cDate)}` ;
                 let keyEncode = encodeURIComponent(reviewSetKey) ;
                 gWordSetKey = reviewSetKey ;
                 tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/DailyReview/${keyEncode}.json` ;
