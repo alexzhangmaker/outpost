@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Firebase MP3 Player</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #trackList { margin-top: 20px; }
+    .track { cursor: pointer; margin: 5px 0; }
+    .track:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>🎵 Firebase MP3 Player</h1>
+  <p id="currentTrack">当前播放：无</p>
+  <audio id="audioPlayer" controls></audio>
+  <div id="trackList"></div>
+
+  <!-- Firebase SDK --
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js"></script>
+  -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+    import { getDatabase, ref as dbRef, get } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js";
+    import { getStorage, ref as storageRef, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
+  
+    const firebaseConfig = {
+        "apiKey": "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+        "authDomain": "outpost-8d74e.firebaseapp.com",
+        "databaseURL": "https://outpost-audible-8d74e-6ba9c.asia-southeast1.firebasedatabase.app/",
+        "projectId": "outpost-8d74e",
+        "storageBucket": "outpost-8d74e.firebasestorage.app",
+        "messagingSenderId": "724993324937",
+        "appId": "1:724993324937:web:ce6c7e6b06489331c79358",
+        "measurementId": "G-QPHWRTH6BH"
+    };
+  
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const storage = getStorage(app);
+  
+    const audioPlayer = document.getElementById('audioPlayer');
+    const trackListDiv = document.getElementById('trackList');
+    const currentTrackLabel = document.getElementById('currentTrack');
+  
+    get(dbRef(db, 'tracks')).then(snapshot => {
+      const tracks = snapshot.val();
+      for (const key in tracks) {
+        const track = tracks[key];
+        const div = document.createElement('div');
+        div.className = 'track';
+        div.textContent = track.name;
+        div.onclick = () => playTrack(track.name, track.path);
+        trackListDiv.appendChild(div);
+      }
+    });
+  
+    function playTrack(name, path) {
+      const fileRef = storageRef(storage, path);
+      getDownloadURL(fileRef).then(url => {
+        audioPlayer.src = url;
+        audioPlayer.play();
+        currentTrackLabel.textContent = `当前播放：${name}`;
+      }).catch(err => {
+        console.error('无法加载音频:', err);
+        alert('音频加载失败');
+      });
+    }
+  </script>
+  
+  <script>
+    // 🔧 初始化 Firebase
+    /*
+    const firebaseConfig = {
+        "apiKey": "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+        "authDomain": "outpost-8d74e.firebaseapp.com",
+        "databaseURL": "https://outpost-audible-8d74e-6ba9c.asia-southeast1.firebasedatabase.app/",
+        "projectId": "outpost-8d74e",
+        "storageBucket": "outpost-8d74e.firebasestorage.app",
+        "messagingSenderId": "724993324937",
+        "appId": "1:724993324937:web:ce6c7e6b06489331c79358",
+        "measurementId": "G-QPHWRTH6BH"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.database();
+    const storage = firebase.storage();
+
+    const audioPlayer = document.getElementById('audioPlayer');
+    const trackListDiv = document.getElementById('trackList');
+    const currentTrackLabel = document.getElementById('currentTrack');
+
+    // 📥 加载音频清单
+    db.ref('tracks').once('value').then(snapshot => {
+      const tracks = snapshot.val();
+      for (const key in tracks) {
+        const track = tracks[key];
+        const div = document.createElement('div');
+        div.className = 'track';
+        div.textContent = track.name;
+        div.onclick = () => playTrack(track.name, track.path);
+        trackListDiv.appendChild(div);
+      }
+    });
+
+    // ▶️ 播放音频
+    function playTrack(name, path) {
+      storage.ref(path).getDownloadURL().then(url => {
+        audioPlayer.src = url;
+        audioPlayer.play();
+        currentTrackLabel.textContent = `当前播放：${name}`;
+      }).catch(err => {
+        console.error('无法加载音频:', err);
+        alert('音频加载失败');
+      });
+    }
+    */
+  </script>
+</body>
+</html>

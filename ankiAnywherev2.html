@@ -316,7 +316,15 @@
             transform: translateY(-2px);
         }
         
+        .desktopOnly{
+            display: block;
+        }
         @media (max-width: 768px) {
+
+            .desktopOnly{
+                display: none;
+            }
+            
             .container {
                 padding: 15px;
             }
@@ -341,6 +349,10 @@
         }
         
         @media (max-width: 480px) {
+            .desktopOnly{
+                display: none;
+            }
+
             h1 {
                 font-size: 1.6rem;
             }
@@ -370,7 +382,7 @@
 </head>
 <body>
     <div class="container">
-        <header>
+        <header class="desktopOnly">
             <h3>泰语单词闪卡学习</h3>
             <div class="stats">
                 <div class="stat-item">

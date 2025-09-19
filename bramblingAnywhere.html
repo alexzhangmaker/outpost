@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 数据库管理控制台</title>
+    <!-- 引入Grid.js -->
+    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet">
+    <!-- 引入Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --border-color: #ddd;
+            --sidebar-width: 250px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 顶部导航栏 */
+        .navbar {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .navbar-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .navbar-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        /* 主内容区 */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* 左侧边栏 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--dark-color);
+            color: white;
+            padding: 1rem 0;
+            overflow-y: auto;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-header {
+            padding: 0 1rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #e74c3c;
+        }
+        
+        .status-indicator.connected {
+            background-color: var(--success-color);
+        }
+        
+        .tables-list {
+            list-style: none;
+        }
+        
+        .table-item {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .table-item.active {
+            background-color: var(--secondary-color);
+        }
+        
+        .table-row-count {
+            background-color: rgba(255,255,255,0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+        
+        /* 右侧内容区 */
+        .content {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .content-header {
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .search-box {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            width: 250px;
+        }
+        
+        .grid-container {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        
+        /* 连接模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+        }
+        
+        .modal-header {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .modal-footer {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+            }
+            
+            .navbar-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-title">Firebase 数据库控制台</div>
+        <div class="navbar-actions">
+            <button id="connect-btn" class="btn btn-primary">连接数据库</button>
+            <button id="add-table-btn" class="btn btn-success" disabled>新建数据表</button>
+            <button id="save-btn" class="btn btn-warning" disabled>保存更改</button>
+        </div>
+    </nav>
+    
+    <!-- 主内容区 -->
+    <div class="main-container">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>数据表列表</h3>
+                <div class="connection-status">
+                    <div class="status-indicator" id="status-indicator"></div>
+                    <span id="status-text">未连接</span>
+                </div>
+            </div>
+            <ul class="tables-list" id="tables-list">
+                <li class="table-item">请先连接数据库</li>
+            </ul>
+        </aside>
+        
+        <!-- 右侧内容区 -->
+        <main class="content">
+            <div class="content-header">
+                <h2 class="table-title" id="table-title">请选择数据表</h2>
+                <input type="text" class="search-box" id="search-input" placeholder="搜索..." disabled>
+            </div>
+            <div class="grid-container" id="grid-container"></div>
+        </main>
+    </div>
+    
+    <!-- 连接数据库模态框 -->
+    <div class="modal" id="connection-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>连接 Firebase 数据库</h2>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Firebase 配置</label>
+                <textarea class="form-input" id="firebase-config" rows="6" placeholder='{
+  "apiKey": "your-api-key",
+  "authDomain": "your-project.firebaseapp.com",
+  "databaseURL": "https://your-database.firebaseio.com",
+  "projectId": "your-project-id",
+  "storageBucket": "your-project.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "your-app-id"
+}'></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">数据库路径 (可选)</label>
+                <input type="text" class="form-input" id="db-path" placeholder="例如: myapp/data">
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="cancel-btn">取消</button>
+                <button class="btn btn-primary" id="confirm-connect-btn">连接</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入Grid.js -->
+    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+    <script>
+        const firebaseConfig = {
+                "apiKey": "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+                "authDomain": "outpost-8d74e.firebaseapp.com",
+                "databaseURL": "https://aesop-portfolio.asia-southeast1.firebasedatabase.app/",
+                "projectId": "outpost-8d74e",
+                "storageBucket": "outpost-8d74e.firebasestorage.app",
+                "messagingSenderId": "724993324937",
+                "appId": "1:724993324937:web:ce6c7e6b06489331c79358",
+                "measurementId": "G-QPHWRTH6BH"
+        };
+        //https://aesop-portfolio.asia-southeast1.firebasedatabase.app/DuckDB/factTbl_HTZQ
+    </script>
+    <script>
+        // 全局变量
+        let db = null;
+        let currentTable = null;
+        let currentTableData = null;
+        let grid = null;
+        let tables = [];
+        
+        // DOM元素
+        const connectBtn = document.getElementById('connect-btn');
+        const addTableBtn = document.getElementById('add-table-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        const tablesList = document.getElementById('tables-list');
+        const tableTitle = document.getElementById('table-title');
+        const searchInput = document.getElementById('search-input');
+        const gridContainer = document.getElementById('grid-container');
+        const connectionModal = document.getElementById('connection-modal');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const confirmConnectBtn = document.getElementById('confirm-connect-btn');
+        const firebaseConfigInput = document.getElementById('firebase-config');
+        const dbPathInput = document.getElementById('db-path');
+        
+        // 初始化
+        function init() {
+            // 尝试从本地存储加载配置
+            const savedConfig = localStorage.getItem('firebaseConfig');
+            const savedPath = localStorage.getItem('dbPath');
+            
+            if (savedConfig) {
+                firebaseConfigInput.value = savedConfig;
+            }
+            
+            if (savedPath) {
+                dbPathInput.value = savedPath;
+            }
+            
+            // 事件监听
+            connectBtn.addEventListener('click', showConnectionModal);
+            addTableBtn.addEventListener('click', addNewTable);
+            saveBtn.addEventListener('click', saveChanges);
+            cancelBtn.addEventListener('click', hideConnectionModal);
+            confirmConnectBtn.addEventListener('click', connectToFirebase);
+            searchInput.addEventListener('input', handleSearch);
+        }
+        
+        // 显示连接模态框
+        function showConnectionModal() {
+            connectionModal.style.display = 'flex';
+        }
+        
+        // 隐藏连接模态框
+        function hideConnectionModal() {
+            connectionModal.style.display = 'none';
+        }
+        
+        // 连接到Firebase
+        function connectToFirebase() {
+            try {
+                const configText = firebaseConfigInput.value.trim();
+                if (!configText) {
+                    alert('请输入Firebase配置');
+                    return;
+                }
+                
+                const config = JSON.parse(configText);
+                const dbPath = dbPathInput.value.trim();
+                
+                // 保存到本地存储
+                localStorage.setItem('firebaseConfig', configText);
+                localStorage.setItem('dbPath', dbPath);
+                
+                // 初始化Firebase
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                
+                // 更新UI状态
+                statusIndicator.classList.add('connected');
+                statusText.textContent = '已连接';
+                addTableBtn.disabled = false;
+                
+
+                // 加载数据表
+                loadTables('/DuckDB');
+                
+                // 隐藏模态框
+                hideConnectionModal();
+            } catch (error) {
+                alert('连接失败: ' + error.message);
+                console.error(error);
+            }
+        }
+        
+        // 加载数据表列表
+        function loadTables(path = '') {
+            const ref = path ? db.ref(path) : db.ref();
+            
+            ref.once('value')
+                .then(snapshot => {
+                    tables = [];
+                    tablesList.innerHTML = '';
+                    
+                    snapshot.forEach(childSnapshot => {
+                        const tableName = childSnapshot.key;
+                        const tableData = childSnapshot.val();
+                        
+                        if (tableData && tableData.columns && tableData.rows) {
+                            tables.push({
+                                name: tableName,
+                                path: path ? `${path}/${tableName}` : tableName,
+                                rowCount: tableData.rows.length
+                            });
+                            
+                            const tableItem = document.createElement('li');
+                            tableItem.className = 'table-item';
+                            tableItem.innerHTML = `
+                                <span>${tableName}</span>
+                                <span class="table-row-count">${tableData.rows.length} 行</span>
+                            `;
+                            
+                            tableItem.addEventListener('click', () => {
+                                // 移除所有active类
+                                document.querySelectorAll('.table-item').forEach(item => {
+                                    item.classList.remove('active');
+                                });
+                                
+                                // 添加active类到当前项
+                                tableItem.classList.add('active');
+                                
+                                // 加载表数据
+                                loadTableData(path ? `${path}/${tableName}` : tableName);
+                            });
+                            
+                            tablesList.appendChild(tableItem);
+                        }
+                    });
+                    
+                    if (tables.length === 0) {
+                        tablesList.innerHTML = '<li class="table-item">未找到数据表</li>';
+                    }
+                })
+                .catch(error => {
+                    console.error('加载数据表失败:', error);
+                    tablesList.innerHTML = '<li class="table-item">加载失败</li>';
+                });
+        }
+        
+        // 加载表数据
+        function loadTableData(path) {
+            currentTable = path;
+            tableTitle.textContent = `数据表: ${path.split('/').pop()}`;
+            saveBtn.disabled = false;
+            searchInput.disabled = false;
+            
+            db.ref(path).once('value')
+                .then(snapshot => {
+                    currentTableData = snapshot.val();
+                    
+                    // 销毁现有的Grid.js实例
+                    if (grid) {
+                        grid.destroy();
+                    }
+                    
+                    // 创建新的Grid.js实例
+                    grid = new gridjs.Grid({
+                        columns: currentTableData.columns.map(col => ({
+                            name: col,
+                            id: col
+                        })),
+                        data: currentTableData.rows,
+                        pagination: {
+                            enabled: true,
+                            limit: 5
+                        },
+                        search: {
+                            enabled: true,
+                            selector: (cell, rowIndex, cellIndex) => {
+                                if (cell !== null && typeof cell !== 'undefined') {
+                                    return cell.toString().toLowerCase();
+                                }
+                                return '';
+                            }
+                        },
+                        sort: true,
+                        resizable: true,
+                        style: {
+                            table: {
+                                'white-space': 'nowrap'
+                            }
+                        }
+                    }).render(document.getElementById('grid-container'));
+                })
+                .catch(error => {
+                    console.error('加载表数据失败:', error);
+                    alert('加载数据失败: ' + error.message);
+                });
+        }
+        
+        // 处理搜索
+        function handleSearch(e) {
+            if (grid) {
+                grid.search(e.target.value);
+            }
+        }
+        
+        // 添加新表
+        function addNewTable() {
+            const tableName = prompt('请输入新表名:');
+            if (!tableName) return;
+            
+            const path = dbPathInput.value.trim();
+            const fullPath = path ? `${path}/${tableName}` : tableName;
+            
+            const newTable = {
+                columns: ['id', 'name', 'value'],
+                rows: []
+            };
+            
+            db.ref(fullPath).set(newTable)
+                .then(() => {
+                    alert('表创建成功!');
+                    loadTables(path);
+                })
+                .catch(error => {
+                    alert('创建表失败: ' + error.message);
+                    console.error(error);
+                });
+        }
+        
+        // 保存更改
+        function saveChanges() {
+            if (!currentTable || !currentTableData) {
+                alert('没有可保存的数据');
+                return;
+            }
+            
+            db.ref(currentTable).set(currentTableData)
+                .then(() => {
+                    alert('保存成功!');
+                })
+                .catch(error => {
+                    alert('保存失败: ' + error.message);
+                    console.error(error);
+                });
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>
