@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --sidebar-width: 60px;
+            --sidebar-width: 80px;
             --doclist-width: 250px;
             --topbar-height: 60px;
         }
@@ -107,7 +107,8 @@
         }
         
         .document-item {
-            padding: 8px 12px;
+            /*padding: 8px 12px;*/
+            padding-left: 2px;
             border-radius: 4px;
             margin-bottom: 5px;
             cursor: pointer;
@@ -395,13 +396,13 @@
                             // 这是一个分类/文件夹
                             html += `
                                 <div class="accordion-item">
-                                    <h2 class="accordion-header" id="heading-${itemId}">
+                                    <h4 class="accordion-header" id="heading-${itemId}">
                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
                                                 data-bs-target="#collapse-${itemId}" aria-expanded="false" 
                                                 aria-controls="collapse-${itemId}">
                                             ${item.name}
                                         </button>
-                                    </h2>
+                                    </h4>
                                     <div id="collapse-${itemId}" class="accordion-collapse collapse" 
                                         aria-labelledby="heading-${itemId}" data-bs-parent="#categories-accordion">
                                         <div class="accordion-body">

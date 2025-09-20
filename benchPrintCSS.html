@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown文档打印样式</title>
+    <style>
+        /* 基础样式 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        /* 屏幕特定样式 */
+        @media screen {
+            .print-only {
+                display: none;
+            }
+            
+            .content {
+                background: white;
+                padding: 2rem;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+            
+            .print-button {
+                display: inline-block;
+                background: #4c7ef3;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-bottom: 20px;
+                border: none;
+                font-size: 16px;
+            }
+            
+            .print-button:hover {
+                background: #3b5fc9;
+            }
+        }
+        
+        /* 打印样式 */
+        @media print {
+            * {
+                background: transparent !important;
+                color: black !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+            }
+            
+            body {
+                font-family: Georgia, serif;
+                font-size: 12pt;
+                line-height: 1.5;
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .print-only {
+                display: block;
+            }
+            
+            .content {
+                padding: 0;
+                margin: 0;
+                width: 100%;
+            }
+            
+            h1, h2, h3, h4, h5, h6 {
+                page-break-after: avoid;
+            }
+            
+            p, h2, h3 {
+                orphans: 3;
+                widows: 3;
+            }
+            
+            pre {
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+            
+            blockquote {
+                border-left: 4px solid #ddd;
+                padding-left: 1em;
+                page-break-inside: avoid;
+            }
+            
+            img {
+                max-width: 100% !important;
+                page-break-inside: avoid;
+            }
+            
+            a {
+                text-decoration: underline;
+                color: #000;
+            }
+            
+            a[href^="http"]:after {
+                content: " (" attr(href) ")";
+                font-size: 90%;
+            }
+            
+            a[href^="#"]:after {
+                content: "";
+            }
+            
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                page-break-inside: auto;
+            }
+            
+            table, th, td {
+                border: 1px solid #ddd;
+            }
+            
+            th, td {
+                padding: 8px;
+                text-align: left;
+            }
+            
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            
+            thead {
+                display: table-header-group;
+            }
+            
+            ul, ol {
+                page-break-before: avoid;
+            }
+            
+            @page {
+                margin: 2cm;
+                @top-right {
+                    content: "第 " counter(page) " 页";
+                    font-size: 10pt;
+                }
+            }
+            
+            @page :first {
+                @top-right {
+                    content: "";
+                }
+            }
+            
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button no-print" onclick="window.print()">打印文档</button>
+    
+    <div class="content">
+        <div class="print-only">
+            <h1>项目文档</h1>
+            <p>生成日期: <span id="current-date"></span></p>
+            <hr>
+        </div>
+        
+        <!-- 这里是Markdown转换后的HTML内容 -->
+        <h1>Markdown示例文档</h1>
+        
+        <p>这是一篇<strong>示例文档</strong>，展示了Markdown转换为HTML后的各种元素。</p>
+        
+        <h2>二级标题</h2>
+        
+        <p>这是一个段落，包含一个<a href="https://example.com">链接</a>和一些<em>强调文本</em>。</p>
+        
+        <h3>列表示例</h3>
+        
+        <ul>
+            <li>无序列表项一</li>
+            <li>无序列表项二</li>
+            <li>无序列表项三</li>
+        </ul>
+        
+        <ol>
+            <li>有序列表项一</li>
+            <li>有序列表项二</li>
+            <li>有序列表项三</li>
+        </ol>
+        
+        <h3>代码示例</h3>
+        
+        <pre><code>function helloWorld() {
+    console.log("Hello, World!");
+}</code></pre>
+        
+        <h3>引用块</h3>
+        
+        <blockquote>
+            <p>这是一个引用块。它通常用于引用他人的话语或突出重要内容。</p>
+        </blockquote>
+        
+        <h3>表格示例</h3>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>姓名</th>
+                    <th>年龄</th>
+                    <th>职业</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>张三</td>
+                    <td>28</td>
+                    <td>工程师</td>
+                </tr>
+                <tr>
+                    <td>李四</td>
+                    <td>32</td>
+                    <td>设计师</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="page-break"></div>
+        
+        <h2>另一页内容</h2>
+        
+        <p>这是在新一页上的内容，展示了分页功能。</p>
+        
+        <p>打印样式确保了文档在纸质上的可读性和专业性。</p>
+    </div>
+
+    <script>
+        // 添加当前日期
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('zh-CN');
+    </script>
+</body>
+</html>

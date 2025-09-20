@@ -244,10 +244,7 @@ async function _FetchDocumentsSupabase() {
     return;
   }
 
-  const { data, error } = await supabase
-    .from('documents')
-    .select('id,title')
-    .order('updated_at', { ascending: false });
+  const { data, error } = await supabase.from('documents').select('id,title').order('updated_at', { ascending: false });
 
   if (error) {
     console.log('Error fetching documents: ' + error.message);
@@ -268,10 +265,7 @@ async function _FetchDocumentSupabase(uuid) {
     return;
   }
 
-  const { data, error } = await supabase
-    .from('documents')
-    .select('*')
-    .eq('id', uuid);
+  const { data, error } = await supabase.from('documents').select('*').eq('id', uuid);
 
   if (error) {
     console.log('Error fetching documents: ' + error.message);
@@ -365,7 +359,7 @@ async function _DeleteDocumentSupabase(uuid) {
 }
 
 
-
+/*
 const supabaseUrl = "https://yfftwweuxxkrzlvqilvc.supabase.co" ;
 //using service_role secret key
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmZnR3d2V1eHhrcnpsdnFpbHZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMjYxMTEsImV4cCI6MjA2NzkwMjExMX0.7rcV3RBrH5kY3KLqD-NHLMhMyc62wIxxYG9VfW-i1tk";
@@ -373,12 +367,14 @@ const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 const supabaseSDK = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 console.log('Supabase Instance: ', supabaseSDK) ;
+*/
+
 const noteFoldersTbl = 'noteFoldersTbl' ;
 
 let globalNoteFolderTree={} ;
 async function fetchNoteFolderTree(email){
     try {
-        let { data: noteFolderTreeTbl, error } = await supabaseSDK.from('noteFolderTreeTbl').select("*")
+        let { data: noteFolderTreeTbl, error } = await supabase.from('noteFolderTreeTbl').select("*")
             .eq('user_email', email) ;
         if (error) {
             throw new Error(`Failed to fetchNoteFolderTree: ${error.message} (code: ${error.code})`);
@@ -390,7 +386,7 @@ async function fetchNoteFolderTree(email){
 }
 
 async function notesInFolder(folderID){
-    let { data, error } = await supabaseSDK.from('document_FolderTbl').select("documentID").eq('folderID', folderID) ;
+    let { data, error } = await supabase.from('document_FolderTbl').select("documentID").eq('folderID', folderID) ;
     if(error) {
         throw new Error(`Failed to fetchNoteFolderTree: ${error.message} (code: ${error.code})`);
         return { error };
@@ -400,7 +396,7 @@ async function notesInFolder(folderID){
 
 
 async function notesInWhichFolder(noteID){
-  let { data, error } = await supabaseSDK.from('document_FolderTbl').select("folderID").eq('documentID', noteID) ;
+  let { data, error } = await supabase.from('document_FolderTbl').select("folderID").eq('documentID', noteID) ;
   if(error) {
       throw new Error(`Failed to fetchNoteFolderTree: ${error.message} (code: ${error.code})`);
       return [];
@@ -446,14 +442,14 @@ async function removeNoteFromFolder(documentID){
       console.error('documentID are required');
       return { error: 'Missing required fields' };
     }
-  const { error } = await supabaseSDK.from('document_FolderTbl')
+  const { error } = await supabase.from('document_FolderTbl')
     .delete().eq('documentID',documentID) ;
 
   if (error) {
     console.error('Error during upsert:', error);
     return { error };
   }
-  
+   
   console.log('removeNoteFromFolder successful:');
 }
 
@@ -463,14 +459,59 @@ async function fetchNoteMeta(documentID){
     return { error: 'Missing required fields' };
   }
 
-  let { data: titles, error } = await supabaseSDK.from('documents')
+  //let titles = API_FetchMDMemoMeta(documentID) ;
+  
+  let { data: titles, error } = await supabase.from('documents')
     .select("title").eq('id', documentID) ;
   if (error) {
     console.error('Error during upsert:', error);
     return { error };
   }
+  
 
   if(titles.length==0)return "" ;
 
   return titles[0].title ;
+}
+
+
+// Fetch document by ID from Supabase
+async function API_FetchMDMemoMeta(id) {
+  if (!id) {
+    console.log('Please enter a valid Document ID to fetch.');
+    return;
+  }
+  console.log('Fetching document with ID:', id);
+  let cURL = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${id}&user_id=eq.${USER_ID_SupabaseAPI}&select=title`;
+  try {
+    const response = await fetch(cURL, {
+      method: 'GET',
+      headers:{
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+    });
+    const data = await response.json();
+    console.log('Fetch response:', response.status, data);
+    
+    if (response.ok && data.length) {
+      return data[0] ;
+      /*
+      document.getElementById('docTitle').value = data[0].title;
+      editor.setMarkdown(data[0].content);
+      console.log('Document fetched successfully!');
+      */
+    } else if (response.ok) {
+      console.log('No document found with the specified ID.');
+      return null ;
+    } else {
+      console.error('Error fetching document:', data);
+      console.log('Error fetching document: ' + (data.message || data.error || 'Unknown error'));
+      return null ;
+    }
+  } catch (error) {
+    console.error('Network error:', error);
+    console.log('Network error: ' + error.message);
+    return null ;
+  }
 }

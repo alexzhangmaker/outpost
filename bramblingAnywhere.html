@@ -109,14 +109,16 @@
             background-color: var(--dark-color);
             color: white;
             padding: 1rem 0;
-            overflow-y: auto;
+            overflow-y: hidden;
+            height: 100%;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
         }
         
         .sidebar-header {
-            padding: 0 1rem 1rem;
+            padding: 0.2rem .02rem;
             border-bottom: 1px solid rgba(255,255,255,0.1);
             margin-bottom: 1rem;
+            height:10% ;
         }
         
         .connection-status {
@@ -140,10 +142,12 @@
         
         .tables-list {
             list-style: none;
+            height:90% ;
+            overflow-y: auto;
         }
         
         .table-item {
-            padding: 0.8rem 1.5rem;
+            padding: 0.2rem .02rem;
             cursor: pointer;
             transition: background-color 0.2s;
             display: flex;
@@ -159,11 +163,20 @@
             background-color: var(--secondary-color);
         }
         
+        .table-row-name{
+            width:80% ;
+            white-space: nowrap; /* Prevents text from wrapping to the next line */
+            overflow: hidden;    /* Hides any content that extends beyond the element's box */
+            text-overflow: ellipsis; /* Displays an ellipsis to indicate truncated text */
+            display: inline-block; /* Required for width and text-overflow to work on inline elements */
+            max-width: 10rem; /* Set a maximum width for the span */
+            font-size:0.8rem;
+        }
         .table-row-count {
             background-color: rgba(255,255,255,0.2);
             padding: 0.2rem 0.5rem;
             border-radius: 10px;
-            font-size: 0.8rem;
+            font-size: 0.3rem;
         }
         
         /* 右侧内容区 */
@@ -176,14 +189,14 @@
         }
         
         .content-header {
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
         .table-title {
-            font-size: 1.5rem;
+            font-size: 1rem;
             color: var(--primary-color);
         }
         
@@ -200,6 +213,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             overflow: hidden;
+            font-size: 0.65rem;
         }
         
         /* 连接模态框 */
@@ -270,11 +284,16 @@
             }
         }
     </style>
+    <style>
+        .noShow{
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <!-- 顶部导航栏 -->
     <nav class="navbar">
-        <div class="navbar-title">Firebase 数据库控制台</div>
+        <div class="navbar-title">Brambling.数据控制台</div>
         <div class="navbar-actions">
             <button id="connect-btn" class="btn btn-primary">连接数据库</button>
             <button id="add-table-btn" class="btn btn-success" disabled>新建数据表</button>
@@ -287,10 +306,10 @@
         <!-- 左侧边栏 -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h3>数据表列表</h3>
+                <h3 style="text-align: left;font-size:1rem;">数据表列表</h3>
                 <div class="connection-status">
-                    <div class="status-indicator" id="status-indicator"></div>
-                    <span id="status-text">未连接</span>
+                    <div class="status-indicator noShow" id="status-indicator"></div>
+                    <span id="status-text" class="noShow">未连接</span>
                 </div>
             </div>
             <ul class="tables-list" id="tables-list">
@@ -301,8 +320,8 @@
         <!-- 右侧内容区 -->
         <main class="content">
             <div class="content-header">
-                <h2 class="table-title" id="table-title">请选择数据表</h2>
-                <input type="text" class="search-box" id="search-input" placeholder="搜索..." disabled>
+                <h4 class="table-title" id="table-title">请选择数据表</h4>
+                <input type="text" class="search-box noShow" id="search-input" placeholder="搜索..." disabled>
             </div>
             <div class="grid-container" id="grid-container"></div>
         </main>
@@ -395,13 +414,16 @@
             addTableBtn.addEventListener('click', addNewTable);
             saveBtn.addEventListener('click', saveChanges);
             cancelBtn.addEventListener('click', hideConnectionModal);
-            confirmConnectBtn.addEventListener('click', connectToFirebase);
+            //confirmConnectBtn.addEventListener('click', connectToFirebase);
             searchInput.addEventListener('input', handleSearch);
         }
         
         // 显示连接模态框
         function showConnectionModal() {
-            connectionModal.style.display = 'flex';
+            //connectionModal.style.display = 'flex';
+            connectToFirebase() ;
+            connectBtn.disabled = true;
+            connectBtn.style.color = 'grey'; 
         }
         
         // 隐藏连接模态框
@@ -469,7 +491,7 @@
                             const tableItem = document.createElement('li');
                             tableItem.className = 'table-item';
                             tableItem.innerHTML = `
-                                <span>${tableName}</span>
+                                <span class="table-row-name">${tableName}</span>
                                 <span class="table-row-count">${tableData.rows.length} 行</span>
                             `;
                             
@@ -525,7 +547,7 @@
                         data: currentTableData.rows,
                         pagination: {
                             enabled: true,
-                            limit: 5
+                            limit: 10
                         },
                         search: {
                             enabled: true,

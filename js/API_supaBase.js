@@ -1,16 +1,16 @@
 
 // Supabase configuration
-const USER_ID = 'alexszhang@gmail.com'; //`4ebe5f02-8473-4051-8ed9-9bdd9ec8dbb8`;//'alexszhang@gmail.com'; // Hardcoded for testing
-const SUPABASE_URL = 'https://yfftwweuxxkrzlvqilvc.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmZnR3d2V1eHhrcnpsdnFpbHZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMjYxMTEsImV4cCI6MjA2NzkwMjExMX0.7rcV3RBrH5kY3KLqD-NHLMhMyc62wIxxYG9VfW-i1tk';
-const SUPABASE_TABLE = 'documents';
+const USER_ID_SupabaseAPI = 'alexszhang@gmail.com'; //`4ebe5f02-8473-4051-8ed9-9bdd9ec8dbb8`;//'alexszhang@gmail.com'; // Hardcoded for testing
+//const SUPABASE_URL = 'https://yfftwweuxxkrzlvqilvc.supabase.co';
+//const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmZnR3d2V1eHhrcnpsdnFpbHZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMjYxMTEsImV4cCI6MjA2NzkwMjExMX0.7rcV3RBrH5kY3KLqD-NHLMhMyc62wIxxYG9VfW-i1tk';
+//const SUPABASE_TABLE = 'documents';
 
 async function API_PlusMDMemo_Supabase(title, content) {
-    console.log('Saving document:', { title, content, user_id: USER_ID });
+    console.log('Saving document:', { title, content, user_id: USER_ID_SupabaseAPI });
     let jsonMemo = {
         title: title,
         content: content,
-        user_id: USER_ID
+        user_id: USER_ID_SupabaseAPI
     };
     let cURL = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`;
     try {
@@ -44,7 +44,7 @@ async function API_DeleteMDMemo(id) {
     return;
   }
   console.log('Deleting document with ID:', id);
-  let cURL = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${id}&user_id=eq.${USER_ID}`;
+  let cURL = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${id}&user_id=eq.${USER_ID_SupabaseAPI}`;
   try {
     const response = await fetch(cURL, {
       method: 'DELETE',
@@ -75,7 +75,7 @@ async function API_DeleteMDMemo(id) {
 async function API_LoadLatestMemo_Supabase() {
   try {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=id,title,content&user_id=eq.${USER_ID}&order=created_at.desc&limit=10`,
+      `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=id,title,content&user_id=eq.${USER_ID_SupabaseAPI}&order=created_at.desc&limit=10`,
       {
         method: 'GET',
         headers: {
@@ -120,7 +120,7 @@ async function API_FetchMDMemo(id) {
     return;
   }
   console.log('Fetching document with ID:', id);
-  let cURL = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${id}&user_id=eq.${USER_ID}&select=title,content`;
+  let cURL = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${id}&user_id=eq.${USER_ID_SupabaseAPI}&select=title,content`;
   try {
     const response = await fetch(cURL, {
       method: 'GET',
@@ -160,11 +160,11 @@ async function API_UpdateMDMemo(id, title, content) {
     console.log('Please enter a valid Document ID to update.');
     return;
   }
-  console.log('Updating document:', { id, title, content, user_id: USER_ID });
+  console.log('Updating document:', { id, title, content, user_id: USER_ID_SupabaseAPI });
   let jsonMemo = {
     title: title,
     content: content,
-    user_id: USER_ID,
+    user_id: USER_ID_SupabaseAPI,
     updated_at: new Date().toISOString() // Update timestamp
   };
   let cURL = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${id}`;
@@ -190,5 +190,48 @@ async function API_UpdateMDMemo(id, title, content) {
   } catch (error) {
     console.error('Network error:', error);
     console.log('Network error: ' + error.message);
+  }
+}
+
+
+
+// Fetch document by ID from Supabase
+async function API_FetchMDMemoMeta(id) {
+  if (!id) {
+    console.log('Please enter a valid Document ID to fetch.');
+    return;
+  }
+  console.log('Fetching document with ID:', id);
+  let cURL = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${id}&user_id=eq.${USER_ID_SupabaseAPI}&select=title`;
+  try {
+    const response = await fetch(cURL, {
+      method: 'GET',
+      headers:{
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+    });
+    const data = await response.json();
+    console.log('Fetch response:', response.status, data);
+    
+    if (response.ok && data.length) {
+      return data[0] ;
+      /*
+      document.getElementById('docTitle').value = data[0].title;
+      editor.setMarkdown(data[0].content);
+      console.log('Document fetched successfully!');
+      */
+    } else if (response.ok) {
+      console.log('No document found with the specified ID.');
+      return null ;
+    } else {
+      console.error('Error fetching document:', data);
+      console.log('Error fetching document: ' + (data.message || data.error || 'Unknown error'));
+      return null ;
+    }
+  } catch (error) {
+    console.error('Network error:', error);
+    console.log('Network error: ' + error.message);
+    return null ;
   }
 }
