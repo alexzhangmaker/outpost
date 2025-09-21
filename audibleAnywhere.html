@@ -15,6 +15,9 @@
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=enable" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=install_desktop" />
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_back" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_right_alt" />
     <style>
         * {
             margin: 0;
@@ -82,12 +85,14 @@
         }
         
         .lesson-item {
-            padding: 12px 15px;
+            padding: 8px 10px;
             margin-bottom: 8px;
             background-color: #34495e;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
+
+            font-size: 16px;
         }
         
         .lesson-item:hover {
@@ -263,20 +268,29 @@
             }
         }
     </style>
+    <style>
+        .noShow{
+            display: none;
+        }
+
+        .btnOutpost{
+            font-size: 18px;
+        }
+
+        .btnOutpost:hover{
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <!-- 左侧导航区 -->
     <div class="sidebar">
         <div class="app-title">
-            <span>泰语学习音频应用</span>
-            <span class="material-symbols-outlined" id="idToggleNav">install_desktop</span>
+            
+            <span style="font-size:24px;">泰语学习音频应用</span>
 
         </div>
-        <script>
-            document.querySelector("#idToggleNav").addEventListener('click',(event)=>{
-                document.querySelector('.sidebar').style.display = "none" ;
-            }) ;
-        </script>
+        
         
         <div class="nav-section">
             <div class="nav-header">音频课件</div>
@@ -310,16 +324,19 @@
         <!-- 播放器区域 -->
         <div class="player-section">
             <div class="section-title">
-                <span class="material-symbols-outlined" id="idSaveChange">install_desktop</span>
+                <a id="idBTNToggleNavBar" class="btnOutpost">
+                    <svg xmlns="http://www.w3.org/2000/svg"  width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5h18M3 12h18M3 19h18"/></svg>            
+                </a>
                 <span id="currentLessonTitle">选择左侧音频课件开始学习</span>
             </div> 
             <div id="waveform"></div>
             <div class="player-controls">
-                <button id="playPauseBtn" class="btn" disabled>播放</button>
+                <a id="playPauseBtn" class="btnOutpost"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M22 17.5L18.5 20v-5l3.5 2.5ZM2 5h18M2 11h18M2 17h12"/></svg></a>
                 <div class="nav-buttons">
-                    <button id="prevRegionBtn" class="btn" disabled>上一句</button>
-                    <button id="nextRegionBtn" class="btn" disabled>下一句</button>
+                    <a id="prevRegionBtn" class="btnOutpost"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12H3m0 0l8.5-8.5M3 12l8.5 8.5"/></svg>上一句</a>
+                    <a id="nextRegionBtn" class="btnOutpost" disabled><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12h18m0 0l-8.5-8.5M21 12l-8.5 8.5"/></svg>下一句</a>
                 </div>
+                <a id="idSaveChange" class="btnOutpost"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#000000"><g fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="m14 19l3 3l5-5M4 6v6s0 3 7 3s7-3 7-3V6"/><path d="M11 3c7 0 7 3 7 3s0 3-7 3s-7-3-7-3s0-3 7-3Zm0 18c-7 0-7-3-7-3v-6"/></g></svg>保存</a>
             </div>
         </div>
         
@@ -387,7 +404,9 @@
         const nextRegionBtn = document.getElementById('nextRegionBtn');
         const timestampsBody = document.getElementById('timestampsBody');
         const autoPlayNext = document.getElementById('autoPlayNext');
-        
+        const btnToggleNav = document.getElementById('idBTNToggleNavBar') ;
+        const btnSaveChange = document.querySelector("#idSaveChange") ;
+
         // 从Firebase获取课件列表
         function loadLessons() {
             const lessonsRef = database.ref('audibles');
@@ -711,7 +730,6 @@
         });
     </script>
     <script>
-        let btnSaveChange = document.querySelector("#idSaveChange") ;
 
         btnSaveChange.addEventListener('click',async (event)=>{
             //alert("todo save")
@@ -735,6 +753,11 @@
                     console.error("Error writing data: ", error);
                     alert("Error writing data: " + error.message);
             });
+
+        }) ;
+
+        btnToggleNav.addEventListener('click',(event)=>{
+            document.querySelector('.sidebar').classList.toggle('noShow') ;
 
         }) ;
     </script>

@@ -26,3 +26,16 @@ font-family: "Noto Sans SC", sans-serif;
     font-style: normal;
 
 }
+
+/* 编辑器区字体 */
+.toastui-editor-md-container .toastui-editor{
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 14px;
+}
+
+/* 预览区字体 */
+.toastui-editor-defaultUI .toastui-editor-md-preview {
+    font-family: 'Noto Serif', 'Times New Roman', serif;
+    font-size: 14px !important;
+    /*line-height: 1.6;*/
+}
