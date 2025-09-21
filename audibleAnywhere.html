@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>泰语学习音频应用</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
     <!-----
@@ -281,6 +285,7 @@
             cursor: pointer;
         }
     </style>
+
 </head>
 <body>
     <!-- 左侧导航区 -->
@@ -324,6 +329,8 @@
         <!-- 播放器区域 -->
         <div class="player-section">
             <div class="section-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="btnOutpost" id="idBTNSignIn" viewBox="0 0 16 16" fill="#000000"><g fill="#000000"><path d="M12.5 16a3.5 3.5 0 1 0 0-7a3.5 3.5 0 0 0 0 7Zm1.679-4.493l-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.708l.547.548l1.17-1.951a.5.5 0 1 1 .858.514ZM11 5a3 3 0 1 1-6 0a3 3 0 0 1 6 0ZM8 7a2 2 0 1 0 0-4a2 2 0 0 0 0 4Z"/><path d="M8.256 14a4.474 4.474 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10c.26 0 .507.009.74.025c.226-.341.496-.65.804-.918C9.077 9.038 8.564 9 8 9c-5 0-6 3-6 4s1 1 1 1h5.256Z"/></g></svg>
+
                 <a id="idBTNToggleNavBar" class="btnOutpost">
                     <svg xmlns="http://www.w3.org/2000/svg"  width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5h18M3 12h18M3 19h18"/></svg>            
                 </a>
@@ -378,8 +385,11 @@
         };
         
         // 初始化Firebase
-        firebase.initializeApp(firebaseConfig);
+        // Correct v8 code
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
         const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
         
 
         // Wavesurfer实例
@@ -760,6 +770,24 @@
             document.querySelector('.sidebar').classList.toggle('noShow') ;
 
         }) ;
+    </script>
+    <script>
+        const btnUserLogin = document.querySelector('#idBTNSignIn') ;
+        btnUserLogin.addEventListener('click',(event)=>{
+            signInWithGoogle() ;
+        }) ;
+        // 登录函数
+        // The correct way to call the function in V8
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
     </script>
 </body>
 </html>
