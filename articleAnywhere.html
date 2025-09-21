@@ -8,6 +8,10 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -273,6 +277,15 @@
             z-index: 999;
         }
     </style>
+    <style>
+        .btnOutpost{
+            font-size: 36px;
+        }
+
+        .btnOutpost:hover{
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <div class="toolbar">
@@ -289,6 +302,7 @@
             <i class="fas fa-text-height"></i>
             减小字体
         </button>
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" class="btnOutpost" id="idBTNSignIn" viewBox="0 0 16 16" fill="#000000"><g fill="#000000"><path d="M12.5 16a3.5 3.5 0 1 0 0-7a3.5 3.5 0 0 0 0 7Zm1.679-4.493l-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.708l.547.548l1.17-1.951a.5.5 0 1 1 .858.514ZM11 5a3 3 0 1 1-6 0a3 3 0 0 1 6 0ZM8 7a2 2 0 1 0 0-4a2 2 0 0 0 0 4Z"/><path d="M8.256 14a4.474 4.474 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10c.26 0 .507.009.74.025c.226-.341.496-.65.804-.918C9.077 9.038 8.564 9 8 9c-5 0-6 3-6 4s1 1 1 1h5.256Z"/></g></svg>
     </div>
     
     <div class="container">
@@ -330,9 +344,7 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
+
     <script>
         // 配置Markdown渲染器，确保正确处理换行
         marked.setOptions({
@@ -357,10 +369,13 @@
         
         const path025233="025233" ;
         // 初始化Firebase
-        firebase.initializeApp(firebaseConfig);
-        
-        // 获取数据库引用
+        // Correct v8 code
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
         const database = firebase.database();
+
+        const provider = new firebase.auth.GoogleAuthProvider();
+
         function fetchDataFromFirebase(path) {
             return new Promise((resolve, reject) => {
                 const ref = database.ref(path);
@@ -1188,6 +1203,24 @@
         
         // 绑定打印按钮事件
         //document.getElementById('printBtn').addEventListener('click', showPrintDialog);
+    </script>
+    <script>
+        const btnUserLogin = document.querySelector('#idBTNSignIn') ;
+        btnUserLogin.addEventListener('click',(event)=>{
+            signInWithGoogle() ;
+        }) ;
+        // 登录函数
+        // The correct way to call the function in V8
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
     </script>
 </body>
 </html>
