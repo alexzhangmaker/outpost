@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON列表渲染组件</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .demo-panel {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .component-container {
+            flex: 2;
+            min-height: 600px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #3498db;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .event-log {
+            height: 150px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+        }
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+            font-family: monospace;
+        }
+        .log-entry:nth-child(odd) {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>JSON列表渲染组件演示</h1>
+    
+    <div class="container">
+        <div class="demo-panel">
+            <h2>控制面板</h2>
+            
+            <div class="control-group">
+                <label for="filterField">过滤字段:</label>
+                <select id="filterField">
+                    <option value="name">名称</option>
+                    <option value="email">邮箱</option>
+                    <option value="age">年龄</option>
+                    <option value="department">部门</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="filterValue">过滤值:</label>
+                <input type="text" id="filterValue" placeholder="输入过滤内容">
+            </div>
+            
+            <div class="control-group">
+                <label for="sortField">排序字段:</label>
+                <select id="sortField">
+                    <option value="name">名称</option>
+                    <option value="email">邮箱</option>
+                    <option value="age">年龄</option>
+                    <option value="department">部门</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="sortDirection">排序方向:</label>
+                <select id="sortDirection">
+                    <option value="asc">升序</option>
+                    <option value="desc">降序</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="pageSize">每页项目数:</label>
+                <select id="pageSize">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            
+            <button id="applyBtn">应用设置</button>
+            
+            <h2>事件日志</h2>
+            <div id="eventLog" class="event-log"></div>
+        </div>
+        
+        <div class="component-container" id="componentContainer"></div>
+    </div>
+
+    <script>
+        // 示例数据
+        const sampleData = [
+            { id: 1, name: "张三", email: "zhangsan@example.com", age: 28, department: "研发部" },
+            { id: 2, name: "李四", email: "lisi@example.com", age: 32, department: "市场部" },
+            { id: 3, name: "王五", email: "wangwu@example.com", age: 25, department: "研发部" },
+            { id: 4, name: "赵六", email: "zhaoliu@example.com", age: 45, department: "人事部" },
+            { id: 5, name: "钱七", email: "qianqi@example.com", age: 29, department: "财务部" },
+            { id: 6, name: "孙八", email: "sunba@example.com", age: 36, department: "市场部" },
+            { id: 7, name: "周九", email: "zhoujiu@example.com", age: 31, department: "研发部" },
+            { id: 8, name: "吴十", email: "wushi@example.com", age: 27, department: "人事部" },
+            { id: 9, name: "郑十一", email: "zhengshiyi@example.com", age: 38, department: "财务部" },
+            { id: 10, name: "王十二", email: "wangshier@example.com", age: 42, department: "市场部" },
+            { id: 11, name: "陈十三", email: "chenshisan@example.com", age: 26, department: "研发部" },
+            { id: 12, name: "林十四", email: "linshisi@example.com", age: 33, department: "人事部" },
+            { id: 13, name: "黄十五", email: "huangshiwu@example.com", age: 29, department: "财务部" },
+            { id: 14, name: "杨十六", email: "yangshiliu@example.com", age: 37, department: "市场部" },
+            { id: 15, name: "刘十七", email: "liushiqi@example.com", age: 24, department: "研发部" }
+        ];
+
+        // 创建JSON列表组件的工厂函数
+        function createJSONListRenderer(container, data, options = {}) {
+            // 默认配置
+            const config = {
+                pageSize: options.pageSize || 10,
+                filterable: options.filterable || true,
+                sortable: options.sortable || true,
+                fields: options.fields || Object.keys(data[0] || {}),
+                itemRenderer: options.itemRenderer || null,
+                events: options.events || {}
+            };
+            
+            // 状态管理
+            let state = {
+                currentPage: 1,
+                filterField: options.filterField || config.fields[0],
+                filterValue: '',
+                sortField: options.sortField || config.fields[0],
+                sortDirection: 'asc'
+            };
+            
+            // 创建Shadow DOM封装组件
+            const shadowRoot = container.attachShadow({ mode: 'open' });
+            
+            // 组件样式
+            const style = document.createElement('style');
+            style.textContent = `
+                .json-list-container {
+                    font-family: Arial, sans-serif;
+                    padding: 15px;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                }
+                
+                .controls {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    margin-bottom: 20px;
+                    padding: 15px;
+                    background: #f8f9fa;
+                    border-radius: 6px;
+                }
+                
+                .control-group {
+                    flex: 1;
+                    min-width: 150px;
+                }
+                
+                .control-group label {
+                    display: block;
+                    margin-bottom: 5px;
+                    font-weight: bold;
+                    color: #2c3e50;
+                }
+                
+                .control-group input, 
+                .control-group select {
+                    width: 100%;
+                    padding: 8px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                }
+                
+                .list-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 15px;
+                }
+                
+                .pagination {
+                    display: flex;
+                    gap: 5px;
+                }
+                
+                .pagination button {
+                    padding: 5px 10px;
+                    background: #3498db;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+                
+                .pagination button:disabled {
+                    background: #95a5a6;
+                    cursor: not-allowed;
+                }
+                
+                .pagination-info {
+                    font-size: 14px;
+                    color: #7f8c8d;
+                }
+                
+                .json-list {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                
+                .json-item {
+                    padding: 12px 15px;
+                    border-bottom: 1px solid #ecf0f1;
+                    transition: background-color 0.2s;
+                }
+                
+                .json-item:hover {
+                    background-color: #f8f9fa;
+                }
+                
+                .json-item:last-child {
+                    border-bottom: none;
+                }
+                
+                .item-content {
+                    display: flex;
+                    justify-content: space-between;
+                }
+                
+                .item-field {
+                    flex: 1;
+                    padding: 0 5px;
+                }
+                
+                .item-field strong {
+                    color: #2c3e50;
+                }
+            `;
+            
+            shadowRoot.appendChild(style);
+            
+            // 创建容器
+            const containerEl = document.createElement('div');
+            containerEl.className = 'json-list-container';
+            shadowRoot.appendChild(containerEl);
+            
+            // 渲染控件
+            function renderControls() {
+                let controlsHTML = `
+                    <div class="controls">
+                        <div class="control-group">
+                            <label for="filter-field">过滤字段</label>
+                            <select id="filter-field">
+                                ${config.fields.map(field => 
+                                    `<option value="${field}" ${state.filterField === field ? 'selected' : ''}>${field}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="filter-value">过滤值</label>
+                            <input type="text" id="filter-value" value="${state.filterValue}" placeholder="输入过滤内容">
+                        </div>
+                        <div class="control-group">
+                            <label for="sort-field">排序字段</label>
+                            <select id="sort-field">
+                                ${config.fields.map(field => 
+                                    `<option value="${field}" ${state.sortField === field ? 'selected' : ''}>${field}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="sort-direction">排序方向</label>
+                            <select id="sort-direction">
+                                <option value="asc" ${state.sortDirection === 'asc' ? 'selected' : ''}>升序</option>
+                                <option value="desc" ${state.sortDirection === 'desc' ? 'selected' : ''}>降序</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+                
+                containerEl.innerHTML = controlsHTML;
+                
+                // 添加事件监听
+                const filterField = containerEl.querySelector('#filter-field');
+                const filterValue = containerEl.querySelector('#filter-value');
+                const sortField = containerEl.querySelector('#sort-field');
+                const sortDirection = containerEl.querySelector('#sort-direction');
+                
+                filterField.addEventListener('change', (e) => {
+                    state.filterField = e.target.value;
+                    state.currentPage = 1;
+                    render();
+                    triggerEvent('filterChange', { field: state.filterField, value: state.filterValue });
+                });
+                
+                filterValue.addEventListener('input', (e) => {
+                    state.filterValue = e.target.value;
+                    state.currentPage = 1;
+                    render();
+                    triggerEvent('filterChange', { field: state.filterField, value: state.filterValue });
+                });
+                
+                sortField.addEventListener('change', (e) => {
+                    state.sortField = e.target.value;
+                    render();
+                    triggerEvent('sortChange', { field: state.sortField, direction: state.sortDirection });
+                });
+                
+                sortDirection.addEventListener('change', (e) => {
+                    state.sortDirection = e.target.value;
+                    render();
+                    triggerEvent('sortChange', { field: state.sortField, direction: state.sortDirection });
+                });
+            }
+            
+            // 渲染列表
+            function renderList() {
+                // 数据处理：过滤和排序
+                let processedData = [...data];
+                
+                // 过滤
+                if (state.filterValue) {
+                    processedData = processedData.filter(item => {
+                        const value = item[state.filterField];
+                        return value && value.toString().toLowerCase().includes(state.filterValue.toLowerCase());
+                    });
+                }
+                
+                // 排序
+                if (state.sortField) {
+                    processedData.sort((a, b) => {
+                        let aValue = a[state.sortField];
+                        let bValue = b[state.sortField];
+                        
+                        if (typeof aValue === 'string') {
+                            aValue = aValue.toLowerCase();
+                            bValue = bValue.toLowerCase();
+                        }
+                        
+                        if (aValue < bValue) return state.sortDirection === 'asc' ? -1 : 1;
+                        if (aValue > bValue) return state.sortDirection === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+                }
+                
+                // 分页
+                const totalPages = Math.ceil(processedData.length / config.pageSize);
+                const startIndex = (state.currentPage - 1) * config.pageSize;
+                const paginatedData = processedData.slice(startIndex, startIndex + config.pageSize);
+                
+                // 生成列表HTML
+                let listHTML = `
+                    <div class="list-header">
+                        <div class="pagination-info">
+                            显示 ${startIndex + 1} - ${Math.min(startIndex + config.pageSize, processedData.length)} 条，共 ${processedData.length} 条
+                        </div>
+                        <div class="pagination">
+                            <button id="prev-page" ${state.currentPage === 1 ? 'disabled' : ''}>上一页</button>
+                            <button id="next-page" ${state.currentPage === totalPages ? 'disabled' : ''}>下一页</button>
+                        </div>
+                    </div>
+                    <ul class="json-list">
+                `;
+                
+                if (paginatedData.length === 0) {
+                    listHTML += `<li class="json-item"><div class="item-content">没有找到匹配的数据</div></li>`;
+                } else {
+                    paginatedData.forEach(item => {
+                        if (config.itemRenderer) {
+                            listHTML += config.itemRenderer(item);
+                        } else {
+                            listHTML += `<li class="json-item" data-id="${item.id}">
+                                <div class="item-content">`;
+                            
+                            config.fields.forEach(field => {
+                                listHTML += `<div class="item-field"><strong>${field}:</strong> ${item[field] || ''}</div>`;
+                            });
+                            
+                            listHTML += `</div></li>`;
+                        }
+                    });
+                }
+                
+                listHTML += `</ul>`;
+                
+                containerEl.innerHTML += listHTML;
+                
+                // 添加分页事件监听
+                const prevPage = containerEl.querySelector('#prev-page');
+                const nextPage = containerEl.querySelector('#next-page');
+                
+                if (prevPage) {
+                    prevPage.addEventListener('click', () => {
+                        if (state.currentPage > 1) {
+                            state.currentPage--;
+                            render();
+                            triggerEvent('pageChange', { page: state.currentPage });
+                        }
+                    });
+                }
+                
+                if (nextPage) {
+                    nextPage.addEventListener('click', () => {
+                        if (state.currentPage < totalPages) {
+                            state.currentPage++;
+                            render();
+                            triggerEvent('pageChange', { page: state.currentPage });
+                        }
+                    });
+                }
+                
+                // 添加项目点击事件
+                const items = containerEl.querySelectorAll('.json-item[data-id]');
+                items.forEach(item => {
+                    item.addEventListener('click', () => {
+                        const id = item.getAttribute('data-id');
+                        const itemData = data.find(d => d.id == id);
+                        triggerEvent('itemClick', itemData);
+                    });
+                });
+            }
+            
+            // 触发自定义事件
+            function triggerEvent(eventName, detail) {
+                if (config.events[eventName]) {
+                    config.events[eventName](detail);
+                }
+                
+                // 同时触发原生事件
+                const event = new CustomEvent(eventName, { detail });
+                container.dispatchEvent(event);
+            }
+            
+            // 完整渲染
+            function render() {
+                containerEl.innerHTML = '';
+                renderControls();
+                renderList();
+            }
+            
+            // 公共方法
+            return {
+                render,
+                updateData: (newData) => {
+                    data = newData;
+                    render();
+                },
+                setFilter: (field, value) => {
+                    state.filterField = field;
+                    state.filterValue = value;
+                    state.currentPage = 1;
+                    render();
+                },
+                setSort: (field, direction) => {
+                    state.sortField = field;
+                    state.sortDirection = direction;
+                    render();
+                },
+                setPageSize: (size) => {
+                    config.pageSize = size;
+                    state.currentPage = 1;
+                    render();
+                },
+                getState: () => ({ ...state }),
+                on: (eventName, callback) => {
+                    config.events[eventName] = callback;
+                }
+            };
+        }
+
+        // 初始化演示
+        document.addEventListener('DOMContentLoaded', function() {
+            const eventLog = document.getElementById('eventLog');
+            
+            // 创建组件实例
+            const listComponent = createJSONListRenderer(
+                document.getElementById('componentContainer'),
+                sampleData,
+                {
+                    pageSize: 10,
+                    fields: ['name', 'email', 'age', 'department'],
+                    events: {
+                        itemClick: (item) => {
+                            const logEntry = document.createElement('div');
+                            logEntry.className = 'log-entry';
+                            logEntry.textContent = `项目点击: ${item.name} (ID: ${item.id})`;
+                            eventLog.prepend(logEntry);
+                        },
+                        filterChange: (detail) => {
+                            const logEntry = document.createElement('div');
+                            logEntry.className = 'log-entry';
+                            logEntry.textContent = `过滤更改: 字段=${detail.field}, 值=${detail.value}`;
+                            eventLog.prepend(logEntry);
+                        },
+                        sortChange: (detail) => {
+                            const logEntry = document.createElement('div');
+                            logEntry.className = 'log-entry';
+                            logEntry.textContent = `排序更改: 字段=${detail.field}, 方向=${detail.direction}`;
+                            eventLog.prepend(logEntry);
+                        },
+                        pageChange: (detail) => {
+                            const logEntry = document.createElement('div');
+                            logEntry.className = 'log-entry';
+                            logEntry.textContent = `页码更改: ${detail.page}`;
+                            eventLog.prepend(logEntry);
+                        }
+                    }
+                }
+            );
+            
+            // 初始渲染
+            listComponent.render();
+            
+            // 应用按钮事件
+            document.getElementById('applyBtn').addEventListener('click', function() {
+                const filterField = document.getElementById('filterField').value;
+                const filterValue = document.getElementById('filterValue').value;
+                const sortField = document.getElementById('sortField').value;
+                const sortDirection = document.getElementById('sortDirection').value;
+                const pageSize = parseInt(document.getElementById('pageSize').value);
+                
+                listComponent.setFilter(filterField, filterValue);
+                listComponent.setSort(sortField, sortDirection);
+                listComponent.setPageSize(pageSize);
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.textContent = `设置已应用: 过滤=${filterField}:${filterValue}, 排序=${sortField}:${sortDirection}, 每页=${pageSize}`;
+                eventLog.prepend(logEntry);
+            });
+        });
+    </script>
+</body>
+</html>

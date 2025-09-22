@@ -13,9 +13,7 @@
 
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
-    <!-----
-    <script src="https://unpkg.com/wavesurfer.js@7.10.1/dist/plugins/timeline.esm.js"></script>
--->
+
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=enable" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=install_desktop" />
@@ -619,15 +617,6 @@
                 `;
                 
                 timestampsBody.appendChild(row);
-                
-                /*
-                // 行点击事件
-                row.addEventListener('click', (e) => {
-                    if (!e.target.matches('button')) {
-                        playRegion(index);
-                    }
-                });
-                */
                 
                 // 播放按钮事件
                 row.querySelector('.play-row').addEventListener('click', (e) => {

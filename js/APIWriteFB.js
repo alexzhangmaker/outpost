@@ -413,9 +413,7 @@ async function addNote2Folder(documentID, folderID) {
       return { error: 'Missing required fields' };
     }
   
-    const { data, error } = await supabaseSDK
-      .from('document_FolderTbl')
-      .upsert(
+    const { data, error } = await supabase.from('document_FolderTbl').upsert(
         [
           {
             documentID: documentID, // UUID for the document

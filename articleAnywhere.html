@@ -373,7 +373,6 @@
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); // Correct: auth() is the function
         const database = firebase.database();
-
         const provider = new firebase.auth.GoogleAuthProvider();
 
         function fetchDataFromFirebase(path) {

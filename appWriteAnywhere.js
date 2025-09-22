@@ -204,7 +204,7 @@ const _renderWorkStudio=async (tagRightPanelMain)=>{
     el: document.querySelector('#editor'), 
     height: '90%', 
     initialEditType: 'markdown', 
-    previewStyle: 'vertical', 
+    previewStyle: 'tab',//'vertical', 
     sanitizer: {
       allowedTags: ['p', 'strong', 'br', 'div'],
       allowedAttributes: {}
