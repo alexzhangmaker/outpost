@@ -9,6 +9,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-----
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
+    -->
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+
     <style>
         body {
             font-family: 'Sarabun', sans-serif;
@@ -16,7 +28,6 @@
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-
     <div id="app-container" class="w-full max-w-md mx-auto">
         <!-- Quiz Card -->
         <div id="quiz-card" class="bg-white rounded-xl shadow-lg p-6 md:p-8 transition-all duration-500">
@@ -55,7 +66,158 @@
     </div>
 
     <script>
-        const quizData = [
+        function createStickyToolbar(config) {
+            // Helper to inject script or stylesheet
+            function injectResource(type, url) {
+                return new Promise((resolve, reject) => {
+                    let el;
+                    if (type === 'script') {
+                        el = document.createElement('script');
+                        el.src = url;
+                        el.async = true;
+                    } else if (type === 'style') {
+                        el = document.createElement('link');
+                        el.href = url;
+                        el.rel = 'stylesheet';
+                    }
+                    el.onload = () => resolve();
+                    el.onerror = () => reject(`Failed to load ${url}`);
+                    document.head.appendChild(el);
+                });
+            }
+
+            // Check if dependencies exist
+            const hasTippy = typeof window.tippy === 'function';
+            const hasPopper = typeof window.Popper === 'function';
+
+            const loadDependencies = async () => {
+                const promises = [];
+
+                if (!hasPopper) {
+                    promises.push(injectResource('script', 'https://unpkg.com/@popperjs/core@2'));
+                }
+                if (!hasTippy) {
+                    promises.push(injectResource('script', 'https://unpkg.com/tippy.js@6'));
+                    promises.push(injectResource('style', 'https://unpkg.com/tippy.js@6/dist/tippy.css'));
+                }
+
+                await Promise.all(promises);
+            };
+
+            // Main toolbar logic
+            const initToolbar = () => {
+                const toolbar = document.createElement('div');
+                toolbar.style.position = 'fixed';
+                toolbar.style.bottom = '20px';
+                toolbar.style.right = '20px';
+                toolbar.style.display = 'flex';
+                toolbar.style.gap = '12px';
+                toolbar.style.background = '#fff';
+                toolbar.style.border = '1px solid #ccc';
+                toolbar.style.borderRadius = '8px';
+                toolbar.style.padding = '10px';
+                toolbar.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+                toolbar.style.zIndex = '9999';
+
+                config.buttons.forEach((btn) => {
+                    const button = document.createElement('button');
+                    button.style.border = 'none';
+                    button.style.background = 'transparent';
+                    button.style.cursor = 'pointer';
+                    button.style.padding = '0';
+                    button.style.width = '32px';
+                    button.style.height = '32px';
+
+                    if(btn.hasOwnProperty("svg")){
+                        button.innerHTML=btn.svg ;
+                    }else{
+                        const img = document.createElement('img');
+                        img.src = btn.iconUrl;
+                        img.alt = btn.tip;
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        button.appendChild(img);
+                    }
+                    
+
+                    button.onclick = btn.onClick;
+
+                    toolbar.appendChild(button);
+
+                        // Initialize tooltip
+                    window.tippy(button, {
+                        content: btn.tip,
+                        placement: 'top',
+                        animation: 'scale',
+                    });
+                });
+
+                document.body.appendChild(toolbar);
+            };
+
+            // Load dependencies and initialize
+            loadDependencies().then(initToolbar).catch((err) => console.error('Toolbar setup failed:', err));
+        }
+    </script>
+    <script>
+        // Firebase配置（实际使用时替换为你的配置）
+        // 在实际应用中，您可以使用以下代码从Firebase获取数据
+        // 模拟Firebase配置 - 在实际应用中替换为您的配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-uiz-d289c.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        
+        const path025233="025233" ;
+        // 初始化Firebase
+        // Correct v8 code
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        function fetchDataFromFirebase(path) {
+            return new Promise((resolve, reject) => {
+                const ref = database.ref(path);
+                ref.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    //resolve(data ? Object.values(data) : []);
+                    resolve(data);
+                }, (error) => {
+                    reject(error);
+                });
+            });
+        }
+        
+    </script>
+    <script>
+        /*
+        const btnUserLogin = document.querySelector('#idBTNSignIn') ;
+        btnUserLogin.addEventListener('click',(event)=>{
+            signInWithGoogle() ;
+        }) ;
+        */
+        // 登录函数
+        // The correct way to call the function in V8
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
+    </script>
+    <script>
+        let quizData = [
             { "question": "คำว่า 'ตรงข้าม' หมายความว่าอย่างไร?", "options": [{ "id": "A", "text": "สิ่งที่อยู่คนละด้านหรือมีลักษณะตรงกันข้าม" }, { "id": "B", "text": "สิ่งที่เหมือนกันทุกประการ" }, { "id": "C", "text": "สิ่งที่อยู่ใกล้กันและช่วยเหลือกัน" }, { "id": "D", "text": "สิ่งที่ซับซ้อนและเข้าใจยาก" }], "correct_answer": "A" },
             { "question": "คำว่า 'วิจารณ์' มีความหมายตรงกับข้อใด?", "options": [{ "id": "A", "text": "การชื่นชมยินดี" }, { "id": "B", "text": "การให้คำติชมหรือข้อคิดเห็น" }, { "id": "C", "text": "การเลียนแบบพฤติกรรม" }, { "id": "D", "text": "การเพิกเฉยไม่สนใจ" }], "correct_answer": "B" },
             { "question": "'นวัตกรรม' หมายถึงอะไร?", "options": [{ "id": "A", "text": "สิ่งของโบราณที่มีค่า" }, { "id": "B", "text": "ประเพณีที่สืบทอดกันมานาน" }, { "id": "C", "text": "การกระทำหรือสิ่งที่ทำขึ้นใหม่หรือแปลกจากเดิม" }, { "id": "D", "text": "กฎหมายและข้อบังคับ" }], "correct_answer": "C" },
@@ -201,7 +363,65 @@
         restartButton.addEventListener('click', startQuiz);
 
         // --- Initial Load ---
-        document.addEventListener('DOMContentLoaded', startQuiz);
+        document.addEventListener('DOMContentLoaded', async (event)=>{
+            console.log('DOMContentLoaded') ;
+            const svgBTNSize = 18 ;
+            createStickyToolbar({
+                buttons: [
+                    {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/home.svg',
+                        svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 16 16"><path fill="#000000" d="M8 1.4L6 2.7V1H4v3L0 6.6l.6.8L8 2.6l7.4 4.8l.6-.8z"/><path fill="#000000" d="M8 4L2 8v7h5v-3h2v3h5V8z"/></svg>`,
+                        tip: 'Home',
+                        onClick: () => alert('Home clicked'),
+                    },
+                    {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 512 512"><path fill="#000000" d="M379.087 75.202c18.168 40.684 25.533 83.89 32.421 127.21c-1.265.358-2.528.72-3.794 1.082c-.91-2.534-1.984-5.021-2.707-7.61c-5.218-18.653-10.48-37.296-15.474-56.011c-1.797-6.733-6.035-10.084-12.096-13.381c-8.901-4.842-17.313-11.084-24.69-18.046c-4.707-4.44-8.735-7.149-15.413-7.078c-44.46.47-88.925.515-133.384.924c-2.963.03-6.63 1.124-8.728 3.065c-8.089 7.484-15.671 15.514-25.642 25.556c26.3 64.04 39.522 133.84 33.845 208.044c-12.626-8.084-22.4-14.48-22.981-31.418c-2.904-84.661-29.02-161.225-83.58-227.108c-1.228-1.482-1.838-3.476-2.738-5.23h284.96ZM48.73 107.847c12.663 0 25.332-.2 37.984.172c2.51.072 6.022 1.668 7.277 3.68c37.836 60.79 67.334 124.635 71.155 197.682c.018.29-.282.594-1.362 2.716c-22.612-77.293-63.404-142.735-115.872-201.39c.274-.952.545-1.906.819-2.86zM8 161.029c18.09-.658 33.39-1.318 48.692-1.602c1.541-.03 3.36 2.009 4.65 3.443c29.848 33.202 56.936 68.281 73.633 110.235c3.177 7.98 5.351 16.36 7.989 24.555C108.379 243.235 60.254 202.538 8 161.028Zm194.474 275.77c-31.481-50.066-61.803-98.29-92.128-146.513l1.112-1.428c2.542 2.047 56.622 45.412 80.91 65.302c6.766 5.541 11.878 5.441 18.915-.274c82.584-67.085 174.737-117.862 272.583-158.809c5.223-2.185 10.64-3.916 15.983-5.816c1.186-.42 2.44-.654 4.151-.222c-113.623 65.987-222.022 138.239-301.526 247.76Z"/></svg>`,
+                        tip: 'Quiz',
+                        onClick: async () => {
+                            alert('Quiz clicked') ;
+                            await loadQuizData() ;
+                        },
+                    },{
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 48 48"><g fill="none" stroke-linejoin="round" stroke-width="4"><path fill="#2F88FF" stroke="#000" d="M21 38C30.3888 38 38 30.3888 38 21C38 11.6112 30.3888 4 21 4C11.6112 4 4 11.6112 4 21C4 30.3888 11.6112 38 21 38Z"/><path stroke="#fff" stroke-linecap="round" d="M26.657 14.3431C25.2093 12.8954 23.2093 12 21.0001 12C18.791 12 16.791 12.8954 15.3433 14.3431"/><path stroke="#000" stroke-linecap="round" d="M33.2216 33.2217L41.7069 41.707"/></g></svg>`,
+                        tip: 'Search',
+                        onClick: () => alert('Search clicked'),
+                    },{
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 24 24"><path fill="#000000" d="M8 15h8v-.55q0-1.125-1.1-1.788T12 12q-1.8 0-2.9.663T8 14.45V15Zm4-4q.825 0 1.413-.588T14 9q0-.825-.588-1.413T12 7q-.825 0-1.413.588T10 9q0 .825.588 1.413T12 11ZM8 21v-2H4q-.825 0-1.413-.588T2 17V5q0-.825.588-1.413T4 3h16q.825 0 1.413.588T22 5v12q0 .825-.588 1.413T20 19h-4v2H8Z"/></svg>`,
+                        tip: 'SignIn',
+                        onClick: () => signInWithGoogle() ,
+                    }
+                ],
+            });
+        });
+
+        
+    </script>
+    <script>
+        function formatDateYYYYMMDD(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+
+        async function loadQuizData(){
+            let cDate = new Date() ;
+
+            let snapshot = await database.ref(`Quiz_todo/${formatDateYYYYMMDD(cDate)}`).once('value');
+            const jsonQuizToday = snapshot.val();
+            console.log('jsonQuizToday:', jsonQuizToday);
+
+            let refQuiz = jsonQuizToday[0].path ;
+            snapshot = await database.ref(refQuiz).once('value');
+            let jsonQuizData = snapshot.val();
+            console.log(jsonQuizData) ;
+            quizData = jsonQuizData ;
+            startQuiz() ;
+
+        }
     </script>
 
 </body>
