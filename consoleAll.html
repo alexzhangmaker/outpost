@@ -182,6 +182,8 @@
                         <option value="dbThaiDictionary">泰语字典数据库</option>
                         <option value="dbThaiAudible">泰语听力数据库</option>
                         <option value="dbOutpostTask">任务管理数据库</option>
+                        <option value="dbOutpostQuiz">Quiz管理数据库</option>
+
                     </select>
                 </div>
             </div>
@@ -383,6 +385,15 @@
             window.open(urlAnki,"_blank") ;
         }
 
+        const _funcDoQuiz_001223 = async (rowCells) => {
+            let UnitKey = rowCells[1].data ;
+            let QuizKey = rowCells[0].data ;
+            let QuizPath = `/${UnitKey}/${QuizKey}`
+            console.log(QuizPath) ;
+            let urlQuiz=`http://localhost:3010/quizAnywhereV2.html?quiz=001223${QuizPath}` ;
+            ////http://localhost:3010/quizAnywhereV2.html?quiz=001223/Unit4/Quiz_Vocabulary4_1
+            window.open(urlQuiz,"_blank") ;
+        }
 
         const actionTbl={
             "dbThaiDictionary":{
@@ -395,6 +406,11 @@
                     actionEdit:_funcDict_WordSet,
                     actionDelete:_funcDict_WordSet,
                     actionClick:_funcDoAnki
+                }
+            },
+            "dbOutpostQuiz":{
+                "/001223":{
+                    actionClick:_funcDoQuiz_001223
                 }
             }
         };
@@ -482,7 +498,59 @@
                 }
             ],
             "dbOutpostTask":[],
-            "dbThaiAudible":[]
+            "dbThaiAudible":[],
+            "dbOutpostQuiz":[
+                {
+                    "title":"英语3测试",
+                    "dbPath":"/001223"
+                },{
+                    "title":"泰语听说3测试",
+                    "dbPath":"/025233"
+                }
+            ]
+        } ;
+
+        const dbRender_Quiz_001223_En = (data,dbName,tblName)=>{
+            console.log(`${dbName}==${tblName}`) ;
+
+            let gridSchema = {
+                columns:["Quiz","Unit","# Questions"],
+                gridData:[]
+            } ;
+
+            let keys = Object.keys(data) ;
+            for(let i=0;i<keys.length;i++){
+                let jsonUnit = data[keys[i]] ;
+
+                let quizKeys = Object.keys(jsonUnit) ;
+                for(let j=0;j<quizKeys.length;j++){
+                    let jsonQuiz = jsonUnit[quizKeys[j]] ;
+                    let jsonQuizSchema={
+                        QuizTitle:quizKeys[j],
+                        QuizUnit:keys[i],
+                        Questions:jsonQuiz.length
+                    } ;
+                    gridSchema.gridData.push([jsonQuizSchema.QuizTitle,jsonQuizSchema.QuizUnit,jsonQuizSchema.Questions])
+                }
+            }
+            return gridSchema ;
+        } ;
+
+        const dbRender_Quiz_025233_Th = (data,dbName,tblName)=>{
+            console.log(`${dbName}==${tblName}`) ;
+
+            return {
+                columns:[],
+                gridData:[]
+            } ;
+        } ;
+
+        const dbTblRenders={
+            "dbOutpostQuiz":{
+                    "/001223":dbRender_Quiz_001223_En,
+                    "/025233":dbRender_Quiz_025233_Th
+            }
+            
         } ;
     </script>
     <script>
@@ -600,32 +668,54 @@
             if (grid) {
                 grid.destroy();
             }
-            
             let keys=[] ;
             let gridData = [] ;
-            if(Array.isArray(data)==false){
-                console.log(data) ;
-                let jSONkeys = Object.keys(data) ;
-                let jsonFirst = data[jSONkeys[0]] ;
-                keys = Object.keys(jsonFirst) ;
-                gridData = jsonToArrays(data).values ;
-            }else{
-                // 获取数据的schema（键）
-                keys = data.length > 0 ? Object.keys(data[0]) : [];
-                gridData = data.map(item => {
-                    const row = keys.map(key => item[key]);
-                    row.push(''); // 为空操作列占位
-                    return row;
-                }) ;
+            let columns=[] ;
+            let jsonGridSchema = {};
+            let bSpecificRender = false ;
+            let dbRender = dbTblRenders[dbName] ;
+            if(dbRender){
+                let dbTblRender = dbTblRenders[dbName][tblName] ;
+                if(dbTblRender!=null){
+                    jsonGridSchema = dbTblRender(data,dbName,tblName) ;
+                    bSpecificRender = true ;
+                }
             }
+            console.log(jsonGridSchema) ;
+            if(bSpecificRender){
+                console.log('<====');
+                keys = jsonGridSchema.columns;
+                gridData = jsonGridSchema.gridData ;
+                columns = keys ;
+            }else{
+                if(Array.isArray(data)==false){
+                    console.log(data) ;
+                    let jSONkeys = Object.keys(data) ;
+                    let jsonFirst = data[jSONkeys[0]] ;
+                    keys = Object.keys(jsonFirst) ;
+                    gridData = jsonToArrays(data).values ;
+                }else{
+                    // 获取数据的schema（键）
+                    keys = data.length > 0 ? Object.keys(data[0]) : [];
+                    gridData = data.map(item => {
+                        const row = keys.map(key => item[key]);
+                        row.push(''); // 为空操作列占位
+                        return row;
+                    }) ;
+                }
+                console.log(keys) ;
+                console.log(gridData) ;
+                // 构建列定义
+                columns = keys.map(key => ({
+                    name: key.charAt(0).toUpperCase() + key.slice(1),
+                    id: key
+                }));
+            }
+
             
-            console.log(gridData) ;
-            // 构建列定义
-            let columns = keys.map(key => ({
-                name: key.charAt(0).toUpperCase() + key.slice(1),
-                id: key
-            }));
-            columns.unshift("Key");
+            
+            
+            //columns.unshift("Key");
             console.log(columns) ;
 
             // 添加操作列
@@ -746,7 +836,6 @@
         // 初始化页面
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化数据表格
-            //initDataGrid(sampleData.users,true);
             
             // 模拟连接状态
             const connectionStatus = document.getElementById('connection-status');
@@ -781,13 +870,7 @@
                     tableItems.forEach(i => i.classList.remove('active'));
                     this.classList.add('active');
                     
-                    /*
-                    // 在实际应用中，这里应该加载对应表格的数据
-                    const tableName = this.textContent.trim().split(' ')[1];
-                    if (sampleData[tableName]) {
-                        initDataGrid(sampleData[tableName],true);
-                    }
-                    */
+                   
                 });
             });
             
@@ -838,6 +921,18 @@
                 measurementId: "G-QPHWRTH6BH"
         };
 
+        // Firebase configuration for the second database
+        const firebaseConfig_Quiz = {
+                apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+                authDomain: "outpost-8d74e.firebaseapp.com",
+                databaseURL: "https://outpost-8d74e-uiz-d289c.asia-southeast1.firebasedatabase.app/",
+                projectId: "outpost-8d74e",
+                storageBucket: "outpost-8d74e.firebasestorage.app",
+                messagingSenderId: "724993324937",
+                appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+                measurementId: "G-QPHWRTH6BH"
+        };
+
         let app = null ; //firebase.initializeApp(firebaseConfig_ThaiDict);
         let auth = null ;//firebase.auth(); // Correct: auth() is the function
         let provider = null ;//new firebase.auth.GoogleAuthProvider();
@@ -856,7 +951,7 @@
         // Function to switch Firebase database
         function switchDatabase(config) {
             if(gDatabase==null){
-                app = firebase.initializeApp(firebaseConfig_ThaiDict);
+                app = firebase.initializeApp(config);
                 auth = firebase.auth(); // Correct: auth() is the function
                 provider = new firebase.auth.GoogleAuthProvider();
                 //firebase.initializeApp(config);
@@ -869,7 +964,7 @@
                     return firebase.app().delete().then(() => {
                         // Initialize Firebase with new config
                         firebase.initializeApp(config);
-                        const database = firebase.database();
+                        gDatabase = firebase.database();
                         console.log(`Switched to database: ${config.databaseURL}`);
                         return database;
                     }).catch(error => {
@@ -879,7 +974,7 @@
                 } else {
                     // Initialize Firebase if no app exists
                     firebase.initializeApp(config);
-                    const database = firebase.database();
+                    gDatabase = firebase.database();
                     console.log(`Initialized database: ${config.databaseURL}`);
                     return Promise.resolve(database);
                 }
@@ -900,6 +995,10 @@
                     break ;
                 case "dbOutpostTask":
                     switchDatabase(firebaseConfig_Task) ;
+                    gDbName = dbName ;
+                    break ;
+                case "dbOutpostQuiz":
+                    switchDatabase(firebaseConfig_Quiz) ;
                     gDbName = dbName ;
                     break ;
             }
