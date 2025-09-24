@@ -391,7 +391,13 @@
             let QuizPath = `/${UnitKey}/${QuizKey}`
             console.log(QuizPath) ;
             let urlQuiz=`http://localhost:3010/quizAnywhereV2.html?quiz=001223${QuizPath}` ;
-            ////http://localhost:3010/quizAnywhereV2.html?quiz=001223/Unit4/Quiz_Vocabulary4_1
+            window.open(urlQuiz,"_blank") ;
+        }
+
+        const _funcDoQuiz_025233 = async (rowCells) => {
+            let QuizKey = rowCells[0].data ;
+            console.log(QuizKey) ;
+            let urlQuiz=`http://localhost:3010/quizAnywhereV2.html?quiz=025233/${QuizKey}` ;
             window.open(urlQuiz,"_blank") ;
         }
 
@@ -411,6 +417,9 @@
             "dbOutpostQuiz":{
                 "/001223":{
                     actionClick:_funcDoQuiz_001223
+                },
+                "/025233":{
+                    actionClick:_funcDoQuiz_025233
                 }
             }
         };
@@ -538,11 +547,17 @@
 
         const dbRender_Quiz_025233_Th = (data,dbName,tblName)=>{
             console.log(`${dbName}==${tblName}`) ;
-
-            return {
-                columns:[],
+            let gridSchema = {
+                columns:["Quiz","# Questions"],
                 gridData:[]
             } ;
+            let keys = Object.keys(data) ;
+            for(let i=0;i<keys.length;i++){
+                let jsonQuiz = data[keys[i]] ;
+                let rowData = [keys[i],jsonQuiz.length] ;
+                gridSchema.gridData.push(rowData) ;
+            }
+            return gridSchema ;
         } ;
 
         const dbTblRenders={
