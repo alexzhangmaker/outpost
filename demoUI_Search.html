@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>即时搜索演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .search-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 18px 50px 18px 20px;
+            font-size: 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .search-box:focus {
+            border-color: #6a11cb;
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.2);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 22px;
+        }
+        
+        .clear-btn {
+            position: absolute;
+            right: 55px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 20px;
+            cursor: pointer;
+            display: none;
+        }
+        
+        .clear-btn:hover {
+            color: #6a11cb;
+        }
+        
+        .results-count {
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .results-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            padding: 10px;
+        }
+        
+        .result-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+        }
+        
+        .result-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-left-color: #6a11cb;
+        }
+        
+        .result-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .highlight {
+            background-color: #fff9c4;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .search-box {
+                padding: 15px 45px 15px 15px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>即时搜索演示</h1>
+        <p class="subtitle">输入关键词，实时查看搜索结果</p>
+        
+        <div class="search-container">
+            <input type="text" class="search-box" id="searchInput" placeholder="输入标题关键词进行搜索...">
+            <button class="clear-btn" id="clearBtn">×</button>
+            <div class="search-icon">🔍</div>
+        </div>
+        
+        <div class="results-count" id="resultsCount">找到 10 个结果</div>
+        
+        <div class="results-container" id="resultsContainer">
+            <!-- 搜索结果将在这里显示 -->
+        </div>
+    </div>
+
+    <script>
+        // 示例数据 - 包含title字段的对象数组
+        const data = [
+            { id: 1, title: "JavaScript高级程序设计" },
+            { id: 2, title: "深入理解计算机系统" },
+            { id: 3, title: "设计模式：可复用面向对象软件的基础" },
+            { id: 4, title: "算法导论" },
+            { id: 5, title: "你不知道的JavaScript" },
+            { id: 6, title: "React Native跨平台移动应用开发" },
+            { id: 7, title: "Python数据科学手册" },
+            { id: 8, title: "Node.js实战" },
+            { id: 9, title: "CSS权威指南" },
+            { id: 10, title: "Vue.js前端开发实战" },
+            { id: 11, title: "TypeScript编程指南" },
+            { id: 12, title: "Web性能权威指南" },
+            { id: 13, title: "HTTP权威指南" },
+            { id: 14, title: "深入浅出Node.js" },
+            { id: 15, title: "前端架构设计" }
+        ];
+
+        // 获取DOM元素
+        const searchInput = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsCount = document.getElementById('resultsCount');
+
+        // 初始显示所有数据
+        displayResults(data);
+
+        // 监听输入事件
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.trim().toLowerCase();
+            
+            // 显示或隐藏清除按钮
+            clearBtn.style.display = searchTerm ? 'block' : 'none';
+            
+            // 过滤数据
+            const filteredData = data.filter(item => 
+                item.title.toLowerCase().includes(searchTerm)
+            );
+            
+            // 显示结果
+            displayResults(filteredData, searchTerm);
+        });
+
+        // 清除搜索内容
+        clearBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            searchInput.focus();
+            clearBtn.style.display = 'none';
+            displayResults(data);
+        });
+
+        // 显示结果的函数
+        function displayResults(results, searchTerm = '') {
+            // 更新结果计数
+            resultsCount.textContent = `找到 ${results.length} 个结果`;
+            
+            // 清空结果容器
+            resultsContainer.innerHTML = '';
+            
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<div class="no-results">没有找到匹配的结果</div>';
+                return;
+            }
+            
+            // 创建并添加结果项
+            results.forEach(item => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                
+                // 高亮匹配的文本
+                let title = item.title;
+                if (searchTerm) {
+                    const regex = new RegExp(`(${searchTerm})`, 'gi');
+                    title = title.replace(regex, '<span class="highlight">$1</span>');
+                }
+                
+                resultItem.innerHTML = `
+                    <div class="result-title">${title}</div>
+                    <div class="result-id">ID: ${item.id}</div>
+                `;
+                
+                resultsContainer.appendChild(resultItem);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -302,6 +302,10 @@
                     correctButton.classList.remove('bg-gray-50', 'hover:bg-blue-100');
                     correctButton.classList.add('bg-green-200', 'border-green-400');
                 }
+
+                globalQuizInProgress.failed.push(currentQuestion) ;
+                globalQuizInProgress.fails++ ;
+
             }
 
             // Disable all option buttons
@@ -314,7 +318,7 @@
             nextButton.classList.remove('hidden');
         }
 
-        function showResults() {
+        async function showResults() {
             quizCard.classList.add('hidden');
             resultsCard.classList.remove('hidden');
             
@@ -323,7 +327,7 @@
             document.getElementById('final-percentage').textContent = `${percentage}%`;
 
             // Save results to LocalForage
-            localforage.setItem('thaiQuizLastResult', {
+            localforage.setItem('outpostQuizLastResult', {
                 score: score,
                 total: quizData.length,
                 percentage: percentage,
@@ -331,12 +335,15 @@
             }).catch(err => {
                 console.error("Error saving to LocalForage:", err);
             });
+
+            globalQuizInProgress.finished = true ;
+            await publishQuizResult(globalQuizInProgress) ;
         }
         
         async function checkPreviousScores() {
             const previousScoreContainer = document.getElementById('previous-score-container');
             try {
-                const lastResult = await localforage.getItem('thaiQuizLastResult');
+                const lastResult = await localforage.getItem('outpostQuizLastResult');
                 if (lastResult) {
                     document.getElementById('previous-score-text').textContent = 
                         `คะแนน: ${lastResult.score}/${lastResult.total} (${lastResult.percentage}%) - เมื่อ: ${lastResult.timestamp}`;
@@ -367,8 +374,6 @@
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', async (event)=>{
             console.log('DOMContentLoaded') ;
-
-            //http://localhost:3010/quizAnywhereV2.html?quiz=001223/Unit4/Quiz_Vocabulary4_1
             const queryString = window.location.search; // ?quiz=001223/Unit4/Quiz_Vocabulary4_1
             const urlParams = new URLSearchParams(queryString);
             let quizPath = urlParams.get('quiz'); // "purple"
@@ -411,6 +416,15 @@
         
     </script>
     <script>
+
+        let globalQuizInProgress={
+            quizPath:'',
+            quizTitle:"",
+            questions:0,
+            fails:0,
+            failed:[],
+            finished:false
+        } ;
         function formatDateYYYYMMDD(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -428,12 +442,28 @@
                 console.log('jsonQuizToday:', jsonQuizToday);
                 chooseQuiz(jsonQuizToday) ;
             }else{
+                
                 snapshot = await database.ref(quizPath).once('value');
                 let jsonQuizData = snapshot.val();
                 console.log(jsonQuizData) ;
                 quizData = jsonQuizData ;
                 startQuiz() ;
+
+                globalQuizInProgress.quizPath = quizPath ;
+                globalQuizInProgress.quizTitle =  quizPath;
+                globalQuizInProgress.questions = quizData.length;      
+                globalQuizInProgress.finished = false ;
+                globalQuizInProgress.fails = 0 ;
+                globalQuizInProgress.failed = [] ;
+
             }
+        }
+
+        async function publishQuizResult(jsonQuizProgress){
+            let cDate = new Date() ;
+
+            let refQuizLog = database.ref(`/Quiz_logs/${formatDateYYYYMMDD(cDate)}/${cDate.getTime()}`) ;
+            await refQuizLog.set(jsonQuizProgress) ;
         }
 
         function chooseQuiz(Quizs){
@@ -458,6 +488,13 @@
                             console.log(jsonQuizData) ;
                             quizData = jsonQuizData ;
                             startQuiz() ;
+
+                            globalQuizInProgress.quizPath = quizPath ;
+                            globalQuizInProgress.quizTitle =  quizPath;
+                            globalQuizInProgress.questions = quizData.length;      
+                            globalQuizInProgress.finished = false ;
+                            globalQuizInProgress.fails = 0 ;
+                            globalQuizInProgress.failed = [] ;
                         }
                     }
                 },

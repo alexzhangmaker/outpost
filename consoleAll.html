@@ -315,10 +315,6 @@
         </div>
     </div>
 
-    <!-- Firebase 和 GridJS 脚本 --
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
--->
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -327,80 +323,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
     <script src="./js/modalFactoryV2.js"></script>
+    <script src="./consoleAll_pluginDictDB.js"></script>
+    <script src="./consoleAll_pluginQuizDB.js"></script>
     <script>
         let gDatabase = null ;
         let gDbName = "" ;
         let gTblName = "" ;
     </script>
     <script>
-
-        const _funcDict_WordSet = (parameter) => {
-            alert("_funcDict_WordSet: " + parameter);
-        };
-
-        const _funcDict_PubAnki = async (rowCells) => {
-            console.log(rowCells) ;
-            let wordSetKey = rowCells[0].data ;
-            console.log(wordSetKey) ;
-            await _PublishWordSet2Anki(wordSetKey) ;
-        };
-
-        async function _PublishWordSet2Anki(wordSetKey) {
-            let keyEncode =encodeURIComponent(wordSetKey) ;
-            let cDate = new Date() ;
-
-            //let urlReviewSet = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/reviewSets/${keyEncode}.json`;
-            let urlWordSet = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${keyEncode}.json` ;
-            let jsonReviewSet={
-                "createdAt":cDate.toDateString(),
-                "nextReview":cDate.toDateString(),
-                "wordSetID":wordSetKey,
-                "title":wordSetKey,
-                "wordSetURL":urlWordSet
-            };
-            // 在实际应用中，这里应该调用Firebase的发布API
-
-            console.log(`发布项目: ${wordSetKey}`);
-            /*
-            await fetch(urlReviewSet, {
-                method: "PUT", // Use PATCH to update specific fields
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(jsonReviewSet),
-            }) ;
-            */
-
-            const reviewRef = gDatabase.ref(`thaiAnki/reviewSets/${keyEncode}`);
-            await reviewRef.set(jsonReviewSet) ;
-            alert(`已发布: ${wordSetKey}`);
-        }
-
-        const _funcDoAnki = async (rowCells) => {
-
-            let reviewKey = rowCells[0].data ;
-            console.log(reviewKey) ;
-            //alert('will _funcDoAnki') ;
-            let urlAnki=`http://localhost:3010/ankiAnywhereV2.html?reviewSet=${reviewKey}` ;
-            window.open(urlAnki,"_blank") ;
-        }
-
-        const _funcDoQuiz_001223 = async (rowCells) => {
-            let UnitKey = rowCells[1].data ;
-            let QuizKey = rowCells[0].data ;
-            let QuizPath = `/${UnitKey}/${QuizKey}`
-            console.log(QuizPath) ;
-            let urlQuiz=`http://localhost:3010/quizAnywhereV2.html?quiz=001223${QuizPath}` ;
-            window.open(urlQuiz,"_blank") ;
-        }
-
-        const _funcDoQuiz_025233 = async (rowCells) => {
-            let QuizKey = rowCells[0].data ;
-            console.log(QuizKey) ;
-            let urlQuiz=`http://localhost:3010/quizAnywhereV2.html?quiz=025233/${QuizKey}` ;
-            window.open(urlQuiz,"_blank") ;
-        }
-
         const actionTbl={
             "dbThaiDictionary":{
                 "/thaiWordList":{
@@ -424,6 +354,7 @@
             }
         };
 
+        /*Use this modalSchema to define plus a new record for various table*/
         const tblModalSchema={
             "dbThaiDictionary":{
                 "/thaiWordList":{
@@ -435,37 +366,7 @@
                         {"name":"级别","type":"string"}
                     ],
                     "callback":{
-                        onConfirm: async (formData) => {
-                            if(gDatabase==null)return ;
-
-                            let cKey = formData.key ;
-                            console.log("表单已确认, 接收到的数据:", formData);
-                            const ref = gDatabase.ref(`/thaiWordList/${formData.key}`);
-                            // Write data
-                            delete formData.key ;
-                            console.log(formData) ;
-                            ref.set(formData).then(() => {
-                                console.log('Data written successfully');
-                            }).catch((error) => {
-                                console.error('Error writing data:', error);
-                            });
-
-                            let cDate = new Date() ;
-                            let DateString = `${cDate.getFullYear()}${cDate.getMonth()+1}${cDate.getDate()}_${cDate.getTime()}` ;
-                            let urlTask = `https://outpost-asks-116208-c86c2-217ba.asia-southeast1.firebasedatabase.app/tasks/${DateString}.json` ;
-                            formData["Course"]="tdb" ;
-                            formData["taskStatus"]="pending" ;
-                            formData["wordSetID"]=`${cKey}` ;
-                            let putResponse = await fetch(urlTask, {
-                                method: 'PUT',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify(formData)
-                            });
-
-                            alert("数据已提交，请查看控制台！");
-                        },
+                        onConfirm: modalCallConfirm_DictWL,
                         onCancel: () => {
                             console.log("用户取消了操作。");
                         }
@@ -490,7 +391,15 @@
                         }
                     }
                 }
-            }
+            }/*,
+            "dbOutpostQuiz":{
+                "/001223":{
+                    actionClick:_funcDoQuiz_001223
+                },
+                "/025233":{
+                    actionClick:_funcDoQuiz_025233
+                }
+            }*/
         } ;
 
         const dbTbls={
@@ -519,75 +428,14 @@
             ]
         } ;
 
-        const dbRender_Quiz_001223_En = (data,dbName,tblName)=>{
-            console.log(`${dbName}==${tblName}`) ;
-
-            let gridSchema = {
-                columns:["Quiz","Unit","# Questions"],
-                gridData:[]
-            } ;
-
-            let keys = Object.keys(data) ;
-            for(let i=0;i<keys.length;i++){
-                let jsonUnit = data[keys[i]] ;
-
-                let quizKeys = Object.keys(jsonUnit) ;
-                for(let j=0;j<quizKeys.length;j++){
-                    let jsonQuiz = jsonUnit[quizKeys[j]] ;
-                    let jsonQuizSchema={
-                        QuizTitle:quizKeys[j],
-                        QuizUnit:keys[i],
-                        Questions:jsonQuiz.length
-                    } ;
-                    gridSchema.gridData.push([jsonQuizSchema.QuizTitle,jsonQuizSchema.QuizUnit,jsonQuizSchema.Questions])
-                }
-            }
-            return gridSchema ;
-        } ;
-
-        const dbRender_Quiz_025233_Th = (data,dbName,tblName)=>{
-            console.log(`${dbName}==${tblName}`) ;
-            let gridSchema = {
-                columns:["Quiz","# Questions"],
-                gridData:[]
-            } ;
-            let keys = Object.keys(data) ;
-            for(let i=0;i<keys.length;i++){
-                let jsonQuiz = data[keys[i]] ;
-                let rowData = [keys[i],jsonQuiz.length] ;
-                gridSchema.gridData.push(rowData) ;
-            }
-            return gridSchema ;
-        } ;
-
         const dbTblRenders={
             "dbOutpostQuiz":{
                     "/001223":dbRender_Quiz_001223_En,
                     "/025233":dbRender_Quiz_025233_Th
             }
-            
         } ;
     </script>
     <script>
-        // 模拟数据
-        const sampleData = {
-            users: [
-                { id: 1, name: '张三', email: 'zhangsan@example.com', age: 28, status: 'active', address: '北京市海淀区中关村大街1号' },
-                { id: 2, name: '李四', email: 'lisi@example.com', age: 32, status: 'active', address: '上海市浦东新区张江高科技园区' },
-                { id: 3, name: '王五', email: 'wangwu@example.com', age: 25, status: 'inactive', address: '广州市天河区天河路' },
-                { id: 4, name: '赵六', email: 'zhaoliu@example.com', age: 45, status: 'suspended', address: '深圳市南山区科技园' },
-                { id: 5, name: '钱七', email: 'qianqi@example.com', age: 29, status: 'active', address: '杭州市西湖区文三路' }
-            ],
-            products: [
-                { id: 101, name: '智能手机', price: 3999, category: '电子产品', stock: 45 },
-                { id: 102, name: '笔记本电脑', price: 8999, category: '电子产品', stock: 12 }
-            ],
-            orders: [
-                { id: 1001, userId: 1, productId: 101, quantity: 1, total: 3999, date: '2023-05-15' },
-                { id: 1002, userId: 2, productId: 102, quantity: 1, total: 8999, date: '2023-05-16' }
-            ]
-        };
-
         // 初始化GridJS表格
         let grid;
         function jsonToArrays(obj) {
@@ -633,50 +481,6 @@
                 values: valueArray
             };
         }
-
-        function jsonToArraysV0(obj) {
-            // 获取所有唯一的键（包括嵌套对象的键）
-            const allKeys = new Set();
-            
-            // 遍历对象的所有属性
-            Object.values(obj).forEach(item => {
-                Object.keys(item).forEach(key => {
-                    allKeys.add(key);
-                });
-            });
-            
-            // 将 Set 转换为数组，并确保特定的顺序（如果需要的话）
-            const keyArray = Array.from(allKeys);
-
-            // 创建值数组
-            const valueArray = Object.entries(obj).map(([mainKey, item]) => {
-                // 为每个主键创建一个数组，包含主键本身和所有属性的值
-                const row = [mainKey];
-                
-                // 按照 keyArray 的顺序（除了第一个主键）添加值
-                keyArray.forEach(key => {
-                    if (key in item) {
-                        row.push(item[key]);
-                    } else {
-                        row.push(null); // 或者空字符串 ''，根据需要调整
-                    }
-                });
-                
-                return row;
-            });
-            
-            // 将主键 'key' 添加到键数组的开头
-            keyArray.unshift('key');
-            
-            return {
-                keys: keyArray,
-                values: valueArray
-            };
-        }
-
-        
-
-        
 
         function initDataGrid(data,dbName,tblName) {
             // 如果已有表格实例，先销毁
@@ -727,12 +531,6 @@
                 }));
             }
 
-            
-            
-            
-            //columns.unshift("Key");
-            console.log(columns) ;
-
             // 添加操作列
             columns.push({
                 name: '操作',
@@ -751,7 +549,6 @@
                         gridjs.h('i', { 
                             className: 'bi bi-trash action-btn delete',
                             onClick: (event) => {
-                                //deleteRecord(row.cells)
                                 let localFunc = actionTbl[dbName][tblName].actionDelete ;
                                 localFunc('delete') ;
                             }
@@ -759,9 +556,7 @@
                         gridjs.h('i', { 
                             className: 'bi bi-eye action-btn custom',
                             onClick: (event) => {
-                                //viewDetails(row.cells) ;
                                 console.log(row.cells) ;
-                                
                                 let localFunc = actionTbl[dbName][tblName].actionClick ;
                                 localFunc(row.cells) ;
                             }
@@ -775,10 +570,7 @@
             grid = new gridjs.Grid({
                 columns: columns,
                 data: gridData,
-                pagination: {
-                    enabled: true,
-                    limit: 10
-                },
+                pagination: {enabled: true,limit: 10},
                 search: {
                     enabled: true,
                     selector: (cell, rowIndex, cellIndex) => {
@@ -1047,11 +839,13 @@
     </script>
     <script>
         document.querySelector("#idBTNPlusRecord").addEventListener('click',async (event)=>{
-            alert(`idBTNPlusRecord:${gDbName}-${gTblName}`) ;
             console.log(gDbName) ;
             console.log(gTblName) ;
             //tblModalSchema
-            let tblSchema = tblModalSchema[gDbName][gTblName].schema ;
+            let schemaDB = tblModalSchema[gDbName] ;
+            if(schemaDB==null|| schemaDB==undefined) return ;
+            if(schemaDB[gTblName]==null|| schemaDB[gTblName]==undefined) return ;
+            let tblSchema = schemaDB[gTblName].schema ;
             console.log(tblSchema) ;
 
             let tblModalCallback = tblModalSchema[gDbName][gTblName].callback ;

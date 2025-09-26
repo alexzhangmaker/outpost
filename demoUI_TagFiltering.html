@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>标签过滤系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .filter-section {
+            margin-bottom: 30px;
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .results-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .data-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .data-card h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .tags-container {
+            margin-top: 10px;
+        }
+        
+        .tag {
+            display: inline-block;
+            background: #e0e0e0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .selected-tags {
+            margin-top: 10px;
+        }
+        
+        .selected-tag {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        
+        .no-results {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+        
+        .filter-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>标签过滤系统</h1>
+        
+        <div class="filter-section">
+            <label for="tag-selector">选择标签进行过滤：</label>
+            <select id="tag-selector" multiple></select>
+            <div class="selected-tags" id="selected-tags-display"></div>
+            <div class="filter-info" id="filter-info">未选择任何标签，显示所有项目</div>
+        </div>
+        
+        <div class="results-section" id="results-container">
+            <!-- 结果将在这里动态显示 -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        // 示例数据
+        const data = [
+            { 
+                id: 1, 
+                title: "React 开发指南", 
+                tags: ["前端", "React", "JavaScript", "框架"],
+                description: "深入学习 React 框架的最佳实践"
+            },
+            { 
+                id: 2, 
+                title: "Vue.js 实战教程", 
+                tags: ["前端", "Vue", "JavaScript", "框架"],
+                description: "从零开始掌握 Vue.js 开发"
+            },
+            { 
+                id: 3, 
+                title: "Node.js 后端开发", 
+                tags: ["后端", "Node.js", "JavaScript", "服务器"],
+                description: "使用 Node.js 构建高性能后端服务"
+            },
+            { 
+                id: 4, 
+                title: "Python 数据分析", 
+                tags: ["数据分析", "Python", "Pandas", "机器学习"],
+                description: "利用 Python 进行数据分析和可视化"
+            },
+            { 
+                id: 5, 
+                title: "Docker 容器化部署", 
+                tags: ["运维", "Docker", "容器", "部署"],
+                description: "使用 Docker 简化应用部署流程"
+            },
+            { 
+                id: 6, 
+                title: "TypeScript 类型系统", 
+                tags: ["前端", "TypeScript", "JavaScript", "类型"],
+                description: "深入理解 TypeScript 的类型系统"
+            }
+        ];
+
+        // 获取所有唯一标签
+        const allTags = [...new Set(data.flatMap(item => item.tags))];
+        let selectedTags = [];
+
+        // 初始化 Choices.js
+        const tagSelector = new Choices('#tag-selector', {
+            removeItemButton: true,
+            maxItemCount: 10,
+            searchEnabled: true,
+            duplicateItemsAllowed: false,
+            placeholderValue: '输入或选择标签...',
+            searchPlaceholderValue: '搜索标签...',
+            addItems: true, // 允许添加新项
+            addItemFilter: null // 允许任何输入作为新项
+        });
+
+        // 添加所有标签作为选项
+        tagSelector.setChoices(
+            allTags.map(tag => ({ value: tag, label: tag })),
+            'value',
+            'label',
+            true
+        );
+
+        // 修复：监听添加和移除事件
+        tagSelector.passedElement.element.addEventListener('addItem', (e) => {
+            updateSelectedTags();
+            filterAndDisplayData();
+        });
+
+        tagSelector.passedElement.element.addEventListener('removeItem', (e) => {
+            updateSelectedTags();
+            filterAndDisplayData();
+        });
+
+        // 修复：正确获取选中标签
+        function updateSelectedTags() {
+            selectedTags = tagSelector.getValue().map(item => item.value);
+            updateSelectedTagsDisplay();
+        }
+
+        // 更新选中标签的显示
+        function updateSelectedTagsDisplay() {
+            const displayContainer = document.getElementById('selected-tags-display');
+            displayContainer.innerHTML = '';
+            
+            selectedTags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'selected-tag';
+                tagElement.textContent = tag;
+                tagElement.onclick = () => removeTag(tag);
+                displayContainer.appendChild(tagElement);
+            });
+        }
+
+        // 移除标签
+        function removeTag(tagToRemove) {
+            // 直接从 Choices.js 中移除项目
+            tagSelector.removeActiveItemsByValue([tagToRemove]);
+            updateSelectedTags();
+            filterAndDisplayData();
+        }
+
+        // 过滤和显示数据
+        function filterAndDisplayData() {
+            const resultsContainer = document.getElementById('results-container');
+            const filterInfo = document.getElementById('filter-info');
+            
+            let filteredData;
+            
+            if (selectedTags.length === 0) {
+                filteredData = data;
+                filterInfo.textContent = `未选择任何标签，显示所有 ${data.length} 个项目`;
+            } else {
+                // AND 逻辑：必须包含所有选中的标签
+                filteredData = data.filter(item => 
+                    selectedTags.every(selectedTag => item.tags.includes(selectedTag))
+                );
+                filterInfo.textContent = `根据选中的 ${selectedTags.length} 个标签过滤，找到 ${filteredData.length} 个匹配项目`;
+            }
+            
+            // 显示结果
+            displayResults(filteredData, resultsContainer);
+        }
+
+        // 显示结果
+        function displayResults(items, container) {
+            container.innerHTML = '';
+            
+            if (items.length === 0) {
+                container.innerHTML = '<div class="no-results">没有找到匹配的项目</div>';
+                return;
+            }
+            
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'data-card';
+                
+                card.innerHTML = `
+                    <h3>${item.title}</h3>
+                    <p>${item.description}</p>
+                    <div class="tags-container">
+                        ${item.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // 添加键盘快捷键：按 ESC 清除所有选择
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                tagSelector.removeActiveItems();
+                updateSelectedTags();
+                filterAndDisplayData();
+            }
+        });
+
+        // 初始显示所有数据
+        updateSelectedTags();
+        filterAndDisplayData();
+
+        // 调试：打印当前状态
+        console.log('初始化完成，可用标签:', allTags);
+    </script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TUI Editor with KaTeX</title>
+  <!-- Toast UI Editor CSS -->
+  <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+  <!-- KaTeX CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" />
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    #editor { max-width: 800px; margin: auto; }
+  </style>
+</head>
+<body>
+  <h2>TUI Editor with KaTeX Support</h2>
+  <div id="editor"></div>
+
+  <!-- Toast UI Editor JS -->
+  <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+  <!-- KaTeX JS -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+  <script>
+    const editor = new toastui.Editor({
+      el: document.querySelector('#editor'),
+      height: '500px',
+      initialEditType: 'markdown',
+      previewStyle: 'vertical',
+      initialValue: `
+# 数学公式示例
+
+这是一个行内公式：$E = mc^2$
+
+这是一个块级公式：
+
+$$
+\\int_{a}^{b} f(x)\\,dx = F(b) - F(a)
+$$
+      `
+    });
+
+    function renderKaTeXInPreview() {
+      const previewEl = document.querySelector('.toastui-editor-defaultUI .toastui-editor-contents');
+      if (!previewEl) return;
+
+      // 渲染块级公式
+      previewEl.querySelectorAll('p').forEach(p => {
+        const text = p.textContent.trim();
+        if (text.startsWith('$$') && text.endsWith('$$')) {
+          const formula = text.slice(2, -2);
+          try {
+            const html = katex.renderToString(formula, { displayMode: true });
+            p.innerHTML = html;
+          } catch (err) {
+            console.error('KaTeX block render error:', err);
+          }
+        }
+      });
+
+      // 渲染行内公式
+      previewEl.querySelectorAll('p').forEach(p => {
+        p.innerHTML = p.innerHTML.replace(/\$(.+?)\$/g, (match, formula) => {
+          try {
+            return katex.renderToString(formula, { displayMode: false });
+          } catch (err) {
+            console.error('KaTeX inline render error:', err);
+            return match;
+          }
+        });
+      });
+    }
+
+    // 每次内容变化后重新渲染公式
+    editor.on('change', () => {
+      setTimeout(renderKaTeXInPreview, 50); // 等待 DOM 更新
+    });
+
+    // 初始渲染
+    setTimeout(renderKaTeXInPreview, 100);
+  </script>
+</body>
+</html>

@@ -25,6 +25,8 @@
             line-height: 1.6;
             color: var(--text-color);
             background-color: #f9f9f9;
+
+            overflow-y: hidden;
         }
         
         .container {
@@ -33,6 +35,9 @@
             margin: 0 auto;
             padding: 20px;
             gap: 20px;
+
+            height:100vh;
+            overflow-y: auto;
         }
         
         .controls-panel {
@@ -238,11 +243,11 @@
 <body>
     <div class="container">
         <div class="controls-panel">
-            <h1>打印格式化设置</h1>
+            <h1 style="font-size:24px;">打印格式化设置</h1>
             
             <div class="control-group">
-                <h2>文档输入</h2>
-                <label for="markdown-url">Markdown URL</label>
+                <h2 style="font-size:20px;">文档输入</h2>
+                <label style="font-size:18px;" for="markdown-url">Markdown URL</label>
                 <input type="text" id="markdown-url" placeholder="输入Markdown文档URL">
                 <button id="load-markdown">加载文档</button>
                 <button id="load-sample">加载示例文档</button>
@@ -332,7 +337,7 @@
         </div>
         
         <div class="preview-panel">
-            <h1>打印预览</h1>
+            <h1 style="display: none;">打印预览</h1>
             <div class="preview-container">
                 <div class="preview-content" id="preview-content">
                     <!-- Markdown内容将在这里渲染 -->
