@@ -161,6 +161,19 @@ async function saveNoteContent2Cloud(noteID,content){
     }
 }
 
+async function updateNoteTitleInCloud(noteID,folderID,title){
+    try {
+        const noteInTblRef = globalDatabase.ref(`notesTbl/${noteID}/title`);
+        const snapshot = await noteInTblRef.set(title);
+
+        const folderNoteRef = globalDatabase.ref(`noteFolders/${folderID}/notes/${noteID}/title`);
+        await folderNoteRef.set(title) ;
+
+    } catch (error) {
+        console.error('Failed to read data:', error);
+    }
+}
+
 async function saveNote2Cloud(jsonNote){
     console.log(jsonNote) ;
     try {

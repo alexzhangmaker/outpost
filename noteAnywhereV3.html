@@ -348,6 +348,7 @@
             flex-direction: column;
             height: 100%;
             position: relative;
+            overflow-y: hidden;
         }
 
         .editor-toolbar {
@@ -458,17 +459,22 @@
             border-left: 3px solid var(--secondary-color);
             padding-left: 10px;
             margin-left: -13px;
+            font-size: 0.8em;
         }
 
         .outline-h2 {
             font-weight: 400;
             padding-left: 15px;
+            font-size: 0.7em;
+
         }
 
         .outline-h3 {
             font-size: 0.9rem;
             padding-left: 25px;
             color: var(--text-light);
+            font-size: 0.6em;
+
         }
 
         /* 响应式设计 */
@@ -654,6 +660,7 @@
     <!-- 引入KaTeX JS -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="./noteAnywhereData.js"></script>
+    <script src="./outpostPlugins.js"></script>
     <script>
         // 等待DOM完全加载
         document.addEventListener('DOMContentLoaded', async function() {
@@ -741,7 +748,7 @@
                     // 移除加载提示
                     document.getElementById('editor-loading').style.display = 'none';
                     
-
+                    /*
                     //将以下代码添加到你的JavaScript中，在初始化编辑器之前执行：
                     // 扩展TUI Editor的自定义渲染器，处理数学公式
                     const customHTMLRenderer = {
@@ -789,6 +796,7 @@
                             }
                         }
                     };
+                    */
 
                     // 初始化编辑器
                     editorInstance = new toastui.Editor({
@@ -907,6 +915,44 @@
                             event.preventDefault() ;
                             let noteID = tagNote.getAttribute("data-note-id") ;
                             window.open(`./noteMarkdownPrint.html?app=noteAnywhere&note=${noteID}`,"_blank") ;
+                        }) ;
+                        //idBTNSaveNote
+                        tagNote.querySelector('#idBTNSaveNote').addEventListener('click',async (event)=>{
+                            event.stopPropagation() ;
+                            event.preventDefault() ;
+                            let noteID = tagNote.getAttribute("data-note-id") ;
+                            const markdownContent = editorInstance.getMarkdown();
+                            console.log(markdownContent);
+                            await saveNoteContent2Cloud(noteID,markdownContent) ;
+                        }) ;
+                        //idBTNEditNoteMeta
+                        tagNote.querySelector('#idBTNEditNoteMeta').addEventListener('click',async (event)=>{
+                            event.stopPropagation() ;
+                            event.preventDefault() ;
+                            let noteID = tagNote.getAttribute("data-note-id") ;
+                            let folderID = folder.id ;
+
+                            // 1. 定义你的表单结构 (Schema)
+                            const noteModalSchema = [
+                                { "name": "title", "type": "string", "placeholder": "请输入笔记标题" },
+                            ];
+
+                            // 2. 定义回调函数
+                            const noteModalCallbacks = {
+                                onConfirm: async (formData) => {
+                                    console.log("表单已确认, 接收到的数据:", formData);
+                                    await updateNoteTitleInCloud(noteID,folderID,formData.title) ;
+                                    tagNote.querySelector(".note-title").innerHTML=`${formData.title}` ;
+                                    alert("数据已提交，请查看控制台！"+formData.title);
+                                },
+                                onCancel: () => {
+                                    console.log("用户取消了操作。");
+                                }
+                            };
+
+                            // 3. 调用函数创建并显示 Modal
+                            createFormModal('新建项目', noteModalSchema, noteModalCallbacks);
+
                         }) ;
                     }
                    
@@ -1194,6 +1240,7 @@
     </script>
 
     <script>
+        /*
         // 使用KaTeX渲染数学公式的函数
         function renderMathWithKaTeX() {
             // 渲染行内公式
@@ -1225,6 +1272,7 @@
                 }
             });
         }
+        */
 
 
         function renderKaTeXInPreview() {
