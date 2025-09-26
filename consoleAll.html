@@ -819,6 +819,15 @@
             alert('查看详情: ' + JSON.stringify(cells.map(cell => cell.data)));
         }
 
+        function emptyTblList(){
+            let tagTblList = document.querySelector("#table-list") ;
+            tagTblList.innerHTML=`` ;
+            if (grid) {
+                grid.destroy();
+                document.querySelector("#data-grid-wrapper").innerHTML='' ;
+            }
+        }
+
         function renderTblList(dbName){
             let tables = dbTbls[dbName] ;
             if(tables==undefined || tables ==null)return ;
@@ -872,6 +881,7 @@
                     connectionStatus.classList.add('disconnected');
                     connectionText.textContent = '未连接';
                     connectBtn.innerHTML = '<i class="bi bi-plug"></i> 连接数据库';
+                    emptyTblList() ;
                 }
             });
             
@@ -884,8 +894,6 @@
                 item.addEventListener('click', function() {
                     tableItems.forEach(i => i.classList.remove('active'));
                     this.classList.add('active');
-                    
-                   
                 });
             });
             
@@ -978,10 +986,10 @@
                     // Delete the existing app instance
                     return firebase.app().delete().then(() => {
                         // Initialize Firebase with new config
-                        firebase.initializeApp(config);
+                        app = firebase.initializeApp(config);
                         gDatabase = firebase.database();
                         console.log(`Switched to database: ${config.databaseURL}`);
-                        return database;
+                        return gDatabase;
                     }).catch(error => {
                         console.error("Error switching database:", error);
                         throw error;

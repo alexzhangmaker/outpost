@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研究笔记 - 专注写作与学习</title>
+    <!-- TUI Editor CSS -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --background-color: #f8f9fa;
+            --sidebar-bg: #ffffff;
+            --border-color: #e0e0e0;
+            --text-color: #2c3e50;
+            --text-light: #7f8c8d;
+            --header-height: 60px;
+            --folder-bg: #f5f7fa;
+            --file-bg: #ffffff;
+            --folder-hover: #e8f4fd;
+            --file-hover: #f0f7ff;
+            --folder-active: #d4e9ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Serif SC', serif;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 顶部导航栏样式 */
+        .header {
+            height: var(--header-height);
+            background-color: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+
+        .app-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .auth-button, .settings-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .auth-button:hover, .settings-button:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .auth-icon, .settings-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--primary-color);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .sidebar-header {
+            /*padding: 20px;*/
+            padding-top: 10px;
+            padding-bottom: 10px;
+            padding-left: 20px;
+            padding-right: 20px;
+            border-bottom: 1px solid var(--border-color);
+
+        }
+
+        .app-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .notes-container {
+            flex: 1;
+            overflow-y: auto;
+            /*padding: 10px 0;*/
+        }
+
+        /* Accordion文件夹样式 */
+        .folder {
+            margin-bottom: 5px;
+        }
+
+        .folder-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            background-color: var(--folder-bg);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .folder-header:hover {
+            background-color: var(--folder-hover);
+        }
+
+        .folder-header.active {
+            background-color: var(--folder-active);
+            border-left: 3px solid var(--secondary-color);
+        }
+
+        .folder-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
+            transition: transform 0.2s;
+        }
+
+        .folder.open .folder-icon {
+            transform: rotate(90deg);
+        }
+
+        .folder-name {
+            flex: 1;
+        }
+
+        .folder-count {
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+        }
+
+        .folder-content {
+            display: none;
+            background-color: var(--file-bg);
+        }
+
+        .folder.open .folder-content {
+            display: block;
+        }
+
+        /* 笔记文件样式 */
+        .note-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px 10px 40px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+            background-color: var(--file-bg);
+        }
+
+        .note-item:hover {
+            background-color: var(--file-hover);
+        }
+
+        .note-item.active {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 3px solid var(--secondary-color);
+        }
+
+        .note-icon {
+            width: 14px;
+            height: 14px;
+            margin-right: 10px;
+            color: var(--text-light);
+        }
+
+        .note-info {
+            flex: 1;
+        }
+
+        .note-title {
+            font-weight: 500;
+            margin-bottom: 3px;
+            font-size: 0.9rem;
+        }
+
+        .note-date {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        /* 笔记操作工具栏 */
+        .notes-toolbar {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--sidebar-bg);
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .save-status {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .save-icon {
+            width: 14px;
+            height: 14px;
+            margin-right: 5px;
+        }
+
+        .saved .save-icon {
+            color: #27ae60;
+        }
+
+        .unsaved .save-icon {
+            color: #e74c3c;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .toolbar-right {
+            display: flex;
+        }
+
+        .toolbar-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            color: var(--primary-color);
+        }
+
+        .toolbar-btn:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .toolbar-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* 编辑器区域样式 */
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+
+        .editor-toolbar {
+            /*padding: 10px 20px;*/
+            border-bottom: 1px solid var(--border-color);
+            background-color: white;
+        }
+
+        .editor-content {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* TUI Editor 自定义样式 */
+        .toastui-editor {
+            font-family: 'Noto Serif SC', serif !important;
+            font-size: 16px;
+            line-height: 1.7;
+            height: 100%;
+        }
+
+        .toastui-editor-contents {
+            font-family: 'Noto Serif SC', serif !important;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .toastui-editor-contents h1,
+        .toastui-editor-contents h2,
+        .toastui-editor-contents h3 {
+            font-weight: 700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            color: var(--primary-color);
+            scroll-margin-top: 20px; /* 为跳转添加滚动边距 */
+        }
+
+        .toastui-editor-contents h1 {
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.3em;
+        }
+
+        .toastui-editor-contents h2 {
+            font-size: 1.5rem;
+        }
+
+        .toastui-editor-contents h3 {
+            font-size: 1.3rem;
+        }
+
+        .toastui-editor-contents p {
+            margin-bottom: 1em;
+        }
+
+        .toastui-editor-contents blockquote {
+            border-left: 4px solid var(--secondary-color);
+            padding-left: 1em;
+            margin: 1.5em 0;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        .toastui-editor-contents code {
+            font-family: 'Courier New', monospace;
+            background-color: rgba(52, 152, 219, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .toastui-editor-contents pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+
+        /* 大纲侧边栏 */
+        .outline-sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .outline-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .outline-item {
+            margin-bottom: 8px;
+            padding-left: 10px;
+            cursor: pointer;
+            transition: color 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .outline-item:hover {
+            color: var(--secondary-color);
+            border-left-color: var(--secondary-color);
+        }
+
+        .outline-h1 {
+            font-weight: 500;
+            border-left: 3px solid var(--secondary-color);
+            padding-left: 10px;
+            margin-left: -13px;
+        }
+
+        .outline-h2 {
+            font-weight: 400;
+            padding-left: 15px;
+        }
+
+        .outline-h3 {
+            font-size: 0.9rem;
+            padding-left: 25px;
+            color: var(--text-light);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .outline-sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 250px;
+            }
+        }
+        
+        /* 加载状态 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 1.2rem;
+            color: var(--text-light);
+        }
+        
+        /* 高亮跳转的标题 */
+        .heading-highlight {
+            background-color: rgba(52, 152, 219, 0.1);
+            transition: background-color 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="header">
+        <div class="header-left">
+            <!-- Home图标 -->
+            <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <div class="app-title">研究笔记</div>
+        </div>
+        <div class="header-right">
+            <!-- 认证按钮 -->
+            <button class="auth-button" id="auth-button">
+                <svg class="auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+            <!-- 设置按钮 -->
+            <button class="settings-button" id="settings-button">
+                <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
+            <!-- 用户信息（登录后显示） -->
+            <div class="user-info" id="user-info" style="display: none;">
+                <img class="user-avatar" id="user-avatar" src="" alt="用户头像">
+                <span class="user-name" id="user-name"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <!-- 左侧笔记列表 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <!-----
+                <div class="app-title">研究笔记</div>
+                <div class="app-subtitle">专注写作与学习</div>
+                -->
+                <div style="display: flex;flex-direction: row;justify-content: space-between;align-items: center;gap:10px;width:100%;">
+                    <input type="text" id="fname" name="fname" style="flex-grow: 1;border: none; border-bottom: 1px solid #000;outline: none;" placeholder="searching ...">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 25"><path fill="#000000" d="M11.25 5.75a.75.75 0 0 0 0 1.5A4.75 4.75 0 0 1 16 12a.75.75 0 0 0 1.5 0a6.25 6.25 0 0 0-6.251-6.25"/><path fill="#000000" fill-rule="evenodd" d="M2 11.999C2 6.89 6.142 2.75 11.25 2.75s9.25 4.14 9.25 9.248a9.2 9.2 0 0 1-2.202 5.99l3.481 3.48a.75.75 0 1 1-1.06 1.061l-3.482-3.481a9.2 9.2 0 0 1-5.987 2.198c-5.108 0-9.25-4.14-9.25-9.248m9.25-7.748a7.749 7.749 0 1 0 0 15.496a7.749 7.749 0 1 0 0-15.496" clip-rule="evenodd"/></svg>                </div>
+            </div>
+            
+            <div class="notes-container" id="notes-container">
+                <!-- 文件夹和笔记将通过JavaScript动态生成 -->
+            </div>
+            
+            <!-- 笔记操作工具栏 -->
+            <div class="notes-toolbar">
+                <div class="toolbar-left">
+                    <div class="save-status saved" id="save-status">
+                        <svg class="save-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        <span>已保存</span>
+                    </div>
+                </div>
+                <div class="toolbar-right">
+                    <button class="toolbar-btn" id="new-note-btn" title="新建笔记">
+                        <svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="12" y1="18" x2="12" y2="12"></line>
+                            <line x1="9" y1="15" x2="15" y2="15"></line>
+                        </svg>
+                    </button>
+                    <button class="toolbar-btn" id="save-cloud-btn" title="保存到云端">
+                        <svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
+                            <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
+                            <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                    </button>
+                    <button class="toolbar-btn" id="tag-btn" title="标签管理">
+                        <svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 中间编辑器区域 -->
+        <div class="editor-container">
+            <div class="editor-toolbar" id="toolbar"></div>
+            <div class="editor-content" id="editor">
+                <div class="loading" id="editor-loading">编辑器加载中...</div>
+            </div>
+        </div>
+        
+        <!-- 右侧大纲视图 -->
+        <div class="outline-sidebar">
+            <div class="outline-title">文档大纲</div>
+            <div id="outline-container">
+                <!-- 大纲内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <!-- TUI Editor 脚本 -->
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+    <script src="./noteAnywhereData.js"></script>
+    <script>
+        // 等待DOM完全加载
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 示例数据 - 文件夹和笔记
+            let folders = [];
+            let currentNote = null;
+            let currentFolder = null;
+            let isUnsaved = false;
+            let autoSaveTimer = null;
+            let editorInstance = null;
+            
+            // 从本地存储加载数据
+            async function loadFromLocalStorage() {
+                const savedData = localStorage.getItem('notesAnywhere');
+                if (savedData) {
+                    try {
+                        folders = JSON.parse(savedData);
+                        console.log('从本地存储加载数据成功');
+                    } catch (e) {
+                        console.error('解析本地存储数据失败:', e);
+                        await initDefaultData();
+                    }
+                } else {
+                    await initDefaultData();
+                }
+            }
+            
+            // 初始化默认数据
+            async function initDefaultData() {
+
+                /*folders = mockData_folders ;*/
+                await _loadEveryNotes() ;
+                folders = globalFolders ;//await loadFolders() ;
+                console.log(folders) ;
+            }
+            
+            // 保存到本地存储
+            function saveToLocalStorage() {
+                try {
+                    console.log(`saveToLocalStorage: ${folders}`) ;
+                    localStorage.setItem('notesAnywhere', JSON.stringify(folders));
+                    console.log('数据已保存到本地存储');
+                    updateSaveStatus(true);
+                } catch (e) {
+                    console.error('保存到本地存储失败:', e);
+                    updateSaveStatus(false);
+                }
+            }
+            
+            // 自动保存功能
+            function setupAutoSave() {
+                // 清除之前的定时器
+                if (autoSaveTimer) {
+                    clearTimeout(autoSaveTimer);
+                }
+                
+                // 设置新的定时器（5秒后自动保存）
+                autoSaveTimer = setTimeout(() => {
+                    if (isUnsaved && currentNote) {
+                        saveToLocalStorage();
+                        isUnsaved = false;
+                    }
+                }, 5000);
+            }
+            
+            // 更新保存状态显示
+            function updateSaveStatus(saved) {
+                const saveStatus = document.getElementById('save-status');
+                if (saved) {
+                    saveStatus.classList.remove('unsaved');
+                    saveStatus.classList.add('saved');
+                    saveStatus.querySelector('span').textContent = '已保存';
+                } else {
+                    saveStatus.classList.remove('saved');
+                    saveStatus.classList.add('unsaved');
+                    saveStatus.querySelector('span').textContent = '未保存';
+                    isUnsaved = true;
+                    setupAutoSave();
+                }
+            }
+            
+            // 初始化编辑器
+            async function initEditor() {
+                try {
+                    // 移除加载提示
+                    document.getElementById('editor-loading').style.display = 'none';
+                    
+                    // 初始化编辑器
+                    editorInstance = new toastui.Editor({
+                        el: document.querySelector('#editor'),
+                        height: '100%',
+                        initialEditType: 'markdown',
+                        previewStyle: 'vertical',
+                        usageStatistics: false,
+                        toolbarItems: [
+                            ['heading', 'bold', 'italic', 'strike'],
+                            ['hr', 'quote'],
+                            ['ul', 'ol', 'task'],
+                            ['table', 'link'],
+                            ['code', 'codeblock']
+                        ]
+                    });
+                    
+                    // 监听编辑器内容变化，更新大纲
+                    editorInstance.on('change', () => {
+                        updateOutline();
+                        // 更新当前笔记内容
+                        if (currentNote) {
+                            currentNote.content = editorInstance.getMarkdown();
+                            currentNote.lastSaved = Date.now();
+                            updateSaveStatus(false);
+                        }
+                    });
+                    
+                    // 从本地存储加载数据
+                    await loadFromLocalStorage();
+                    
+                    // 渲染文件夹和笔记列表
+                    renderFolders();
+                } catch (error) {
+                    console.error('编辑器初始化失败:', error);
+                    document.getElementById('editor-loading').textContent = '编辑器加载失败，请刷新页面重试';
+                }
+            }
+            
+            // 渲染文件夹和笔记
+            function renderFolders() {
+                const notesContainer = document.getElementById('notes-container');
+                notesContainer.innerHTML = '';
+                
+                folders.forEach(folder => {
+                    // 创建文件夹元素
+                    const folderElement = document.createElement('div');
+                    folderElement.className = 'folder';
+                    folderElement.setAttribute('data-folder-id', folder.id);
+                    folderElement.innerHTML = `
+                        <div class="folder-header">
+                            <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="6 3 20 3 20 21 4 21 4 8"></polygon>
+                                <polyline points="4 3 4 8 10 8 10 3"></polyline>
+                            </svg>
+                            <span class="folder-name">${folder.name}</span>
+                            <span class="folder-count">${folder.notes.length}</span>
+                        </div>
+                        <div class="folder-content">
+                            ${folder.notes.map(note => `
+                                <div class="note-item" data-note-id="${note.id}">
+                                    <svg class="note-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10 9 9 9 8 9"></polyline>
+                                    </svg>
+                                    <div class="note-info">
+                                        <div class="note-title">${note.title}</div>
+                                        <div class="note-date">${note.date}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    
+                    // 文件夹点击事件 - 展开/折叠
+                    const folderHeader = folderElement.querySelector('.folder-header');
+                    folderHeader.addEventListener('click', (e) => {
+                        // 如果点击的是文件夹名称或图标，切换展开状态
+                        if (e.target.classList.contains('folder-name') || 
+                            e.target.classList.contains('folder-icon') ||
+                            e.target.classList.contains('folder-header')) {
+                            folderElement.classList.toggle('open');
+                        }
+                        
+                        // 设置当前选中的文件夹
+                        setCurrentFolder(folder.id);
+                    });
+                    
+                    // 笔记点击事件
+                    folderElement.querySelectorAll('.note-item').forEach(noteElement => {
+                        noteElement.addEventListener('click', async (e) => {
+                            e.stopPropagation(); // 防止触发文件夹点击事件
+                            
+                            // 移除所有active类
+                            document.querySelectorAll('.note-item').forEach(item => {
+                                item.classList.remove('active');
+                            });
+                            
+                            // 添加active类到当前笔记
+                            noteElement.classList.add('active');
+                            
+                            // 获取笔记数据
+                            const noteId = noteElement.getAttribute('data-note-id');//parseInt(noteElement.getAttribute('data-note-id'));
+                            const note = await findNoteById(noteId);
+                            
+                            if (note) {
+                                currentNote = note;
+                                editorInstance.setMarkdown(note.content);
+                                updateOutline();
+                                updateSaveStatus(true);
+                                
+                                // 设置当前选中的文件夹
+                                setCurrentFolder(folder.id);
+                            }
+                        });
+                    });
+                    
+                    notesContainer.appendChild(folderElement);
+                });
+                
+                // 默认展开第一个文件夹并选择第一个笔记
+                if (folders.length > 0 && folders[0].notes.length > 0) {
+                    const firstFolder = notesContainer.querySelector('.folder');
+                    firstFolder.classList.add('open');
+                    
+                    const firstNote = firstFolder.querySelector('.note-item');
+                    firstNote.classList.add('active');
+                    
+                    currentNote = folders[0].notes[0];
+                    currentFolder = folders[0];
+                    
+                    if (editorInstance) {
+                        editorInstance.setMarkdown(currentNote.content);
+                        updateOutline();
+                    }
+                    
+                    // 高亮当前文件夹
+                    setCurrentFolder(folders[0].id);
+                }
+            }
+
+            // 设置当前选中的文件夹
+            function setCurrentFolder(folderId) {
+                // 移除所有文件夹的active类
+                document.querySelectorAll('.folder-header').forEach(header => {
+                    header.classList.remove('active');
+                });
+                
+                // 为当前文件夹添加active类
+                const currentFolderHeader = document.querySelector(`.folder[data-folder-id="${folderId}"] .folder-header`);
+                if (currentFolderHeader) {
+                    currentFolderHeader.classList.add('active');
+                }
+                
+                // 更新当前文件夹引用
+                currentFolder = folders.find(f => f.id === folderId);
+            }
+
+            // 根据ID查找笔记
+            async function findNoteById(noteId) {
+                /*
+                for (const folder of folders) {
+                    const note = folder.notes.find(n => n.id === noteId);
+                    if (note) return note;
+                }
+                */
+               /*
+                for(let i=0;i<globalNotes.length;i++){
+                    console.log(globalNotes[i]) ;
+                    if(globalNotes[i].id == noteId){
+                        return globalNotes[i] ;
+                    } 
+                }
+                */
+                return fetchNoteUsingID(noteId);
+            }
+
+            // 更新大纲视图
+            function updateOutline() {
+                const outlineContainer = document.getElementById('outline-container');
+                
+                if (!editorInstance) {
+                    outlineContainer.innerHTML = '<div style="color: var(--text-light); font-style: italic;">编辑器未就绪</div>';
+                    return;
+                }
+                
+                const content = editorInstance.getMarkdown();
+                
+                // 提取标题和它们在内容中的位置
+                const lines = content.split('\n');
+                const headings = [];
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line.startsWith('#') && line.length > 1) {
+                        const level = line.match(/^#+/)[0].length;
+                        const text = line.replace(/^#+\s/, '');
+                        headings.push({
+                            level: level,
+                            text: text,
+                            lineIndex: i
+                        });
+                    }
+                }
+                
+                outlineContainer.innerHTML = '';
+                
+                if (headings.length === 0) {
+                    outlineContainer.innerHTML = '<div style="color: var(--text-light); font-style: italic;">暂无标题</div>';
+                    return;
+                }
+                
+                headings.forEach((heading, index) => {
+                    const outlineItem = document.createElement('div');
+                    outlineItem.className = `outline-item outline-h${heading.level}`;
+                    outlineItem.textContent = heading.text;
+                    outlineItem.setAttribute('data-heading-index', index);
+                    
+                    outlineItem.addEventListener('click', () => {
+                        scrollToHeading(heading.lineIndex);
+                    });
+                    
+                    outlineContainer.appendChild(outlineItem);
+                });
+            }
+
+            // 滚动到指定标题
+            function scrollToHeading(lineIndex) {
+                if (!editorInstance) return;
+                
+                // 获取编辑器预览区域的DOM元素
+                const previewEl = document.querySelector('.toastui-editor-contents');
+                if (!previewEl) return;
+                
+                // 获取所有标题元素
+                const headingElements = previewEl.querySelectorAll('h1, h2, h3, h4, h5, h6');
+                
+                if (headingElements.length > 0) {
+                    // 找到对应的标题元素
+                    let targetHeading = null;
+                    const lines = editorInstance.getMarkdown().split('\n');
+                    
+                    for (let i = 0; i < headingElements.length; i++) {
+                        const headingText = headingElements[i].textContent.trim();
+                        // 找到与指定行索引对应的标题
+                        if (lines[lineIndex].includes(headingText)) {
+                            targetHeading = headingElements[i];
+                            break;
+                        }
+                    }
+                    
+                    if (targetHeading) {
+                        // 添加高亮效果
+                        targetHeading.classList.add('heading-highlight');
+                        
+                        // 滚动到标题位置
+                        targetHeading.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start',
+                            inline: 'nearest'
+                        });
+                        
+                        // 2秒后移除高亮效果
+                        setTimeout(() => {
+                            targetHeading.classList.remove('heading-highlight');
+                        }, 2000);
+                    }
+                }
+            }
+
+            // 新建笔记功能
+            document.getElementById('new-note-btn').addEventListener('click',async () => {
+                if (!currentFolder) {
+                    alert('请先选择一个文件夹');
+                    return;
+                }
+                
+                const newNote = {
+                    id: crypto.randomUUID(),//Math.max(...folders.flatMap(f => f.notes.map(n => n.id))) + 1,
+                    title: `新笔记 ${new Date().toLocaleDateString()}`,
+                    date: new Date().toISOString().split('T')[0],
+                    lastSaved: Date.now(),
+                    tags:[]
+                };
+                console.log(newNote) ;
+                
+                //currentFolder.notes.unshift(newNote);
+                //newNote.content='# 新笔记\n\n开始写作...',
+                //plusNote(newNote,'# 新笔记\n\n开始写作...',currentFolder.id) ;
+                await plusNotesInCloud(newNote,'# 新笔记\n\n开始写作...',currentFolder.id) ;
+                renderFolders();
+                
+                // 选择新笔记
+                const newNoteElement = document.querySelector(`.note-item[data-note-id="${newNote.id}"]`);
+                if (newNoteElement) {
+                    newNoteElement.click();
+                }
+                
+                // 标记为未保存
+                updateSaveStatus(false);
+            });
+
+            // 保存到云端功能
+            document.getElementById('save-cloud-btn').addEventListener('click', async () => {
+
+                let tagCurrentNote = document.querySelector(".note-item.active") ;
+                if(tagCurrentNote==null)return ;
+                if(editorInstance==null)return ;
+
+                saveToLocalStorage();
+                const noteID = tagCurrentNote.getAttribute('data-note-id');//parseInt(noteElement.getAttribute('data-note-id'));
+
+                const markdownContent = editorInstance.getMarkdown();
+                console.log(markdownContent);
+                await saveNoteContent2Cloud(noteID,markdownContent) ;
+                //alert("fdsfgdsfdsfsdfdsfdsfs") ;
+                //await saveNote2Cloud() ;
+                updateSaveStatus(true);
+            });
+
+            // 标签管理功能
+            document.getElementById('tag-btn').addEventListener('click', () => {
+                alert('标签管理功能待实现');
+            });
+
+            // Home按钮功能
+            document.querySelector('.header-icon').addEventListener('click', () => {
+                // 回到第一个笔记
+                if (folders.length > 0 && folders[0].notes.length > 0) {
+                    const firstNote = document.querySelector('.note-item');
+                    if (firstNote) {
+                        firstNote.click();
+                    }
+                }
+            });
+
+            // 设置按钮功能
+            document.getElementById('settings-button').addEventListener('click', () => {
+                alert('设置功能待实现');
+            });
+
+            // 页面关闭前提示保存
+            window.addEventListener('beforeunload', (e) => {
+                if (isUnsaved) {
+                    e.preventDefault();
+                    e.returnValue = '您有未保存的更改，确定要离开吗？';
+                    return e.returnValue;
+                }
+                localStorage.removeItem('notesAnywhere');
+            });
+
+            // 初始化应用
+            await initEditor();
+        });
+    </script>
+</body>
+</html>

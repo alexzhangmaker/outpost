@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>Markdown 打印工具</title>
+  <style>
+    body {
+      display: flex;
+      font-family: sans-serif;
+      margin: 0;
+    }
+    #toolbar {
+      width: 300px;
+      padding: 1em;
+      background: #f4f4f4;
+      border-right: 1px solid #ccc;
+    }
+    #preview {
+      flex: 1;
+      padding: 2em;
+      overflow: auto;
+    }
+    #content {
+      max-width: 800px;
+      margin: auto;
+    }
+    h1, h2, h3 {
+      page-break-after: avoid;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1em 0;
+    }
+    table th, table td {
+      border: 1px solid #333;
+      padding: 8px;
+      text-align: left;
+    }
+    ul, ol {
+      padding-left: 2em;
+    }
+    li {
+      margin-bottom: 0.5em;
+    }
+    .page-break {
+      page-break-before: always;
+      border-top: 2px dashed #999;
+      margin: 2em 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <h2>打印格式设置</h2>
+    <label>字体:
+      <select id="fontSelect">
+        <option value="serif">Serif</option>
+        <option value="sans-serif">Sans-serif</option>
+        <option value="monospace">Monospace</option>
+      </select>
+    </label><br/>
+    <label>字号:
+      <input type="number" id="fontSize" value="14" /> px
+    </label><br/>
+    <label>行距:
+      <input type="number" id="lineHeight" value="1.6" step="0.1" />
+    </label><br/>
+    <label>边距:
+      <input type="text" id="margin" value="20mm" />
+    </label><br/>
+    <label>自定义 CSS:
+      <textarea id="customCSS" rows="4" style="width:100%" placeholder="例如：table { border: 1px solid #000; }"></textarea>
+    </label><br/>
+    <button onclick="applyStyles()">应用样式</button>
+    <button onclick="window.print()">打印</button>
+  </div>
+
+  <div id="preview">
+    <div id="content"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const mockMarkdown = `
+# 项目介绍
+
+这是一个用于将 Markdown 文档转换为可打印 HTML 的工具。
+
+## 特性
+
+- 支持字体、字号、边距等格式调整
+- 支持分页插入
+- 支持打印预览
+
+## 表格示例
+
+| 姓名 | 职位 | 部门 |
+|------|------|------|
+| 张三 | 工程师 | 技术部 |
+| 李四 | 设计师 | 产品部 |
+
+## 清单示例
+
+- 第一项
+- 第二项
+- 第三项
+`;
+
+    async function loadMarkdown() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const mdUrl = urlParams.get('md');
+      let markdown = mockMarkdown;
+
+      if (mdUrl) {
+        try {
+          const response = await fetch(mdUrl);
+          markdown = await response.text();
+        } catch (e) {
+          alert("无法加载指定的 Markdown 文件，使用默认内容。");
+        }
+      }
+
+      const html = marked.parse(markdown);
+      document.getElementById('content').innerHTML = html;
+      enablePagination();
+    }
+
+    function applyStyles() {
+      const font = document.getElementById('fontSelect').value;
+      const fontSize = document.getElementById('fontSize').value + 'px';
+      const lineHeight = document.getElementById('lineHeight').value;
+      const margin = document.getElementById('margin').value;
+      const customCSS = document.getElementById('customCSS').value;
+
+      const style = `
+        @media print {
+          body { margin: ${margin}; }
+        }
+        #content {
+          font-family: ${font};
+          font-size: ${fontSize};
+          line-height: ${lineHeight};
+        }
+        ${customCSS}
+      `;
+
+      let styleTag = document.getElementById('dynamic-style');
+      if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'dynamic-style';
+        document.head.appendChild(styleTag);
+      }
+      styleTag.innerHTML = style;
+    }
+
+    function enablePagination() {
+      document.querySelectorAll('#content > *').forEach(el => {
+        el.addEventListener('click', () => {
+          const breaker = document.createElement('div');
+          breaker.className = 'page-break';
+          el.parentNode.insertBefore(breaker, el);
+        });
+      });
+    }
+
+    loadMarkdown();
+  </script>
+</body>
+</html>
