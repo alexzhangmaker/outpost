@@ -171,6 +171,20 @@ async function saveNote2Cloud(jsonNote){
     }
 }
 
+
+async function removeNoteInCloud(noteID,folderID){
+    console.log(noteID) ;
+    try {
+        const folderNoteRef = globalDatabase.ref(`noteFolders/${folderID}/notes/${noteID}`);
+        await folderNoteRef.set(null) ;
+
+        const noteInTblRef = globalDatabase.ref(`notesTbl/${noteID}`);
+        const snapshot = await noteInTblRef.set(null);
+    } catch (error) {
+        console.error('Failed to read data:', error);
+    }
+}
+
 async function _loadEveryNotes(){
     await loadFolders() ;
     await loadTagClouds() ;
