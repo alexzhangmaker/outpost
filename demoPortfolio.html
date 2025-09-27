@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股息追踪器 - 投资组合仪表板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .logo h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 10px;
+            color: #4cd964;
+        }
+        
+        .menu {
+            list-style: none;
+        }
+        
+        .menu li {
+            padding: 12px 20px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu li:hover, .menu li.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #4cd964;
+        }
+        
+        .menu li i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .menu .submenu {
+            list-style: none;
+            margin-left: 20px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .menu li.active .submenu {
+            display: block;
+        }
+        
+        .menu .submenu li {
+            padding: 8px 0;
+            font-size: 0.9rem;
+            border-left: none;
+        }
+        
+        /* 主内容区样式 */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 30px;
+            padding: 8px 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            width: 300px;
+        }
+        
+        .search-bar input {
+            border: none;
+            outline: none;
+            padding: 5px 10px;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2a5298;
+        }
+        
+        /* 投资组合价值样式 */
+        .portfolio-value {
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        .portfolio-value h2 {
+            font-size: 1rem;
+            color: #777;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .portfolio-value .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 5px;
+        }
+        
+        .portfolio-value .change {
+            color: #4cd964;
+            font-weight: 600;
+        }
+        
+        /* 图表容器样式 */
+        .chart-container {
+            height: 200px;
+            margin-top: 20px;
+            position: relative;
+        }
+        
+        .chart-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #f0f4f8, #e1e8f0);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7b8ab5;
+            font-size: 1.1rem;
+        }
+        
+        /* 时间范围选择器样式 */
+        .time-range {
+            display: flex;
+            background: #f0f4f8;
+            border-radius: 30px;
+            padding: 5px;
+            width: fit-content;
+        }
+        
+        .time-range button {
+            border: none;
+            background: transparent;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .time-range button.active {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            color: #777;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        td {
+            font-size: 0.95rem;
+        }
+        
+        .positive {
+            color: #4cd964;
+        }
+        
+        .negative {
+            color: #ff3b30;
+        }
+        
+        .grade {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #4cd964;
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+        }
+        
+        /* 标签页样式 */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #777;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: #2a5298;
+            border-bottom: 2px solid #2a5298;
+        }
+        
+        /* 添加持仓按钮 */
+        .add-holding {
+            background: #2a5298;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .add-holding:hover {
+            background: #1e3c72;
+        }
+        
+        .add-holding i {
+            margin-right: 8px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+            
+            .menu {
+                display: flex;
+                flex-wrap: wrap;
+            }
+            
+            .menu li {
+                flex: 1;
+                min-width: 120px;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .search-bar {
+                width: 100%;
+                margin-bottom: 15px;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-chart-line"></i> DIVIDEND TRACKER</h1>
+            </div>
+            <ul class="menu">
+                <li class="active">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                    <ul class="submenu">
+                        <li>trial</li>
+                        <li>Add Portfolio</li>
+                    </ul>
+                </li>
+                <li><i class="fas fa-list"></i> Watchlist</li>
+                <li><i class="fas fa-calendar-alt"></i> Payout Calendar</li>
+                <li><i class="fas fa-project-diagram"></i> Diversification</li>
+                <li><i class="fas fa-calculator"></i> Calculators</li>
+                <li><i class="fas fa-lightbulb"></i> Ideas</li>
+                <li><i class="fas fa-users"></i> Community</li>
+                <li><i class="fas fa-newspaper"></i> News</li>
+            </ul>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 头部 -->
+            <div class="header">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <div class="user-info">
+                    <img src="https://i.pravatar.cc/150?img=12" alt="User">
+                    <span>John Doe</span>
+                </div>
+            </div>
+            
+            <!-- 投资组合价值卡片 -->
+            <div class="card">
+                <div class="portfolio-value">
+                    <h2>Portfolio Value</h2>
+                    <div class="value">$95,794.00</div>
+                    <div class="change">+2.35% <i class="fas fa-arrow-up"></i></div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-line"></i> 投资组合价值图表区域
+                    </div>
+                </div>
+                
+                <div class="time-range">
+                    <button>LW</button>
+                    <button>LM</button>
+                    <button>SM</button>
+                    <button class="active">1Y</button>
+                    <button>MAX</button>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                    <div>
+                        <div style="font-size: 0.9rem; color: #777;">Dividend Yield</div>
+                        <div style="font-size: 1.5rem; font-weight: 600;">5.33%</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: #777;">5.61%</div>
+                        <div style="font-size: 1.5rem; font-weight: 600;">$5,997.86</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 关键持仓卡片 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Key Holdings</div>
+                    <div class="tabs">
+                        <div class="tab active">General</div>
+                        <div class="tab">Dividends</div>
+                        <div class="tab">Returns</div>
+                    </div>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Share</th>
+                            <th>Price</th>
+                            <th>Change</th>
+                            <th>Equity</th>
+                            <th>Div. Yield</th>
+                            <th>YDE</th>
+                            <th>PWD Annual Div.</th>
+                            <th>Dividend Grade</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>BIP</td>
+                            <td>2,000</td>
+                            <td>$33.12</td>
+                            <td class="positive">4.35%</td>
+                            <td>$63,360.00</td>
+                            <td>5.19%</td>
+                            <td>5.45%</td>
+                            <td>$3,400.00</td>
+                            <td><span class="grade">A</span></td>
+                            <td><i class="fas fa-ellipsis-v"></i></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 当前持仓卡片 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Current Holdings (3)</div>
+                    <div class="tabs">
+                        <div class="tab active">My Holdings</div>
+                        <div class="tab">General</div>
+                        <div class="tab">Dividends</div>
+                        <div class="tab">Returns</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                    <button class="add-holding"><i class="fas fa-plus"></i> Add Holdings (9/10)</button>
+                    <button class="add-holding"><i class="fas fa-plus"></i> Add Holdings (9/10)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 简单的交互功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 菜单项点击事件
+            const menuItems = document.querySelectorAll('.menu li');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // 移除所有active类
+                    menuItems.forEach(i => i.classList.remove('active'));
+                    // 为当前项添加active类
+                    this.classList.add('active');
+                });
+            });
+            
+            // 时间范围按钮点击事件
+            const timeButtons = document.querySelectorAll('.time-range button');
+            timeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    timeButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // 标签页点击事件
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const parent = this.parentElement;
+                    const siblingTabs = parent.querySelectorAll('.tab');
+                    siblingTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUI Editor 自定义按钮示例</title>
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        #editor {
+            height: 400px;
+        }
+        .custom-toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .custom-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .custom-btn:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TUI Editor 自定义按钮示例</h1>
+        
+        <!-- 自定义工具栏 -->
+        <div class="custom-toolbar">
+            <button class="custom-btn" onclick="insertTimestamp()">插入时间戳</button>
+            <button class="custom-btn" onclick="insertHighlight()" style="background: #FF9800;">高亮文本</button>
+        </div>
+        
+        <div id="editor"></div>
+    </div>
+
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+    
+    <script>
+        let editor;
+
+        //function to create menu button element
+        function createLastButton() {
+            const button = document.createElement('button');
+
+            button.className = 'toastui-editor-toolbar-icons last';
+            button.style.backgroundImage = 'none';
+            button.style.margin = '0';
+            button.innerHTML = `<i>Sentry</i>`;
+            button.addEventListener('click', () => {
+                //editor.exec('bold');
+                const now = new Date();
+                const timestamp = now.toLocaleString('zh-CN');
+                editor.insertText(`\n\n ### 当前时间: ${timestamp}\n\n`);
+            });
+
+            return button;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // 创建简单的编辑器实例
+                editor = new toastui.Editor({
+                    el: document.querySelector('#editor'),
+                    initialEditType: 'markdown',
+                    previewStyle: 'vertical',
+                    height: '400px',
+                    initialValue: '# 欢迎使用TUI Editor\n\n点击上方的自定义按钮测试功能。',
+                    toolbarItems: [
+                        ['heading', 'bold', 'italic', 'strike'],
+                        ['hr', 'quote'],
+                        ['ul', 'ol', 'task', 'indent', 'outdent'],
+                        ['table', 'image', 'link'],
+                        ['code', 'codeblock'],
+
+                        //below to extend a menu button
+                        // Using Option: Customize the last button
+                        [{
+                            el: createLastButton(),
+                            command: 'bold',
+                            tooltip: 'Custom Bold'
+                        }]
+                    ]
+                });
+
+                //code below to for exteneded menu button
+                editor.insertToolbarItem({ groupIndex: 0, itemIndex: 0 }, {
+                    name: 'myItem',
+                    tooltip: 'Custom Button',
+                    command: 'bold',
+                    text: '@',
+                    className: 'toastui-editor-toolbar-icons first',
+                    style: { backgroundImage: 'none' }
+                });
+
+
+
+                console.log('TUI Editor 初始化成功！');
+
+            } catch (error) {
+                console.error('初始化失败:', error);
+                document.querySelector('#editor').innerHTML = 
+                    '<p style="color: red;">编辑器初始化失败: ' + error.message + '</p>';
+            }
+        });
+
+        // 自定义按钮功能
+        function insertTimestamp() {
+            if (!editor) return;
+            
+            const now = new Date();
+            const timestamp = now.toLocaleString('zh-CN');
+            editor.insertText(`\n\n**当前时间:** ${timestamp}\n\n`);
+        }
+
+        function insertHighlight() {
+            if (!editor) return;
+            
+            const selection = editor.getSelectedContent();
+            if (selection) {
+                editor.replaceSelection(`==${selection}==`);
+            } else {
+                editor.insertText('==高亮文本==');
+            }
+        }
+    </script>
+</body>
+</html>

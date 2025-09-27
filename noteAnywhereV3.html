@@ -662,6 +662,9 @@
     <script src="./noteAnywhereData.js"></script>
     <script src="./outpostPlugins.js"></script>
     <script>
+
+        
+
         // 等待DOM完全加载
         document.addEventListener('DOMContentLoaded', async function() {
             // 示例数据 - 文件夹和笔记
@@ -742,6 +745,23 @@
                 }
             }
             
+            //function to create menu button element
+            function createLastButton() {
+                const button = document.createElement('button');
+
+                button.className = 'toastui-editor-toolbar-icons last';
+                button.style.backgroundImage = 'none';
+                button.style.margin = '0';
+                button.innerHTML = `<i>Sentry</i>`;
+                button.addEventListener('click', () => {
+                    //editor.exec('bold');
+                    const now = new Date();
+                    const timestamp = now.toLocaleString('zh-CN');
+                    editorInstance.insertText(`\n\n ### 当前时间: ${timestamp}\n\n`);
+                });
+
+                return button;
+            }
             // 初始化编辑器
             async function initEditor() {
                 try {
@@ -816,8 +836,23 @@
                             ['hr', 'quote'],
                             ['ul', 'ol', 'task'],
                             ['table', 'link'],
-                            ['code', 'codeblock']
+                            ['code', 'codeblock'],
+                            [{
+                                el: createLastButton(),
+                                command: 'bold',
+                                tooltip: 'Custom Bold'
+                            }]
                         ]
+                    });
+
+                    //code below to for exteneded menu button
+                    editorInstance.insertToolbarItem({ groupIndex: 0, itemIndex: 0 }, {
+                        name: 'myItem',
+                        tooltip: 'Custom Button',
+                        command: 'bold',
+                        text: '@',
+                        className: 'toastui-editor-toolbar-icons first',
+                        style: { backgroundImage: 'none' }
                     });
                     
                     // 监听编辑器内容变化，更新大纲
@@ -836,6 +871,7 @@
                     
                     // 初始化完成后立即渲染一次可能存在的公式
                     setTimeout(renderKaTeXInPreview, 100);
+
 
                     // 从本地存储加载数据
                     await loadFromLocalStorage();
@@ -1274,7 +1310,38 @@
         }
         */
 
+        function renderSentryGrid(){
+            const previewEl = document.querySelector('.toastui-editor-defaultUI .toastui-editor-contents');
+            if (!previewEl) return;
 
+            // 渲染块级公式
+            previewEl.querySelectorAll('p').forEach(p => {
+                const text = p.textContent.trim();
+                if (text.startsWith('@@') && text.endsWith('@@')) {
+                    const formula = text.slice(2, -2);
+                    try {
+                        const html = `<span>hello sentry Grid</span>`;
+                        p.innerHTML = html;
+                    } catch (err) {
+                        console.error('KaTeX block render error:', err);
+                    }
+                }
+            });
+
+            /*
+            // 渲染行内公式
+            previewEl.querySelectorAll('p').forEach(p => {
+                    p.innerHTML = p.innerHTML.replace(/\$(.+?)\$/g, (match, formula) => {
+                    try {
+                        return katex.renderToString(formula, { displayMode: false });
+                    } catch (err) {
+                        console.error('KaTeX inline render error:', err);
+                        return match;
+                    }
+                });
+            });
+            */
+        }
         function renderKaTeXInPreview() {
             const previewEl = document.querySelector('.toastui-editor-defaultUI .toastui-editor-contents');
             if (!previewEl) return;
@@ -1304,6 +1371,8 @@
                     }
                 });
             });
+
+            renderSentryGrid() ;
         }
     </script>
 </body>
