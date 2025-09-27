@@ -661,6 +661,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="./noteAnywhereData.js"></script>
     <script src="./outpostPlugins.js"></script>
+    <script src="./noteAnywhereMockData.js"></script>
     <script>
 
         
@@ -758,6 +759,9 @@
                     const now = new Date();
                     const timestamp = now.toLocaleString('zh-CN');
                     editorInstance.insertText(`\n\n ### 当前时间: ${timestamp}\n\n`);
+
+                    const htmlTable = `\n\n## HTML表格示例\n\n<div align="center">\n\n<table border="1" style="border-collapse: collapse; width: 100%;">\n  <thead>\n    <tr style="background-color: #f2f2f2;">\n      <th style="padding: 8px;">产品</th>\n      <th style="padding: 8px;">价格</th>\n      <th style="padding: 8px;">库存</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td style="padding: 8px;">笔记本电脑</td>\n      <td style="padding: 8px;">¥5,999</td>\n      <td style="padding: 8px;">15</td>\n    </tr>\n    <tr>\n      <td style="padding: 8px;">智能手机</td>\n      <td style="padding: 8px;">¥3,299</td>\n      <td style="padding: 8px;">30</td>\n    </tr>\n  </tbody>\n</table>\n\n</div>\n\n`;
+                    editorInstance.insertText(htmlTable) ;
                 });
 
                 return button;
@@ -768,55 +772,6 @@
                     // 移除加载提示
                     document.getElementById('editor-loading').style.display = 'none';
                     
-                    /*
-                    //将以下代码添加到你的JavaScript中，在初始化编辑器之前执行：
-                    // 扩展TUI Editor的自定义渲染器，处理数学公式
-                    const customHTMLRenderer = {
-                        // 处理行内数学公式，语法为 $...$
-                        htmlInline: {
-                            // 加强数学公式的识别，避免与URL冲突:cite[3]
-                            latexInline({ literal }) {
-                                // 使用正则表达式匹配行内数学公式
-                                const match = literal.match(/^\$(.+?)\$$/);
-                                if (match) {
-                                    // 返回一个包含公式内容的span，KaTeX会处理它
-                                    return {
-                                        type: 'openTag',
-                                        tagName: 'span',
-                                        outerNewLine: false,
-                                        attributes: { 
-                                            'class': 'math-inline',
-                                            'data-latex': match[1]
-                                        },
-                                        content: match[1] // 公式内容
-                                    };
-                                }
-                                // 如果不是数学公式，返回null由默认渲染器处理
-                                return null;
-                            }
-                        },
-                        
-                        // 处理块级数学公式，语法为 $$...$$
-                        htmlBlock: {
-                            latxBlock({ literal }) {
-                                const match = literal.match(/^\$\$(.+?)\$\$$/s); // 's'标志使 . 匹配包括换行符的所有字符
-                                if (match) {
-                                    return {
-                                        type: 'openTag',
-                                        tagName: 'div',
-                                        outerNewLine: true,
-                                        attributes: { 
-                                            'class': 'math-block',
-                                            'data-latex': match[1]
-                                        },
-                                        content: match[1]
-                                    };
-                                }
-                                return null;
-                            }
-                        }
-                    };
-                    */
 
                     // 初始化编辑器
                     editorInstance = new toastui.Editor({
@@ -825,11 +780,6 @@
                         initialEditType: 'markdown',
                         previewStyle: 'vertical',
                         usageStatistics: false,
-
-                        // 启用默认HTML清理器
-                        //useDefaultHTMLSanitizer: true,
-                        // 传入自定义渲染器
-                        //customHTMLRenderer: customHTMLRenderer,
 
                         toolbarItems: [
                             ['heading', 'bold', 'italic', 'strike'],
@@ -1079,20 +1029,6 @@
 
             // 根据ID查找笔记
             async function findNoteById(noteId) {
-                /*
-                for (const folder of folders) {
-                    const note = folder.notes.find(n => n.id === noteId);
-                    if (note) return note;
-                }
-                */
-               /*
-                for(let i=0;i<globalNotes.length;i++){
-                    console.log(globalNotes[i]) ;
-                    if(globalNotes[i].id == noteId){
-                        return globalNotes[i] ;
-                    } 
-                }
-                */
                 return fetchNoteUsingID(noteId);
             }
 
@@ -1276,39 +1212,54 @@
     </script>
 
     <script>
-        /*
-        // 使用KaTeX渲染数学公式的函数
-        function renderMathWithKaTeX() {
-            // 渲染行内公式
-            document.querySelectorAll('.math-inline').forEach(element => {
-                try {
-                    const latex = element.getAttribute('data-latex') || element.textContent;
-                    katex.render(latex, element, {
-                        throwOnError: false,
-                        output: 'html'
-                    });
-                } catch (e) {
-                    console.error("KaTeX渲染错误（行内）:", e);
-                    element.innerHTML = `<span style="color: red;">公式错误: ${e.message}</span>`;
-                }
+        function convertJSON2VerticalHTMLTbl(data) {
+            let html = '<table border="1">\n';
+            
+            // Get all unique keys from the first object (assuming all objects have the same keys)
+            const keys = data.length > 0 ? Object.keys(data[0]) : [];
+            
+            // Generate rows where each row starts with a key and then includes values for that key
+            keys.forEach((key, index) => {
+                html += '  <tr>\n';
+                // First column is the key
+                html += `    <th>${key}</th>\n`;
+                // Add values for this key from each object
+                data.forEach(item => {
+                    html += `    <td>${item[key]}</td>\n`;
+                });
+                html += '  </tr>\n';
             });
-
-            // 渲染块级公式
-            document.querySelectorAll('.math-block').forEach(element => {
-                try {
-                    const latex = element.getAttribute('data-latex') || element.textContent;
-                    katex.render(latex, element, {
-                        throwOnError: false,
-                        displayMode: true,
-                        output: 'html'
-                    });
-                } catch (e) {
-                    console.error("KaTeX渲染错误（块级）:", e);
-                    element.innerHTML = `<div style="color: red; text-align: center;">公式错误: ${e.message}</div>`;
-                }
-            });
+            
+            html += '</table>';
+            return html;
         }
-        */
+
+        function convertJSON2HTMLTbl(data) {
+            let cDate = new Date() ;
+            let tblID = `tbl_${cDate.getTime()}`;
+            let html = `<table border="1" id=${tblID}>\n`;
+            
+            // Generate header row
+            if (data.length > 0) {
+                html += '  <tr>\n';
+                Object.keys(data[0]).forEach(key => {
+                    html += `    <th>${key}</th>\n`;
+                });
+                html += '  </tr>\n';
+            }
+            
+            // Generate data rows
+            data.forEach(item => {
+                html += '  <tr>\n';
+                Object.values(item).forEach(value => {
+                    html += `    <td>${value}</td>\n`;
+                });
+                html += '  </tr>\n';
+            });
+            
+            html += '</table>';
+            return html;
+        }
 
         function renderSentryGrid(){
             const previewEl = document.querySelector('.toastui-editor-defaultUI .toastui-editor-contents');
@@ -1319,28 +1270,19 @@
                 const text = p.textContent.trim();
                 if (text.startsWith('@@') && text.endsWith('@@')) {
                     const formula = text.slice(2, -2);
+                    console.log(text) ;
+                    console.log(formula) ;
+
                     try {
                         const html = `<span>hello sentry Grid</span>`;
-                        p.innerHTML = html;
+                        
+                        //p.innerHTML = convertJSON2HTMLTbl(mockTblData);
+                        p.innerHTML = convertJSON2VerticalHTMLTbl(mockData2) ;
                     } catch (err) {
                         console.error('KaTeX block render error:', err);
                     }
                 }
             });
-
-            /*
-            // 渲染行内公式
-            previewEl.querySelectorAll('p').forEach(p => {
-                    p.innerHTML = p.innerHTML.replace(/\$(.+?)\$/g, (match, formula) => {
-                    try {
-                        return katex.renderToString(formula, { displayMode: false });
-                    } catch (err) {
-                        console.error('KaTeX inline render error:', err);
-                        return match;
-                    }
-                });
-            });
-            */
         }
         function renderKaTeXInPreview() {
             const previewEl = document.querySelector('.toastui-editor-defaultUI .toastui-editor-contents');
