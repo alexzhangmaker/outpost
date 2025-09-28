@@ -475,7 +475,40 @@
             <button class="reset-btn" id="reset-btn">重新开始</button>
         </div>
     </div>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script src="./outpostPlugins.js"></script>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
+    </script>
     <script>
         let gWordSetKey = 'B1_Work_Social' ;
         let tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${gWordSetKey}.json` ;
@@ -581,10 +614,9 @@
 
             console.log(learnedWords) ;
             for(let i=0;i<learnedWords.length;i++){
-                let encodeWord = encodeURIComponent(learnedWords[i].word) ;
-                let sm2RecordURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/SM2Records/${encodeWord}.json` ;
-                let response = await fetch(sm2RecordURL) ;
-                let jsonResult = await response.json() ;
+                //let encodeWord = encodeURIComponent(learnedWords[i].word) ;
+                let snapshot = await database.ref(`thaiAnki/SM2Records/${learnedWords[i].word}`).once('value');
+                let jsonResult = snapshot.val();
 
                 let jsonSM2 = {
                     "efactor": 2.5,
@@ -619,13 +651,7 @@
                     jsonRecord.repetition = jsonSM2.repetition ;
                 }
                 console.log(jsonRecord) ;
-                await fetch(sm2RecordURL, {
-                    method: "PUT", // Use PATCH to update specific fields
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(jsonRecord),
-                }) ;
+                await database.ref(`thaiAnki/SM2Records/${learnedWords[i].word}`).set(jsonRecord) ;
             }
             bUploaded = true ;
         }
@@ -752,30 +778,24 @@
             let reviewSetKey = urlParams.get('reviewSet'); // "purple"
             let cDate = new Date() ;
 
+            let refWordList = '';//`thaiWordList/${keyEncode}` ;
             if(wordSetKey!=null){
                 console.log(wordSetKey) ;
                 let keyEncode = encodeURIComponent(wordSetKey) ;
-                gWordSetKey = wordSetKey ;
-                tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${keyEncode}.json` ;
+                refWordList = `thaiWordList/${keyEncode}` ;
             }else if(reviewSetKey!=null){
-                //let keyEncode = encodeURIComponent(formatDateToYYYYMMDD(cDate)) ;
-                gWordSetKey = reviewSetKey ;
                 let keyEncode = encodeURIComponent(reviewSetKey) ;
-                tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/reviewSets/${keyEncode}.json` ;
-                let respo = await fetch(tWordSetURL) ;
-                let jsonReviewSet = await respo.json() ;
+                let snapshot = await database.ref(`thaiAnki/reviewSets/${keyEncode}`).once('value');
+                let jsonReviewSet = snapshot.val();
                 console.log(jsonReviewSet) ;
-                tWordSetURL = jsonReviewSet.wordSetURL ;
-                gWordSetKey = jsonReviewSet.wordSetID ;
+                refWordList = `thaiWordList/${jsonReviewSet.wordSetID}` ;
             }else{
                 reviewSetKey = `${formatDateToYYYYMMDD(cDate)}` ;
                 let keyEncode = encodeURIComponent(reviewSetKey) ;
-                gWordSetKey = reviewSetKey ;
-                tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiAnki/DailyReview/${keyEncode}.json` ;
+                refWordList = `thaiAnki/DailyReview/${keyEncode}` ;
             }
 
-
-            await _loadFireBaseWordSet(tWordSetURL) ;
+            await _loadFireBaseWordSet(refWordList) ;
 
             loadProgress();
             showCurrentWord();
@@ -838,9 +858,9 @@
             return `${year}${month}${day}`;
         }
 
-        async function _loadFireBaseWordSet(url){
-            let response = await fetch(url) ;
-            let jsonWordSet = await response.json() ;
+        async function _loadFireBaseWordSet(refWordList){
+            let snapshot = await database.ref(refWordList).once('value');
+            let jsonWordSet = snapshot.val();
             console.log(jsonWordSet) ;
             if(jsonWordSet==null)return ;
 
@@ -848,10 +868,9 @@
             for(let i=0;i<jsonWordSet.words.length;i++){
                 let word = jsonWordSet.words[i] ;
                 console.log(word) ;
-                wordURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiDictionary/${word}.json` ;
-                console.log(wordURL) ;
-                response = await fetch(wordURL) ;
-                let jsonWord = await response.json() ;
+
+                let snapshot = await database.ref(`thaiDictionary/${word}`).once('value');
+                let jsonWord = snapshot.val();
                 console.log(jsonWord) ;
                 if(jsonWord==null){
                     console.log(`${word} not in DB,something wrong`) ;
@@ -870,8 +889,7 @@
         }
 
         
-        // 启动应用
-        initApp();
+
     </script>
     <script>
         let tagBTNPlayer = document.getElementById('idBTNPlayer') ;
@@ -883,6 +901,53 @@
             const audio = new Audio(urlGoogleTTSProxy);
             audio.play();
         }) ;
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async (event)=>{
+            console.log('DOMContentLoaded') ;
+            /*
+            const queryString = window.location.search; // ?quiz=001223/Unit4/Quiz_Vocabulary4_1
+            const urlParams = new URLSearchParams(queryString);
+            let quizPath = urlParams.get('quiz'); // "purple"
+            if(quizPath){
+                loadQuizData(quizPath) ;
+                return ;
+            }
+            */
+
+            const svgBTNSize = 18 ;
+            createStickyToolbar({
+                buttons: [
+                    {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/home.svg',
+                        svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 16 16"><path fill="#000000" d="M8 1.4L6 2.7V1H4v3L0 6.6l.6.8L8 2.6l7.4 4.8l.6-.8z"/><path fill="#000000" d="M8 4L2 8v7h5v-3h2v3h5V8z"/></svg>`,
+                        tip: 'Home',
+                        onClick: () => alert('Home clicked'),
+                    },
+                    {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 512 512"><path fill="#000000" d="M379.087 75.202c18.168 40.684 25.533 83.89 32.421 127.21c-1.265.358-2.528.72-3.794 1.082c-.91-2.534-1.984-5.021-2.707-7.61c-5.218-18.653-10.48-37.296-15.474-56.011c-1.797-6.733-6.035-10.084-12.096-13.381c-8.901-4.842-17.313-11.084-24.69-18.046c-4.707-4.44-8.735-7.149-15.413-7.078c-44.46.47-88.925.515-133.384.924c-2.963.03-6.63 1.124-8.728 3.065c-8.089 7.484-15.671 15.514-25.642 25.556c26.3 64.04 39.522 133.84 33.845 208.044c-12.626-8.084-22.4-14.48-22.981-31.418c-2.904-84.661-29.02-161.225-83.58-227.108c-1.228-1.482-1.838-3.476-2.738-5.23h284.96ZM48.73 107.847c12.663 0 25.332-.2 37.984.172c2.51.072 6.022 1.668 7.277 3.68c37.836 60.79 67.334 124.635 71.155 197.682c.018.29-.282.594-1.362 2.716c-22.612-77.293-63.404-142.735-115.872-201.39c.274-.952.545-1.906.819-2.86zM8 161.029c18.09-.658 33.39-1.318 48.692-1.602c1.541-.03 3.36 2.009 4.65 3.443c29.848 33.202 56.936 68.281 73.633 110.235c3.177 7.98 5.351 16.36 7.989 24.555C108.379 243.235 60.254 202.538 8 161.028Zm194.474 275.77c-31.481-50.066-61.803-98.29-92.128-146.513l1.112-1.428c2.542 2.047 56.622 45.412 80.91 65.302c6.766 5.541 11.878 5.441 18.915-.274c82.584-67.085 174.737-117.862 272.583-158.809c5.223-2.185 10.64-3.916 15.983-5.816c1.186-.42 2.44-.654 4.151-.222c-113.623 65.987-222.022 138.239-301.526 247.76Z"/></svg>`,
+                        tip: 'Quiz',
+                        onClick: async () => {
+                            await loadQuizData("") ;
+                        },
+                    },{
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 48 48"><g fill="none" stroke-linejoin="round" stroke-width="4"><path fill="#2F88FF" stroke="#000" d="M21 38C30.3888 38 38 30.3888 38 21C38 11.6112 30.3888 4 21 4C11.6112 4 4 11.6112 4 21C4 30.3888 11.6112 38 21 38Z"/><path stroke="#fff" stroke-linecap="round" d="M26.657 14.3431C25.2093 12.8954 23.2093 12 21.0001 12C18.791 12 16.791 12.8954 15.3433 14.3431"/><path stroke="#000" stroke-linecap="round" d="M33.2216 33.2217L41.7069 41.707"/></g></svg>`,
+                        tip: 'Search',
+                        onClick: () => alert('Search clicked'),
+                    },{
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 24 24"><path fill="#000000" d="M8 15h8v-.55q0-1.125-1.1-1.788T12 12q-1.8 0-2.9.663T8 14.45V15Zm4-4q.825 0 1.413-.588T14 9q0-.825-.588-1.413T12 7q-.825 0-1.413.588T10 9q0 .825.588 1.413T12 11ZM8 21v-2H4q-.825 0-1.413-.588T2 17V5q0-.825.588-1.413T4 3h16q.825 0 1.413.588T22 5v12q0 .825-.588 1.413T20 19h-4v2H8Z"/></svg>`,
+                        tip: 'SignIn',
+                        onClick: () => signInWithGoogle() ,
+                    }
+                ],
+            });
+
+            // 启动应用
+            initApp();
+        });
     </script>
 </body>
 </html>

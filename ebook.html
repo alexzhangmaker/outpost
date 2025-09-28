@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>电子墨水屏阅读器</title>
+    <style>
+        /* 全局样式 - 针对电子墨水屏优化 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background-color: #fefefe; /* 模拟电子纸的浅米色 */
+            color: #111;
+            line-height: 1.6;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            /* 禁用文字选择动画 */
+            -webkit-font-smoothing: none;
+            font-smooth: never;
+        }
+        
+        /* 阅读器容器 */
+        .reader-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            max-width: 1072px; /* 小米设备宽度 */
+            margin: 0 auto;
+            background-color: #fefefe;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* 标题栏 */
+        .header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background-color: #fafafa;
+            flex-shrink: 0;
+        }
+        
+        .title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        /* 内容区域 */
+        .content-area {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* 分页容器 */
+        .pages-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* 隐藏滚动条但保持滚动功能 */
+        .pages-container::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* 单页样式 */
+        .page {
+            flex: 0 0 100%;
+            height: 100%;
+            padding: 25px 30px;
+            scroll-snap-align: start;
+            overflow-y: auto;
+            background-color: #fefefe;
+        }
+        
+        /* 隐藏单页的滚动条 */
+        .page::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* 文章内容样式 */
+        .content {
+            max-width: 100%;
+            height: 100%;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        h2 {
+            font-size: 1.4rem;
+            margin: 1.5rem 0 1rem 0;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            text-align: justify;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+        
+        ul, ol {
+            margin: 1rem 0 1rem 1.5rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        blockquote {
+            border-left: 3px solid #ddd;
+            padding-left: 1rem;
+            margin: 1.5rem 0;
+            color: #555;
+            font-style: italic;
+        }
+        
+        /* 底部控制栏 */
+        .footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            background-color: #fafafa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .nav-button {
+            background: none;
+            border: 1px solid #ccc;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        
+        .nav-button:active {
+            background-color: #e0e0e0;
+        }
+        
+        .page-info {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        /* 进度条 */
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background-color: #e0e0e0;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: #444;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        /* 加载指示器 */
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            color: #666;
+        }
+        
+        /* 夜间模式 */
+        .night-mode {
+            background-color: #111;
+            color: #e0e0e0;
+        }
+        
+        .night-mode .reader-container {
+            background-color: #111;
+        }
+        
+        .night-mode .header,
+        .night-mode .footer {
+            background-color: #222;
+            border-color: #333;
+        }
+        
+        .night-mode .page {
+            background-color: #111;
+        }
+        
+        .night-mode .nav-button {
+            border-color: #444;
+            color: #e0e0e0;
+        }
+        
+        .night-mode .nav-button:active {
+            background-color: #333;
+        }
+        
+        .night-mode h1 {
+            border-color: #333;
+        }
+        
+        .night-mode blockquote {
+            border-color: #444;
+            color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <div class="reader-container">
+        <div class="header">
+            <div class="title">电子墨水屏阅读器</div>
+        </div>
+        
+        <div class="content-area">
+            <div class="loading">加载中...</div>
+            <div class="pages-container" id="pagesContainer">
+                <!-- 页面将通过JavaScript动态生成 -->
+            </div>
+        </div>
+        
+        <div class="footer">
+            <button class="nav-button" id="prevBtn">上一页</button>
+            <div class="page-info">
+                <span id="currentPage">1</span> / <span id="totalPages">1</span>
+            </div>
+            <button class="nav-button" id="nextBtn">下一页</button>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟的长篇文章内容
+        const articleContent = `
+            <h1>人工智能与未来社会</h1>
+            <p>人工智能（AI）是当今科技领域最引人注目的发展之一。从简单的自动化任务到复杂的决策系统，AI正在改变我们生活的方方面面。</p>
+            
+            <h2>AI的历史发展</h2>
+            <p>人工智能的概念可以追溯到20世纪50年代。当时，计算机科学家开始探索机器是否能够模拟人类智能。早期的AI系统主要基于符号推理，能够解决特定领域的问题，但缺乏学习和适应能力。</p>
+            
+            <p>随着计算能力的提升和算法的改进，AI在21世纪取得了突破性进展。深度学习技术的出现使得机器能够从大量数据中学习复杂模式，在图像识别、自然语言处理等领域表现出色。</p>
+            
+            <h2>AI的应用领域</h2>
+            <p>人工智能已经渗透到各个行业：</p>
+            <ul>
+                <li><strong>医疗健康：</strong>AI辅助诊断、药物研发和个性化治疗</li>
+                <li><strong>金融服务：</strong>欺诈检测、算法交易和风险评估</li>
+                <li><strong>交通运输：</strong>自动驾驶技术、交通流量优化</li>
+                <li><strong>教育：</strong>个性化学习路径、智能辅导系统</li>
+                <li><strong>制造业：</strong>预测性维护、质量控制自动化</li>
+            </ul>
+            
+            <h2>技术原理</h2>
+            <p>现代人工智能主要基于机器学习，特别是深度学习技术。神经网络模仿人脑的结构，通过多层处理单元提取数据的层次化特征。</p>
+            
+            <blockquote>
+                "人工智能将在未来几十年内对全球经济产生深远影响，其影响可能比互联网更大。" - 技术专家预测
+            </blockquote>
+            
+            <p>监督学习、无监督学习和强化学习是三种主要的机器学习范式。每种方法适用于不同类型的任务和数据环境。</p>
+            
+            <h2>伦理与社会影响</h2>
+            <p>随着AI能力的增强，相关的伦理问题也日益突出：</p>
+            <ol>
+                <li>隐私保护与数据安全</li>
+                <li>算法偏见与公平性</li>
+                <li>就业市场的变化</li>
+                <li>自主武器的道德问题</li>
+                <li>AI系统的透明度和可解释性</li>
+            </ol>
+            
+            <p>社会各界正在努力制定AI伦理准则和监管框架，以确保技术的发展符合人类价值观。</p>
+            
+            <h2>未来展望</h2>
+            <p>专家预测，AI技术将继续快速发展，可能在以下领域取得突破：</p>
+            <ul>
+                <li>通用人工智能（AGI）的实现</li>
+                <li>脑机接口技术的成熟</li>
+                <li>AI在气候变化解决方案中的应用</li>
+                <li>个性化医疗的普及</li>
+            </ul>
+            
+            <p>同时，我们需要关注AI可能带来的风险，如技术失业、安全漏洞和权力集中等问题。</p>
+            
+            <h2>结论</h2>
+            <p>人工智能是一项具有巨大潜力的技术，它既带来了前所未有的机遇，也提出了严峻的挑战。通过负责任的开发和部署，AI可以成为解决全球问题的有力工具。</p>
+            
+            <p>未来社会需要在技术创新与伦理约束之间找到平衡，确保AI的发展方向符合人类整体利益。这需要技术专家、政策制定者和公众的共同努力。</p>
+            
+            <p>随着技术的不断进步，我们正站在一个新时代的门槛上。人工智能将如何塑造未来，很大程度上取决于我们今天做出的选择。</p>
+            
+            <p>只有通过跨学科合作和全球对话，我们才能确保AI技术为全人类带来福祉，而不是加剧不平等或创造新的风险。</p>
+            
+            <h2>附加内容：AI在日常生活中的应用</h2>
+            <p>除了上述领域，AI已经悄然融入我们的日常生活：</p>
+            <ul>
+                <li>智能助手（如Siri、Alexa）帮助我们管理日程和获取信息</li>
+                <li>推荐系统根据我们的喜好推荐内容</li>
+                <li>智能家居设备自动调节环境</li>
+                <li>语言翻译工具打破沟通障碍</li>
+            </ul>
+            
+            <p>这些应用虽然不如自动驾驶或医疗诊断那样引人注目，但它们正在潜移默化地改变我们的生活方式。</p>
+            
+            <h2>技术挑战</h2>
+            <p>尽管AI取得了显著进展，但仍面临许多技术挑战：</p>
+            <ol>
+                <li>数据效率：当前AI系统需要大量标注数据</li>
+                <li>泛化能力：模型在新环境中的适应能力有限</li>
+                <li>常识推理：AI缺乏人类的基本常识</li>
+                <li>能源消耗：大型模型训练需要大量计算资源</li>
+            </ol>
+            
+            <p>解决这些挑战将是未来AI研究的重要方向。</p>
+            
+            <blockquote>
+                "人工智能不是要取代人类，而是要增强人类能力。" - 行业领袖观点
+            </blockquote>
+            
+            <p>最终，人工智能的成功不应仅仅以技术指标衡量，而应以它对人类福祉的贡献为评价标准。</p>
+        `;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const pagesContainer = document.getElementById('pagesContainer');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const currentPageEl = document.getElementById('currentPage');
+            const totalPagesEl = document.getElementById('totalPages');
+            const progressEl = document.getElementById('progress');
+            const loadingEl = document.querySelector('.loading');
+            
+            let currentPage = 0;
+            let pages = [];
+            
+            // 初始化阅读器
+            function initReader() {
+                loadingEl.style.display = 'block';
+                
+                // 模拟加载延迟
+                setTimeout(() => {
+                    // 将文章内容分页
+                    pages = paginateContent(articleContent);
+                    
+                    // 清空容器
+                    pagesContainer.innerHTML = '';
+                    
+                    // 创建页面元素
+                    pages.forEach((pageContent, index) => {
+                        const pageEl = document.createElement('div');
+                        pageEl.className = 'page';
+                        pageEl.innerHTML = `<div class="content">${pageContent}</div>`;
+                        pagesContainer.appendChild(pageEl);
+                    });
+                    
+                    // 更新页面信息
+                    totalPagesEl.textContent = pages.length;
+                    updatePageIndicator();
+                    
+                    loadingEl.style.display = 'none';
+                }, 500);
+            }
+            
+            // 将内容分页
+            function paginateContent(content) {
+                const pageHeight = pagesContainer.clientHeight - 50; // 减去内边距
+                const tempDiv = document.createElement('div');
+                tempDiv.style.width = '100%';
+                tempDiv.style.visibility = 'hidden';
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.top = '-1000px';
+                tempDiv.innerHTML = content;
+                document.body.appendChild(tempDiv);
+                
+                const resultPages = [];
+                let currentPageContent = '';
+                let currentHeight = 0;
+                
+                // 遍历所有子节点
+                Array.from(tempDiv.childNodes).forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() === '') {
+                        return; // 跳过空文本节点
+                    }
+                    
+                    const nodeClone = node.cloneNode(true);
+                    const testDiv = document.createElement('div');
+                    testDiv.appendChild(nodeClone);
+                    tempDiv.appendChild(testDiv);
+                    
+                    const nodeHeight = testDiv.offsetHeight;
+                    tempDiv.removeChild(testDiv);
+                    
+                    // 如果当前节点高度超过页面高度，需要特殊处理
+                    if (nodeHeight > pageHeight) {
+                        // 如果当前页已经有内容，先保存当前页
+                        if (currentPageContent) {
+                            resultPages.push(currentPageContent);
+                            currentPageContent = '';
+                            currentHeight = 0;
+                        }
+                        
+                        // 处理超长节点（如长表格或大图片）
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            // 这里简化处理：直接将超长节点单独放一页
+                            resultPages.push(node.outerHTML);
+                        }
+                    } else {
+                        // 检查添加节点后是否超出页面
+                        if (currentHeight + nodeHeight > pageHeight) {
+                            // 保存当前页并开始新页
+                            resultPages.push(currentPageContent);
+                            currentPageContent = node.outerHTML || node.textContent;
+                            currentHeight = nodeHeight;
+                        } else {
+                            // 添加到当前页
+                            currentPageContent += node.outerHTML || node.textContent;
+                            currentHeight += nodeHeight;
+                        }
+                    }
+                });
+                
+                // 添加最后一页
+                if (currentPageContent) {
+                    resultPages.push(currentPageContent);
+                }
+                
+                document.body.removeChild(tempDiv);
+                return resultPages;
+            }
+            
+            // 更新页面指示器
+            function updatePageIndicator() {
+                currentPageEl.textContent = currentPage + 1;
+                const progress = ((currentPage + 1) / pages.length) * 100;
+                progressEl.style.width = `${progress}%`;
+                
+                // 更新按钮状态
+                prevBtn.disabled = currentPage === 0;
+                nextBtn.disabled = currentPage === pages.length - 1;
+                
+                // 滚动到当前页
+                pagesContainer.scrollTo({
+                    left: currentPage * pagesContainer.clientWidth,
+                    behavior: 'smooth'
+                });
+            }
+            
+            // 上一页
+            prevBtn.addEventListener('click', function() {
+                if (currentPage > 0) {
+                    currentPage--;
+                    updatePageIndicator();
+                }
+            });
+            
+            // 下一页
+            nextBtn.addEventListener('click', function() {
+                if (currentPage < pages.length - 1) {
+                    currentPage++;
+                    updatePageIndicator();
+                }
+            });
+            
+            // 键盘翻页支持
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') {
+                    prevBtn.click();
+                } else if (e.key === 'ArrowRight') {
+                    nextBtn.click();
+                }
+            });
+            
+            // 触摸滑动翻页（简化版）
+            let startX = 0;
+            pagesContainer.addEventListener('touchstart', function(e) {
+                startX = e.touches[0].clientX;
+            });
+            
+            pagesContainer.addEventListener('touchend', function(e) {
+                const endX = e.changedTouches[0].clientX;
+                const diffX = startX - endX;
+                
+                if (Math.abs(diffX) > 50) { // 滑动阈值
+                    if (diffX > 0) {
+                        nextBtn.click(); // 向左滑动，下一页
+                    } else {
+                        prevBtn.click(); // 向右滑动，上一页
+                    }
+                }
+            });
+            
+            // 切换夜间模式
+            const toggleNightMode = function() {
+                document.body.classList.toggle('night-mode');
+            };
+            
+            // 添加夜间模式切换按钮（可选功能）
+            const nightModeBtn = document.createElement('button');
+            nightModeBtn.className = 'nav-button';
+            nightModeBtn.textContent = '夜间模式';
+            nightModeBtn.style.marginLeft = '10px';
+            nightModeBtn.addEventListener('click', toggleNightMode);
+            document.querySelector('.footer').appendChild(nightModeBtn);
+            
+            // 初始化阅读器
+            initReader();
+            
+            // 窗口大小变化时重新分页
+            window.addEventListener('resize', function() {
+                initReader();
+            });
+        });
+    </script>
+</body>
+</html>

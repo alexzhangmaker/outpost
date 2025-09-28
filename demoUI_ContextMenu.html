@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vertical Draggable Toolbar Demo</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+    }
+    #myContainer {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      background: #f0f0f0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+    <div id="myContainer" style="width:100%;height:100vh;background:#f9f9f9;position:relative;">
+        <div class="file" style="margin:50px;padding:10px;background:#eee;">📄 文件.txt</div>
+        <div class="folder" style="margin:50px;padding:10px;background:#ddd;">📁 我的文件夹</div>
+    </div>
+  <script>
+    
+    function createContextMenu(container) {
+        let menu = document.createElement('div');
+        menu.style.position = 'absolute';
+        menu.style.display = 'none';
+        menu.style.flexDirection = 'column';
+        menu.style.gap = '10px';
+        menu.style.background = '#fff';
+        menu.style.border = '1px solid #ccc';
+        menu.style.borderRadius = '8px';
+        menu.style.padding = '10px';
+        menu.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+        menu.style.zIndex = '10000';
+
+        container.appendChild(menu);
+
+        // 自动加载 Tippy.js
+        const ensureTippy = async () => {
+            if (typeof window.tippy === 'function') return;
+            await Promise.all([
+                loadScript('https://unpkg.com/@popperjs/core@2'),
+                loadScript('https://unpkg.com/tippy.js@6'),
+                loadStyle('https://unpkg.com/tippy.js@6/dist/tippy.css')
+            ]);
+            await new Promise(resolve => {
+                const check = () => typeof window.tippy === 'function' ? resolve() : setTimeout(check, 50);
+                check();
+            });
+        };
+
+        const loadScript = (url) => new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = url;
+            s.async = true;
+            s.onload = resolve;
+            s.onerror = () => reject(`Failed to load ${url}`);
+            document.head.appendChild(s);
+        });
+
+        const loadStyle = (url) => new Promise((resolve, reject) => {
+            const l = document.createElement('link');
+            l.href = url;
+            l.rel = 'stylesheet';
+            l.onload = resolve;
+            l.onerror = () => reject(`Failed to load ${url}`);
+            document.head.appendChild(l);
+        });
+
+        const api = {
+            show(x, y) {
+                menu.style.left = `${x}px`;
+                menu.style.top = `${y}px`;
+                menu.style.display = 'flex';
+            },
+            hide() {
+                menu.style.display = 'none';
+            },
+            populate(items) {
+                menu.innerHTML = '';
+                items.forEach(item => {
+                    const btn = document.createElement('button');
+                    btn.style.border = 'none';
+                    btn.style.background = 'transparent';
+                    btn.style.cursor = 'pointer';
+                    btn.style.width = '32px';
+                    btn.style.height = '32px';
+                    btn.style.display = 'flex';
+                    btn.style.alignItems = 'center';
+                    btn.style.justifyContent = 'center';
+
+                    if (item.svg) {
+                        btn.innerHTML = item.svg;
+                    } else if (item.iconUrl) {
+                        const img = document.createElement('img');
+                        img.src = item.iconUrl;
+                        img.alt = item.tip;
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        btn.appendChild(img);
+                    }
+
+                    btn.onclick = () => {
+                        item.onClick?.();
+                        api.hide();
+                    };
+
+                    menu.appendChild(btn);
+
+                    ensureTippy().then(() => {
+                        window.tippy(btn, {
+                            content: item.tip,
+                            placement: 'right',
+                            animation: 'scale',
+                        });
+                    });
+                });
+            }
+        };
+
+        // 点击空白处隐藏菜单
+        document.addEventListener('click', () => api.hide());
+
+        return api;
+    }
+  </script>
+  <script>
+    const container = document.getElementById('myContainer');
+const contextMenu = createContextMenu(container);
+
+container.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+
+  const target = e.target;
+
+  // 根据点击对象动态生成菜单项
+  let items = [];
+  if (target.classList.contains('file')) {
+    items = [
+      {
+        svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48" fill="#000000"><g fill="none" stroke="#000000" stroke-linecap="round" stroke-width="4"><path stroke-linejoin="round" d="M29 4H9C7.89543 4 7 4.89543 7 6V42C7 43.1046 7.89543 44 9 44H37C38.1046 44 39 43.1046 39 42V20.0046"/><path d="M13 18H21"/><path d="M13 28H25"/><path stroke-linejoin="round" d="M40.9991 6.00098L29.0044 17.9958"/></g></svg>',
+        tip: '打开文件',
+        onClick: () => alert('打开文件')
+      },
+      {
+        svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48" fill="#000000"><g fill="none" stroke="#000000" stroke-linecap="round" stroke-width="4"><path stroke-linejoin="round" d="M29 4H9C7.89543 4 7 4.89543 7 6V42C7 43.1046 7.89543 44 9 44H37C38.1046 44 39 43.1046 39 42V20.0046"/><path d="M13 18H21"/><path d="M13 28H25"/><path stroke-linejoin="round" d="M40.9991 6.00098L29.0044 17.9958"/></g></svg>',
+        tip: '删除',
+        onClick: () => alert('删除文件')
+      }
+    ];
+  } else if (target.classList.contains('folder')) {
+    items = [
+      {
+        svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48" fill="#000000"><g fill="none" stroke="#000000" stroke-linecap="round" stroke-width="4"><path stroke-linejoin="round" d="M29 4H9C7.89543 4 7 4.89543 7 6V42C7 43.1046 7.89543 44 9 44H37C38.1046 44 39 43.1046 39 42V20.0046"/><path d="M13 18H21"/><path d="M13 28H25"/><path stroke-linejoin="round" d="M40.9991 6.00098L29.0044 17.9958"/></g></svg>',
+        tip: '打开文件夹',
+        onClick: () => alert('打开文件夹')
+      },
+      {
+        svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48" fill="#000000"><g fill="none" stroke="#000000" stroke-linecap="round" stroke-width="4"><path stroke-linejoin="round" d="M29 4H9C7.89543 4 7 4.89543 7 6V42C7 43.1046 7.89543 44 9 44H37C38.1046 44 39 43.1046 39 42V20.0046"/><path d="M13 18H21"/><path d="M13 28H25"/><path stroke-linejoin="round" d="M40.9991 6.00098L29.0044 17.9958"/></g></svg>',
+        tip: '新建文件',
+        onClick: () => alert('新建文件')
+      }
+    ];
+  }
+
+  contextMenu.populate(items);
+  contextMenu.show(e.clientX, e.clientY);
+});
+  </script>
+</body>
+</html>

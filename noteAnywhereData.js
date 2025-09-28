@@ -130,12 +130,10 @@ async function plusNotesInCloud(jsonNote,noteContent,folderID){
 
             }
         }
-        
     } catch (error) {
         console.error('Failed to read data:', error);
     }
 }
-
 
 
 async function fetchNoteUsingID(noteID){
