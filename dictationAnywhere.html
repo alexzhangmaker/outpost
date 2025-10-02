@@ -415,9 +415,11 @@
         // 加载单词集
         function loadWordSets() {
             if (!AppState.settings.firebaseUrl) {
-                alert('请先配置Firebase Database URL');
-                showSettingsPage();
-                return;
+                AppState.settings.firebaseUrl = 'https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/' ;
+                AppState.settings.wordsetsPath = 'thaiAnki/Dictation/wordSets' ;
+                //alert('请先配置Firebase Database URL');
+                //showSettingsPage();
+                //return;
             }
             
             //const database = firebase.database();
