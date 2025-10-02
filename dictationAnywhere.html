@@ -20,6 +20,11 @@
             touch-action: pan-y;
         }
     </style>
+    <style>
+        .noShow{
+            display: none;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 font-sans">
     <!-- 欢迎/登录页面 -->
@@ -104,7 +109,8 @@
             <div id="answer-section" class="bg-white rounded-lg shadow-lg p-6 hidden">
                 <h3 class="text-lg font-semibold mb-4">正确答案</h3>
                 <p id="correct-spelling" class="text-xl text-center mb-6">正确拼写</p>
-                
+                <p id="idWordSpelling" class="noShow"></p>
+
                 <div class="flex justify-between">
                     <button id="wrong-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg">
                         错误
@@ -498,6 +504,8 @@
                 
                 // 更新单词信息
                 if(jsonWord.definitions[0].hasOwnProperty('en')){
+                    //idWordSpelling
+                    document.getElementById('idWordSpelling').textContent = currentWord;//jsonWord.definitions[0].en || '未知意思';
                     document.getElementById('word-meaning').textContent = jsonWord.definitions[0].en || '未知意思';
                     document.getElementById('word-type').textContent = currentWord.type || '';
                 }else{
@@ -508,7 +516,7 @@
                 // 重置答案区域
                 document.getElementById('answer-section').classList.add('hidden');
                 document.getElementById('check-btn').classList.remove('hidden');
-                document.getElementById('correct-spelling').textContent = currentWord.spelling || '';
+                document.getElementById('correct-spelling').textContent = currentWord;//.spelling || '';
                 
                 // 设置音频播放
                 document.getElementById('play-audio-btn').onclick = function() {
@@ -545,6 +553,10 @@
         function showAnswer() {
             document.getElementById('answer-section').classList.remove('hidden');
             document.getElementById('check-btn').classList.add('hidden');
+
+            //alex
+            document.getElementById('idWordSpelling').classList.toggle('noShow') ;
+            //end alex
         }
 
         // 处理用户答案

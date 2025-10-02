@@ -266,7 +266,36 @@
         
     </div>
     <script src="./jsResource/localforage.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
 
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
+    </script>
     <script>
         let jsonDictCache = {} ;
         let dictEntries=[] ;
@@ -286,12 +315,19 @@
             if(dictEntries==null){
                 jsonDictCache = await localforage.getItem(gDictCacheKey);
                 console.log(jsonDictCache);
+                if(jsonDictCache==null){
+                    //alex 
+                    let snapshot = await database.ref(`thaiDictionary`).once('value');
+                    jsonDictCache = snapshot.val();
+                    await localforage.setItem(gDictCacheKey,jsonDictCache);
+                    //end alex 
+                }
                 let keys = Object.keys(jsonDictCache) ;
                 console.log('length of keys:'+keys.length) ;
-                console.log(jsonDictCache[keys[keys.length-2]])
+
+                dictEntries=[] ;
                 keys.forEach(key=>{
                     //if(key==null || key ==undefined)continue ;
-
                     let jsonEntry = {
                         word:key,
                         dictEntry:jsonDictCache[key]
@@ -1271,7 +1307,6 @@
                     }
 
                     emptyState.querySelector('#idBTNCheckGoogle').addEventListener('click',async (event)=>{
-                        alert(`will google ${query}`) ;
                         /*
                         let cDate = new Date() ;
                         let jsonGoogleQuery={

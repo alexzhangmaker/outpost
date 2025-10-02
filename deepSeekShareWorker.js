@@ -529,9 +529,10 @@ class AIServiceWorker {
     async getApiKey() {
         try {
             const config = await this.storage.getItem('DeepSeek_API_Config');
-            return config?.value?.apiKey || null;
+            //return "sk-687556a7509a4799a20aa9566dd94ec3" ;
+            return config?.value?.apiKey || "sk-687556a7509a4799a20aa9566dd94ec3";
         } catch (error) {
-            return null;
+            return "sk-687556a7509a4799a20aa9566dd94ec3";
         }
     }
 

@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语词汇短语数据录入应用</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .auto-complete-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .auto-complete-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .auto-complete-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .suggestions-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e1e8ed;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f1f1;
+            transition: background 0.2s;
+        }
+        
+        .suggestion-item:hover, .suggestion-item.active {
+            background-color: #f8f9fa;
+        }
+        
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            font-weight: bold;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .entered-words {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            min-height: 60px;
+        }
+        
+        .word-tag {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .word-tag.custom {
+            background: #e74c3c;
+        }
+        
+        .word-tag .remove {
+            margin-left: 5px;
+            cursor: pointer;
+        }
+        
+        .words-summary {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e8f4fd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .separator-info {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #219653;
+        }
+        
+        .instructions {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .status-message {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
+            text-align: center;
+            display: none;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+    
+</head>
+<body>
+    <div class="container">
+        <h1>泰语词汇短语数据录入</h1>
+        <p class="description">输入泰语词汇或短语，使用逗号或连续两个空格作为分隔符，按回车键保存到数据库</p>
+        
+        <div class="input-section">
+            <div class="form-group">
+                <label class="form-label" for="titleInput">标题</label>
+                <input type="text" id="titleInput" class="form-input" placeholder="输入标题...">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="noteInput">备注</label>
+                <textarea id="noteInput" class="form-textarea" placeholder="输入备注..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="thaiInput">泰语词汇/短语</label>
+                <div class="auto-complete-container">
+                    <input type="text" id="thaiInput" class="auto-complete-input" placeholder="输入泰语词汇或短语，使用逗号或连续两个空格分隔...">
+                    <div id="suggestions" class="suggestions-list"></div>
+                </div>
+                <div class="separator-info">
+                    <strong>分隔符说明：</strong> 可以使用逗号 (,) 或连续两个空格作为分隔符
+                </div>
+                <div class="entered-words" id="enteredWords">
+                    <!-- 已输入的词汇将在这里显示 -->
+                </div>
+                <div class="words-summary" id="wordsSummary">
+                    <!-- 词汇统计信息将在这里显示 -->
+                </div>
+            </div>
+            
+            <div id="statusMessage" class="status-message"></div>
+            
+            <div class="actions">
+                <button class="btn btn-primary" id="saveBtn">
+                    <i class="fas fa-save"></i> 保存到数据库
+                </button>
+                <button class="btn btn-success" id="idBTNAuditAIResult">审计AI词条</button>
+                <button class="btn btn-success" id="idBTNPubWordSet">发布单词集</button>
+                <button class="btn btn-success" id="idBTNPubDictationSet">发布听写集</button>
+
+                <button class="btn btn-secondary" id="clearBtn">
+                    <i class="fas fa-trash"></i> 清空输入
+                </button>
+                <button class="btn btn-success" id="exportBtn">
+                    <i class="fas fa-download"></i> 导出JSON
+                </button>
+               
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>使用说明</h3>
+            <ul>
+                <li>在标题字段输入数据集的标题</li>
+                <li>在备注字段添加相关说明</li>
+                <li>在泰语词汇字段输入词汇或短语</li>
+                <li>使用<strong>逗号 (,)</strong> 或 <strong>连续两个空格</strong> 分隔不同的词汇/短语</li>
+                <li>按<strong>回车键</strong>或点击"保存到数据库"按钮保存数据</li>
+                <li>蓝色标签表示预置词汇，红色标签表示自定义词汇</li>
+                <li>点击词汇标签上的×可以删除该词汇</li>
+                <li>使用"导出JSON"按钮可以下载数据的JSON文件</li>
+            </ul>
+        </div>
+    </div>
+    <script src="./jsResource/localforage.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
+    </script>
+    <script type="module">
+        import AIServiceClient from './deepSeekShareWorkerAPI.js';
+
+        // 创建客户端实例
+        const aiClient = new AIServiceClient();
+        window.aiClient = aiClient;
+
+        const keyRequestIDs = 'keyRequestIDs' ;
+        async function logAIRequestID(requestID){
+            let requestIDs = await localforage.getItem(keyRequestIDs) ;
+            if(requestIDs==null){
+                requestIDs=[requestID] ;
+            }else{
+                if(requestIDs.includes(requestID))return ;
+                requestIDs.push(requestID) ;
+            }
+            await localforage.setItem(keyRequestIDs,requestIDs) ;
+        }
+
+        const keyRequestResults = 'keyRequestResults' ;
+        async function logAIRequestResult(requestID,result){
+            let jsonResult = {
+                requestID:requestID,
+                result:result
+            } ;
+            let requestResults = await localforage.getItem(keyRequestResults) ;
+            if(requestResults==null){
+                requestResults=[jsonResult] ;
+            }else{
+                //if(requestResults.includes(requestID))return ;
+                const hasObjectWithKeyValue = requestResults.some((obj) => obj.requestID === requestID);
+                if(hasObjectWithKeyValue)return ;
+
+                requestResults.push(jsonResult) ;
+            }
+            await localforage.setItem(keyRequestResults,requestResults) ;
+        }
+
+        // 设置事件监听
+        function setupEventListeners() {
+            /*
+            aiClient.on('queueInitialized', (data) => {
+                addLog('队列初始化完成', data);
+                updateStatus('已连接 - 队列就绪');
+            });
+
+            aiClient.on('requestQueued', (data) => {
+                addLog(`请求已加入队列，位置: ${data.position}`, data);
+            });
+            */
+
+            aiClient.on('requestProcessingStarted', async (data) => {
+                console.log("=====>>>requestProcessingStarted====>>>") ;
+                addLog(`请求开始处理: ${data.queueId}`, data);
+                //localforage.setItem()
+                await logAIRequestID(data.queueId) ;
+            });
+
+            /*
+            aiClient.on('requestRetry', (data) => {
+                addLog(`请求重试: ${data.queueId} (${data.retryCount}/${data.maxRetries})`, data);
+            });
+            */
+
+            aiClient.on('requestCompleted', async (data) => {
+                addLog(`请求完成: ${data.queueId}`, data);
+                if (data.result && data.result.response) {
+                    addLog(`AI 回复: ${data.result.response.choices[0].message.content}`);
+                    await logAIRequestResult(data.queueId,data.result.response.choices[0].message.content) ;
+                }
+            });
+
+            /*
+            aiClient.on('requestFailed', (data) => {
+                addLog(`请求失败: ${data.queueId}`, data);
+            });
+            
+
+            aiClient.on('requestCancelled', (data) => {
+                addLog(`请求已取消: ${data.queueId}`, data);
+                updateQueueStatus();
+            });
+            */
+            /*
+            aiClient.on('storageUpdated', (data) => {
+                addLog(`存储已更新: ${data.key}`, data);
+            });
+
+            aiClient.on('apiConfigUpdated', (data) => {
+                addLog('API 配置已更新', data);
+            });
+            */
+        }
+
+        
+
+        // 工具函数
+        function addLog(message, data = null) {
+            /*
+            const logElement = document.getElementById('eventLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            
+            if (data) {
+                const details = document.createElement('div');
+                details.style.fontSize = '10px';
+                details.style.color = '#666';
+                details.textContent = JSON.stringify(data, null, 2);
+                logEntry.appendChild(details);
+            }
+            
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            */
+            console.log(message) ;
+        }
+
+        function updateStatus(message) {
+            /*
+            document.getElementById('statusDisplay').textContent = message;
+            */
+           console.log(message) ;
+        }
+
+        async function updateQueueStatus() {
+            /*
+            try {
+                const status = await aiClient.getQueueStatus();
+                document.getElementById('queueStatus').innerHTML = `
+                    <div>总队列: ${status.queueStatus.total}</div>
+                    <div>待处理: ${status.queueStatus.pending}</div>
+                    <div>处理中: ${status.queueStatus.processing}</div>
+                    <div>当前位置: ${status.queueStatus.position}</div>
+                    <div>预计等待: ${Math.round(status.queueStatus.estimatedWaitTime / 1000)}秒</div>
+                `;
+
+                // 显示活动请求
+                const activeRequests = status.items.filter(item => 
+                    item.status === 'processing' || item.status === 'pending'
+                );
+                
+                const activeRequestsElement = document.getElementById('activeRequests');
+                activeRequestsElement.innerHTML = '<h3>活动请求:</h3>';
+                
+                activeRequests.forEach(item => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = `queue-item ${item.status}`;
+                    itemElement.innerHTML = `
+                        <div><strong>${item.id}</strong></div>
+                        <div>状态: ${item.status}</div>
+                        <div>优先级: ${item.priority}</div>
+                        <div>创建时间: ${new Date(item.createdAt).toLocaleTimeString()}</div>
+                        ${item.status === 'processing' ? `<div>开始处理: ${new Date(item.startedProcessingAt).toLocaleTimeString()}</div>` : ''}
+                        <button onclick="cancelRequest('${item.id}')">取消</button>
+                    `;
+                    activeRequestsElement.appendChild(itemElement);
+                });
+
+            } catch (error) {
+                console.error('更新队列状态失败:', error);
+            }
+            */
+        }
+
+        // 全局函数供按钮调用
+        window.checkStatus = async function() {
+            try {
+                const stats = await aiClient.getQueueStatistics();
+                addLog('系统状态检查', stats);
+                updateStatus(`已连接 - 队列: ${stats.total} 客户端: ${stats.clients}`);
+            } catch (error) {
+                addLog('状态检查失败: ' + error.message);
+            }
+        };
+
+        window.getQueueStats = async function() {
+            try {
+                const stats = await aiClient.getQueueStatistics();
+                addLog('队列统计', stats);
+            } catch (error) {
+                addLog('获取队列统计失败: ' + error.message);
+            }
+        };
+
+        window.cleanupQueue = async function() {
+            try {
+                const result = await aiClient.cleanupQueue();
+                addLog('队列清理完成', result);
+                updateQueueStatus();
+            } catch (error) {
+                addLog('队列清理失败: ' + error.message);
+            }
+        };
+
+        window.submitRequest = async function(prompt,priority) {
+            /*
+            const prompt = document.getElementById('promptInput').value;
+            const priority = document.getElementById('prioritySelect').value;
+            */
+            if (!prompt) {
+                alert('请输入提示内容');
+                return;
+            }
+
+            try {
+                const result = await aiClient.callDeepSeek(prompt, {
+                    priority: priority,
+                    conversationId: 'demo_conversation'
+                });
+                
+                addLog(`请求已提交: ${result.queueId}`, result);
+                //document.getElementById('promptInput').value = '';
+                
+            } catch (error) {
+                addLog('提交请求失败: ' + error.message);
+            }
+        };
+
+        /*
+        window.submitMultipleRequests = async function() {
+            const prompts = [
+                '请简单介绍一下人工智能',
+                '解释一下机器学习的基本概念',
+                '什么是深度学习？',
+                '自然语言处理有哪些应用？'
+            ];
+
+            for (let i = 0; i < prompts.length; i++) {
+                setTimeout(async () => {
+                    try {
+                        const result = await aiClient.callDeepSeek(prompts[i], {
+                            priority: i === 0 ? 'high' : 'normal',
+                            conversationId: 'batch_test'
+                        });
+                        addLog(`批量请求 ${i+1} 已提交: ${result.queueId}`);
+                    } catch (error) {
+                        addLog(`批量请求 ${i+1} 失败: ` + error.message);
+                    }
+                }, i * 1000); // 每秒提交一个
+            }
+        };
+        */
+
+        window.cancelRequest = async function(queueId) {
+            try {
+                const result = await aiClient.cancelQueuedRequest(queueId);
+                addLog(`取消请求: ${queueId}`, result);
+                updateQueueStatus();
+            } catch (error) {
+                addLog('取消请求失败: ' + error.message);
+            }
+        };
+
+        window.setStorageData = async function(key,value) {
+            /*
+            const key = document.getElementById('storageKey').value;
+            const value = document.getElementById('storageValue').value;
+            */
+            
+            if (!key) {
+                alert('请输入键名');
+                return;
+            }
+
+            try {
+                const result = await aiClient.setData(key, value);
+                addLog('存储数据成功', result);
+            } catch (error) {
+                addLog('存储数据失败: ' + error.message);
+            }
+        };
+
+        window.getStorageData = async function(key) {
+            /*
+            const key = document.getElementById('storageKey').value;
+            */
+            
+            if (!key) {
+                alert('请输入键名');
+                return;
+            }
+
+            try {
+                const result = await aiClient.getData(key);
+                addLog('获取数据成功', result);
+            } catch (error) {
+                addLog('获取数据失败: ' + error.message);
+            }
+        };
+
+        window.getAllStorageData = async function() {
+            try {
+                const result = await aiClient.getAllData();
+                addLog('获取所有数据成功', result);
+            } catch (error) {
+                addLog('获取所有数据失败: ' + error.message);
+            }
+        };
+
+        window.setApiConfig = async function(apiKey) {
+            /*
+            const apiKey = document.getElementById('apiKeyInput').value;
+            */
+            
+            if (!apiKey) {
+                alert('请输入 API Key');
+                return;
+            }
+
+            try {
+                const result = await aiClient.setApiConfig({ apiKey });
+                addLog('API 配置成功', result);
+                document.getElementById('apiKeyInput').value = '';
+            } catch (error) {
+                addLog('API 配置失败: ' + error.message);
+            }
+        };
+
+        // 初始化
+        async function init() {
+            setupEventListeners();
+            
+            try {
+                const result = await aiClient.connect();
+                addLog('连接成功', result);
+                updateStatus('已连接 - ' + result.clientId);
+                
+                // 初始状态检查
+                await updateQueueStatus();
+                
+            } catch (error) {
+                addLog('连接失败: ' + error.message);
+                updateStatus('连接失败');
+            }
+        }
+
+        // 启动应用
+        init();
+
+        /*
+        document.querySelector('#idBTNAuditAIResults').addEventListener('click',(event)=>{
+            window.open("consoleAuditAILog.html","_blank");
+        }) ;
+
+        //idBTNGoConsole
+        document.querySelector('#idBTNGoConsole').addEventListener('click',(event)=>{
+            window.open("deepSeekConsole.html","_blank");
+        }) ;
+        */
+    </script>
+    <script>
+
+        async function _larkGoogleTranslate(text,sourceLang,targetLang){
+            console.log("_larkGoogleTranslate==============>>>>>>>>>>>>>>");
+            console.log(text);
+            let textPre = text.replace(/( )/ig, "%20") ;
+            //let encodedText = encodeURI(textPre) ;
+            //var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="+ sourceLang + "&tl=" + targetLang + "&dt=t&q=" + encodedText;
+            var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="+ sourceLang + "&tl=" + targetLang + "&dt=t&q=" + textPre;
+            
+            console.log(url);
+            console.log("<<<<<<<<<<<================");
+    
+    
+            let jsonResp = await fetch(url) ;//larkHTTPFetchJSON(url) ;
+            let jsonData = await jsonResp.text() ;
+            let jsonDict = JSON.parse(jsonData) ;
+            console.log(jsonDict) ;
+            let meaning = jsonDict[0][0] ;
+            return meaning[0] ;
+        }
+    
+    
+    
+        // 生成提示词用于DeepSeek API
+        function promptQueryDictThai(thaiWord) {
+            return `
+            请提供泰语单词"${thaiWord}"的详细字典定义,以JSON格式返回,包含以下字段:
+            - word_id: 唯一ID
+            - thai: JSON对象,包含word, pronunciation, spelling_breakdown属性
+            - pos: 词性
+            - level: CEFR级别
+            - topic: 字符串数组,数组每个元素对应一种主题分类
+            - definitions: JSON对象数组,其中每个对象包含属性en和zh,属性en为英文释义,属性zh为中文释义
+            - grammar_notes: 语法说明
+            - conjugations: JSON对象,每个属性对应一种变形形式
+            - common_phrases: 常见短语对象数组，每个对象包括短语及其翻译
+            - synonyms: 近义词字符串数组
+            - antonyms: 反义词字符串数组
+            - tags: 标签数组
+        
+            请确保返回纯JSON格式,不要包含其他文本。
+            
+            `;
+        }
+    
+    </script>
+    <script>
+        // 泰语词汇数组
+        let thaiWords = [
+            "สวัสดี", // 你好
+            "ขอบคุณ", // 谢谢
+            "ขอโทษ", // 对不起
+            "ใช่", // 是
+            "ไม่", // 不
+            "สบายดี", // 很好
+            "อาหาร", // 食物
+            "น้ำ", // 水
+            "บ้าน", // 家
+            "โรงเรียน", // 学校
+            "มหาวิทยาลัย", // 大学
+            "รถ", // 车
+            "รถไฟ", // 火车
+            "เครื่องบิน", // 飞机
+            "ประเทศไทย", // 泰国
+            "กรุงเทพ", // 曼谷
+            "พัทยา", // 芭堤雅
+            "เชียงใหม่", // 清迈
+            "ภูเก็ต", // 普吉岛
+            "ทะเล", // 海
+            "ภูเขา", // 山
+            "แดด", // 阳光
+            "ฝน", // 雨
+            "ร้อน", // 热
+            "เย็น", // 冷
+            "สวย", // 美丽
+            "อร่อย", // 美味
+            "ใหญ่", // 大
+            "เล็ก", // 小
+            "เร็ว", // 快
+            "ช้า", // 慢
+            "เพื่อน", // 朋友
+            "ครอบครัว", // 家庭
+            "พ่อ", // 爸爸
+            "แม่", // 妈妈
+            "ลูก", // 孩子
+            "พี่", // 哥哥/姐姐
+            "น้อง", // 弟弟/妹妹
+            "สัตว์", // 动物
+            "แมว", // 猫
+            "หมา", // 狗
+            "ปลา", // 鱼
+            "นก", // 鸟
+            "ดอกไม้", // 花
+            "ต้นไม้", // 树
+            "หนังสือ", // 书
+            "ดนตรี", // 音乐
+            "ภาพยนตร์", // 电影
+            "กีฬา", // 运动
+            "ฟุตบอล", // 足球
+            "ว่ายน้ำ" // 游泳
+        ];
+
+        
+
+        // 自动完成工厂函数
+        function createAutoComplete(inputElement, suggestionsContainer, words) {
+            let currentFocus = -1;
+            let enteredWords = [];
+            
+            // 输入事件处理
+            inputElement.addEventListener('input', function() {
+                const value = this.value;
+                closeAllLists();
+                currentFocus = -1;
+                
+                if (!value) return false;
+                
+                const filteredWords = words.filter(word => 
+                    word.includes(value)
+                );
+                
+                if (filteredWords.length > 0) {
+                    showSuggestions(filteredWords, value);
+                }
+            });
+            
+            // 键盘导航
+            inputElement.addEventListener('keydown', function(e) {
+                let suggestions = suggestionsContainer.getElementsByClassName('suggestion-item');
+                
+                if (e.keyCode === 40) { // 向下键
+                    currentFocus++;
+                    addActive(suggestions);
+                } else if (e.keyCode === 38) { // 向上键
+                    currentFocus--;
+                    addActive(suggestions);
+                } else if (e.keyCode === 13) { // 回车键
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        if (suggestions) suggestions[currentFocus].click();
+                    } else {
+                        // 如果没有选择建议，处理输入内容
+                        processInput();
+                    }
+                }
+            });
+            
+            // 显示建议列表
+            function showSuggestions(filteredWords, inputValue) {
+                suggestionsContainer.innerHTML = '';
+                
+                filteredWords.forEach(word => {
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+                    
+                    // 高亮匹配部分
+                    const startIndex = word.indexOf(inputValue);
+                    if (startIndex !== -1) {
+                        const before = word.substring(0, startIndex);
+                        const match = word.substring(startIndex, startIndex + inputValue.length);
+                        const after = word.substring(startIndex + inputValue.length);
+                        
+                        item.innerHTML = `${before}<span class="highlight">${match}</span>${after}`;
+                    } else {
+                        item.textContent = word;
+                    }
+                    
+                    item.addEventListener('click', function() {
+                        inputElement.value = word;
+                        closeAllLists();
+                    });
+                    
+                    suggestionsContainer.appendChild(item);
+                });
+                
+                suggestionsContainer.style.display = 'block';
+            }
+            
+            // 添加活动状态
+            function addActive(suggestions) {
+                if (!suggestions) return false;
+                
+                removeActive(suggestions);
+                
+                if (currentFocus >= suggestions.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = suggestions.length - 1;
+                
+                suggestions[currentFocus].classList.add('active');
+            }
+            
+            // 移除活动状态
+            function removeActive(suggestions) {
+                for (let i = 0; i < suggestions.length; i++) {
+                    suggestions[i].classList.remove('active');
+                }
+            }
+            
+            // 关闭所有建议列表
+            function closeAllLists() {
+                suggestionsContainer.style.display = 'none';
+            }
+            
+            // 点击外部关闭建议列表
+            document.addEventListener('click', function(e) {
+                if (e.target !== inputElement) {
+                    closeAllLists();
+                }
+            });
+            
+            // 处理输入内容 - 支持逗号和连续两个空格作为分隔符
+            function processInput() {
+                let inputValue = inputElement.value.trim();
+                inputValue = inputValue.replaceAll(`"`,'') ;
+                inputValue = inputValue.replaceAll(`[`,'') ;
+                inputValue = inputValue.replaceAll(`]`,'') ;
+
+
+                if (!inputValue) return;
+                
+                // 使用正则表达式分割：逗号或连续两个空格
+                const wordsArray = inputValue.split(/,|\s{2,}/).filter(word => word.trim() !== '');
+                
+                // 添加到已输入词汇数组
+                enteredWords = [...enteredWords, ...wordsArray];
+                
+                // 更新显示
+                updateEnteredWordsDisplay();
+                
+                // 清空输入框
+                inputElement.value = '';
+                
+                // 关闭建议列表
+                closeAllLists();
+            }
+            
+            // 检查单词是否为预置词汇
+            function isPredefinedWord(word) {
+                return thaiWords.includes(word);
+            }
+            
+            // 获取自定义词汇（不在预置数组中的词汇）
+            function getCustomWords() {
+                return enteredWords.filter(word => !isPredefinedWord(word));
+            }
+            
+            // 更新已输入词汇显示
+            function updateEnteredWordsDisplay() {
+                const enteredWordsContainer = document.getElementById('enteredWords');
+                const wordsSummaryContainer = document.getElementById('wordsSummary');
+                enteredWordsContainer.innerHTML = '';
+                
+                if (enteredWords.length === 0) {
+                    enteredWordsContainer.innerHTML = '<p style="color: #7f8c8d; text-align: center;">尚未输入任何词汇</p>';
+                    wordsSummaryContainer.innerHTML = '';
+                    return;
+                }
+                
+                // 显示词汇标签
+                enteredWords.forEach((word, index) => {
+                    const wordTag = document.createElement('div');
+                    wordTag.className = `word-tag ${isPredefinedWord(word) ? '' : 'custom'}`;
+                    wordTag.innerHTML = `
+                        ${word}
+                        <span class="remove" data-index="${index}">×</span>
+                    `;
+                    enteredWordsContainer.appendChild(wordTag);
+                });
+                
+                // 显示词汇统计
+                const predefinedCount = enteredWords.filter(word => isPredefinedWord(word)).length;
+                const customCount = enteredWords.length - predefinedCount;
+                
+                wordsSummaryContainer.innerHTML = `
+                    <strong>词汇统计:</strong> 
+                    总计 ${enteredWords.length} 个词汇 | 
+                    预置词汇 ${predefinedCount} 个 | 
+                    自定义词汇 ${customCount} 个
+                `;
+                
+                // 添加删除事件监听
+                document.querySelectorAll('.word-tag .remove').forEach(removeBtn => {
+                    removeBtn.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        enteredWords.splice(index, 1);
+                        updateEnteredWordsDisplay();
+                    });
+                });
+            }
+            
+            // 获取已输入的词汇数组
+            function getEnteredWords() {
+                return [...enteredWords];
+            }
+            
+            // 清空已输入的词汇
+            function clearEnteredWords() {
+                enteredWords = [];
+                updateEnteredWordsDisplay();
+            }
+            
+            // 初始化显示
+            updateEnteredWordsDisplay();
+            
+            return {
+                processInput: processInput,
+                getEnteredWords: getEnteredWords,
+                getCustomWords: getCustomWords,
+                clearEnteredWords: clearEnteredWords
+            };
+        }
+
+        // 生成UUID
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // 保存数据到Firebase
+        function saveToFirebase(data) {
+
+            alert("logic for save to firebase TBD") ;
+            const path = 'thaiVocabulary'; // 指定数据库路径
+            return database.ref(path).push(data).then(() => {
+                return true;
+            }).catch((error) => {
+                console.error('保存数据失败:', error);
+                return false;
+            });
+            
+        }
+
+        // 显示状态消息
+        function showStatusMessage(message, isSuccess) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.className = `status-message ${isSuccess ? 'status-success' : 'status-error'}`;
+            statusElement.style.display = 'block';
+            
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // 导出JSON数据
+        function exportToJSON(data) {
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `thai-vocabulary-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+
+        let dictEntries=[];
+        async function prepareLocalDiction(){
+            const gDictCacheKey = "outpostDictCache" ;
+            const gDictLocalKey ="outpostDictLocal" ;
+
+            dictEntries = await localforage.getItem(gDictLocalKey);
+            if(dictEntries==null){
+                jsonDictCache = await localforage.getItem(gDictCacheKey);
+                console.log(jsonDictCache);
+                if(jsonDictCache==null){
+                    //alex 
+                    let snapshot = await database.ref(`thaiDictionary`).once('value');
+                    jsonDictCache = snapshot.val();
+                    await localforage.setItem(gDictCacheKey,jsonDictCache);
+                    //end alex 
+                }
+                let keys = Object.keys(jsonDictCache) ;
+                console.log('length of keys:'+keys.length) ;
+
+                dictEntries=[] ;
+                keys.forEach(key=>{
+                    //if(key==null || key ==undefined)continue ;
+                    let jsonEntry = {
+                        word:key,
+                        dictEntry:jsonDictCache[key]
+                    } ;
+                    dictEntries.push(jsonEntry) ;
+                    //console.log(jsonEntry) ;
+                }) ;
+                console.log(dictEntries) ;
+                await localforage.setItem(gDictLocalKey,dictEntries);
+            }
+
+            thaiWords=[]; 
+            dictEntries.forEach(entry=>{
+                thaiWords.push(entry.word);
+            });
+            return thaiWords;
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', async function() {
+            const inputElement = document.getElementById('thaiInput');
+            const suggestionsContainer = document.getElementById('suggestions');
+            const saveBtn = document.getElementById('saveBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const btnAuditAI = document.getElementById('idBTNAuditAIResult') ;
+            const btnPubWordset = document.getElementById('idBTNPubWordSet') ;
+            const btnPubDictSet = document.getElementById('idBTNPubDictationSet') ;
+
+            
+            await prepareLocalDiction();
+            // 创建自动完成实例
+            const autoComplete = createAutoComplete(inputElement, suggestionsContainer, thaiWords);
+            
+            btnAuditAI.addEventListener('click', function() {
+                window.open("consoleAuditAILog.html","_blank");
+            }) ;
+
+            //btnPubDictSet
+            btnPubDictSet.addEventListener('click', async function() {
+                //thaiWordList
+                const title = document.getElementById('titleInput').value.trim();
+                const note = document.getElementById('noteInput').value.trim();
+                const words = autoComplete.getEnteredWords();
+                const customWords = autoComplete.getCustomWords();
+                
+                if (!title || words.length === 0) {
+                    showStatusMessage('请先输入标题和词汇', false);
+                    return;
+                }
+                
+                let uuid= generateUUID() ;
+                // 构造数据对象
+                const jsonWordSet = {
+                    name:title,
+                    words: words,
+                };
+                
+                await database.ref(`thaiAnki/Dictation/wordSets/${uuid}`).set(jsonWordSet) ;
+            }) ;
+
+            btnPubWordset.addEventListener('click', async function() {
+                //thaiWordList
+                const title = document.getElementById('titleInput').value.trim();
+                const note = document.getElementById('noteInput').value.trim();
+                const words = autoComplete.getEnteredWords();
+                const customWords = autoComplete.getCustomWords();
+                
+                if (!title || words.length === 0) {
+                    showStatusMessage('请先输入标题和词汇', false);
+                    return;
+                }
+                
+                let uuid= generateUUID() ;
+                // 构造数据对象
+                const jsonWordSet = {
+                    //uuid: generateUUID(),
+                    "分类title":title,
+                    "大类title":title,
+                    //note: note,
+                    words: words,
+                    //customWords: customWords, // 新增属性：不在预置数组中的词汇
+                    //timestamp: new Date().toISOString()
+                    "级别":"C.TBD"
+                };
+                
+                await database.ref(`thaiWordList/${uuid}`).set(jsonWordSet) ;
+            }) ;
+            // 保存按钮事件
+            saveBtn.addEventListener('click', function() {
+                const title = document.getElementById('titleInput').value.trim();
+                const note = document.getElementById('noteInput').value.trim();
+                const words = autoComplete.getEnteredWords();
+                const customWords = autoComplete.getCustomWords();
+                
+                if (!title) {
+                    showStatusMessage('请输入标题', false);
+                    return;
+                }
+                
+                if (words.length === 0) {
+                    showStatusMessage('请输入至少一个泰语词汇', false);
+                    return;
+                }
+                
+                // 构造数据对象
+                const data = {
+                    uuid: generateUUID(),
+                    title: title,
+                    note: note,
+                    words: words,
+                    customWords: customWords, // 新增属性：不在预置数组中的词汇
+                    timestamp: new Date().toISOString()
+                };
+                
+                // 保存到Firebase
+
+                //window.submitRequest
+                for(let i=0;i<customWords.length;i++){
+                    let promptText = promptQueryDictThai(customWords[i]) ;
+                    window.submitRequest(promptText,"normal") ;
+                }
+                /*
+                saveToFirebase(data)
+                    .then(success => {
+                        if (success) {
+                            showStatusMessage('数据保存成功！', true);
+                            // 清空输入
+                            document.getElementById('titleInput').value = '';
+                            document.getElementById('noteInput').value = '';
+                            autoComplete.clearEnteredWords();
+                        } else {
+                            showStatusMessage('数据保存失败，请检查网络连接', false);
+                        }
+                    });
+                */
+            });
+            
+            // 清空按钮事件
+            clearBtn.addEventListener('click', function() {
+                document.getElementById('titleInput').value = '';
+                document.getElementById('noteInput').value = '';
+                autoComplete.clearEnteredWords();
+                showStatusMessage('输入已清空', true);
+            });
+            
+            // 导出按钮事件
+            exportBtn.addEventListener('click', function() {
+                const title = document.getElementById('titleInput').value.trim();
+                const note = document.getElementById('noteInput').value.trim();
+                const words = autoComplete.getEnteredWords();
+                const customWords = autoComplete.getCustomWords();
+                
+                if (!title || words.length === 0) {
+                    showStatusMessage('请先输入标题和词汇', false);
+                    return;
+                }
+                
+                // 构造数据对象
+                const data = {
+                    uuid: generateUUID(),
+                    title: title,
+                    note: note,
+                    words: words,
+                    customWords: customWords, // 新增属性：不在预置数组中的词汇
+                    timestamp: new Date().toISOString()
+                };
+                
+                exportToJSON(data);
+                showStatusMessage('数据已导出为JSON文件', true);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -118,7 +118,7 @@
         }
     </script>
     <script>
-        const keyRequestIDs = 'keyRequestIDs' ;
+        const keyRequestIDs ="keyRequestIDs" ;//'keyRequestIDs' ;
         async function logAIRequestID(requestID){
             let requestIDs = await localforage.getItem(keyRequestIDs) ;
             if(requestIDs==null){
@@ -130,7 +130,7 @@
             await localforage.setItem(keyRequestIDs,requestIDs) ;
         }
 
-        const keyRequestResults = 'keyRequestResults' ;
+        const keyRequestResults = "keyRequestResults";//'keyRequestResults' ;
         async function logAIRequestResult(requestID,result){
             let jsonResult = {
                 requestID:requestID,
