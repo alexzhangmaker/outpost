@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comlink SharedWorker 数据缓存应用</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/comlink@4.4.1/dist/umd/comlink.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; }
+        .card { background: white; border-radius: 1rem; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button.active { background-color: #3b82f6; color: white; }
+    </style>
+    <!-- Firebase CDN Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // 全局变量由 Canvas 环境提供
+        const firebaseConfig = {
+    apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+    authDomain: "outpost-8d74e.firebaseapp.com",
+    databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+    projectId: "outpost-8d74e",
+    storageBucket: "outpost-8d74e.firebasestorage.app",
+    messagingSenderId: "724993324937",
+    appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+    measurementId: "G-QPHWRTH6BH"
+};
+        const appId = firebaseConfig.appId;//typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app;
+        let auth;
+        let db;
+        let workerProxy;
+        let isWorkerReady = false;
+
+        // --- 1. SharedWorker 脚本内容 (使用 Blob URL 封装) ---
+        // 该脚本运行在 SharedWorker 上下文中，负责数据获取和缓存。
+        const SHARED_WORKER_SCRIPT = (firebaseConfig) => `
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+            import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+            import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+            
+            // 导入 Comlink 的 ESM 版本
+            import * as Comlink from "https://cdn.jsdelivr.net/npm/comlink@4.4.1/dist/esm/comlink.js";
+            // 导入 localforage 的 ESM 版本
+            import localforage from "https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.module.js";
+
+            // --- Worker-side Firebase and localForage Initialization ---
+            const config = JSON.parse('${JSON.stringify(firebaseConfig)}');
+            const app = initializeApp(config);
+            const auth = getAuth(app);
+            const db = getDatabase(app);
+            
+            // Initialize localForage specifically for the worker
+            localforage.config({
+                driver: localforage.INDEXEDDB,
+                name: "SharedWorkerCache",
+                storeName: "FirebaseDataStore"
+            });
+
+            // Ensure Auth state is settled before reading data
+            const getAuthState = () => new Promise(resolve => {
+                const unsubscribe = onAuthStateChanged(auth, (user) => {
+                    unsubscribe();
+                    resolve(user);
+                });
+            });
+
+            // SharedWorker 暴露给客户端的 API 核心逻辑
+            const WorkerDataService = {
+                // 用于缓存的键，包含路径以避免冲突
+                CACHE_KEY: 'app_config_data',
+                
+                async fetchData(path) {
+                    try {
+                        const user = await getAuthState();
+                        if (!user) {
+                            console.error("Worker: Cannot fetch data, user is unauthenticated.");
+                            throw new Error("Authentication required for database access.");
+                        }
+
+                        console.log(\`Worker: Checking cache for \${path}\`);
+                        
+                        // 1. 尝试从 localForage 缓存中读取数据
+                        const cachedData = await localforage.getItem(this.CACHE_KEY);
+                        if (cachedData) {
+                            console.log("Worker: Cache hit! Returning cached data.");
+                            // 注意：这里的 path 检查只是一个简化，实际上应该缓存和检查特定 path 的数据
+                            return { source: 'Cache', data: cachedData };
+                        }
+
+                        // 2. 缓存未命中或过期，从 Realtime Database 读取
+                        const dataPath = \`/artifacts/${appId}/public/data/app_data/\${path}\`;
+                        console.log(\`Worker: Cache miss. Fetching from RTDB at \${dataPath}\`);
+
+                        const snapshot = await get(ref(db, dataPath));
+                        const liveData = snapshot.val();
+                        
+                        if (liveData) {
+                            // 3. 将新数据写入 localForage 缓存
+                            await localforage.setItem(this.CACHE_KEY, liveData);
+                            console.log("Worker: Data fetched from RTDB and successfully cached.");
+                            return { source: 'RTDB', data: liveData };
+                        } else {
+                            return { source: 'RTDB', data: null };
+                        }
+                    } catch (error) {
+                        console.error("Worker: Failed to fetch data from RTDB.", error);
+                        // 返回一个错误对象
+                        return { source: 'Error', data: null, error: error.message };
+                    }
+                }
+            };
+
+            // 使用 Comlink 暴露 WorkerDataService
+            // self.onconnect 是 SharedWorker 的标准 API
+            self.onconnect = function(e) {
+                const port = e.ports[0];
+                Comlink.expose(WorkerDataService, port);
+            };
+        `;
+
+        // --- 2. Main Thread 通用数据服务封装 ---
+        // 客户端业务逻辑使用的抽象接口
+        class DataService {
+            constructor(workerProxy) {
+                this.workerProxy = workerProxy;
+            }
+
+            /**
+             * 抽象数据读取接口，封装了 Comlink 通信和缓存逻辑。
+             * @param {string} path 数据库路径 (例如 'config/header_text')
+             * @returns {Promise<object>} 包含 {source, data, error} 的对象
+             */
+            async readData(path) {
+                if (!this.workerProxy) {
+                    return { source: 'Error', data: null, error: "SharedWorker not initialized." };
+                }
+                
+                // 调用 Worker 中暴露的 fetchData 方法
+                return await this.workerProxy.fetchData(path);
+            }
+        }
+
+        // --- 3. 初始化逻辑 ---
+
+        // Firebase Auth 初始化 (确保 worker 可以访问状态)
+        async function initializeFirebase() {
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.error('Firebase Config is missing.');
+                document.getElementById('auth-status').textContent = '错误: Firebase 配置缺失.';
+                return;
+            }
+
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getDatabase(app);
+
+            // 使用 Canvas 提供的 Custom Token 登录，确保 Auth 状态在所有 Context (包括 SharedWorker) 中持久化
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                console.warn('No initial auth token. Auth rules might reject database access.');
+            }
+
+            // 监听认证状态变化并更新 UI
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    document.getElementById('auth-status').textContent = `认证成功 (UID: ${user.uid})`;
+                    document.getElementById('auth-status').classList.add('success');
+                } else {
+                    document.getElementById('auth-status').textContent = '未认证或匿名用户';
+                    document.getElementById('auth-status').classList.remove('success');
+                    document.getElementById('auth-status').classList.add('error');
+                }
+            });
+            
+            // 确保 RTDB 中有初始数据，以便 Worker 可以读取
+            await ensureInitialDataExists();
+        }
+
+        // 确保 RTDB 中有初始数据
+        async function ensureInitialDataExists() {
+            const dataPath = `/artifacts/${appId}/public/data/app_data/config`;
+            const dataRef = ref(db, dataPath);
+            const snapshot = await get(dataRef);
+            
+            if (!snapshot.exists()) {
+                console.log("Creating initial RTDB data for testing.");
+                const dataToSet = {
+                    header_text: "欢迎使用共享数据服务",
+                    last_update: new Date().toISOString()
+                };
+                await set(dataRef, dataToSet);
+                console.log("Initial data created successfully.");
+            }
+        }
+
+        // SharedWorker 初始化 (实现检查和创建逻辑)
+        async function initSharedWorker() {
+            if (isWorkerReady) return;
+
+            try {
+                // 1. 创建 Blob URL
+                const workerScript = SHARED_WORKER_SCRIPT(firebaseConfig);
+                const blob = new Blob([workerScript], { type: 'application/javascript' });
+                const workerUrl = URL.createObjectURL(blob);
+
+                // 2. 检查并创建 SharedWorker
+                // 浏览器使用 workerUrl 和 name 来识别是否是同一个 worker
+                // FIX: 必须添加 type: 'module' 来支持 Worker 内部的 import 语句
+                const worker = new SharedWorker(workerUrl, appId, { type: 'module' }); 
+
+                // 3. 使用 Comlink 包装 Worker 的 Port
+                workerProxy = Comlink.wrap(worker.port);
+                
+                worker.port.start(); // 确保端口已启动
+
+                worker.onerror = (e) => {
+                    console.error("SharedWorker 发生错误:", e);
+                    document.getElementById('worker-status').textContent = `Worker 错误: ${e.message}`;
+                    document.getElementById('worker-status').classList.add('error');
+                };
+
+                document.getElementById('worker-status').textContent = `Worker 已连接 (名称: ${appId})`;
+                document.getElementById('worker-status').classList.add('success');
+                isWorkerReady = true;
+
+                // 返回 DataService 实例
+                return new DataService(workerProxy);
+
+            } catch (error) {
+                console.error("SharedWorker 初始化失败:", error);
+                document.getElementById('worker-status').textContent = `Worker 初始化失败: ${error.message}`;
+                document.getElementById('worker-status').classList.add('error');
+                return null;
+            }
+        }
+        
+        // --- 4. 页面视图逻辑 ---
+
+        let dataService;
+
+        async function loadDataAndRender(targetId, pageName) {
+            const output = document.getElementById(targetId);
+            output.innerHTML = '<p class="text-blue-500 font-semibold">正在通过 DataService 请求数据...</p>';
+            
+            if (!dataService) {
+                output.innerHTML = '<p class="error font-bold">错误: Worker 尚未初始化或连接失败。</p>';
+                return;
+            }
+
+            const startTime = performance.now();
+            // 使用抽象的 readData 接口
+            const result = await dataService.readData('config');
+            const endTime = performance.now();
+            const latency = (endTime - startTime).toFixed(2);
+
+            if (result.error) {
+                 output.innerHTML = `<p class="error font-bold">获取数据失败: ${result.error}</p>`;
+                 return;
+            }
+            
+            const dataJson = JSON.stringify(result.data, null, 2);
+            
+            output.innerHTML = `
+                <div class="space-y-4">
+                    <p class="font-bold text-lg">页面: ${pageName}</p>
+                    <p class="text-gray-700">数据来源: <span class="${result.source === 'Cache' ? 'success' : 'text-purple-600'} font-bold">${result.source}</span></p>
+                    <p class="text-gray-700">延迟: <span class="text-sm text-gray-500">${latency} ms</span></p>
+                    <p class="text-gray-700">配置文本: <span class="font-semibold text-gray-900">${result.data.header_text}</span></p>
+                    <pre class="bg-gray-100 p-3 rounded-lg overflow-x-auto text-sm">${dataJson}</pre>
+                </div>
+            `;
+
+            // 如果是从缓存读取，清除缓存，以便下次强制从 RTDB 读取
+            if (result.source === 'RTDB') {
+                 // 演示用途：清除缓存，以便在另一个页面/Tab 上测试缓存命中
+                await localforage.removeItem('app_config_data');
+                console.log("RTDB Data fetched, cache cleared for next test.");
+            }
+        }
+
+        // 切换视图/页面
+        function showPage(pageId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.tab-button[data-page="${pageId}"]`).classList.add('active');
+            
+            // 自动加载当前页面的数据
+            if (pageId === 'page-a') {
+                loadDataAndRender('output-a', '页面 A');
+            } else if (pageId === 'page-b') {
+                loadDataAndRender('output-b', '页面 B');
+            }
+        }
+        
+        // 应用程序启动
+        window.onload = async () => {
+            await initializeFirebase();
+            dataService = await initSharedWorker();
+
+            // 默认显示页面 A
+            showPage('page-a'); 
+
+            // 绑定 Tab 切换事件
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => showPage(button.dataset.page));
+            });
+            
+            // 绑定刷新按钮事件
+            document.getElementById('refresh-page-a').addEventListener('click', () => loadDataAndRender('output-a', '页面 A'));
+            document.getElementById('refresh-page-b').addEventListener('click', () => loadDataAndRender('output-b', '页面 B'));
+        };
+    </script>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto space-y-8">
+        <header class="text-center mb-6">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">共享数据服务演示</h1>
+            <p class="text-gray-600">SharedWorker + Comlink + Firebase RTDB + localForage</p>
+        </header>
+        
+        <!-- Status Card -->
+        <div class="card p-5 space-y-2">
+            <h2 class="text-xl font-semibold text-gray-700">系统状态</h2>
+            <div class="flex flex-col md:flex-row md:space-x-8 space-y-2 md:space-y-0 text-sm">
+                <p class="font-medium">Firebase Auth: <span id="auth-status" class="text-yellow-600">初始化中...</span></p>
+                <p class="font-medium">SharedWorker: <span id="worker-status" class="text-yellow-600">初始化中...</span></p>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex space-x-2 border-b border-gray-200">
+            <button class="tab-button px-4 py-2 rounded-t-lg bg-gray-100 text-gray-700 font-semibold transition duration-150 hover:bg-gray-200" data-page="page-a">
+                页面 A (客户端 1)
+            </button>
+            <button class="tab-button px-4 py-2 rounded-t-lg bg-gray-100 text-gray-700 font-semibold transition duration-150 hover:bg-gray-200" data-page="page-b">
+                页面 B (客户端 2)
+            </button>
+        </div>
+
+        <!-- Page A Content -->
+        <div id="page-a" class="tab-content active card p-6">
+            <h3 class="text-2xl font-bold mb-4 text-gray-800">页面 A：数据读取</h3>
+            <p class="text-gray-600 mb-4">本页面通过抽象的 `DataService.readData('config')` 接口获取数据。</p>
+            <button id="refresh-page-a" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-150">
+                刷新并读取数据
+            </button>
+            <div id="output-a" class="mt-6 p-4 border border-dashed border-gray-300 rounded-lg min-h-[150px]">
+                等待数据加载...
+            </div>
+        </div>
+
+        <!-- Page B Content -->
+        <div id="page-b" class="tab-content card p-6">
+            <h3 class="text-2xl font-bold mb-4 text-gray-800">页面 B：数据读取</h3>
+            <p class="text-gray-600 mb-4">本页面与页面 A 共享同一个 SharedWorker 实例和缓存。</p>
+            <button id="refresh-page-b" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-150">
+                刷新并读取数据
+            </button>
+            <div id="output-b" class="mt-6 p-4 border border-dashed border-gray-300 rounded-lg min-h-[150px]">
+                等待数据加载...
+            </div>
+        </div>
+    </div>
+</body>
+</html>

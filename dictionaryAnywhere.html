@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语字典 - 分组展示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2rem;
+        }
+        
+        .content-wrapper {
+            display: flex;
+            gap: 20px;
+            min-height: 600px;
+        }
+        
+        .dictionary-content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            max-height: 700px;
+        }
+        
+        .group-tabs {
+            width: 200px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+        
+        .group-tab {
+            padding: 12px 15px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #2c3e50;
+            border: 2px solid transparent;
+        }
+        
+        .group-tab:hover {
+            background: #d5dbdb;
+            transform: translateX(-5px);
+        }
+        
+        .group-tab.active {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+            transform: translateX(-5px);
+        }
+        
+        .group-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .words-grid {
+            display: flex;
+            flex-direction: column;
+            /*grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));*/
+            gap: 20px;
+        }
+        
+        .word-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid #3498db;
+        }
+        
+        .word-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .word-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .word-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .word-class {
+            background: #3498db;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .word-meaning {
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        
+        .word-example {
+            font-style: italic;
+            color: #95a5a6;
+            border-left: 2px solid #ecf0f1;
+            padding-left: 10px;
+            margin-top: 10px;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .search-btn {
+            padding: 12px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .search-btn:hover {
+            background: #2980b9;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+            color: #bdc3c7;
+        }
+        
+        @media (max-width: 768px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+            
+            .group-tabs {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 15px;
+            }
+            
+            .group-tab {
+                min-width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>泰语字典</h1>
+            <p class="subtitle">
+                <span>按辅音字母分组展示 - 点击右侧标签查看不同分组</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" id="idBTNAuditAIResults" viewBox="0 0 32 32"><path fill="#000000" d="M28 16v6H4V6h12V4H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8v4H8v2h16v-2h-4v-4h8a2 2 0 0 0 2-2v-6ZM18 28h-4v-4h4Z"/><path fill="#000000" d="m21 15l-5-4.96l1.59-1.57L21 11.85l7.41-7.35L30 6.08L21 15z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" id="idBTNGoConsole" viewBox="0 0 24 24"><path fill="#000000" d="M5 4h13a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3m0 1a2 2 0 0 0-2 2h17a2 2 0 0 0-2-2H5M3 18a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2V8H3v10m14 0h-5v-1h5v1M6 10.5l.71-.71l4.2 4.21l-4.2 4.21L6 17.5L9.5 14L6 10.5Z"/></svg>
+            </p>
+            
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="搜索泰语单词...">
+                <button class="search-btn">搜索</button>
+            </div>
+        </header>
+        
+        <div class="content-wrapper">
+            <div class="dictionary-content">
+                <h2 class="group-title" id="current-group">ก 分组</h2>
+                <div class="words-grid" id="words-container">
+                    <!-- 单词卡片将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <div class="group-tabs" id="group-tabs">
+                <!-- 分组标签将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+    <div style="display: none;">
+        <div id="eventLog"></div>
+        <div id="statusDisplay"></div>
+        <div id="queueStatus"></div>
+        <div id="activeRequests"></div>
+        
+    </div>
+    <script src="./jsResource/localforage.min.js"></script>
+
+    <script>
+        let jsonDictCache = {} ;
+        let dictEntries=[] ;
+
+        function filterDiction(searchTerm){
+            const filteredData = dictEntries.filter(dictEntry => 
+                dictEntry.word.toLowerCase().includes(searchTerm)
+            );
+            return filteredData ;
+        }
+
+        async function prepareLocalDiction(){
+            const gDictCacheKey = "outpostDictCache" ;
+            const gDictLocalKey ="outpostDictLocal" ;
+
+            dictEntries = await localforage.getItem(gDictLocalKey);
+            if(dictEntries==null){
+                jsonDictCache = await localforage.getItem(gDictCacheKey);
+                console.log(jsonDictCache);
+                let keys = Object.keys(jsonDictCache) ;
+                console.log('length of keys:'+keys.length) ;
+                console.log(jsonDictCache[keys[keys.length-2]])
+                keys.forEach(key=>{
+                    //if(key==null || key ==undefined)continue ;
+
+                    let jsonEntry = {
+                        word:key,
+                        dictEntry:jsonDictCache[key]
+                    } ;
+                    dictEntries.push(jsonEntry) ;
+                    //console.log(jsonEntry) ;
+                }) ;
+                console.log(dictEntries) ;
+                await localforage.setItem(gDictLocalKey,dictEntries);
+            }
+        }
+
+        function sortThaiWordsByConsonant(words) {
+            // 泰语辅音字母传统顺序
+            const THAI_CONSONANTS = [
+                'ก', 'ข', 'ฃ', 'ค', 'ฅ', 'ฆ', 'ง', 
+                'จ', 'ฉ', 'ช', 'ซ', 'ฌ', 'ญ', 
+                'ฎ', 'ฏ', 'ฐ', 'ฑ', 'ฒ', 'ณ', 
+                'ด', 'ต', 'ถ', 'ท', 'ธ', 'น', 
+                'บ', 'ป', 'ผ', 'ฝ', 'พ', 'ฟ', 'ภ', 'ม', 
+                'ย', 'ร', 'ล', 'ว', 
+                'ศ', 'ษ', 'ส', 'ห', 'ฬ', 'อ', 'ฮ'
+            ];
+
+            // 泰语前置元音和特殊字符（不是首辅音）
+            const THAI_PREFIX_VOWELS = ['เ', 'แ', 'โ', 'ใ', 'ไ'];
+            const THAI_TONE_MARKS = ['่', '้', '๊', '๋'];
+            const THAI_ABOVE_VOWELS = ['ิ', 'ี', 'ึ', 'ื', 'ุ', 'ู', 'ั'];
+            const THAI_BELOW_VOWELS = ['็', '์', 'ฺ'];
+            const THAI_OTHER_SYMBOLS = ['ํ', 'ๅ', 'ฯ'];
+
+            // 元音类型优先级
+            const VOWEL_ORDER = {
+                'implicit': 0,      // 无显式元音
+                'sara_a': 1,        // -ะ, -ั 类短元音
+                'sara_aa': 2,       // -า 类长元音
+                'sara_am': 3,       // ำ
+                'sara_i': 4,        // -ิ, -ี
+                'sara_ue': 5,       // -ึ, -ื
+                'sara_u': 6,        // -ุ, -ู
+                'sara_e': 7,        // เ-
+                'sara_ae': 8,       // แ-
+                'sara_o': 9,        // โ-
+                'sara_ai': 10,      // ใ-, ไ-
+                'sara_ao': 11,      // เ-า
+                'other': 12         // 其他复合元音
+            };
+
+            // 声调优先级
+            const TONE_ORDER = {
+                'none': 0,      // 无声调
+                'mai_ek': 1,    // -่
+                'mai_tho': 2,   // -้
+                'mai_tri': 3,   // -๊
+                'mai_chattawa': 4 // -๋
+            };
+
+            // 尾辅音优先级
+            const FINAL_CONSONANT_ORDER = {
+                'none': 0,  // 无尾辅音
+                'ง': 1, 'ญ': 2, 'ณ': 3, 'น': 4, 'ม': 5,
+                'ย': 6, 'ร': 7, 'ล': 8, 'ว': 9,
+                'ก': 10, 'ข': 11, 'ค': 12, 'ฆ': 13,
+                'จ': 14, 'ฉ': 15, 'ช': 16, 'ซ': 17, 'ฌ': 18, 'ฎ': 19,
+                'ฏ': 20, 'ฐ': 21, 'ฑ': 22, 'ฒ': 23, 'ด': 24,
+                'ต': 25, 'ถ': 26, 'ท': 27, 'ธ': 28, 'บ': 29,
+                'ป': 30, 'ผ': 31, 'ฝ': 32, 'พ': 33, 'ฟ': 34, 'ภ': 35
+            };
+
+            // 提取单词的真正首辅音（跳过前置元音和声调符号）
+            function getInitialConsonant(word) {
+                // 移除可能的引号
+                const cleanWord = word.replace(/'/g, '');
+                if (!cleanWord) return null;
+                
+                let index = 0;
+                // 跳过前置元音、声调符号和其他非辅音字符
+                while (index < cleanWord.length) {
+                    const char = cleanWord.charAt(index);
+                    
+                    // 如果是辅音字母，返回它
+                    if (THAI_CONSONANTS.includes(char)) {
+                        return char;
+                    }
+                    
+                    // 如果是前置元音、声调符号、上下元音或其他符号，继续检查下一个字符
+                    if (THAI_PREFIX_VOWELS.includes(char) || 
+                        THAI_TONE_MARKS.includes(char) ||
+                        THAI_ABOVE_VOWELS.includes(char) ||
+                        THAI_BELOW_VOWELS.includes(char) ||
+                        THAI_OTHER_SYMBOLS.includes(char)) {
+                        index++;
+                        continue;
+                    }
+                    
+                    // 其他字符（数字、英文、标点、中文等）
+                    return null;
+                }
+                
+                return null;
+            }
+
+            // 分析单词结构用于排序
+            function analyzeWord(word) {
+                const cleanWord = word.replace(/'/g, '');
+                const initialConsonant = getInitialConsonant(cleanWord);
+                
+                if (!initialConsonant) {
+                    return {
+                        initialConsonant: null,
+                        vowelType: 'other',
+                        tone: 'none',
+                        finalConsonant: 'none',
+                        originalWord: word
+                    };
+                }
+
+                // 检测声调
+                let tone = 'none';
+                for (let i = 0; i < cleanWord.length; i++) {
+                    const char = cleanWord.charAt(i);
+                    if (THAI_TONE_MARKS.includes(char)) {
+                        if (char === '่') tone = 'mai_ek';
+                        else if (char === '้') tone = 'mai_tho';
+                        else if (char === '๊') tone = 'mai_tri';
+                        else if (char === '๋') tone = 'mai_chattawa';
+                        break;
+                    }
+                }
+
+                // 检测元音类型
+                let vowelType = 'implicit';
+                
+                // 检查复合元音和前置元音
+                if (cleanWord.includes('เ') && cleanWord.includes('า')) {
+                    vowelType = 'sara_ao';
+                } else if (cleanWord.includes('ใ') || cleanWord.includes('ไ')) {
+                    vowelType = 'sara_ai';
+                } else if (cleanWord.includes('แ')) {
+                    vowelType = 'sara_ae';
+                } else if (cleanWord.includes('โ')) {
+                    vowelType = 'sara_o';
+                } else if (cleanWord.includes('เ')) {
+                    vowelType = 'sara_e';
+                }
+                // 检查基本元音
+                else if (cleanWord.includes('ำ')) {
+                    vowelType = 'sara_am';
+                } else if (cleanWord.includes('า')) {
+                    vowelType = 'sara_aa';
+                } else if (cleanWord.includes('ะ') || cleanWord.includes('ั')) {
+                    vowelType = 'sara_a';
+                } else if (cleanWord.includes('ิ') || cleanWord.includes('ี')) {
+                    vowelType = 'sara_i';
+                } else if (cleanWord.includes('ึ') || cleanWord.includes('ื')) {
+                    vowelType = 'sara_ue';
+                } else if (cleanWord.includes('ุ') || cleanWord.includes('ู')) {
+                    vowelType = 'sara_u';
+                }
+
+                // 检测尾辅音
+                let finalConsonant = 'none';
+                // 从后往前找第一个辅音字母
+                for (let i = cleanWord.length - 1; i >= 0; i--) {
+                    const char = cleanWord.charAt(i);
+                    if (THAI_CONSONANTS.includes(char)) {
+                        // 检查这个辅音是否可能是首辅音（在单词开头位置）
+                        let isPotentialInitial = false;
+                        for (let j = 0; j <= i; j++) {
+                            if (cleanWord.charAt(j) === char && 
+                                !THAI_PREFIX_VOWELS.includes(cleanWord.charAt(j)) &&
+                                !THAI_TONE_MARKS.includes(cleanWord.charAt(j)) &&
+                                !THAI_ABOVE_VOWELS.includes(cleanWord.charAt(j)) &&
+                                !THAI_BELOW_VOWELS.includes(cleanWord.charAt(j))) {
+                                isPotentialInitial = true;
+                                break;
+                            }
+                        }
+                        
+                        // 如果这个辅音不是首辅音，那么它就是尾辅音
+                        if (char !== initialConsonant || !isPotentialInitial) {
+                            finalConsonant = char;
+                            break;
+                        }
+                    }
+                }
+
+                return {
+                    initialConsonant,
+                    vowelType,
+                    tone,
+                    finalConsonant,
+                    originalWord: word
+                };
+            }
+
+            // 按泰语字典规则排序
+            function compareThaiWords(a, b) {
+                const analysisA = analyzeWord(a.word);
+                const analysisB = analyzeWord(b.word);
+
+                // 如果有一个单词无法识别辅音，放到最后
+                if (!analysisA.initialConsonant && !analysisB.initialConsonant) {
+                    return a.word.localeCompare(b.word, 'th');
+                }
+                if (!analysisA.initialConsonant) return 1;
+                if (!analysisB.initialConsonant) return -1;
+
+                // 1. 按辅音字母顺序
+                const consonantOrderA = THAI_CONSONANTS.indexOf(analysisA.initialConsonant);
+                const consonantOrderB = THAI_CONSONANTS.indexOf(analysisB.initialConsonant);
+                
+                if (consonantOrderA !== consonantOrderB) {
+                    return consonantOrderA - consonantOrderB;
+                }
+
+                // 2. 按元音类型
+                const vowelOrderA = VOWEL_ORDER[analysisA.vowelType] || VOWEL_ORDER.other;
+                const vowelOrderB = VOWEL_ORDER[analysisB.vowelType] || VOWEL_ORDER.other;
+                
+                if (vowelOrderA !== vowelOrderB) {
+                    return vowelOrderA - vowelOrderB;
+                }
+
+                // 3. 按声调
+                const toneOrderA = TONE_ORDER[analysisA.tone];
+                const toneOrderB = TONE_ORDER[analysisB.tone];
+                
+                if (toneOrderA !== toneOrderB) {
+                    return toneOrderA - toneOrderB;
+                }
+
+                // 4. 按尾辅音
+                const finalOrderA = FINAL_CONSONANT_ORDER[analysisA.finalConsonant] || FINAL_CONSONANT_ORDER.none;
+                const finalOrderB = FINAL_CONSONANT_ORDER[analysisB.finalConsonant] || FINAL_CONSONANT_ORDER.none;
+                
+                if (finalOrderA !== finalOrderB) {
+                    return finalOrderA - finalOrderB;
+                }
+
+                // 5. 最后按字符串原始顺序
+                return a.word.localeCompare(b.word, 'th');
+            }
+
+            // 主处理逻辑
+            const sortedWords = [...words].sort(compareThaiWords);
+            
+            // 按辅音字母分组
+            const groupedResult = {};
+            
+            sortedWords.forEach(item => {
+                const consonant = getInitialConsonant(item.word);
+                const groupKey = consonant || 'other';
+                
+                if (!groupedResult[groupKey]) {
+                    groupedResult[groupKey] = [];
+                }
+                
+                groupedResult[groupKey].push(item);
+            });
+
+            // 按辅音字母顺序对分组进行排序
+            const sortedGroupedResult = {};
+            THAI_CONSONANTS.forEach(consonant => {
+                if (groupedResult[consonant]) {
+                    sortedGroupedResult[consonant] = groupedResult[consonant];
+                }
+            });
+            
+            // 添加other分组（如果有）
+            if (groupedResult['other'] && groupedResult['other'].length > 0) {
+                sortedGroupedResult['other'] = groupedResult['other'];
+            }
+
+            return sortedGroupedResult;
+        }
+    </script>
+    <script type="module">
+        import AIServiceClient from './deepSeekShareWorkerAPI.js';
+
+        // 创建客户端实例
+        const aiClient = new AIServiceClient();
+        window.aiClient = aiClient;
+
+        const keyRequestIDs = 'keyRequestIDs' ;
+        async function logAIRequestID(requestID){
+            let requestIDs = await localforage.getItem(keyRequestIDs) ;
+            if(requestIDs==null){
+                requestIDs=[requestID] ;
+            }else{
+                if(requestIDs.includes(requestID))return ;
+                requestIDs.push(requestID) ;
+            }
+            await localforage.setItem(keyRequestIDs,requestIDs) ;
+        }
+
+        const keyRequestResults = 'keyRequestResults' ;
+        async function logAIRequestResult(requestID,result){
+            let jsonResult = {
+                requestID:requestID,
+                result:result
+            } ;
+            let requestResults = await localforage.getItem(keyRequestResults) ;
+            if(requestResults==null){
+                requestResults=[jsonResult] ;
+            }else{
+                //if(requestResults.includes(requestID))return ;
+                const hasObjectWithKeyValue = requestResults.some((obj) => obj.requestID === requestID);
+                if(hasObjectWithKeyValue)return ;
+
+                requestResults.push(jsonResult) ;
+            }
+            await localforage.setItem(keyRequestResults,requestResults) ;
+        }
+
+        // 设置所有事件监听
+        function setupEventListeners() {
+            aiClient.on('queueInitialized', (data) => {
+                addLog('队列初始化完成', data);
+                updateStatus('已连接 - 队列就绪');
+            });
+
+            aiClient.on('requestQueued', (data) => {
+                addLog(`请求已加入队列，位置: ${data.position}`, data);
+            });
+
+            aiClient.on('requestProcessingStarted', async (data) => {
+                console.log("=====>>>requestProcessingStarted====>>>") ;
+                addLog(`请求开始处理: ${data.queueId}`, data);
+                //localforage.setItem()
+                await logAIRequestID(data.queueId) ;
+            });
+
+            aiClient.on('requestRetry', (data) => {
+                addLog(`请求重试: ${data.queueId} (${data.retryCount}/${data.maxRetries})`, data);
+            });
+
+            aiClient.on('requestCompleted', async (data) => {
+                addLog(`请求完成: ${data.queueId}`, data);
+                if (data.result && data.result.response) {
+                    addLog(`AI 回复: ${data.result.response.choices[0].message.content}`);
+                    await logAIRequestResult(data.queueId,data.result.response.choices[0].message.content) ;
+                }
+            });
+
+            aiClient.on('requestFailed', (data) => {
+                addLog(`请求失败: ${data.queueId}`, data);
+            });
+
+            aiClient.on('requestCancelled', (data) => {
+                addLog(`请求已取消: ${data.queueId}`, data);
+                updateQueueStatus();
+            });
+
+            aiClient.on('storageUpdated', (data) => {
+                addLog(`存储已更新: ${data.key}`, data);
+            });
+
+            aiClient.on('apiConfigUpdated', (data) => {
+                addLog('API 配置已更新', data);
+            });
+        }
+
+        
+
+        // 工具函数
+        function addLog(message, data = null) {
+            /*
+            const logElement = document.getElementById('eventLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            
+            if (data) {
+                const details = document.createElement('div');
+                details.style.fontSize = '10px';
+                details.style.color = '#666';
+                details.textContent = JSON.stringify(data, null, 2);
+                logEntry.appendChild(details);
+            }
+            
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            */
+            console.log(message) ;
+        }
+
+        function updateStatus(message) {
+            /*
+            document.getElementById('statusDisplay').textContent = message;
+            */
+           console.log(message) ;
+        }
+
+        async function updateQueueStatus() {
+            /*
+            try {
+                const status = await aiClient.getQueueStatus();
+                document.getElementById('queueStatus').innerHTML = `
+                    <div>总队列: ${status.queueStatus.total}</div>
+                    <div>待处理: ${status.queueStatus.pending}</div>
+                    <div>处理中: ${status.queueStatus.processing}</div>
+                    <div>当前位置: ${status.queueStatus.position}</div>
+                    <div>预计等待: ${Math.round(status.queueStatus.estimatedWaitTime / 1000)}秒</div>
+                `;
+
+                // 显示活动请求
+                const activeRequests = status.items.filter(item => 
+                    item.status === 'processing' || item.status === 'pending'
+                );
+                
+                const activeRequestsElement = document.getElementById('activeRequests');
+                activeRequestsElement.innerHTML = '<h3>活动请求:</h3>';
+                
+                activeRequests.forEach(item => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = `queue-item ${item.status}`;
+                    itemElement.innerHTML = `
+                        <div><strong>${item.id}</strong></div>
+                        <div>状态: ${item.status}</div>
+                        <div>优先级: ${item.priority}</div>
+                        <div>创建时间: ${new Date(item.createdAt).toLocaleTimeString()}</div>
+                        ${item.status === 'processing' ? `<div>开始处理: ${new Date(item.startedProcessingAt).toLocaleTimeString()}</div>` : ''}
+                        <button onclick="cancelRequest('${item.id}')">取消</button>
+                    `;
+                    activeRequestsElement.appendChild(itemElement);
+                });
+
+            } catch (error) {
+                console.error('更新队列状态失败:', error);
+            }
+            */
+        }
+
+        // 全局函数供按钮调用
+        window.checkStatus = async function() {
+            try {
+                const stats = await aiClient.getQueueStatistics();
+                addLog('系统状态检查', stats);
+                updateStatus(`已连接 - 队列: ${stats.total} 客户端: ${stats.clients}`);
+            } catch (error) {
+                addLog('状态检查失败: ' + error.message);
+            }
+        };
+
+        window.getQueueStats = async function() {
+            try {
+                const stats = await aiClient.getQueueStatistics();
+                addLog('队列统计', stats);
+            } catch (error) {
+                addLog('获取队列统计失败: ' + error.message);
+            }
+        };
+
+        window.cleanupQueue = async function() {
+            try {
+                const result = await aiClient.cleanupQueue();
+                addLog('队列清理完成', result);
+                updateQueueStatus();
+            } catch (error) {
+                addLog('队列清理失败: ' + error.message);
+            }
+        };
+
+        window.submitRequest = async function(prompt,priority) {
+            /*
+            const prompt = document.getElementById('promptInput').value;
+            const priority = document.getElementById('prioritySelect').value;
+            */
+            if (!prompt) {
+                alert('请输入提示内容');
+                return;
+            }
+
+            try {
+                const result = await aiClient.callDeepSeek(prompt, {
+                    priority: priority,
+                    conversationId: 'demo_conversation'
+                });
+                
+                addLog(`请求已提交: ${result.queueId}`, result);
+                document.getElementById('promptInput').value = '';
+                
+            } catch (error) {
+                addLog('提交请求失败: ' + error.message);
+            }
+        };
+
+        /*
+        window.submitMultipleRequests = async function() {
+            const prompts = [
+                '请简单介绍一下人工智能',
+                '解释一下机器学习的基本概念',
+                '什么是深度学习？',
+                '自然语言处理有哪些应用？'
+            ];
+
+            for (let i = 0; i < prompts.length; i++) {
+                setTimeout(async () => {
+                    try {
+                        const result = await aiClient.callDeepSeek(prompts[i], {
+                            priority: i === 0 ? 'high' : 'normal',
+                            conversationId: 'batch_test'
+                        });
+                        addLog(`批量请求 ${i+1} 已提交: ${result.queueId}`);
+                    } catch (error) {
+                        addLog(`批量请求 ${i+1} 失败: ` + error.message);
+                    }
+                }, i * 1000); // 每秒提交一个
+            }
+        };
+        */
+
+        window.cancelRequest = async function(queueId) {
+            try {
+                const result = await aiClient.cancelQueuedRequest(queueId);
+                addLog(`取消请求: ${queueId}`, result);
+                updateQueueStatus();
+            } catch (error) {
+                addLog('取消请求失败: ' + error.message);
+            }
+        };
+
+        window.setStorageData = async function(key,value) {
+            /*
+            const key = document.getElementById('storageKey').value;
+            const value = document.getElementById('storageValue').value;
+            */
+            
+            if (!key) {
+                alert('请输入键名');
+                return;
+            }
+
+            try {
+                const result = await aiClient.setData(key, value);
+                addLog('存储数据成功', result);
+            } catch (error) {
+                addLog('存储数据失败: ' + error.message);
+            }
+        };
+
+        window.getStorageData = async function(key) {
+            /*
+            const key = document.getElementById('storageKey').value;
+            */
+            
+            if (!key) {
+                alert('请输入键名');
+                return;
+            }
+
+            try {
+                const result = await aiClient.getData(key);
+                addLog('获取数据成功', result);
+            } catch (error) {
+                addLog('获取数据失败: ' + error.message);
+            }
+        };
+
+        window.getAllStorageData = async function() {
+            try {
+                const result = await aiClient.getAllData();
+                addLog('获取所有数据成功', result);
+            } catch (error) {
+                addLog('获取所有数据失败: ' + error.message);
+            }
+        };
+
+        window.setApiConfig = async function(apiKey) {
+            /*
+            const apiKey = document.getElementById('apiKeyInput').value;
+            */
+            
+            if (!apiKey) {
+                alert('请输入 API Key');
+                return;
+            }
+
+            try {
+                const result = await aiClient.setApiConfig({ apiKey });
+                addLog('API 配置成功', result);
+                document.getElementById('apiKeyInput').value = '';
+            } catch (error) {
+                addLog('API 配置失败: ' + error.message);
+            }
+        };
+
+        // 初始化
+        async function init() {
+            setupEventListeners();
+            
+            try {
+                const result = await aiClient.connect();
+                addLog('连接成功', result);
+                updateStatus('已连接 - ' + result.clientId);
+                
+                // 初始状态检查
+                await updateQueueStatus();
+                
+            } catch (error) {
+                addLog('连接失败: ' + error.message);
+                updateStatus('连接失败');
+            }
+        }
+
+        // 启动应用
+        init();
+
+        document.querySelector('#idBTNAuditAIResults').addEventListener('click',(event)=>{
+            window.open("consoleAuditAILog.html","_blank");
+        }) ;
+
+        //idBTNGoConsole
+        document.querySelector('#idBTNGoConsole').addEventListener('click',(event)=>{
+            window.open("deepSeekConsole.html","_blank");
+        }) ;
+    </script>
+    <script>
+
+    async function _larkGoogleTranslate(text,sourceLang,targetLang){
+        console.log("_larkGoogleTranslate==============>>>>>>>>>>>>>>");
+        console.log(text);
+        let textPre = text.replace(/( )/ig, "%20") ;
+        //let encodedText = encodeURI(textPre) ;
+        //var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="+ sourceLang + "&tl=" + targetLang + "&dt=t&q=" + encodedText;
+        var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="+ sourceLang + "&tl=" + targetLang + "&dt=t&q=" + textPre;
+        
+        console.log(url);
+        console.log("<<<<<<<<<<<================");
+
+
+        let jsonResp = await fetch(url) ;//larkHTTPFetchJSON(url) ;
+        let jsonData = await jsonResp.text() ;
+        let jsonDict = JSON.parse(jsonData) ;
+        console.log(jsonDict) ;
+        let meaning = jsonDict[0][0] ;
+        return meaning[0] ;
+    }
+
+
+
+    // 生成提示词用于DeepSeek API
+    function promptQueryDictThai(thaiWord) {
+        return `
+        请提供泰语单词"${thaiWord}"的详细字典定义,以JSON格式返回,包含以下字段:
+        - word_id: 唯一ID
+        - thai: JSON对象,包含word, pronunciation, spelling_breakdown属性
+        - pos: 词性
+        - level: CEFR级别
+        - topic: 字符串数组,数组每个元素对应一种主题分类
+        - definitions: JSON对象数组,其中每个对象包含属性en和zh,属性en为英文释义,属性zh为中文释义
+        - grammar_notes: 语法说明
+        - conjugations: JSON对象,每个属性对应一种变形形式
+        - common_phrases: 常见短语对象数组，每个对象包括短语及其翻译
+        - synonyms: 近义词字符串数组
+        - antonyms: 反义词字符串数组
+        - tags: 标签数组
+    
+        请确保返回纯JSON格式,不要包含其他文本。
+        
+        `;
+    }
+
+    </script>
+    <script>
+        // 模拟泰语字典数据
+        let dictionaryData = {
+            "ก": [
+                { word: "การแข่งขัน", meaning: "比赛，竞争", example: "การแข่งขันกีฬาโอลิมปิก - 奥运会比赛" },
+                { word: "กางเกง", meaning: "裤子", example: "กางเกงยีนส์ - 牛仔裤" },
+                { word: "กับข้าว", meaning: "菜肴，配菜", example: "กับข้าวไทย - 泰国菜" },
+                { word: "กำลัง", meaning: "正在；力量", example: "เขากำลังอ่านหนังสือ - 他正在看书" },
+                { word: "กว่า", meaning: "比...更", example: "เขาใหญ่กว่าฉัน - 他比我大" },
+                { word: "กัน", meaning: "互相", example: "เราช่วยกัน - 我们互相帮助" }
+            ],
+            "ข": [
+                { word: "ของ", meaning: "的；东西", example: "หนังสือของฉัน - 我的书" },
+                { word: "ข้อ", meaning: "项目，条款", example: "ข้อตกลง - 协议条款" },
+                { word: "ขึ้น", meaning: "上；增加", example: "ขึ้นรถ - 上车" },
+                { word: "ขาย", meaning: "卖", example: "ขายของ - 卖东西" },
+                { word: "เข้า", meaning: "进入", example: "เข้าโรงเรียน - 进入学校" }
+            ],
+            "ค": [
+                { word: "คน", meaning: "人", example: "คนไทย - 泰国人" },
+                { word: "คำ", meaning: "词语", example: "คำศัพท์ - 词汇" },
+                { word: "คืน", meaning: "归还；夜晚", example: "คืนหนังสือ - 还书" },
+                { word: "คือ", meaning: "是", example: "นี่คือหนังสือ - 这是书" },
+                { word: "เครื่อง", meaning: "机器，设备", example: "เครื่องบิน - 飞机" }
+            ],
+            "ง": [
+                { word: "งาน", meaning: "工作；活动", example: "งานเลี้ยง - 宴会" },
+                { word: "ง่าย", meaning: "容易", example: "ง่ายมาก - 非常容易" },
+                { word: "งด", meaning: "取消", example: "งดประชุม - 取消会议" }
+            ],
+            "จ": [
+                { word: "จาก", meaning: "从...来", example: "มาจากประเทศไทย - 来自泰国" },
+                { word: "จัด", meaning: "组织，安排", example: "จัดงาน - 组织活动" },
+                { word: "จึง", meaning: "因此", example: "เขามีงานจึงไม่มา - 他有工作因此没来" }
+            ],
+            "ฉ": [
+                { word: "ฉบับ", meaning: "版本，份", example: "หนังสือพิมพ์ฉบับนี้ - 这份报纸" },
+                { word: "เฉย", meaning: "安静，平静", example: "นั่งเฉย - 安静地坐着" }
+            ],
+            "ช": [
+                { word: "ใช้", meaning: "使用", example: "ใช้คอมพิวเตอร์ - 使用电脑" },
+                { word: "ชอบ", meaning: "喜欢", example: "ชอบอ่านหนังสือ - 喜欢看书" },
+                { word: "ช้า", meaning: "慢", example: "เดินช้า - 走得慢" }
+            ],
+            "ซ": [
+                { word: "ตัวเอง", meaning: "自己", example: "ดูแลตัวเอง - 照顾自己" },
+                { word: "ซื้อ", meaning: "买", example: "ซื้อของ - 买东西" }
+            ],
+            "ญ": [
+                { word: "หญิง", meaning: "女性", example: "ผู้หญิง - 女人" }
+            ],
+            "ด": [
+                { word: "ได้", meaning: "可以；得到", example: "ได้เงิน - 得到钱" },
+                { word: "ด้าน", meaning: "方面", example: "ด้านการศึกษา - 教育方面" },
+                { word: "ด้วย", meaning: "也；用", example: "ฉันก็ไปด้วย - 我也去" }
+            ],
+            "ต": [
+                { word: "ตัว", meaning: "身体；只", example: "ตัวหนังสือ - 字母" },
+                { word: "ต่าง", meaning: "不同", example: "ต่างประเทศ - 外国" },
+                { word: "ต้อง", meaning: "必须", example: "ต้องไป - 必须去" }
+            ],
+            "ถ": [
+                { word: "ถ้า", meaning: "如果", example: "ถ้าฝนตก - 如果下雨" },
+                { word: "ถึง", meaning: "到；即使", example: "ถึงบ้าน - 到家" }
+            ],
+            "ท": [
+                { word: "ที่", meaning: "地方；的", example: "ที่ทำงาน - 工作的地方" },
+                { word: "ทาง", meaning: "道路；方式", example: "ทางนี้ - 这条路" },
+                { word: "ทำ", meaning: "做", example: "ทำอาหาร - 做饭" }
+            ],
+            "น": [
+                { word: "ใน", meaning: "在...里面", example: "ในห้อง - 在房间里" },
+                { word: "นัก", meaning: "...者", example: "นักเรียน - 学生" },
+                { word: "นั่ง", meaning: "坐", example: "นั่งบนเก้าอี้ - 坐在椅子上" }
+            ],
+            "บ": [
+                { word: "กับ", meaning: "和", example: "ฉันกับเขา - 我和他" },
+                { word: "ใบ", meaning: "张，片", example: "ใบไม้ - 树叶" }
+            ],
+            "ป": [
+                { word: "เป็น", meaning: "是", example: "เป็นครู - 是老师" },
+                { word: "เปิด", meaning: "打开", example: "เปิดหนังสือ - 打开书" },
+                { word: "เปลี่ยน", meaning: "改变", example: "เปลี่ยนใจ - 改变主意" }
+            ],
+            "ผ": [
+                { word: "ผู้", meaning: "人", example: "ผู้ชาย - 男人" },
+                { word: "ผล", meaning: "结果", example: "ผลไม้ - 水果" }
+            ],
+            "ฝ": [
+                { word: "ฝน", meaning: "雨", example: "ฝนตก - 下雨" },
+                { word: "ฝั่ง", meaning: "边，岸", example: "ฝั่งซ้าย - 左边" }
+            ],
+            "พ": [
+                { word: "พา", meaning: "带", example: "พาไป - 带去" },
+                { word: "พร้อม", meaning: "准备就绪", example: "พร้อมแล้ว - 准备好了" }
+            ],
+            "ฟ": [
+                { word: "ฟ้า", meaning: "天空", example: "สีฟ้า - 蓝色" },
+                { word: "ฟัง", meaning: "听", example: "ฟังเพลง - 听音乐" }
+            ],
+            "ม": [
+                { word: "มา", meaning: "来", example: "มาโรงเรียน - 来学校" },
+                { word: "มือ", meaning: "手", example: "มือซ้าย - 左手" },
+                { word: "เมือง", meaning: "城市", example: "เมืองไทย - 泰国" }
+            ],
+            "ย": [
+                { word: "ยาง", meaning: "橡胶", example: "ยางลบ - 橡皮" },
+                { word: "อย่าง", meaning: "方式；种类", example: "อย่างดี - 很好地" }
+            ],
+            "ร": [
+                { word: "เรา", meaning: "我们", example: "เราเป็นเพื่อนกัน - 我们是朋友" },
+                { word: "รถ", meaning: "车", example: "รถยนต์ - 汽车" }
+            ],
+            "ล": [
+                { word: "ลง", meaning: "下", example: "ลงจากรถ - 下车" },
+                { word: "ล่าสุด", meaning: "最新的", example: "ข่าวล่าสุด - 最新消息" }
+            ],
+            "ว": [
+                { word: "วัน", meaning: "天", example: "วันนี้ - 今天" },
+                { word: "ว่า", meaning: "说；认为", example: "เขาว่าอะไร - 他说什么" }
+            ],
+            "ศ": [
+                { word: "ศึกษา", meaning: "学习", example: "สถานศึกษา - 教育机构" }
+            ],
+            "ส": [
+                { word: "สวย", meaning: "漂亮", example: "สวยมาก - 非常漂亮" },
+                { word: "สี", meaning: "颜色", example: "สีแดง - 红色" }
+            ],
+            "ห": [
+                { word: "หา", meaning: "找", example: "หางาน - 找工作" },
+                { word: "หรือ", meaning: "或者", example: "ใช่หรือไม่ - 是或不是" }
+            ],
+            "อ": [
+                { word: "ออก", meaning: "出", example: "ออกจากบ้าน - 从家里出来" },
+                { word: "อะไร", meaning: "什么", example: "นี่คืออะไร - 这是什么" }
+            ],
+            "other": [
+                { word: "不贵", meaning: "不贵", example: "这个东西不贵 - 这个东西不贵" },
+                { word: "ฯลฯ", meaning: "等等", example: "มีหนังสือ ปากกา ดินสอ ฯลฯ - 有书、笔、铅笔等等" }
+            ]
+        };
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', async function() {
+            const groupTabsContainer = document.getElementById('group-tabs');
+            const wordsContainer = document.getElementById('words-container');
+            const currentGroupTitle = document.getElementById('current-group');
+            const searchInput = document.querySelector('.search-input');
+            const searchBtn = document.querySelector('.search-btn');
+            
+            //    const result = sortThaiWordsByConsonant(testWords);
+            await prepareLocalDiction() ;
+            dictionaryData = sortThaiWordsByConsonant(dictEntries);
+
+            // 生成分组标签
+            function renderGroupTabs() {
+                groupTabsContainer.innerHTML = '';
+                
+                Object.keys(dictionaryData).forEach(group => {
+                    const tab = document.createElement('div');
+                    tab.className = 'group-tab';
+                    tab.textContent = group === 'other' ? '其他' : group;
+                    tab.dataset.group = group;
+                    
+                    tab.addEventListener('click', function() {
+                        // 移除所有标签的active类
+                        document.querySelectorAll('.group-tab').forEach(t => {
+                            t.classList.remove('active');
+                        });
+                        
+                        // 为当前标签添加active类
+                        this.classList.add('active');
+                        
+                        // 显示对应分组的单词
+                        displayWordsByGroup(this.dataset.group);
+                    });
+                    
+                    groupTabsContainer.appendChild(tab);
+                });
+                
+                // 默认激活第一个标签
+                if (groupTabsContainer.firstChild) {
+                    groupTabsContainer.firstChild.classList.add('active');
+                    displayWordsByGroup(groupTabsContainer.firstChild.dataset.group);
+                }
+            }
+            
+
+            function renderWord(wordsContainer,item){
+                const wordCard = document.createElement('div');
+                wordCard.className = 'word-card';
+                    
+                wordCard.innerHTML = `
+                    <div class="word-header">
+                        <div class="word-text">${item.word}</div>
+                        <div class="word-class"><span>${item.dictEntry.pos}</span></div>
+                        <div class="word-class"><span>${item.dictEntry.level}</span></div>
+                        <div class="word-class">
+                            <span>${item.dictEntry.thai.pronunciation}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" id="idBTNPlayAudio" width="24" height="24" viewBox="0 0 50 50"><path fill="#000000" d="M25.776 20H25v9h.776c2.383 0 4.301-2.124 4.301-4.507c0-2.37-1.918-4.493-4.301-4.493zM40 7H10C4.5 7 0 11.5 0 17v14c0 5.5 4.5 10 10 10h30c5.5 0 10-4.5 10-10V17c0-5.5-4.5-10-10-10zM20 32h-4v-2h-5.89l-1.369 2H3.547l11.609-16H20v16zm7 0h-6V16h5.253c4.46 0 7.999 3.627 7.999 8.1c0 4.461-2.791 7.9-7.252 7.9zm8.76 0h-1.381c1.784-2 2.799-4.774 2.799-7.597c0-3.177-1.284-6.403-3.532-8.403h1.994c2.003 3 3.128 5.287 3.128 8.403c0 2.773-.88 5.597-2.494 7.597h-.514zm4.081 0h-1.393c1.796-2 2.811-4.774 2.811-7.597c0-3.177-1.296-6.403-3.544-8.403h1.992c2.005 3 3.142 5.287 3.142 8.403c0 2.773-.893 5.597-2.506 7.597h-.502zm4.583 0h-1.907c1.796-2 2.811-4.774 2.811-7.597c0-3.177-1.296-6.403-3.544-8.403h1.992c2.005 3 3.142 5.287 3.142 8.403c-.001 2.774-.894 5.597-2.494 7.597zM16 27v-5.903L12.334 27z"/></svg>
+                        </div>
+                    </div>
+                    
+
+                    <div class="word-meaning"></div>
+                    <div class="word-example"></div>
+                    <div>备注：${item.dictEntry.grammar_notes}</div>
+                `;
+                let tagMeaning = wordCard.querySelector('.word-meaning') ;
+                item.dictEntry.definitions.forEach(jsonMeaning=>{
+                    let tagMeanContent = document.createElement('div') ;
+                    if(jsonMeaning==null || jsonMeaning == undefined)return ;
+                    if(jsonMeaning.en == undefined|| jsonMeaning.zh == undefined)return ;
+                    tagMeanContent.innerHTML=`
+                        <p>${jsonMeaning.en}</p>
+                        <p>${jsonMeaning.zh}</p>
+                    `;
+                    tagMeaning.appendChild(tagMeanContent) ;
+                }) ;
+
+                let tagExamples = wordCard.querySelector('.word-example') ;
+                item.dictEntry.common_phrases.forEach(jsonPhrases=>{
+                    let tagPhaseContent = document.createElement('div') ;
+                    tagPhaseContent.innerHTML=`
+                        <p>${jsonPhrases.phrase}</p>
+                        <p>${jsonPhrases.translation}</p>
+                    `;
+                    tagExamples.appendChild(tagPhaseContent) ;
+                }) ;
+
+                //idBTNPlayAudio
+                wordCard.querySelector('#idBTNPlayAudio').addEventListener('click',async (event)=>{
+                    const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${item.word}` ;
+                    const audio = new Audio(urlGoogleTTSProxy);
+                    audio.play();
+                }) ;
+                
+                wordsContainer.appendChild(wordCard);
+            }
+
+
+            // 显示指定分组的单词
+            function displayWordsByGroup(group) {
+                const words = dictionaryData[group] || [];
+                currentGroupTitle.textContent = group === 'other' ? '其他分组' : `${group} 分组`;
+                
+                wordsContainer.innerHTML = '';
+                
+                if (words.length === 0) {
+                    const emptyState = document.createElement('div');
+                    emptyState.className = 'empty-state';
+                    emptyState.innerHTML = `
+                        <i>📖</i>
+                        <h3>此分组暂无单词</h3>
+                        <p>请选择其他分组查看</p>
+                    `;
+                    wordsContainer.appendChild(emptyState);
+                    return;
+                }
+                
+                words.forEach(item => {
+                    renderWord(wordsContainer,item) ;
+                });
+            }
+            
+            // 搜索功能
+            function searchWords() {
+                const query = searchInput.value.trim().toLowerCase();
+                
+                if (!query) {
+                    // 如果没有搜索词，显示当前激活的分组
+                    const activeTab = document.querySelector('.group-tab.active');
+                    if (activeTab) {
+                        displayWordsByGroup(activeTab.dataset.group);
+                    }
+                    return;
+                }
+                
+                // 在所有分组中搜索匹配的单词
+                const allWords = [];
+                Object.keys(dictionaryData).forEach(group => {
+                    dictionaryData[group].forEach(word => {
+                        if (word.word == query/*word.word.toLowerCase().includes(query)*//* || word.meaning.toLowerCase().includes(query)*/) {
+                            allWords.push({...word, group});
+                        }
+                    });
+                });
+                
+                // 更新显示搜索结果
+                currentGroupTitle.textContent = `搜索结果: "${query}"`;
+                wordsContainer.innerHTML = '';
+                
+                if (allWords.length === 0) {
+                    const emptyState = document.createElement('div');
+                    emptyState.className = 'empty-state';
+                    emptyState.innerHTML = `
+                        <i>🔍</i>
+                        <h3>未找到匹配的单词</h3>
+                        <p>请尝试其他搜索词</p>
+                        <p>搜索Google？
+                            <svg xmlns="http://www.w3.org/2000/svg" id="idBTNCheckGoogle" width="32" height="32" viewBox="0 0 16 16" fill="#000000"><g fill="#000000"><path d="M4.545 6.714L4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286H4.545zm1.634-.736L5.5 3.956h-.049l-.679 2.022H6.18z"/><path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm7.138 9.995c.193.301.402.583.63.846c-.748.575-1.673 1.001-2.768 1.292c.178.217.451.635.555.867c1.125-.359 2.08-.844 2.886-1.494c.777.665 1.739 1.165 2.93 1.472c.133-.254.414-.673.629-.89c-1.125-.253-2.057-.694-2.82-1.284c.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6.066 6.066 0 0 1-.415-.492a1.988 1.988 0 0 1-.94.31z"/></g></svg>
+                            <span id="idGoogleOutput"></span>
+                        </p>
+                        <p>问AI？
+                            <svg xmlns="http://www.w3.org/2000/svg" id="idBTNCheckDeepSeek" width="32" height="32" viewBox="0 0 24 24" fill="#000000"><g fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" color="currentColor"><path d="M14.17 20.89c4.184-.277 7.516-3.657 7.79-7.9c.053-.83.053-1.69 0-2.52c-.274-4.242-3.606-7.62-7.79-7.899a33 33 0 0 0-4.34 0c-4.184.278-7.516 3.657-7.79 7.9a20 20 0 0 0 0 2.52c.1 1.545.783 2.976 1.588 4.184c.467.845.159 1.9-.328 2.823c-.35.665-.526.997-.385 1.237c.14.24.455.248 1.084.263c1.245.03 2.084-.322 2.75-.813c.377-.279.566-.418.696-.434s.387.09.899.3c.46.19.995.307 1.485.34c1.425.094 2.914.094 4.342 0"/><path d="m7.5 15l1.842-5.526a.694.694 0 0 1 1.316 0L12.5 15m3-6v6m-7-2h3"/></g></svg>
+                        </p>
+                    `;
+                    wordsContainer.appendChild(emptyState);
+
+                    function findObjectByAttribute(array, attribute, value) {
+                        return array.some(obj => obj[attribute] === value);
+                    }
+
+                    emptyState.querySelector('#idBTNCheckGoogle').addEventListener('click',async (event)=>{
+                        alert(`will google ${query}`) ;
+                        /*
+                        let cDate = new Date() ;
+                        let jsonGoogleQuery={
+                            word:query,
+                            ttm:cDate.toLocaleString(),
+                            handled:false
+                        }
+                        const googleQueueKey = 'googleQueue' ;
+                        let googleQueue = [] ;
+                        googleQueue = await localforage.getItem(googleQueueKey) ;
+                        if(googleQueue==null){
+                            googleQueue = [jsonGoogleQuery] ;
+                            await localforage.setItem(googleQueueKey,googleQueue) ;
+
+                        }else{
+                            if(findObjectByAttribute(googleQueue,"word",query))return ;
+                            googleQueue.push(jsonGoogleQuery) ;
+                            await localforage.setItem(googleQueueKey,googleQueue) ;
+                        }
+                        */
+
+                        let sourceLang = 'th' ;
+                        let targetLang = 'en' ;
+                        let meaning = await _larkGoogleTranslate(query,sourceLang,targetLang) ;
+                        emptyState.querySelector('#idGoogleOutput').innerHTML= meaning ;
+
+                    }) ;
+                    emptyState.querySelector('#idBTNCheckDeepSeek').addEventListener('click',async (event)=>{
+                        //alert(`will ask DeepSeek: ${query}`) ;
+                        /*
+                        let cDate = new Date() ;
+                        let jsonDeepSeekQuery={
+                            word:query,
+                            ttm:cDate.toLocaleString(),
+                            handled:false
+                        }
+                        const deepSeepQueueKey = 'deepSeepQueue' ;
+                        let deepSeekQueue = [] ;
+                        deepSeekQueue = await localforage.getItem(deepSeepQueueKey) ;
+                        if(deepSeekQueue==null){
+                            deepSeekQueue = [jsonDeepSeekQuery] ;
+                            await localforage.setItem(deepSeepQueueKey,deepSeekQueue) ;
+
+                        }else{
+                            if(findObjectByAttribute(deepSeekQueue,"word",query))return ;
+                            deepSeekQueue.push(jsonDeepSeekQuery) ;
+                            await localforage.setItem(deepSeepQueueKey,deepSeekQueue) ;
+                        }
+                        */
+                        let promptText = promptQueryDictThai(query) ;
+                        window.submitRequest(promptText,"normal") ;
+
+                    }) ;
+
+                    return;
+                }
+                
+                allWords.forEach(item => {
+                    renderWord(wordsContainer,item) ;
+                });
+            }
+            
+            // 事件监听
+            searchBtn.addEventListener('click', searchWords);
+            searchInput.addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    searchWords();
+                }
+            });
+            
+            // 初始化页面
+            renderGroupTabs();
+        });
+    </script>
+</body>
+</html>

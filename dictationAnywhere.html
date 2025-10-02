@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语单词听写</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/localforage/dist/localforage.min.js"></script>
+    <style>
+        .page {
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+        .swipe-area {
+            touch-action: pan-y;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- 欢迎/登录页面 -->
+    <div id="welcome-page" class="page active min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+            <h1 class="text-3xl font-bold text-center text-blue-600 mb-2">泰语单词听写</h1>
+            <p class="text-gray-600 text-center mb-8">提升您的泰语词汇能力</p>
+            
+            <div class="mb-6">
+                <p class="text-gray-700 text-center">请登录以开始学习</p>
+            </div>
+            
+            <button id="google-login-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center mb-4">
+                <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                使用 Google 登录
+            </button>
+            
+            <div class="text-center mt-6">
+                <button id="settings-btn" class="text-blue-500 hover:text-blue-700 text-sm">
+                    系统设置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 单词集选择页面 -->
+    <div id="wordset-page" class="page min-h-screen p-4">
+        <div class="max-w-md mx-auto">
+            <h1 class="text-2xl font-bold text-center my-6">选择单词集</h1>
+            
+            <div id="wordset-list" class="space-y-4">
+                <!-- 单词集将通过JavaScript动态加载 -->
+            </div>
+            
+            <div class="mt-8 flex justify-between">
+                <button id="logout-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+                    退出登录
+                </button>
+                <button id="settings-btn-2" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                    系统设置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 单词听写页面 -->
+    <div id="dictation-page" class="page min-h-screen p-4">
+        <div class="max-w-md mx-auto">
+            <div class="mb-4">
+                <div class="flex justify-between items-center">
+                    <h2 id="current-set-name" class="text-xl font-bold">单词集名称</h2>
+                    <span id="progress" class="text-gray-600">1/10</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 10%"></div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6 swipe-area">
+                <!-- 单词信息区域 -->
+                <div class="text-center mb-6">
+                    <button id="play-audio-btn" class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 mb-4">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                    <p id="word-meaning" class="text-lg font-semibold mb-2">单词意思</p>
+                    <p id="word-type" class="text-gray-600">词性</p>
+                </div>
+                
+                <button id="check-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg">
+                    检查答案
+                </button>
+            </div>
+            
+            <!-- 答案区域（初始隐藏） -->
+            <div id="answer-section" class="bg-white rounded-lg shadow-lg p-6 hidden">
+                <h3 class="text-lg font-semibold mb-4">正确答案</h3>
+                <p id="correct-spelling" class="text-xl text-center mb-6">正确拼写</p>
+                
+                <div class="flex justify-between">
+                    <button id="wrong-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg">
+                        错误
+                    </button>
+                    <button id="correct-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg">
+                        正确
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结果显示页面 -->
+    <div id="result-page" class="page min-h-screen p-4">
+        <div class="max-w-md mx-auto">
+            <h1 class="text-2xl font-bold text-center my-6">听写结果</h1>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <div class="text-center mb-6">
+                    <div class="text-4xl font-bold text-blue-600 mb-2" id="score">85%</div>
+                    <p class="text-gray-600">正确率</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold" id="total-words">20</div>
+                        <p class="text-gray-600">总单词数</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600" id="correct-words">17</div>
+                        <p class="text-gray-600">正确单词</p>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-2">错误单词</h3>
+                    <ul id="wrong-words-list" class="list-disc pl-5">
+                        <!-- 错误单词列表将通过JavaScript动态加载 -->
+                    </ul>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button id="restart-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                        重新开始
+                    </button>
+                    <button id="new-set-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                        新单词集
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统设置页面 -->
+    <div id="settings-page" class="page min-h-screen p-4">
+        <div class="max-w-md mx-auto">
+            <h1 class="text-2xl font-bold text-center my-6">系统设置</h1>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <form id="settings-form">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="firebase-url">
+                            Firebase Database URL
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                               id="firebase-url" type="text" placeholder="https://your-project.firebaseio.com">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="wordsets-path">
+                            单词集路径
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                               id="wordsets-path" type="text" placeholder="wordsets">
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="results-path">
+                            结果存储路径
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                               id="results-path" type="text" placeholder="results">
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <button type="button" id="cancel-settings-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+                            取消
+                        </button>
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                            保存设置
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 应用状态管理
+        const AppState = {
+            currentUser: null,
+            currentWordSet: null,
+            currentWordIndex: 0,
+            wrongWords: [],
+            settings: {
+                firebaseUrl: '',
+                wordsetsPath: 'wordsets',
+                resultsPath: 'results'
+            }
+        };
+
+        // Firebase配置
+        const firebaseConfig = {
+                apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+                authDomain: "outpost-8d74e.firebaseapp.com",
+                databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+                projectId: "outpost-8d74e",
+                storageBucket: "outpost-8d74e.firebasestorage.app",
+                messagingSenderId: "724993324937",
+                appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+                measurementId: "G-QPHWRTH6BH"
+        };
+
+        let gDatabase ;//= firebase.database();
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化Firebase
+            firebase.initializeApp(firebaseConfig);
+            gDatabase = firebase.database();
+            // 加载设置
+            loadSettings();
+            
+            // 设置事件监听器
+            setupEventListeners();
+            
+            // 检查用户登录状态
+            checkAuthState();
+        });
+
+        // 加载设置
+        async function loadSettings() {
+            try {
+                const savedSettings = await localforage.getItem('appSettings');
+                if (savedSettings) {
+                    AppState.settings = { ...AppState.settings, ...savedSettings };
+                    updateSettingsForm();
+                }
+            } catch (error) {
+                console.error('加载设置失败:', error);
+            }
+        }
+
+        // 更新设置表单
+        function updateSettingsForm() {
+            document.getElementById('firebase-url').value = AppState.settings.firebaseUrl;
+            document.getElementById('wordsets-path').value = AppState.settings.wordsetsPath;
+            document.getElementById('results-path').value = AppState.settings.resultsPath;
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 登录按钮
+            document.getElementById('google-login-btn').addEventListener('click', signInWithGoogle);
+            
+            // 退出登录按钮
+            document.getElementById('logout-btn').addEventListener('click', signOut);
+            
+            // 设置按钮
+            document.getElementById('settings-btn').addEventListener('click', showSettingsPage);
+            document.getElementById('settings-btn-2').addEventListener('click', showSettingsPage);
+            
+            // 设置表单
+            document.getElementById('settings-form').addEventListener('submit', saveSettings);
+            document.getElementById('cancel-settings-btn').addEventListener('click', function() {
+                if (AppState.currentUser) {
+                    showWordSetPage();
+                } else {
+                    showWelcomePage();
+                }
+            });
+            
+            // 单词听写页面按钮
+            document.getElementById('check-btn').addEventListener('click', showAnswer);
+            document.getElementById('correct-btn').addEventListener('click', function() {
+                handleAnswer(true);
+            });
+            document.getElementById('wrong-btn').addEventListener('click', function() {
+                handleAnswer(false);
+            });
+            
+            // 结果显示页面按钮
+            document.getElementById('restart-btn').addEventListener('click', restartDictation);
+            document.getElementById('new-set-btn').addEventListener('click', showWordSetPage);
+            
+            // 添加滑动支持
+            setupSwipeSupport();
+        }
+
+        // 设置滑动支持
+        function setupSwipeSupport() {
+            const swipeArea = document.querySelector('.swipe-area');
+            let startX = 0;
+            let startY = 0;
+            
+            swipeArea.addEventListener('touchstart', function(e) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            });
+            
+            swipeArea.addEventListener('touchend', function(e) {
+                if (!startX || !startY) return;
+                
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                
+                const diffX = startX - endX;
+                const diffY = startY - endY;
+                
+                // 确保是水平滑动而不是垂直滑动
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        // 向左滑动 - 显示下一个单词
+                        if (document.getElementById('answer-section').classList.contains('hidden')) {
+                            showAnswer();
+                        }
+                    } else {
+                        // 向右滑动 - 显示上一个单词
+                        // 这里可以添加显示上一个单词的逻辑
+                    }
+                }
+                
+                startX = 0;
+                startY = 0;
+            });
+        }
+
+        // 检查用户认证状态
+        function checkAuthState() {
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    AppState.currentUser = user;
+                    showWordSetPage();
+                    loadWordSets();
+                } else {
+                    AppState.currentUser = null;
+                    showWelcomePage();
+                }
+            });
+        }
+
+        // 使用Google登录
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+                .then(function(result) {
+                    // 登录成功
+                    console.log('登录成功:', result.user);
+                })
+                .catch(function(error) {
+                    console.error('登录失败:', error);
+                    alert('登录失败: ' + error.message);
+                });
+        }
+
+        // 退出登录
+        function signOut() {
+            firebase.auth().signOut()
+                .then(function() {
+                    console.log('退出登录成功');
+                })
+                .catch(function(error) {
+                    console.error('退出登录失败:', error);
+                });
+        }
+
+        // 页面导航函数
+        function showWelcomePage() {
+            hideAllPages();
+            document.getElementById('welcome-page').classList.add('active');
+        }
+
+        function showWordSetPage() {
+            hideAllPages();
+            document.getElementById('wordset-page').classList.add('active');
+        }
+
+        function showDictationPage() {
+            hideAllPages();
+            document.getElementById('dictation-page').classList.add('active');
+        }
+
+        function showResultPage() {
+            hideAllPages();
+            document.getElementById('result-page').classList.add('active');
+        }
+
+        function showSettingsPage() {
+            hideAllPages();
+            document.getElementById('settings-page').classList.add('active');
+        }
+
+        function hideAllPages() {
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => page.classList.remove('active'));
+        }
+
+        // 加载单词集
+        function loadWordSets() {
+            if (!AppState.settings.firebaseUrl) {
+                alert('请先配置Firebase Database URL');
+                showSettingsPage();
+                return;
+            }
+            
+            //const database = firebase.database();
+            const wordSetsRef = gDatabase.ref(AppState.settings.wordsetsPath);
+            
+            wordSetsRef.once('value')
+                .then(function(snapshot) {
+                    const wordSets = snapshot.val();
+                    displayWordSets(wordSets);
+                })
+                .catch(function(error) {
+                    console.error('加载单词集失败:', error);
+                    alert('加载单词集失败: ' + error.message);
+                });
+        }
+
+        // 显示单词集
+        function displayWordSets(wordSets) {
+            const wordSetList = document.getElementById('wordset-list');
+            wordSetList.innerHTML = '';
+            
+            if (!wordSets) {
+                wordSetList.innerHTML = '<p class="text-center text-gray-600">暂无单词集</p>';
+                return;
+            }
+            
+            Object.keys(wordSets).forEach(key => {
+                const wordSet = wordSets[key];
+                const wordSetItem = document.createElement('div');
+                wordSetItem.className = 'bg-white rounded-lg shadow p-4 cursor-pointer hover:bg-gray-50';
+                wordSetItem.innerHTML = `
+                    <h3 class="text-lg font-semibold">${wordSet.name || '未命名单词集'}</h3>
+                    <p class="text-gray-600">${wordSet.words ? Object.keys(wordSet.words).length : 0} 个单词</p>
+                `;
+                wordSetItem.addEventListener('click', function() {
+                    startDictation(key, wordSet);
+                });
+                wordSetList.appendChild(wordSetItem);
+            });
+        }
+
+        // 开始听写
+        async function startDictation(wordSetId, wordSet) {
+            AppState.currentWordSet = {
+                id: wordSetId,
+                name: wordSet.name,
+                words: wordSet.words ? Object.values(wordSet.words) : []
+            };
+            AppState.currentWordIndex = 0;
+            AppState.wrongWords = [];
+            
+            showDictationPage();
+            await displayCurrentWord();
+        }
+
+        // 显示当前单词
+        async function displayCurrentWord() {
+            if (!AppState.currentWordSet || AppState.currentWordIndex >= AppState.currentWordSet.words.length) {
+                // 所有单词已完成，显示结果
+                showResults();
+                return;
+            }
+            
+            const currentWord = AppState.currentWordSet.words[AppState.currentWordIndex];
+            
+            //let jsonWord = 
+            //const wordRef = gDatabase.ref(`thaiDictionary/${currentWord}`);
+            let snapshot = await gDatabase.ref(`thaiDictionary/${currentWord}`).once('value');
+            let jsonWord = snapshot.val();
+            console.log(jsonWord) ;
+            if(jsonWord!=null){
+                // 更新进度
+                document.getElementById('current-set-name').textContent = AppState.currentWordSet.name;
+                document.getElementById('progress').textContent = `${AppState.currentWordIndex + 1}/${AppState.currentWordSet.words.length}`;
+                document.getElementById('progress-bar').style.width = `${((AppState.currentWordIndex + 1) / AppState.currentWordSet.words.length) * 100}%`;
+                
+                // 更新单词信息
+                if(jsonWord.definitions[0].hasOwnProperty('en')){
+                    document.getElementById('word-meaning').textContent = jsonWord.definitions[0].en || '未知意思';
+                    document.getElementById('word-type').textContent = currentWord.type || '';
+                }else{
+                    document.getElementById('word-meaning').textContent = jsonWord.definitions[0].english || '未知意思';
+                    document.getElementById('word-type').textContent = currentWord.type || '';
+                }
+                
+                // 重置答案区域
+                document.getElementById('answer-section').classList.add('hidden');
+                document.getElementById('check-btn').classList.remove('hidden');
+                document.getElementById('correct-spelling').textContent = currentWord.spelling || '';
+                
+                // 设置音频播放
+                document.getElementById('play-audio-btn').onclick = function() {
+                    //playWordAudio(currentWord.audioUrl);
+                    const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${currentWord}` ;
+                    const audio = new Audio(urlGoogleTTSProxy);
+                    audio.play();
+                };
+            }else{
+                AppState.currentWordIndex++;
+                await displayCurrentWord();
+            }
+        }
+
+        // 播放单词音频
+        function playWordAudio(audioUrl) {
+            if (audioUrl) {
+                const audio = new Audio(audioUrl);
+                audio.play().catch(error => {
+                    console.error('播放音频失败:', error);
+                });
+            } else {
+                // 如果没有音频URL，使用文本转语音
+                const word = AppState.currentWordSet.words[AppState.currentWordIndex].spelling;
+                if (word && 'speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(word);
+                    utterance.lang = 'th-TH'; // 设置为泰语
+                    speechSynthesis.speak(utterance);
+                }
+            }
+        }
+
+        // 显示答案
+        function showAnswer() {
+            document.getElementById('answer-section').classList.remove('hidden');
+            document.getElementById('check-btn').classList.add('hidden');
+        }
+
+        // 处理用户答案
+        async function handleAnswer(isCorrect) {
+            const currentWord = AppState.currentWordSet.words[AppState.currentWordIndex];
+            
+            if (!isCorrect) {
+                AppState.wrongWords.push(currentWord);
+            }
+            
+            AppState.currentWordIndex++;
+            await displayCurrentWord();
+        }
+
+        // 显示结果
+        function showResults() {
+            const totalWords = AppState.currentWordSet.words.length;
+            const correctWords = totalWords - AppState.wrongWords.length;
+            const score = Math.round((correctWords / totalWords) * 100);
+            
+            document.getElementById('score').textContent = `${score}%`;
+            document.getElementById('total-words').textContent = totalWords;
+            document.getElementById('correct-words').textContent = correctWords;
+            
+            // 显示错误单词列表
+            const wrongWordsList = document.getElementById('wrong-words-list');
+            wrongWordsList.innerHTML = '';
+            
+            if (AppState.wrongWords.length === 0) {
+                wrongWordsList.innerHTML = '<li class="text-gray-600">无错误单词</li>';
+            } else {
+                AppState.wrongWords.forEach(word => {
+                    const li = document.createElement('li');
+                    li.textContent = `${word}`;
+                    wrongWordsList.appendChild(li);
+                });
+            }
+            
+            // 保存结果到本地和Firebase
+            saveResults(score, correctWords, totalWords);
+            
+            showResultPage();
+        }
+
+        // 保存结果
+        async function saveResults(score, correctWords, totalWords) {
+            const result = {
+                userId: AppState.currentUser.uid,
+                userName: AppState.currentUser.displayName,
+                wordSetId: AppState.currentWordSet.id,
+                wordSetName: AppState.currentWordSet.name,
+                score: score,
+                correctWords: correctWords,
+                totalWords: totalWords,
+                wrongWords: AppState.wrongWords,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            // 保存到本地存储
+            try {
+                await localforage.setItem('lastResult', result);
+                await localforage.setItem('wrongWords', AppState.wrongWords);
+            } catch (error) {
+                console.error('保存结果到本地存储失败:', error);
+            }
+            
+            // 保存到Firebase
+            if (AppState.settings.firebaseUrl) {
+                const database = firebase.database();
+                const resultsRef = database.ref(`${AppState.settings.resultsPath}/${AppState.currentUser.uid}`);
+                
+                resultsRef.push(result)
+                    .then(() => {
+                        console.log('结果已保存到Firebase');
+                    })
+                    .catch(error => {
+                        console.error('保存结果到Firebase失败:', error);
+                    });
+            }
+        }
+
+        // 重新开始听写
+        async function restartDictation() {
+            AppState.currentWordIndex = 0;
+            AppState.wrongWords = [];
+            showDictationPage();
+            await displayCurrentWord();
+        }
+
+        // 保存设置
+        function saveSettings(e) {
+            e.preventDefault();
+            
+            AppState.settings.firebaseUrl = document.getElementById('firebase-url').value;
+            AppState.settings.wordsetsPath = document.getElementById('wordsets-path').value;
+            AppState.settings.resultsPath = document.getElementById('results-path').value;
+            
+            localforage.setItem('appSettings', AppState.settings)
+                .then(() => {
+                    alert('设置已保存');
+                    if (AppState.currentUser) {
+                        showWordSetPage();
+                    } else {
+                        showWelcomePage();
+                    }
+                })
+                .catch(error => {
+                    console.error('保存设置失败:', error);
+                    alert('保存设置失败: ' + error.message);
+                });
+        }
+    </script>
+</body>
+</html>

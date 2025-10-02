@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 服务客户端演示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status-panel {
+            grid-column: 1 / -1;
+        }
+        textarea, input, button {
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #f9f9f9;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .queue-item {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        .queue-item.processing {
+            border-left: 4px solid #007cba;
+            background: #e7f3ff;
+        }
+        .queue-item.pending {
+            border-left: 4px solid #ffc107;
+        }
+        .queue-item.completed {
+            border-left: 4px solid #28a745;
+            background: #f0fff4;
+        }
+        .queue-item.failed {
+            border-left: 4px solid #dc3545;
+            background: #fff5f5;
+        }
+    </style>
+</head>
+<body>
+    <h1>
+        <spa>AI 服务客户端演示</spa>
+        <svg xmlns="http://www.w3.org/2000/svg" id="idBTNAuthenticate" width="36" height="36" viewBox="0 0 24 24" fill="#000000"><g fill="none" stroke="#000000" stroke-width="2"><circle cx="12" cy="7" r="5"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 22H5.266a2 2 0 0 1-1.985-2.248l.39-3.124A3 3 0 0 1 6.649 14H7m12-1v6m-3-3h6"/></g></svg>
+    </h1>
+    
+    <div class="AIResults"></div>
+    <script src="./jsResource/localforage.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
+    </script>
+    <script>
+        const keyRequestIDs = 'keyRequestIDs' ;
+        async function logAIRequestID(requestID){
+            let requestIDs = await localforage.getItem(keyRequestIDs) ;
+            if(requestIDs==null){
+                requestIDs=[requestID] ;
+            }else{
+                if(requestIDs.includes(requestID))return ;
+                requestIDs.push(requestID) ;
+            }
+            await localforage.setItem(keyRequestIDs,requestIDs) ;
+        }
+
+        const keyRequestResults = 'keyRequestResults' ;
+        async function logAIRequestResult(requestID,result){
+            let jsonResult = {
+                requestID:requestID,
+                result:result
+            } ;
+            let requestResults = await localforage.getItem(keyRequestResults) ;
+            if(requestResults==null){
+                requestResults=[jsonResult] ;
+            }else{
+                //if(requestResults.includes(requestID))return ;
+                const hasObjectWithKeyValue = requestResults.some((obj) => obj.requestID === requestID);
+                if(hasObjectWithKeyValue)return ;
+
+                requestResults.push(jsonResult) ;
+            }
+            await localforage.setItem(keyRequestResults,requestResults) ;
+        }
+
+        
+        function renderRequestResults(container,requestResults){
+            for(let index=0;index<requestResults.length;index++){
+                let jsonResult = requestResults[index] ;
+                let tagDictEntry = document.createElement('div') ;
+                container.appendChild(tagDictEntry) ;
+                tagDictEntry.dataset.requstID = jsonResult.requestID ;
+                let jsonDictEntry ;
+                try{
+                    jsonDictEntry = JSON.parse(jsonResult.result) ;
+
+                }catch{
+                    let rawResult = jsonResult.result.replace("```json","") ;
+                    rawResult = rawResult.replace("```","") ;
+                    jsonDictEntry = JSON.parse(rawResult) ;
+                }
+
+                tagDictEntry.innerHTML=`
+                    <p>
+                        <span>${jsonDictEntry.thai.word}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" id="idBTNCheckInDictEntry" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" d="M1 23.5h20.5v-19m0 0a2 2 0 1 0 0-4a2 2 0 0 0 0 4Zm-16 4v11m8-11v11m-1-11a3 3 0 1 0-6 0m11 11h-16v-.177l.202-1.345a26.737 26.737 0 0 0 0-7.956L1.5 8.676V8.5h16v.176l-.203 1.346a26.747 26.747 0 0 0 0 7.956l.203 1.345v.177Z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" id="idBTNRemoveLogEntry" width="24" height="24" viewBox="0 0 21 21"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" d="M5.5 4.5h10v12a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2zm5-2a2 2 0 0 1 1.995 1.85l.005.15h-4a2 2 0 0 1 2-2zm-7 2h14m-9 3v8m4-8v8"/></svg>
+                    </p>
+                ` ;
+                tagDictEntry.querySelector('#idBTNCheckInDictEntry').addEventListener('click',async (event)=>{
+                    alert(`will checkIn ${jsonDictEntry.thai.word}`) ;
+                    console.log(jsonDictEntry) ;
+
+                    //check-in to firebase realtime database
+                    await database.ref(`thaiDictionary/${jsonDictEntry.thai.word}`).set(jsonDictEntry) ;
+                    let snapshot = await database.ref(`thaiDictionary/${jsonDictEntry.thai.word}`).once('value');
+                    let jsonResult = snapshot.val();
+                    console.log(jsonResult) ;
+
+                    const gDictCacheKey = "outpostDictCache" ;
+                    const gDictLocalKey ="outpostDictLocal" ;
+                    //check-in to local cache 
+                    let dictionaryCache = await localforage.getItem(gDictCacheKey) ;
+                    console.log(dictionaryCache) ;
+                    dictionaryCache[jsonDictEntry.thai.word] = jsonDictEntry ;
+                    await localforage.setItem(gDictCacheKey,dictionaryCache) ;
+
+                    let dictEntries = await localforage.getItem(gDictLocalKey);
+                    let jsonEntry = {
+                        word:jsonDictEntry.thai.word,
+                        dictEntry:jsonDictEntry
+                    } ;
+                    dictEntries.push(jsonEntry) ;
+                    await localforage.setItem(gDictLocalKey,dictEntries) ;
+
+                    //remove from auditLog
+                    //tagDictEntry.querySelector('#idBTNRemoveLogEntry').click() ;
+                    requestResults.splice(index,1) ;
+                    tagDictEntry.remove() ;
+                    await localforage.setItem(keyRequestResults,requestResults) ;
+                }) ;
+
+                //idBTNRemoveLogEntry
+                tagDictEntry.querySelector('#idBTNRemoveLogEntry').addEventListener('click',async (event)=>{
+                    requestResults.splice(index,1) ;
+                    tagDictEntry.remove() ;
+                    await localforage.setItem(keyRequestResults,requestResults) ;
+                });
+
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            let requestResults = await localforage.getItem(keyRequestResults) ;
+            console.log(requestResults) ;
+            //AIResults
+            renderRequestResults(document.querySelector('.AIResults'),requestResults) ;
+        }) ;
+
+        document.querySelector("#idBTNAuthenticate").addEventListener('click',(event)=>{
+            signInWithGoogle() ;
+        });
+
+    </script>
+
+
+</body>
+</html>

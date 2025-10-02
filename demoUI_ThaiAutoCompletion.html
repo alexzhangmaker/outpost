@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语自动完成输入控件</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .auto-complete-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+        
+        .auto-complete-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .auto-complete-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .suggestions-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e1e8ed;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f1f1;
+            transition: background 0.2s;
+        }
+        
+        .suggestion-item:hover, .suggestion-item.active {
+            background-color: #f8f9fa;
+        }
+        
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            font-weight: bold;
+        }
+        
+        .example-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .example-title {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .example-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        .example-word {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .example-word:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+        
+        .instructions {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .example-list {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>泰语自动完成输入控件</h1>
+        <p class="description">输入泰语词汇，系统将提供智能建议。使用键盘上下键导航，回车键选择。</p>
+        
+        <div id="autoCompleteContainer" class="auto-complete-container">
+            <input type="text" id="thaiInput" class="auto-complete-input" placeholder="输入泰语词汇...">
+            <div id="suggestions" class="suggestions-list"></div>
+        </div>
+        
+        <div class="example-section">
+            <h3 class="example-title">示例词汇（点击尝试）</h3>
+            <div id="exampleWords" class="example-list"></div>
+        </div>
+        
+        <div class="instructions">
+            <h3>使用说明</h3>
+            <ul>
+                <li>在输入框中输入泰语词汇</li>
+                <li>使用键盘上下键浏览建议列表</li>
+                <li>按回车键选择当前高亮的建议</li>
+                <li>点击鼠标选择建议</li>
+                <li>点击上方示例词汇快速尝试</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 泰语词汇数组
+        const thaiWords = [
+            "สวัสดี", // 你好
+            "ขอบคุณ", // 谢谢
+            "ขอโทษ", // 对不起
+            "ใช่", // 是
+            "ไม่", // 不
+            "สบายดี", // 很好
+            "อาหาร", // 食物
+            "น้ำ", // 水
+            "บ้าน", // 家
+            "โรงเรียน", // 学校
+            "มหาวิทยาลัย", // 大学
+            "รถ", // 车
+            "รถไฟ", // 火车
+            "เครื่องบิน", // 飞机
+            "ประเทศไทย", // 泰国
+            "กรุงเทพ", // 曼谷
+            "พัทยา", // 芭堤雅
+            "เชียงใหม่", // 清迈
+            "ภูเก็ต", // 普吉岛
+            "ทะเล", // 海
+            "ภูเขา", // 山
+            "แดด", // 阳光
+            "ฝน", // 雨
+            "ร้อน", // 热
+            "เย็น", // 冷
+            "สวย", // 美丽
+            "อร่อย", // 美味
+            "ใหญ่", // 大
+            "เล็ก", // 小
+            "เร็ว", // 快
+            "ช้า", // 慢
+            "เพื่อน", // 朋友
+            "ครอบครัว", // 家庭
+            "พ่อ", // 爸爸
+            "แม่", // 妈妈
+            "ลูก", // 孩子
+            "พี่", // 哥哥/姐姐
+            "น้อง", // 弟弟/妹妹
+            "สัตว์", // 动物
+            "แมว", // 猫
+            "หมา", // 狗
+            "ปลา", // 鱼
+            "นก", // 鸟
+            "ดอกไม้", // 花
+            "ต้นไม้", // 树
+            "หนังสือ", // 书
+            "ดนตรี", // 音乐
+            "ภาพยนตร์", // 电影
+            "กีฬา", // 运动
+            "ฟุตบอล", // 足球
+            "ว่ายน้ำ" // 游泳
+        ];
+
+        // 自动完成工厂函数
+        function createAutoComplete(inputElement, suggestionsContainer, words) {
+            let currentFocus = -1;
+            
+            // 输入事件处理
+            inputElement.addEventListener('input', function() {
+                const value = this.value;
+                closeAllLists();
+                currentFocus = -1;
+                
+                if (!value) return false;
+                
+                const filteredWords = words.filter(word => 
+                    word.includes(value)
+                );
+                
+                if (filteredWords.length > 0) {
+                    showSuggestions(filteredWords, value);
+                }
+            });
+            
+            // 键盘导航
+            inputElement.addEventListener('keydown', function(e) {
+                let suggestions = suggestionsContainer.getElementsByClassName('suggestion-item');
+                
+                if (e.keyCode === 40) { // 向下键
+                    currentFocus++;
+                    addActive(suggestions);
+                } else if (e.keyCode === 38) { // 向上键
+                    currentFocus--;
+                    addActive(suggestions);
+                } else if (e.keyCode === 13) { // 回车键
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        if (suggestions) suggestions[currentFocus].click();
+                    }
+                }
+            });
+            
+            // 显示建议列表
+            function showSuggestions(filteredWords, inputValue) {
+                suggestionsContainer.innerHTML = '';
+                
+                filteredWords.forEach(word => {
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+                    
+                    // 高亮匹配部分
+                    const startIndex = word.indexOf(inputValue);
+                    if (startIndex !== -1) {
+                        const before = word.substring(0, startIndex);
+                        const match = word.substring(startIndex, startIndex + inputValue.length);
+                        const after = word.substring(startIndex + inputValue.length);
+                        
+                        item.innerHTML = `${before}<span class="highlight">${match}</span>${after}`;
+                    } else {
+                        item.textContent = word;
+                    }
+                    
+                    item.addEventListener('click', function() {
+                        inputElement.value = word;
+                        closeAllLists();
+                    });
+                    
+                    suggestionsContainer.appendChild(item);
+                });
+                
+                suggestionsContainer.style.display = 'block';
+            }
+            
+            // 添加活动状态
+            function addActive(suggestions) {
+                if (!suggestions) return false;
+                
+                removeActive(suggestions);
+                
+                if (currentFocus >= suggestions.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = suggestions.length - 1;
+                
+                suggestions[currentFocus].classList.add('active');
+            }
+            
+            // 移除活动状态
+            function removeActive(suggestions) {
+                for (let i = 0; i < suggestions.length; i++) {
+                    suggestions[i].classList.remove('active');
+                }
+            }
+            
+            // 关闭所有建议列表
+            function closeAllLists() {
+                suggestionsContainer.style.display = 'none';
+            }
+            
+            // 点击外部关闭建议列表
+            document.addEventListener('click', function(e) {
+                if (e.target !== inputElement) {
+                    closeAllLists();
+                }
+            });
+            
+            return {
+                updateWords: function(newWords) {
+                    words = newWords;
+                }
+            };
+        }
+
+        // 初始化自动完成功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputElement = document.getElementById('thaiInput');
+            const suggestionsContainer = document.getElementById('suggestions');
+            const exampleWordsContainer = document.getElementById('exampleWords');
+            
+            // 创建自动完成实例
+            const autoComplete = createAutoComplete(inputElement, suggestionsContainer, thaiWords);
+            
+            // 添加示例词汇
+            thaiWords.slice(0, 12).forEach(word => {
+                const exampleElement = document.createElement('div');
+                exampleElement.className = 'example-word';
+                exampleElement.textContent = word;
+                exampleElement.addEventListener('click', function() {
+                    inputElement.value = word;
+                    inputElement.focus();
+                });
+                exampleWordsContainer.appendChild(exampleElement);
+            });
+        });
+    </script>
+</body>
+</html>

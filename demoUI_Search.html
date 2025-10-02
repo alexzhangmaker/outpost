@@ -175,26 +175,11 @@
             <!-- 搜索结果将在这里显示 -->
         </div>
     </div>
+    <script src="./jsResource/localforage.min.js"></script>
 
     <script>
         // 示例数据 - 包含title字段的对象数组
-        const data = [
-            { id: 1, title: "JavaScript高级程序设计" },
-            { id: 2, title: "深入理解计算机系统" },
-            { id: 3, title: "设计模式：可复用面向对象软件的基础" },
-            { id: 4, title: "算法导论" },
-            { id: 5, title: "你不知道的JavaScript" },
-            { id: 6, title: "React Native跨平台移动应用开发" },
-            { id: 7, title: "Python数据科学手册" },
-            { id: 8, title: "Node.js实战" },
-            { id: 9, title: "CSS权威指南" },
-            { id: 10, title: "Vue.js前端开发实战" },
-            { id: 11, title: "TypeScript编程指南" },
-            { id: 12, title: "Web性能权威指南" },
-            { id: 13, title: "HTTP权威指南" },
-            { id: 14, title: "深入浅出Node.js" },
-            { id: 15, title: "前端架构设计" }
-        ];
+
 
         // 获取DOM元素
         const searchInput = document.getElementById('searchInput');
@@ -203,20 +188,20 @@
         const resultsCount = document.getElementById('resultsCount');
 
         // 初始显示所有数据
-        displayResults(data);
+        //displayResults(data);
 
+        
         // 监听输入事件
         searchInput.addEventListener('input', function() {
             const searchTerm = this.value.trim().toLowerCase();
-            
+
             // 显示或隐藏清除按钮
             clearBtn.style.display = searchTerm ? 'block' : 'none';
             
-            // 过滤数据
-            const filteredData = data.filter(item => 
-                item.title.toLowerCase().includes(searchTerm)
-            );
+            let filteredData = filterDiction(searchTerm) ;
             
+            //const filteredData = filterChildrenByString(jsonDictCache,searchTerm) ;
+            console.log(filteredData) ;
             // 显示结果
             displayResults(filteredData, searchTerm);
         });
@@ -243,12 +228,12 @@
             }
             
             // 创建并添加结果项
-            results.forEach(item => {
+            results.forEach(jsonWord => {
                 const resultItem = document.createElement('div');
                 resultItem.className = 'result-item';
                 
                 // 高亮匹配的文本
-                let title = item.title;
+                let title = jsonWord.word;
                 if (searchTerm) {
                     const regex = new RegExp(`(${searchTerm})`, 'gi');
                     title = title.replace(regex, '<span class="highlight">$1</span>');
@@ -256,12 +241,369 @@
                 
                 resultItem.innerHTML = `
                     <div class="result-title">${title}</div>
-                    <div class="result-id">ID: ${item.id}</div>
+                    <div class="result-id">ID: ${jsonWord.dictEntry.word_id}</div>
                 `;
                 
                 resultsContainer.appendChild(resultItem);
             });
         }
+    </script>
+    <script>
+        
+        let jsonDictCache = {} ;
+        let dictEntries=[] ;
+
+        function filterDiction(searchTerm){
+            const filteredData = dictEntries.filter(dictEntry => 
+                dictEntry.word.toLowerCase().includes(searchTerm)
+            );
+            return filteredData ;
+        }
+
+        async function prepareLocalDiction(){
+            const gDictCacheKey = "outpostDictCache" ;
+            const gDictLocalKey ="outpostDictLocal" ;
+
+            dictEntries = await localforage.getItem(gDictLocalKey);
+            if(dictEntries==null){
+                jsonDictCache = await localforage.getItem(gDictCacheKey);
+                console.log(jsonDictCache);
+                let keys = Object.keys(jsonDictCache) ;
+                console.log('length of keys:'+keys.length) ;
+                console.log(jsonDictCache[keys[keys.length-2]])
+                keys.forEach(key=>{
+                    //if(key==null || key ==undefined)continue ;
+
+                    let jsonEntry = {
+                        word:key,
+                        dictEntry:jsonDictCache[key]
+                    } ;
+                    dictEntries.push(jsonEntry) ;
+                    //console.log(jsonEntry) ;
+                }) ;
+                console.log(dictEntries) ;
+                await localforage.setItem(gDictLocalKey,dictEntries);
+            }
+        }
+
+
+        function sortThaiWordsByConsonant(words) {
+    // 泰语辅音字母传统顺序
+    const THAI_CONSONANTS = [
+        'ก', 'ข', 'ฃ', 'ค', 'ฅ', 'ฆ', 'ง', 
+        'จ', 'ฉ', 'ช', 'ซ', 'ฌ', 'ญ', 
+        'ฎ', 'ฏ', 'ฐ', 'ฑ', 'ฒ', 'ณ', 
+        'ด', 'ต', 'ถ', 'ท', 'ธ', 'น', 
+        'บ', 'ป', 'ผ', 'ฝ', 'พ', 'ฟ', 'ภ', 'ม', 
+        'ย', 'ร', 'ล', 'ว', 
+        'ศ', 'ษ', 'ส', 'ห', 'ฬ', 'อ', 'ฮ'
+    ];
+
+    // 泰语前置元音和特殊字符（不是首辅音）
+    const THAI_PREFIX_VOWELS = ['เ', 'แ', 'โ', 'ใ', 'ไ'];
+    const THAI_TONE_MARKS = ['่', '้', '๊', '๋'];
+    const THAI_ABOVE_VOWELS = ['ิ', 'ี', 'ึ', 'ื', 'ุ', 'ู', 'ั'];
+    const THAI_BELOW_VOWELS = ['็', '์', 'ฺ'];
+    const THAI_OTHER_SYMBOLS = ['ํ', 'ๅ', 'ฯ'];
+
+    // 元音类型优先级
+    const VOWEL_ORDER = {
+        'implicit': 0,      // 无显式元音
+        'sara_a': 1,        // -ะ, -ั 类短元音
+        'sara_aa': 2,       // -า 类长元音
+        'sara_am': 3,       // ำ
+        'sara_i': 4,        // -ิ, -ี
+        'sara_ue': 5,       // -ึ, -ื
+        'sara_u': 6,        // -ุ, -ู
+        'sara_e': 7,        // เ-
+        'sara_ae': 8,       // แ-
+        'sara_o': 9,        // โ-
+        'sara_ai': 10,      // ใ-, ไ-
+        'sara_ao': 11,      // เ-า
+        'other': 12         // 其他复合元音
+    };
+
+    // 声调优先级
+    const TONE_ORDER = {
+        'none': 0,      // 无声调
+        'mai_ek': 1,    // -่
+        'mai_tho': 2,   // -้
+        'mai_tri': 3,   // -๊
+        'mai_chattawa': 4 // -๋
+    };
+
+    // 尾辅音优先级
+    const FINAL_CONSONANT_ORDER = {
+        'none': 0,  // 无尾辅音
+        'ง': 1, 'ญ': 2, 'ณ': 3, 'น': 4, 'ม': 5,
+        'ย': 6, 'ร': 7, 'ล': 8, 'ว': 9,
+        'ก': 10, 'ข': 11, 'ค': 12, 'ฆ': 13,
+        'จ': 14, 'ฉ': 15, 'ช': 16, 'ซ': 17, 'ฌ': 18, 'ฎ': 19,
+        'ฏ': 20, 'ฐ': 21, 'ฑ': 22, 'ฒ': 23, 'ด': 24,
+        'ต': 25, 'ถ': 26, 'ท': 27, 'ธ': 28, 'บ': 29,
+        'ป': 30, 'ผ': 31, 'ฝ': 32, 'พ': 33, 'ฟ': 34, 'ภ': 35
+    };
+
+    // 提取单词的真正首辅音（跳过前置元音和声调符号）
+    function getInitialConsonant(word) {
+        // 移除可能的引号
+        const cleanWord = word.replace(/'/g, '');
+        if (!cleanWord) return null;
+        
+        let index = 0;
+        // 跳过前置元音、声调符号和其他非辅音字符
+        while (index < cleanWord.length) {
+            const char = cleanWord.charAt(index);
+            
+            // 如果是辅音字母，返回它
+            if (THAI_CONSONANTS.includes(char)) {
+                return char;
+            }
+            
+            // 如果是前置元音、声调符号、上下元音或其他符号，继续检查下一个字符
+            if (THAI_PREFIX_VOWELS.includes(char) || 
+                THAI_TONE_MARKS.includes(char) ||
+                THAI_ABOVE_VOWELS.includes(char) ||
+                THAI_BELOW_VOWELS.includes(char) ||
+                THAI_OTHER_SYMBOLS.includes(char)) {
+                index++;
+                continue;
+            }
+            
+            // 其他字符（数字、英文、标点、中文等）
+            return null;
+        }
+        
+        return null;
+    }
+
+    // 分析单词结构用于排序
+    function analyzeWord(word) {
+        const cleanWord = word.replace(/'/g, '');
+        const initialConsonant = getInitialConsonant(cleanWord);
+        
+        if (!initialConsonant) {
+            return {
+                initialConsonant: null,
+                vowelType: 'other',
+                tone: 'none',
+                finalConsonant: 'none',
+                originalWord: word
+            };
+        }
+
+        // 检测声调
+        let tone = 'none';
+        for (let i = 0; i < cleanWord.length; i++) {
+            const char = cleanWord.charAt(i);
+            if (THAI_TONE_MARKS.includes(char)) {
+                if (char === '่') tone = 'mai_ek';
+                else if (char === '้') tone = 'mai_tho';
+                else if (char === '๊') tone = 'mai_tri';
+                else if (char === '๋') tone = 'mai_chattawa';
+                break;
+            }
+        }
+
+        // 检测元音类型
+        let vowelType = 'implicit';
+        
+        // 检查复合元音和前置元音
+        if (cleanWord.includes('เ') && cleanWord.includes('า')) {
+            vowelType = 'sara_ao';
+        } else if (cleanWord.includes('ใ') || cleanWord.includes('ไ')) {
+            vowelType = 'sara_ai';
+        } else if (cleanWord.includes('แ')) {
+            vowelType = 'sara_ae';
+        } else if (cleanWord.includes('โ')) {
+            vowelType = 'sara_o';
+        } else if (cleanWord.includes('เ')) {
+            vowelType = 'sara_e';
+        }
+        // 检查基本元音
+        else if (cleanWord.includes('ำ')) {
+            vowelType = 'sara_am';
+        } else if (cleanWord.includes('า')) {
+            vowelType = 'sara_aa';
+        } else if (cleanWord.includes('ะ') || cleanWord.includes('ั')) {
+            vowelType = 'sara_a';
+        } else if (cleanWord.includes('ิ') || cleanWord.includes('ี')) {
+            vowelType = 'sara_i';
+        } else if (cleanWord.includes('ึ') || cleanWord.includes('ื')) {
+            vowelType = 'sara_ue';
+        } else if (cleanWord.includes('ุ') || cleanWord.includes('ู')) {
+            vowelType = 'sara_u';
+        }
+
+        // 检测尾辅音
+        let finalConsonant = 'none';
+        // 从后往前找第一个辅音字母
+        for (let i = cleanWord.length - 1; i >= 0; i--) {
+            const char = cleanWord.charAt(i);
+            if (THAI_CONSONANTS.includes(char)) {
+                // 检查这个辅音是否可能是首辅音（在单词开头位置）
+                let isPotentialInitial = false;
+                for (let j = 0; j <= i; j++) {
+                    if (cleanWord.charAt(j) === char && 
+                        !THAI_PREFIX_VOWELS.includes(cleanWord.charAt(j)) &&
+                        !THAI_TONE_MARKS.includes(cleanWord.charAt(j)) &&
+                        !THAI_ABOVE_VOWELS.includes(cleanWord.charAt(j)) &&
+                        !THAI_BELOW_VOWELS.includes(cleanWord.charAt(j))) {
+                        isPotentialInitial = true;
+                        break;
+                    }
+                }
+                
+                // 如果这个辅音不是首辅音，那么它就是尾辅音
+                if (char !== initialConsonant || !isPotentialInitial) {
+                    finalConsonant = char;
+                    break;
+                }
+            }
+        }
+
+        return {
+            initialConsonant,
+            vowelType,
+            tone,
+            finalConsonant,
+            originalWord: word
+        };
+    }
+
+    // 按泰语字典规则排序
+    function compareThaiWords(a, b) {
+        const analysisA = analyzeWord(a.word);
+        const analysisB = analyzeWord(b.word);
+
+        // 如果有一个单词无法识别辅音，放到最后
+        if (!analysisA.initialConsonant && !analysisB.initialConsonant) {
+            return a.word.localeCompare(b.word, 'th');
+        }
+        if (!analysisA.initialConsonant) return 1;
+        if (!analysisB.initialConsonant) return -1;
+
+        // 1. 按辅音字母顺序
+        const consonantOrderA = THAI_CONSONANTS.indexOf(analysisA.initialConsonant);
+        const consonantOrderB = THAI_CONSONANTS.indexOf(analysisB.initialConsonant);
+        
+        if (consonantOrderA !== consonantOrderB) {
+            return consonantOrderA - consonantOrderB;
+        }
+
+        // 2. 按元音类型
+        const vowelOrderA = VOWEL_ORDER[analysisA.vowelType] || VOWEL_ORDER.other;
+        const vowelOrderB = VOWEL_ORDER[analysisB.vowelType] || VOWEL_ORDER.other;
+        
+        if (vowelOrderA !== vowelOrderB) {
+            return vowelOrderA - vowelOrderB;
+        }
+
+        // 3. 按声调
+        const toneOrderA = TONE_ORDER[analysisA.tone];
+        const toneOrderB = TONE_ORDER[analysisB.tone];
+        
+        if (toneOrderA !== toneOrderB) {
+            return toneOrderA - toneOrderB;
+        }
+
+        // 4. 按尾辅音
+        const finalOrderA = FINAL_CONSONANT_ORDER[analysisA.finalConsonant] || FINAL_CONSONANT_ORDER.none;
+        const finalOrderB = FINAL_CONSONANT_ORDER[analysisB.finalConsonant] || FINAL_CONSONANT_ORDER.none;
+        
+        if (finalOrderA !== finalOrderB) {
+            return finalOrderA - finalOrderB;
+        }
+
+        // 5. 最后按字符串原始顺序
+        return a.word.localeCompare(b.word, 'th');
+    }
+
+    // 主处理逻辑
+    const sortedWords = [...words].sort(compareThaiWords);
+    
+    // 按辅音字母分组
+    const groupedResult = {};
+    
+    sortedWords.forEach(item => {
+        const consonant = getInitialConsonant(item.word);
+        const groupKey = consonant || 'other';
+        
+        if (!groupedResult[groupKey]) {
+            groupedResult[groupKey] = [];
+        }
+        
+        groupedResult[groupKey].push(item);
+    });
+
+    // 按辅音字母顺序对分组进行排序
+    const sortedGroupedResult = {};
+    THAI_CONSONANTS.forEach(consonant => {
+        if (groupedResult[consonant]) {
+            sortedGroupedResult[consonant] = groupedResult[consonant];
+        }
+    });
+    
+    // 添加other分组（如果有）
+    if (groupedResult['other'] && groupedResult['other'].length > 0) {
+        sortedGroupedResult['other'] = groupedResult['other'];
+    }
+
+    return sortedGroupedResult;
+}
+
+// 测试函数
+function testThaiSorting() {
+    const testWords = [
+        { "word": "เก็บ", "dictEntry": {} },
+        { "word": "เกรงใจ", "dictEntry": {} },
+        { "word": "เกษตรกร", "dictEntry": {} },
+        { "word": "ใกล้", "dictEntry": {} },
+        { "word": "เขา", "dictEntry": {} },
+        { "word": "เข้าใจ", "dictEntry": {} },
+        { "word": "เคย", "dictEntry": {} },
+        { "word": "เครื่องดื่ม", "dictEntry": {} },
+        { "word": "เจ็ด", "dictEntry": {} },
+        { "word": "เจ็บ", "dictEntry": {} },
+        { "word": "เด็กๆ", "dictEntry": {} },
+        { "word": "เดิน", "dictEntry": {} },
+        { "word": "เท่าไหร่", "dictEntry": {} },
+        { "word": "เป็น", "dictEntry": {} },
+        { "word": "เปลี่ยน", "dictEntry": {} },
+        { "word": "ไม่", "dictEntry": {} },
+        { "word": "เมือง", "dictEntry": {} },
+        { "word": "不贵", "dictEntry": {} }, // 中文，应该归为other
+        { "word": "ฯลฯ", "dictEntry": {} }  // 省略符号，应该归为other
+    ];
+
+    const result = sortThaiWordsByConsonant(testWords);
+    console.log('分组结果:');
+    Object.keys(result).forEach(consonant => {
+        console.log(`辅音 ${consonant}:`, result[consonant].map(item => item.word));
+    });
+    
+    return result;
+}
+
+// 执行测试
+testThaiSorting();
+
+        document.addEventListener('DOMContentLoaded', async (event)=>{
+
+            await prepareLocalDiction() ;
+            const result = sortThaiWordsByConsonant(dictEntries);
+            console.log(result);
+            let keys = Object.keys(result) ;
+            console.log(keys) ;
+            console.log(result['other']);
+            let others = [] ;
+            let entryOthers = result['other'];
+            entryOthers.forEach(entry=>{
+                others.push(entry.word) ;
+            }) ;
+            console.log(others) ;
+        }) ;
+
     </script>
 </body>
 </html>

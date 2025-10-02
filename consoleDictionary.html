@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SharedWorker Firebase Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .card { border: 1px solid #ddd; padding: 20px; margin: 10px; border-radius: 8px; }
+        .row { display: flex; flex-wrap: wrap; }
+        .col { flex: 1; min-width: 300px; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        .status { padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .connected { background: #d4edda; color: #155724; }
+        .data-item { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard</h1>
+        
+        <div id="status" class="status">Connecting to SharedWorker...</div>
+        
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <h3>User Information</h3>
+                    <div id="userInfo">Loading...</div>
+                    <button onclick="loadUserInfo()">Reload User</button>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="card">
+                    <h3>Application Stats</h3>
+                    <div id="appStats">Loading...</div>
+                    <button onclick="updateStats()">Update Stats</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Real-time Monitoring</h3>
+            <div id="monitoring">
+                <div class="data-item">
+                    <strong>User Updates:</strong> <span id="userUpdates">0</span>
+                </div>
+                <div class="data-item">
+                    <strong>Last Update:</strong> <span id="lastUpdate">Never</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Cache Management</h3>
+            <button onclick="clearAllData()">Clear All Cache</button>
+            <button onclick="loadAllData()">Load All Data</button>
+        </div>
+
+        <div class="card">
+            <h3>Navigation</h3>
+            <button onclick="goToUserManagement()">Go to User Management</button>
+        </div>
+    </div>
+
+    <script src="page-api.js"></script>
+    <script>
+        let updateCount = 0;
+        let subscriptions = [];
+
+        async function init() {
+            try {
+                await new Promise((resolve) => {
+                    const check = () => {
+                        if (window.firebaseAPI && window.firebaseAPI.worker) {
+                            resolve();
+                        } else {
+                            setTimeout(check, 100);
+                        }
+                    };
+                    check();
+                });
+
+                document.getElementById('status').className = 'status connected';
+                document.getElementById('status').textContent = 'Connected to SharedWorker';
+
+                // 加载初始数据
+                await loadAllData();
+
+                // 设置实时订阅
+                await setupSubscriptions();
+
+            } catch (error) {
+                document.getElementById('status').className = 'status disconnected';
+                document.getElementById('status').textContent = 'Disconnected: ' + error.message;
+            }
+        }
+
+        async function loadAllData() {
+            await loadUserInfo();
+            await loadAppStats();
+        }
+
+        async function loadUserInfo() {
+            try {
+                const userData = await firebaseAPI.getValue('/users/current');
+                document.getElementById('userInfo').textContent = 
+                    userData ? JSON.stringify(userData, null, 2) : 'No user data';
+            } catch (error) {
+                document.getElementById('userInfo').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function loadAppStats() {
+            try {
+                const stats = await firebaseAPI.getValue('/stats/dashboard');
+                document.getElementById('appStats').textContent = 
+                    stats ? JSON.stringify(stats, null, 2) : 'No stats data';
+            } catch (error) {
+                document.getElementById('appStats').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function updateStats() {
+            try {
+                const newStats = {
+                    totalVisits: Math.floor(Math.random() * 1000),
+                    activeUsers: Math.floor(Math.random() * 100),
+                    lastUpdated: new Date().toISOString(),
+                    updatedBy: 'Dashboard'
+                };
+
+                await firebaseAPI.setValue('/stats/dashboard', newStats);
+            } catch (error) {
+                alert('Error updating stats: ' + error.message);
+            }
+        }
+
+        async function setupSubscriptions() {
+            try {
+                // 订阅用户数据更新
+                const userUnsubscribe = await firebaseAPI.ref('/users/current').on('value', (snapshot) => {
+                    updateCount++;
+                    document.getElementById('userUpdates').textContent = updateCount;
+                    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                    
+                    const data = snapshot.val();
+                    if (data) {
+                        document.getElementById('userInfo').textContent = JSON.stringify(data, null, 2);
+                    }
+                });
+
+                // 订阅统计数据更新
+                const statsUnsubscribe = await firebaseAPI.ref('/stats/dashboard').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        document.getElementById('appStats').textContent = JSON.stringify(data, null, 2);
+                    }
+                });
+
+                subscriptions.push(userUnsubscribe, statsUnsubscribe);
+
+            } catch (error) {
+                console.error('Subscription setup error:', error);
+            }
+        }
+
+        async function clearAllData() {
+            try {
+                await firebaseAPI.clearCache();
+                await loadAllData();
+                alert('Cache cleared successfully!');
+            } catch (error) {
+                alert('Error clearing cache: ' + error.message);
+            }
+        }
+
+        function goToUserManagement() {
+            window.open('index.html', '_blank');
+        }
+
+        // 清理
+        window.addEventListener('beforeunload', () => {
+            subscriptions.forEach(unsubscribe => {
+                if (unsubscribe) unsubscribe();
+            });
+        });
+
+        // 初始化
+        init();
+    </script>
+</body>
+</html>

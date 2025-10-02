@@ -316,6 +316,7 @@
     </div>
 
 
+    <script src="./jsResource/localforage.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -329,6 +330,9 @@
         let gDatabase = null ;
         let gDbName = "" ;
         let gTblName = "" ;
+
+        const gDictCacheKey = "outpostDictCache" ;
+        const gDictCacheTTM ="outpostDictCacheTTM" ;
     </script>
     <script>
         const actionTbl={
@@ -404,10 +408,10 @@
 
         const dbTbls={
             "dbThaiDictionary":[
-                /*{
+                {
                     "title":"字典表",
                     "dbPath":"/thaiDictionary"
-                },*/{
+                },{
                     "title":"单词集",
                     "dbPath":"/thaiWordList"
                 },{
@@ -620,7 +624,7 @@
             }
         }
 
-        function renderTblList(dbName){
+        async function renderTblList(dbName){
             let tables = dbTbls[dbName] ;
             if(tables==undefined || tables ==null)return ;
 
@@ -637,16 +641,62 @@
                     let tagActiveTbl = tagTblList.querySelector(".active") ;
                     if(tagActiveTbl == tagTblItem)return ;
 
-                    let data = await readData(tagTblItem.dataset.dbPath) ;
-                    console.log(data) ;
-                    initDataGrid(data,dbName,tagTblItem.dataset.dbPath) ;
-                    tagTblItem.classList.add('active') ;
-                    tagActiveTbl.classList.remove('active') ;
-                    gTblName = tagTblItem.dataset.dbPath ;
+                    if(dbName=="dbThaiDictionary" && tagTblItem.dataset.dbPath =="/thaiDictionary"){
+                        console.log('want to take special routine for dictionary table') ;
+                        /*
+                        try {
+                            let jsonDictCache = await localforage.getItem(gDictCacheKey);
+                            console.log(jsonDictCache);
+                            if(jsonDictCache==null){
+                                //const ref = gDatabase.ref(tagTblItem.dataset.dbPath);
+                                let snapshot = await gDatabase.ref(tagTblItem.dataset.dbPath).once('value');
+                                jsonDictCache = snapshot.val();
+                                console.log("load whole dict from firebase") ;
+                                await localforage.setItem(gDictCacheKey,jsonDictCache);
+                                console.log("dict wrote to local cache") ;
+                                let cDate = new Date() ;
+                                await localforage.setItem(gDictCacheTTM,cDate.toLocaleString());
+                            }
+
+                            let tagGrid = document.querySelector("#data-grid-wrapper") ;
+
+                            let dictItems = Object.keys(jsonDictCache)
+                            tagGrid.innerHTML=`
+                                <span>dict Entries:${dictItems.length}</span>
+                                <div class="container">
+                                    <h1>即时搜索演示</h1>
+                                    <p class="subtitle">输入关键词，实时查看搜索结果</p>
+                                    
+                                    <div class="search-container">
+                                        <input type="text" class="search-box" id="searchInput" placeholder="输入标题关键词进行搜索...">
+                                        <button class="clear-btn" id="clearBtn">×</button>
+                                        <div class="search-icon">🔍</div>
+                                    </div>
+                                    
+                                    <div class="results-count" id="resultsCount">找到 10 个结果</div>
+                                    
+                                    <div class="results-container" id="resultsContainer">
+                                        <!-- 搜索结果将在这里显示 -->
+                                    </div>
+                                </div>
+                            ` ;
+                        } catch (err) {
+                            // This code runs if there were any errors.
+                            console.log(err);
+                        }
+                        */
+                       window.open("dictionaryAnywhere.html","_blank") ;
+                    }else{
+                        let data = await readData(tagTblItem.dataset.dbPath) ;
+                        console.log(data) ;
+                        initDataGrid(data,dbName,tagTblItem.dataset.dbPath) ;
+                        tagTblItem.classList.add('active') ;
+                        tagActiveTbl.classList.remove('active') ;
+                        gTblName = tagTblItem.dataset.dbPath ;
+                    }
+                    
                 }) ;
             }
-            
-
         }
 
         // 初始化页面

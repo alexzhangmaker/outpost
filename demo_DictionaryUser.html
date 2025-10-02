@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - SharedWorker Firebase Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { border: 1px solid #ddd; padding: 20px; margin: 10px 0; border-radius: 8px; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; }
+        .status { padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>User Management</h1>
+        
+        <div id="status" class="status">Connecting to SharedWorker...</div>
+        
+        <div class="card">
+            <h3>User Data</h3>
+            <div id="userData">Loading...</div>
+            <button onclick="refreshUserData()">Refresh User Data</button>
+            <button onclick="clearCache()">Clear Cache</button>
+        </div>
+
+        <div class="card">
+            <h3>Update User</h3>
+            <input type="text" id="userName" placeholder="User name">
+            <input type="email" id="userEmail" placeholder="User email">
+            <button onclick="updateUser()">Update User</button>
+        </div>
+
+        <div class="card">
+            <h3>Real-time Updates</h3>
+            <div id="realtimeData">Waiting for updates...</div>
+        </div>
+
+        <div class="card">
+            <h3>Navigation</h3>
+            <button onclick="goToDashboard()">Go to Dashboard</button>
+        </div>
+    </div>
+
+    <script src="page-api.js"></script>
+    <script>
+        let userUnsubscribe;
+
+        // 初始化
+        async function init() {
+            try {
+                // 等待API初始化
+                await new Promise((resolve) => {
+                    const check = () => {
+                        if (window.firebaseAPI && window.firebaseAPI.worker) {
+                            resolve();
+                        } else {
+                            setTimeout(check, 100);
+                        }
+                    };
+                    check();
+                });
+
+                document.getElementById('status').className = 'status connected';
+                document.getElementById('status').textContent = 'Connected to SharedWorker';
+
+                // 加载用户数据
+                await refreshUserData();
+
+                // 订阅实时更新
+                userUnsubscribe = await subscribeToUpdates();
+
+            } catch (error) {
+                document.getElementById('status').className = 'status disconnected';
+                document.getElementById('status').textContent = 'Disconnected: ' + error.message;
+            }
+        }
+
+        async function refreshUserData() {
+            try {
+                const userRef = await firebaseAPI.ref('/users/current');
+                const snapshot = await userRef.once('value');
+                const userData = snapshot.val();
+                
+                document.getElementById('userData').textContent = 
+                    userData ? JSON.stringify(userData, null, 2) : 'No user data found';
+            } catch (error) {
+                document.getElementById('userData').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function updateUser() {
+            try {
+                const name = document.getElementById('userName').value;
+                const email = document.getElementById('userEmail').value;
+                
+                const userData = {
+                    name: name || 'Anonymous',
+                    email: email || 'anonymous@example.com',
+                    lastUpdated: new Date().toISOString(),
+                    updatedBy: 'User Management Page'
+                };
+
+                await firebaseAPI.setValue('/users/current', userData);
+                alert('User updated successfully!');
+            } catch (error) {
+                alert('Error updating user: ' + error.message);
+            }
+        }
+
+        async function subscribeToUpdates() {
+            try {
+                const ref = await firebaseAPI.ref('/users/current');
+                return ref.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    document.getElementById('realtimeData').textContent = 
+                        `Real-time update: ${JSON.stringify(data, null, 2)}`;
+                });
+            } catch (error) {
+                console.error('Subscription error:', error);
+            }
+        }
+
+        async function clearCache() {
+            try {
+                await firebaseAPI.clearCache();
+                alert('Cache cleared!');
+                await refreshUserData();
+            } catch (error) {
+                alert('Error clearing cache: ' + error.message);
+            }
+        }
+
+        function goToDashboard() {
+            window.open('dashboard.html', '_blank');
+        }
+
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', () => {
+            if (userUnsubscribe) {
+                userUnsubscribe();
+            }
+        });
+
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>

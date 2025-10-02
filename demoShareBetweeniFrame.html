@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome扩展侧边面板LocalStorage访问演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            color: #7f8c8d;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .panel {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .panel h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        
+        input, button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        .data-display {
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            min-height: 100px;
+            border: 1px dashed #ccc;
+        }
+        
+        .data-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .communication-log {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-left: 3px solid #3498db;
+        }
+        
+        .iframe-container {
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 300px;
+            border: none;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Chrome扩展侧边面板LocalStorage访问演示</h1>
+            <p class="description">
+                此演示展示了如何在Chrome扩展的侧边面板中通过iframe访问主页面localStorage数据。
+                由于同源策略限制，我们使用postMessage API进行跨页面通信。
+            </p>
+        </header>
+        
+        <div class="content">
+            <div class="panel">
+                <h2>主页面 (https://a.b.c.d/anotherpage.html)</h2>
+                
+                <div class="input-group">
+                    <label for="key">键 (Key):</label>
+                    <input type="text" id="key" placeholder="输入键名">
+                </div>
+                
+                <div class="input-group">
+                    <label for="value">值 (Value):</label>
+                    <input type="text" id="value" placeholder="输入值">
+                </div>
+                
+                <button id="saveBtn">保存到LocalStorage</button>
+                <button id="loadBtn">从LocalStorage加载</button>
+                
+                <div class="data-display" id="mainData">
+                    <p>存储的数据将显示在这里</p>
+                </div>
+                
+                <div id="mainStatus" class="status info">
+                    准备就绪
+                </div>
+                
+                <div class="communication-log">
+                    <h3>通信日志</h3>
+                    <div id="mainLog"></div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>侧边面板中的iframe (https://a.b.c.d/page.html)</h2>
+                
+                <div class="iframe-container">
+                    <iframe id="sidePanelIframe" src="about:blank"></iframe>
+                </div>
+                
+                <button id="requestDataBtn">从主页面请求数据</button>
+                
+                <div class="data-display" id="iframeData">
+                    <p>从主页面接收的数据将显示在这里</p>
+                </div>
+                
+                <div id="iframeStatus" class="status info">
+                    iframe已加载
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 生成iframe内容
+        const iframeContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        padding: 15px;
+                        margin: 0;
+                        background: #f5f7fa;
+                        color: #333;
+                    }
+                    h2 {
+                        color: #2c3e50;
+                        margin-bottom: 15px;
+                    }
+                    .data-display {
+                        background: white;
+                        border-radius: 5px;
+                        padding: 10px;
+                        margin: 10px 0;
+                        min-height: 80px;
+                        border: 1px dashed #ccc;
+                    }
+                    button {
+                        background: #3498db;
+                        color: white;
+                        border: none;
+                        padding: 8px 15px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        margin: 5px 0;
+                    }
+                    button:hover {
+                        background: #2980b9;
+                    }
+                    .status {
+                        padding: 8px;
+                        border-radius: 4px;
+                        margin: 10px 0;
+                    }
+                    .success {
+                        background: #d4edda;
+                        color: #155724;
+                    }
+                    .error {
+                        background: #f8d7da;
+                        color: #721c24;
+                    }
+                </style>
+            </head>
+            <body>
+                <h2>侧边面板内容 (iframe)</h2>
+                <p>此iframe模拟Chrome扩展侧边面板中的页面</p>
+                
+                <button id="iframeRequestBtn">请求主页面数据</button>
+                
+                <div class="data-display" id="iframeDataDisplay">
+                    <p>从主页面接收的数据将显示在这里</p>
+                </div>
+                
+                <div id="iframeStatusDisplay" class="status">
+                    等待请求...
+                </div>
+                
+                <script>
+                    // 监听来自主页面的消息
+                    window.addEventListener('message', function(event) {
+                        // 安全检查：验证来源
+                        if (event.origin !== '${window.location.origin}') return;
+                        
+                        const data = event.data;
+                        
+                        if (data.type === 'localStorageData') {
+                            // 显示从主页面接收的数据
+                            displayData(data.payload);
+                            updateStatus('成功接收主页面数据', 'success');
+                            
+                            // 发送确认消息回主页面
+                            window.parent.postMessage({
+                                type: 'dataReceived',
+                                payload: 'iframe已成功接收数据'
+                            }, '${window.location.origin}');
+                        }
+                    });
+                    
+                    // 请求主页面数据的函数
+                    document.getElementById('iframeRequestBtn').addEventListener('click', function() {
+                        updateStatus('正在向主页面请求数据...', '');
+                        
+                        // 向主页面发送消息请求数据
+                        window.parent.postMessage({
+                            type: 'requestLocalStorageData'
+                        }, '${window.location.origin}');
+                    });
+                    
+                    // 显示数据的函数
+                    function displayData(data) {
+                        const displayElement = document.getElementById('iframeDataDisplay');
+                        
+                        if (!data || Object.keys(data).length === 0) {
+                            displayElement.innerHTML = '<p>没有找到数据</p>';
+                            return;
+                        }
+                        
+                        let html = '<h3>从主页面接收的数据:</h3>';
+                        for (const [key, value] of Object.entries(data)) {
+                            html += \`<div><strong>\${key}:</strong> \${value}</div>\`;
+                        }
+                        
+                        displayElement.innerHTML = html;
+                    }
+                    
+                    // 更新状态显示的函数
+                    function updateStatus(message, type) {
+                        const statusElement = document.getElementById('iframeStatusDisplay');
+                        statusElement.textContent = message;
+                        statusElement.className = 'status ' + (type || '');
+                    }
+                <\/script>
+            </body>
+            </html>
+        `;
+
+        // 主页面脚本
+        document.addEventListener('DOMContentLoaded', function() {
+            const iframe = document.getElementById('sidePanelIframe');
+            const saveBtn = document.getElementById('saveBtn');
+            const loadBtn = document.getElementById('loadBtn');
+            const requestDataBtn = document.getElementById('requestDataBtn');
+            const mainDataDisplay = document.getElementById('mainData');
+            const iframeDataDisplay = document.getElementById('iframeData');
+            const mainStatus = document.getElementById('mainStatus');
+            const iframeStatus = document.getElementById('iframeStatus');
+            const mainLog = document.getElementById('mainLog');
+            
+            // 将iframe内容写入
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(iframeContent);
+            iframeDoc.close();
+            
+            // 保存数据到localStorage
+            saveBtn.addEventListener('click', function() {
+                const key = document.getElementById('key').value;
+                const value = document.getElementById('value').value;
+                
+                if (!key) {
+                    updateStatus(mainStatus, '请输入键名', 'error');
+                    return;
+                }
+                
+                try {
+                    localStorage.setItem(key, value);
+                    updateStatus(mainStatus, `数据已保存: ${key} = ${value}`, 'success');
+                    addLog(`保存数据: ${key} = ${value}`);
+                } catch (e) {
+                    updateStatus(mainStatus, '保存失败: ' + e.message, 'error');
+                }
+            });
+            
+            // 从localStorage加载数据
+            loadBtn.addEventListener('click', function() {
+                const key = document.getElementById('key').value;
+                
+                if (!key) {
+                    updateStatus(mainStatus, '请输入键名', 'error');
+                    return;
+                }
+                
+                try {
+                    const value = localStorage.getItem(key);
+                    
+                    if (value === null) {
+                        updateStatus(mainStatus, `未找到键: ${key}`, 'error');
+                        mainDataDisplay.innerHTML = `<p>未找到键: ${key}</p>`;
+                    } else {
+                        updateStatus(mainStatus, `数据已加载: ${key} = ${value}`, 'success');
+                        mainDataDisplay.innerHTML = `
+                            <h3>加载的数据:</h3>
+                            <div class="data-item"><strong>${key}:</strong> ${value}</div>
+                        `;
+                        addLog(`加载数据: ${key} = ${value}`);
+                    }
+                } catch (e) {
+                    updateStatus(mainStatus, '加载失败: ' + e.message, 'error');
+                }
+            });
+            
+            // 从iframe请求数据
+            requestDataBtn.addEventListener('click', function() {
+                updateStatus(iframeStatus, '正在请求iframe数据...', '');
+                
+                // 向iframe发送消息请求数据
+                iframe.contentWindow.postMessage({
+                    type: 'requestDataFromIframe'
+                }, window.location.origin);
+                
+                addLog('向iframe发送数据请求');
+            });
+            
+            // 监听来自iframe的消息
+            window.addEventListener('message', function(event) {
+                // 安全检查：验证来源
+                if (event.origin !== window.location.origin) return;
+                
+                const data = event.data;
+                addLog(`收到iframe消息: ${JSON.stringify(data)}`);
+                
+                if (data.type === 'requestLocalStorageData') {
+                    // iframe请求localStorage数据
+                    updateStatus(mainStatus, 'iframe请求localStorage数据', 'info');
+                    
+                    // 获取所有localStorage数据
+                    const allData = {};
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        allData[key] = localStorage.getItem(key);
+                    }
+                    
+                    // 发送数据到iframe
+                    iframe.contentWindow.postMessage({
+                        type: 'localStorageData',
+                        payload: allData
+                    }, window.location.origin);
+                    
+                    updateStatus(mainStatus, '已向iframe发送localStorage数据', 'success');
+                    addLog(`向iframe发送localStorage数据: ${Object.keys(allData).length} 项`);
+                }
+                
+                if (data.type === 'dataReceived') {
+                    // iframe确认收到数据
+                    updateStatus(iframeStatus, data.payload, 'success');
+                    addLog('iframe确认收到数据');
+                }
+            });
+            
+            // 更新状态显示的函数
+            function updateStatus(element, message, type) {
+                element.textContent = message;
+                element.className = 'status ' + (type || '');
+            }
+            
+            // 添加日志条目
+            function addLog(message) {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+                mainLog.appendChild(logEntry);
+                mainLog.scrollTop = mainLog.scrollHeight;
+            }
+            
+            // 初始化：显示所有localStorage数据
+            function displayAllLocalStorage() {
+                const allData = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    allData[key] = localStorage.getItem(key);
+                }
+                
+                if (Object.keys(allData).length === 0) {
+                    mainDataDisplay.innerHTML = '<p>localStorage中没有数据</p>';
+                } else {
+                    let html = '<h3>当前localStorage中的数据:</h3>';
+                    for (const [key, value] of Object.entries(allData)) {
+                        html += `<div class="data-item"><strong>${key}:</strong> ${value}</div>`;
+                    }
+                    mainDataDisplay.innerHTML = html;
+                }
+            }
+            
+            // 页面加载时显示所有localStorage数据
+            displayAllLocalStorage();
+            updateStatus(mainStatus, '系统已准备就绪', 'info');
+        });
+    </script>
+</body>
+</html>

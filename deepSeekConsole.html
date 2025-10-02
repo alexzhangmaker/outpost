@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 服务客户端演示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status-panel {
+            grid-column: 1 / -1;
+        }
+        textarea, input, button {
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #f9f9f9;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .queue-item {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        .queue-item.processing {
+            border-left: 4px solid #007cba;
+            background: #e7f3ff;
+        }
+        .queue-item.pending {
+            border-left: 4px solid #ffc107;
+        }
+        .queue-item.completed {
+            border-left: 4px solid #28a745;
+            background: #f0fff4;
+        }
+        .queue-item.failed {
+            border-left: 4px solid #dc3545;
+            background: #fff5f5;
+        }
+    </style>
+</head>
+<body>
+    <h1>AI 服务客户端演示</h1>
+    
+    <div class="container">
+        <div class="panel status-panel">
+            <h2>系统状态</h2>
+            <div id="statusDisplay">正在连接...</div>
+            <button onclick="checkStatus()">刷新状态</button>
+            <button onclick="getQueueStats()">队列统计</button>
+            <button onclick="cleanupQueue()">清理队列</button>
+        </div>
+
+        <div class="panel">
+            <h2>AI 请求</h2>
+            <textarea id="promptInput" placeholder="输入您的提示..." rows="4"></textarea>
+            <select id="prioritySelect">
+                <option value="high">高优先级</option>
+                <option value="normal" selected>普通优先级</option>
+                <option value="low">低优先级</option>
+            </select>
+            <button onclick="submitRequest()">提交请求</button>
+            <button onclick="submitMultipleRequests()">提交多个测试请求</button>
+        </div>
+
+        <div class="panel">
+            <h2>队列状态</h2>
+            <div id="queueStatus">加载中...</div>
+            <div id="activeRequests"></div>
+        </div>
+
+        <div class="panel">
+            <h2>事件日志</h2>
+            <div class="log" id="eventLog"></div>
+        </div>
+
+        <div class="panel">
+            <h2>Storage 操作</h2>
+            <input type="text" id="storageKey" placeholder="键">
+            <input type="text" id="storageValue" placeholder="值">
+            <button onclick="setStorageData()">设置数据</button>
+            <button onclick="getStorageData()">获取数据</button>
+            <button onclick="getAllStorageData()">获取所有数据</button>
+        </div>
+
+        <div class="panel">
+            <h2>API 配置</h2>
+            <input type="password" id="apiKeyInput" placeholder="DeepSeek API Key">
+            <button onclick="setApiConfig()">设置 API 配置</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import AIServiceClient from './deepSeekShareWorkerAPI.js';
+
+        // 创建客户端实例
+        const aiClient = new AIServiceClient();
+        window.aiClient = aiClient;
+
+        // 设置所有事件监听
+        function setupEventListeners() {
+            aiClient.on('queueInitialized', (data) => {
+                addLog('队列初始化完成', data);
+                updateStatus('已连接 - 队列就绪');
+            });
+
+            aiClient.on('requestQueued', (data) => {
+                addLog(`请求已加入队列，位置: ${data.position}`, data);
+                updateQueueStatus();
+            });
+
+            aiClient.on('requestProcessingStarted', (data) => {
+                addLog(`请求开始处理: ${data.queueId}`, data);
+                updateQueueStatus();
+            });
+
+            aiClient.on('requestRetry', (data) => {
+                addLog(`请求重试: ${data.queueId} (${data.retryCount}/${data.maxRetries})`, data);
+            });
+
+            aiClient.on('requestCompleted', (data) => {
+                addLog(`请求完成: ${data.queueId}`, data);
+                if (data.result && data.result.response) {
+                    addLog(`AI 回复: ${data.result.response.choices[0].message.content}`);
+                }
+                updateQueueStatus();
+            });
+
+            aiClient.on('requestFailed', (data) => {
+                addLog(`请求失败: ${data.queueId}`, data);
+                updateQueueStatus();
+            });
+
+            aiClient.on('requestCancelled', (data) => {
+                addLog(`请求已取消: ${data.queueId}`, data);
+                updateQueueStatus();
+            });
+
+            aiClient.on('storageUpdated', (data) => {
+                addLog(`存储已更新: ${data.key}`, data);
+            });
+
+            aiClient.on('apiConfigUpdated', (data) => {
+                addLog('API 配置已更新', data);
+            });
+        }
+
+        // 工具函数
+        function addLog(message, data = null) {
+            const logElement = document.getElementById('eventLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            
+            if (data) {
+                const details = document.createElement('div');
+                details.style.fontSize = '10px';
+                details.style.color = '#666';
+                details.textContent = JSON.stringify(data, null, 2);
+                logEntry.appendChild(details);
+            }
+            
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(message) {
+            document.getElementById('statusDisplay').textContent = message;
+        }
+
+        async function updateQueueStatus() {
+            try {
+                const status = await aiClient.getQueueStatus();
+                document.getElementById('queueStatus').innerHTML = `
+                    <div>总队列: ${status.queueStatus.total}</div>
+                    <div>待处理: ${status.queueStatus.pending}</div>
+                    <div>处理中: ${status.queueStatus.processing}</div>
+                    <div>当前位置: ${status.queueStatus.position}</div>
+                    <div>预计等待: ${Math.round(status.queueStatus.estimatedWaitTime / 1000)}秒</div>
+                `;
+
+                // 显示活动请求
+                const activeRequests = status.items.filter(item => 
+                    item.status === 'processing' || item.status === 'pending'
+                );
+                
+                const activeRequestsElement = document.getElementById('activeRequests');
+                activeRequestsElement.innerHTML = '<h3>活动请求:</h3>';
+                
+                activeRequests.forEach(item => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = `queue-item ${item.status}`;
+                    itemElement.innerHTML = `
+                        <div><strong>${item.id}</strong></div>
+                        <div>状态: ${item.status}</div>
+                        <div>优先级: ${item.priority}</div>
+                        <div>创建时间: ${new Date(item.createdAt).toLocaleTimeString()}</div>
+                        ${item.status === 'processing' ? `<div>开始处理: ${new Date(item.startedProcessingAt).toLocaleTimeString()}</div>` : ''}
+                        <button onclick="cancelRequest('${item.id}')">取消</button>
+                    `;
+                    activeRequestsElement.appendChild(itemElement);
+                });
+
+            } catch (error) {
+                console.error('更新队列状态失败:', error);
+            }
+        }
+
+        // 全局函数供按钮调用
+        window.checkStatus = async function() {
+            try {
+                const stats = await aiClient.getQueueStatistics();
+                addLog('系统状态检查', stats);
+                updateStatus(`已连接 - 队列: ${stats.total} 客户端: ${stats.clients}`);
+            } catch (error) {
+                addLog('状态检查失败: ' + error.message);
+            }
+        };
+
+        window.getQueueStats = async function() {
+            try {
+                const stats = await aiClient.getQueueStatistics();
+                addLog('队列统计', stats);
+            } catch (error) {
+                addLog('获取队列统计失败: ' + error.message);
+            }
+        };
+
+        window.cleanupQueue = async function() {
+            try {
+                const result = await aiClient.cleanupQueue();
+                addLog('队列清理完成', result);
+                updateQueueStatus();
+            } catch (error) {
+                addLog('队列清理失败: ' + error.message);
+            }
+        };
+
+        function generatePromptSimple(thaiWord) {
+            return `
+            请提供泰语单词"${thaiWord}"的详细字典定义,以JSON格式返回,包含以下字段:
+            - word_id: 唯一ID
+            - thai: JSON对象,包含word, pronunciation, spelling_breakdown属性
+            - pos: 词性
+            - level: CEFR级别
+            - topic: 字符串数组,数组每个元素对应一种主题分类
+            - definitions: JSON对象数组,其中每个对象包含属性en和zh,属性en为英文释义,属性zh为中文释义
+            - grammar_notes: 语法说明
+            - conjugations: JSON对象,每个属性对应一种变形形式
+            - common_phrases: 常见短语对象数组，每个对象包括短语及其翻译
+            - synonyms: 近义词字符串数组
+            - antonyms: 反义词字符串数组
+            - tags: 标签数组
+        
+            请确保返回纯JSON格式,不要包含其他文本。
+            
+            `;
+        }
+
+        window.submitRequest = async function() {
+            const prompt = document.getElementById('promptInput').value;
+            const priority = document.getElementById('prioritySelect').value;
+            
+            if (!prompt) {
+                alert('请输入提示内容');
+                return;
+            }
+
+            let textPrompt = generatePromptSimple(prompt) ;
+            try {
+                const result = await aiClient.callDeepSeek(textPrompt, {
+                    priority: priority,
+                    conversationId: 'demo_conversation'
+                });
+                
+                addLog(`请求已提交: ${result.queueId}`, result);
+                document.getElementById('promptInput').value = '';
+                
+            } catch (error) {
+                addLog('提交请求失败: ' + error.message);
+            }
+        };
+
+        window.submitMultipleRequests = async function() {
+            const prompts = [
+                '请简单介绍一下人工智能',
+                '解释一下机器学习的基本概念',
+                '什么是深度学习？',
+                '自然语言处理有哪些应用？'
+            ];
+
+            for (let i = 0; i < prompts.length; i++) {
+                setTimeout(async () => {
+                    try {
+                        const result = await aiClient.callDeepSeek(prompts[i], {
+                            priority: i === 0 ? 'high' : 'normal',
+                            conversationId: 'batch_test'
+                        });
+                        addLog(`批量请求 ${i+1} 已提交: ${result.queueId}`);
+                    } catch (error) {
+                        addLog(`批量请求 ${i+1} 失败: ` + error.message);
+                    }
+                }, i * 1000); // 每秒提交一个
+            }
+        };
+
+        window.cancelRequest = async function(queueId) {
+            try {
+                const result = await aiClient.cancelQueuedRequest(queueId);
+                addLog(`取消请求: ${queueId}`, result);
+                updateQueueStatus();
+            } catch (error) {
+                addLog('取消请求失败: ' + error.message);
+            }
+        };
+
+        window.setStorageData = async function() {
+            const key = document.getElementById('storageKey').value;
+            const value = document.getElementById('storageValue').value;
+            
+            if (!key) {
+                alert('请输入键名');
+                return;
+            }
+
+            try {
+                const result = await aiClient.setData(key, value);
+                addLog('存储数据成功', result);
+            } catch (error) {
+                addLog('存储数据失败: ' + error.message);
+            }
+        };
+
+        window.getStorageData = async function() {
+            const key = document.getElementById('storageKey').value;
+            
+            if (!key) {
+                alert('请输入键名');
+                return;
+            }
+
+            try {
+                const result = await aiClient.getData(key);
+                addLog('获取数据成功', result);
+            } catch (error) {
+                addLog('获取数据失败: ' + error.message);
+            }
+        };
+
+        window.getAllStorageData = async function() {
+            try {
+                const result = await aiClient.getAllData();
+                addLog('获取所有数据成功', result);
+            } catch (error) {
+                addLog('获取所有数据失败: ' + error.message);
+            }
+        };
+
+        window.setApiConfig = async function() {
+            const apiKey = document.getElementById('apiKeyInput').value;
+            
+            if (!apiKey) {
+                alert('请输入 API Key');
+                return;
+            }
+
+            try {
+                const result = await aiClient.setApiConfig({ apiKey });
+                addLog('API 配置成功', result);
+                document.getElementById('apiKeyInput').value = '';
+            } catch (error) {
+                addLog('API 配置失败: ' + error.message);
+            }
+        };
+
+        // 初始化
+        async function init() {
+            setupEventListeners();
+            
+            try {
+                const result = await aiClient.connect();
+                addLog('连接成功', result);
+                updateStatus('已连接 - ' + result.clientId);
+                
+                // 初始状态检查
+                await updateQueueStatus();
+                
+            } catch (error) {
+                addLog('连接失败: ' + error.message);
+                updateStatus('连接失败');
+            }
+        }
+
+        // 启动应用
+        init();
+    </script>
+</body>
+</html>
