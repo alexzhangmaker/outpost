@@ -500,6 +500,8 @@ class AIServiceWorker {
         };
     }
 
+    
+
     // 实际的 API 调用
     async makeDeepSeekRequest(requestData) {
         const API_KEY = await this.getApiKey();
@@ -523,6 +525,52 @@ class AIServiceWorker {
         }
 
         return await response.json();
+    }
+
+    async makeGeminiRequest(requestData) {
+        // 1. Retrieve the API key using the pattern established by the user's original function.
+        // NOTE: For the specific execution environment (Canvas), the API key is often
+        // provided via the URL query parameter, and the apiKey constant is left as "".
+        const API_KEY = await this.getApiKey();
+
+        if (!API_KEY) {
+            // Use a default empty string for the API key if running in an environment
+            // that handles key injection automatically via the fetch URL.
+            const apiKey = ""; 
+            const modelName = "gemini-2.5-flash-preview-05-20";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        } else {
+            // If an explicit key is retrieved, use it in the query parameter.
+            const modelName = "gemini-2.5-flash-preview-05-20";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
+        }
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    // Gemini API expects the payload to be JSON.
+                    'Content-Type': 'application/json'
+                    // Unlike DeepSeek, the key is typically passed in the URL, not the Authorization header.
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            // Check if the HTTP status code indicates a successful request (200-299).
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Gemini API Request Failed:", response.status, errorText);
+                throw new Error(`Gemini API request failed: ${response.status} - ${errorText}`);
+            }
+
+            // Return the parsed JSON response.
+            return await response.json();
+
+        } catch (error) {
+            console.error('Error during Gemini API call:', error);
+            // Re-throw the error to be handled by the calling worker/main thread.
+            throw error;
+        }
     }
 
     // 获取 API Key

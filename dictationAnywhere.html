@@ -421,15 +421,17 @@
         }
 
         // 加载单词集
-        function loadWordSets() {
+        async function loadWordSets() {
             if (!AppState.settings.firebaseUrl) {
                 AppState.settings.firebaseUrl = 'https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/' ;
                 AppState.settings.wordsetsPath = 'thaiAnki/Dictation/wordSets' ;
+                AppState.settings.resultsPath = 'thaiAnki/Dictation/logs' ;
+
                 //alert('请先配置Firebase Database URL');
                 //showSettingsPage();
                 //return;
             }
-            
+            await buildDailyDictation() ;
             //const database = firebase.database();
             const wordSetsRef = gDatabase.ref(AppState.settings.wordsetsPath);
             
@@ -628,15 +630,13 @@
             // 保存到Firebase
             if (AppState.settings.firebaseUrl) {
                 const database = firebase.database();
-                const resultsRef = database.ref(`${AppState.settings.resultsPath}/${AppState.currentUser.uid}`);
+                const resultsRef = database.ref(`${AppState.settings.resultsPath}`);
                 
-                resultsRef.push(result)
-                    .then(() => {
-                        console.log('结果已保存到Firebase');
-                    })
-                    .catch(error => {
-                        console.error('保存结果到Firebase失败:', error);
-                    });
+                resultsRef.push(result).then(() => {
+                    console.log('结果已保存到Firebase');
+                }).catch(error => {
+                    console.error('保存结果到Firebase失败:', error);
+                });
             }
         }
 
@@ -669,6 +669,50 @@
                     console.error('保存设置失败:', error);
                     alert('保存设置失败: ' + error.message);
                 });
+        }
+    </script>
+    <script>
+        function isDaysBefore(timestamp, days) {
+            const givenDate = new Date(timestamp);
+            const currentDate = new Date();
+            const daysAgo = new Date();
+            daysAgo.setDate(currentDate.getDate() - days);
+            
+            return givenDate < daysAgo;
+        }
+
+        async function buildDailyDictation(){
+            let cDate = new Date() ;
+            let cDaily = `${cDate.getFullYear()}_${cDate.getMonth()+1}_${cDate.getDate()}`;
+            let newRef = `${AppState.settings.wordsetsPath}/Daly_${cDaily}` ;
+
+            const cRefDaily = gDatabase.ref(newRef);
+            let snapshot = await cRefDaily.once('value');
+            let jsonDailyLog = snapshot.val();
+            if(jsonDailyLog==null){
+                snapshot = await gDatabase.ref(`${AppState.settings.resultsPath}`).once('value');
+                let jsonLogs = snapshot.val();
+                console.log(jsonLogs) ;
+                let logKeys = Object.keys(jsonLogs) ;
+                let dailyWords = [] ;
+                logKeys.forEach(key=>{
+                    let jsonLog = jsonLogs[key] ;
+                    if(jsonLog.hasOwnProperty('wrongWords')==false) return ;
+                    if(isDaysBefore(jsonLog.timestamp,3))return ;
+
+                    dailyWords = [...new Set([...dailyWords, ...jsonLog.wrongWords])];
+                    console.log(dailyWords) ;
+                }) ;
+
+                console.log("===========>>>>");
+                let jsonDailySet = {
+                    name:`daily_${cDaily}`,
+                    words:dailyWords
+                } ;
+                console.log(jsonDailySet) ;
+                console.log(newRef) ;
+                await gDatabase.ref(newRef).set(jsonDailySet) ;
+            }
         }
     </script>
 </body>

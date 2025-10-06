@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordset view</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status-panel {
+            grid-column: 1 / -1;
+        }
+        textarea, input, button {
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #f9f9f9;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .queue-item {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        .queue-item.processing {
+            border-left: 4px solid #007cba;
+            background: #e7f3ff;
+        }
+        .queue-item.pending {
+            border-left: 4px solid #ffc107;
+        }
+        .queue-item.completed {
+            border-left: 4px solid #28a745;
+            background: #f0fff4;
+        }
+        .queue-item.failed {
+            border-left: 4px solid #dc3545;
+            background: #fff5f5;
+        }
+    </style>
+    <style>
+        .AIResults p{
+            margin-block-start:5px !important;
+            margin-block-end: 5px !important;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>
+        <spa>wordset view</spa>
+        <svg xmlns="http://www.w3.org/2000/svg" id="idBTNAuthenticate" width="36" height="36" viewBox="0 0 24 24" fill="#000000"><g fill="none" stroke="#000000" stroke-width="2"><circle cx="12" cy="7" r="5"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 22H5.266a2 2 0 0 1-1.985-2.248l.39-3.124A3 3 0 0 1 6.649 14H7m12-1v6m-3-3h6"/></g></svg>
+    </h1>
+    
+    <div class="AIResults"></div>
+
+    <script src="./jsResource/localforage.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
+    </script>
+    <script>
+        
+        
+        function renderDictEntry(container,jsonDictEntry){                
+            let tagDictEntry = document.createElement('div') ;
+            container.appendChild(tagDictEntry) ;
+            tagDictEntry.innerHTML=`
+                    <span style="font-size:1.2em;color:blue;">${jsonDictEntry.thai.word}</span>
+                <div class="definitions"></div>
+            ` ;
+            let tagDefinitions=tagDictEntry.querySelector('.definitions') ;
+            jsonDictEntry.definitions.forEach(definition => {
+                let tagDefintion = document.createElement('p') ;
+                if(definition.hasOwnProperty('en'))tagDefintion.innerHTML=`<span>${definition.en}</span>/<span>${definition.zh}</span>` ;
+                else tagDefintion.innerHTML=`<span>${definition.english}</span>/<span>${definition.chinese}</span>` ;
+                tagDefinitions.appendChild(tagDefintion) ;
+            });
+        }
+
+        let gWordSetKey ='';
+        document.addEventListener('DOMContentLoaded', async function() {
+
+            const queryString = window.location.search; // "?wordSet=db4ba16b-bf70-4bfb-ad90-3fa2816cb91a"
+            const urlParams = new URLSearchParams(queryString);
+            gWordSetKey = urlParams.get('wordSet'); // "purple"
+
+
+        }) ;
+
+        const jsonWords=[] ;
+        async function renderWordSet(wordSetKey){
+            let tagContainer = document.querySelector('.AIResults') ;
+
+            let snapshot = await database.ref(`thaiWordList/${wordSetKey}`).once('value');
+            let jsonWordSet = snapshot.val();
+            console.log(jsonWordSet.words) ;
+            jsonWordSet.words.forEach(async word=>{
+                snapshot = await database.ref(`thaiDictionary/${word}`).once('value');
+                let jsonWord = snapshot.val();
+                console.log(jsonWord) ;   
+                jsonWords.push(jsonWord) ;
+                renderDictEntry(tagContainer,jsonWord) ;
+
+            }) ;
+            console.log(jsonWords) ;
+
+            //renderDictEntry(tagContainer,)
+        }
+
+        document.querySelector("#idBTNAuthenticate").addEventListener('click',async (event)=>{
+            signInWithGoogle() ;
+            await renderWordSet(gWordSetKey) ;
+        });
+
+    </script>
+
+
+</body>
+</html>

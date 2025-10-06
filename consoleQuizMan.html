@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz 管理控制台</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .console-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        /* 顶部工具栏 */
+        .toolbar {
+            background-color: #2d2d30;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .toolbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #cccccc;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #007acc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .login-btn {
+            background-color: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .login-btn:hover {
+            background-color: #1177bb;
+        }
+        
+        .login-btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* 左侧导航 */
+        .sidebar {
+            width: 300px;
+            background-color: #252526;
+            border-right: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar-header {
+            padding: 15px;
+            font-weight: 600;
+            background-color: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .quiz-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .accordion {
+            margin-bottom: 5px;
+        }
+        
+        .accordion-header {
+            background-color: #2d2d30;
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .accordion-header:hover {
+            background-color: #383838;
+        }
+        
+        .accordion-content {
+            background-color: #1e1e1e;
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .accordion.active .accordion-content {
+            max-height: 500px;
+        }
+        
+        .quiz-item {
+            padding: 10px 15px 10px 25px;
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .quiz-item:hover {
+            background-color: #2a2d2e;
+            border-left-color: #007acc;
+        }
+        
+        .quiz-item.active {
+            background-color: #37373d;
+            border-left-color: #007acc;
+        }
+        
+        /* 右侧内容区 */
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #1e1e1e;
+        }
+        
+        .content-header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .quiz-details {
+            background-color: #252526;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .form-group label {
+            font-size: 14px;
+            color: #cccccc;
+        }
+        
+        .form-control {
+            background-color: #3c3c3c;
+            border: 1px solid #464647;
+            color: #d4d4d4;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007acc;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: #0e639c;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1177bb;
+        }
+        
+        .btn-danger {
+            background-color: #c42b1c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #d13426;
+        }
+        
+        .btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        
+        /* 登录遮罩 */
+        .login-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(30, 30, 30, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        
+        .login-panel {
+            background-color: #252526;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .login-panel h2 {
+            margin-bottom: 20px;
+            color: #cccccc;
+        }
+        
+        .login-panel p {
+            margin-bottom: 20px;
+            color: #999;
+        }
+        
+        /* 状态消息 */
+        .status-message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .status-success {
+            background-color: #1e3329;
+            color: #4ec9b0;
+            display: block;
+        }
+        
+        .status-error {
+            background-color: #3c2a2a;
+            color: #f48771;
+            display: block;
+        }
+        
+        /* 加载指示器 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="console-container">
+        <!-- 顶部工具栏 -->
+        <div class="toolbar">
+            <div class="toolbar-title">Quiz 管理控制台</div>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">?</div>
+                <button class="login-btn" id="loginBtn">登录</button>
+            </div>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 左侧导航 -->
+            <div class="sidebar">
+                <div class="sidebar-header">Quiz 列表</div>
+                <div class="quiz-list" id="quizList">
+                    <!-- 这里将通过JS动态生成quiz列表 -->
+                </div>
+            </div>
+            
+            <!-- 右侧内容区 -->
+            <div class="content-area">
+                <div class="content-header">
+                    <h2 id="contentTitle">请选择一个 Quiz 进行编辑</h2>
+                </div>
+                
+                <div id="statusMessage" class="status-message"></div>
+                
+                <div class="quiz-details" id="quizDetails">
+                    <!-- 这里将通过JS动态生成quiz编辑表单 -->
+                    <p>请从左侧选择一个 Quiz 或创建新的 Quiz。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 登录遮罩 -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-panel">
+            <h2>需要登录</h2>
+            <p>请使用您的 Google 账户登录以访问 Quiz 管理控制台。</p>
+            <button class="login-btn" id="overlayLoginBtn">使用 Google 登录</button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase配置 - 请替换为您的实际配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-uiz-d289c.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
+
+        // 初始化Firebase
+        //firebase.initializeApp(firebaseConfig);
+        //const auth = firebase.auth();
+        //const database = firebase.database();
+
+        // DOM元素
+        const loginBtn = document.getElementById('loginBtn');
+        const overlayLoginBtn = document.getElementById('overlayLoginBtn');
+        const loginOverlay = document.getElementById('loginOverlay');
+        const userAvatar = document.getElementById('userAvatar');
+        const quizList = document.getElementById('quizList');
+        const contentTitle = document.getElementById('contentTitle');
+        const quizDetails = document.getElementById('quizDetails');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // 当前选中的quiz
+        let currentQuizId = null;
+        let quizzes = {};
+
+        // 初始化应用
+        function initApp() {
+            // 监听认证状态变化
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // 用户已登录
+                    handleUserLogin(user);
+                } else {
+                    // 用户未登录
+                    handleUserLogout();
+                }
+            });
+
+            // 登录按钮事件
+            loginBtn.addEventListener('click', signIn);
+            overlayLoginBtn.addEventListener('click', signIn);
+        }
+
+        // 用户登录处理
+        function handleUserLogin(user) {
+            console.log('用户已登录:', user);
+            
+            // 更新UI
+            userAvatar.textContent = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
+            loginBtn.textContent = '登出';
+            loginOverlay.style.display = 'none';
+            
+            // 移除登录按钮的登录事件，添加登出事件
+            loginBtn.removeEventListener('click', signIn);
+            loginBtn.addEventListener('click', signOut);
+            
+            // 启用UI功能
+            enableUI();
+            
+            // 加载quiz数据
+            loadQuizzes();
+        }
+
+        // 用户登出处理
+        function handleUserLogout() {
+            console.log('用户已登出');
+            
+            // 更新UI
+            userAvatar.textContent = '?';
+            loginBtn.textContent = '登录';
+            loginOverlay.style.display = 'flex';
+            
+            // 移除登出按钮的登出事件，添加登录事件
+            loginBtn.removeEventListener('click', signOut);
+            loginBtn.addEventListener('click', signIn);
+            
+            // 禁用UI功能
+            disableUI();
+        }
+
+        // 启用UI功能
+        function enableUI() {
+            // 这里可以启用其他UI元素
+            console.log('UI功能已启用');
+        }
+
+        // 禁用UI功能
+        function disableUI() {
+            // 清空quiz列表和内容区
+            quizList.innerHTML = '';
+            contentTitle.textContent = '请选择一个 Quiz 进行编辑';
+            quizDetails.innerHTML = '<p>请从左侧选择一个 Quiz 或创建新的 Quiz。</p>';
+            
+            console.log('UI功能已禁用');
+        }
+
+        // 使用Google账户登录
+        function signIn() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then(result => {
+                    console.log('登录成功:', result.user);
+                })
+                .catch(error => {
+                    console.error('登录失败:', error);
+                    showStatus('登录失败: ' + error.message, 'error');
+                });
+        }
+
+        // 登出
+        function signOut() {
+            auth.signOut()
+                .then(() => {
+                    console.log('登出成功');
+                })
+                .catch(error => {
+                    console.error('登出失败:', error);
+                });
+        }
+
+        let jsonQuizzes=[] ;
+        // 从Firebase加载quiz数据
+        async function loadQuizzes() {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            let quiz001223=[] ;
+            const ref001223 = `001223` ;
+            //const quizzesRef = database.ref('quizzes/' + user.uid);
+            let snapshot = await database.ref(`${ref001223}`).once('value');
+            let jsonQUiz001223 = snapshot.val();
+            console.log(jsonQUiz001223) ;
+            let keys = Object.keys(jsonQUiz001223) ;
+            keys.forEach(key=>{
+                let jsonQuizSection = jsonQUiz001223[key] ;
+                let keysQuizzes = Object.keys(jsonQuizSection) ;
+                keysQuizzes.forEach(quizName=>{
+                    let jsonQuiz={
+                        name:quizName,
+                        path:`001223/${key}`,
+                        fullPath:`001223/${key}/${quizName}`
+                    } ;
+                    jsonQuizzes.push(jsonQuiz) ;
+                }) ;
+            }) ;
+            
+            const ref025231 = `025231` ;
+            snapshot = await database.ref(`${ref025231}`).once('value');
+            let jsonQUiz025231 = snapshot.val();
+            console.log(jsonQUiz025231) ;
+            keys = Object.keys(jsonQUiz025231) ;
+            keys.forEach(key=>{
+                let jsonQuiz={
+                    name:key,
+                    path:`025231`,
+                    fullPath:`025231/${key}`
+                } ;
+                jsonQuizzes.push(jsonQuiz) ;
+            }) ;
+            
+
+            const ref025233 = `025233` ;
+            snapshot = await database.ref(`${ref025233}`).once('value');
+            let jsonQUiz025233 = snapshot.val();
+            console.log(jsonQUiz025233) ;
+            keys = Object.keys(jsonQUiz025233) ;
+            keys.forEach(key=>{
+                let jsonQuiz={
+                    name:key,
+                    path:`025233`,
+                    fullPath:`025233/${key}`
+                } ;
+                jsonQuizzes.push(jsonQuiz) ;
+            }) ;
+            
+
+            renderQuizList() ;
+        }
+
+        // 渲染quiz列表
+        function renderQuizList() {
+            quizList.innerHTML = '';
+            
+            // 创建新的quiz按钮
+            const newQuizAccordion = document.createElement('div');
+            newQuizAccordion.className = 'accordion';
+            newQuizAccordion.innerHTML = `
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <span>创建新 Quiz</span>
+                    <span>+</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="quiz-item" onclick="createNewQuiz()">新建 Quiz</div>
+                </div>
+            `;
+            quizList.appendChild(newQuizAccordion);
+            
+            jsonQuizzes.forEach(jsonQuiz=>{
+                const accordion = document.createElement('div');
+                accordion.className = 'accordion';
+                
+                const header = document.createElement('div');
+                header.className = 'accordion-header';
+                header.innerHTML = `
+                    <span>${jsonQuiz.name}</span>
+                    <span>▼</span>
+                `;
+                header.onclick = function() { toggleAccordion(this); };
+                const content = document.createElement('div');
+                content.className = 'accordion-content';
+                
+                
+                accordion.appendChild(header);
+                accordion.appendChild(content);
+                quizList.appendChild(accordion);
+
+                accordion.dataset.dataPath = jsonQuiz.path;
+                accordion.dataset.dataPathFull = jsonQuiz.fullPath;
+
+                accordion.addEventListener('click',(event)=>{
+                    //alert('dsfds') ;
+                    window.open(`http://localhost:3010/quizAnywhereV2.html?quiz=${jsonQuiz.path}/${jsonQuiz.name}`,"_blank") ;
+                }) ;
+            }) ;
+
+            /*
+            // 渲染现有的quiz分类
+            Object.keys(quizzes).forEach(QuizName => {
+                const accordion = document.createElement('div');
+                accordion.className = 'accordion';
+                
+                const header = document.createElement('div');
+                header.className = 'accordion-header';
+                header.innerHTML = `
+                    <span>${QuizName}</span>
+                    <span>▼</span>
+                `;
+                header.onclick = function() { toggleAccordion(this); };
+                
+                const content = document.createElement('div');
+                content.className = 'accordion-content';
+                
+                
+                
+                accordion.appendChild(header);
+                accordion.appendChild(content);
+                quizList.appendChild(accordion);
+
+                accordion.dataset.dataPath = path;
+                accordion.addEventListener('click',(event)=>{
+                    //alert('dsfds') ;
+                    window.open(`http://localhost:3010/quizAnywhereV2.html?quiz=${path}/${QuizName}`,"_blank") ;
+                }) ;
+            });
+            */
+        }
+
+        // 切换手风琴展开/折叠
+        function toggleAccordion(element) {
+            const accordion = element.parentElement;
+            accordion.classList.toggle('active');
+        }
+
+        // 选择quiz
+        function selectQuiz(category, quizId, quiz) {
+            // 更新当前选中的quiz
+            currentQuizId = { category, quizId };
+            
+            // 更新UI中的选中状态
+            document.querySelectorAll('.quiz-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 渲染quiz详情
+            renderQuizDetails(category, quizId, quiz);
+        }
+
+        // 渲染quiz详情
+        function renderQuizDetails(category, quizId, quiz) {
+            contentTitle.textContent = `编辑: ${quiz.title || '未命名 Quiz'}`;
+            
+            quizDetails.innerHTML = `
+                <form class="quiz-form" id="quizForm">
+                    <div class="form-group">
+                        <label for="quizTitle">标题</label>
+                        <input type="text" id="quizTitle" class="form-control" value="${quiz.title || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label for="quizDescription">描述</label>
+                        <textarea id="quizDescription" class="form-control" rows="3">${quiz.description || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="quizCategory">分类</label>
+                        <input type="text" id="quizCategory" class="form-control" value="${category}">
+                    </div>
+                    <div class="form-group">
+                        <label>问题</label>
+                        <div id="questionsContainer">
+                            ${renderQuestions(quiz.questions || [])}
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="addQuestion()">添加问题</button>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary" onclick="saveQuiz()">保存</button>
+                        <button type="button" class="btn btn-danger" onclick="deleteQuiz()">删除</button>
+                    </div>
+                </form>
+            `;
+        }
+
+        // 渲染问题列表
+        function renderQuestions(questions) {
+            if (questions.length === 0) {
+                return '<p>暂无问题</p>';
+            }
+            
+            return questions.map((question, index) => `
+                <div class="question-item" style="margin-bottom: 15px; padding: 10px; background: #2d2d30; border-radius: 4px;">
+                    <div class="form-group">
+                        <label>问题 ${index + 1}</label>
+                        <input type="text" class="form-control question-text" value="${question.text || ''}" placeholder="输入问题">
+                    </div>
+                    <div class="form-group">
+                        <label>选项</label>
+                        ${renderOptions(question.options || [], index)}
+                    </div>
+                    <div class="form-group">
+                        <label>正确答案索引</label>
+                        <input type="number" class="form-control correct-answer" value="${question.correctIndex || 0}" min="0">
+                    </div>
+                    <button type="button" class="btn btn-danger" onclick="removeQuestion(${index})">删除问题</button>
+                </div>
+            `).join('');
+        }
+
+        // 渲染选项列表
+        function renderOptions(options, questionIndex) {
+            return options.map((option, index) => `
+                <div style="display: flex; margin-bottom: 5px;">
+                    <input type="text" class="form-control option-text" value="${option}" placeholder="选项 ${index + 1}" style="flex: 1;">
+                    <button type="button" class="btn btn-danger" onclick="removeOption(${questionIndex}, ${index})" style="margin-left: 5px;">删除</button>
+                </div>
+            `).join('') + 
+            `<button type="button" class="btn btn-primary" onclick="addOption(${questionIndex})" style="margin-top: 5px;">添加选项</button>`;
+        }
+
+        // 添加问题
+        function addQuestion() {
+            const questionsContainer = document.getElementById('questionsContainer');
+            const questionIndex = document.querySelectorAll('.question-item').length;
+            
+            const questionHTML = `
+                <div class="question-item" style="margin-bottom: 15px; padding: 10px; background: #2d2d30; border-radius: 4px;">
+                    <div class="form-group">
+                        <label>问题 ${questionIndex + 1}</label>
+                        <input type="text" class="form-control question-text" placeholder="输入问题">
+                    </div>
+                    <div class="form-group">
+                        <label>选项</label>
+                        <div id="options-${questionIndex}">
+                            <div style="display: flex; margin-bottom: 5px;">
+                                <input type="text" class="form-control option-text" placeholder="选项 1" style="flex: 1;">
+                                <button type="button" class="btn btn-danger" onclick="removeOption(${questionIndex}, 0)" style="margin-left: 5px;">删除</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="addOption(${questionIndex})" style="margin-top: 5px;">添加选项</button>
+                    </div>
+                    <div class="form-group">
+                        <label>正确答案索引</label>
+                        <input type="number" class="form-control correct-answer" value="0" min="0">
+                    </div>
+                    <button type="button" class="btn btn-danger" onclick="removeQuestion(${questionIndex})">删除问题</button>
+                </div>
+            `;
+            
+            questionsContainer.innerHTML += questionHTML;
+        }
+
+        // 删除问题
+        function removeQuestion(index) {
+            // 在实际应用中，这里需要从数据模型中删除问题
+            // 这里只是简单地从UI中移除
+            const questionItems = document.querySelectorAll('.question-item');
+            if (questionItems[index]) {
+                questionItems[index].remove();
+                
+                // 更新问题标签
+                updateQuestionLabels();
+            }
+        }
+
+        // 更新问题标签
+        function updateQuestionLabels() {
+            const questionItems = document.querySelectorAll('.question-item');
+            questionItems.forEach((item, index) => {
+                const label = item.querySelector('label');
+                if (label) {
+                    label.textContent = `问题 ${index + 1}`;
+                }
+            });
+        }
+
+        // 添加选项
+        function addOption(questionIndex) {
+            const optionsContainer = document.getElementById(`options-${questionIndex}`);
+            const optionIndex = optionsContainer.querySelectorAll('.option-text').length;
+            
+            const optionHTML = `
+                <div style="display: flex; margin-bottom: 5px;">
+                    <input type="text" class="form-control option-text" placeholder="选项 ${optionIndex + 1}" style="flex: 1;">
+                    <button type="button" class="btn btn-danger" onclick="removeOption(${questionIndex}, ${optionIndex})" style="margin-left: 5px;">删除</button>
+                </div>
+            `;
+            
+            optionsContainer.innerHTML += optionHTML;
+        }
+
+        // 删除选项
+        function removeOption(questionIndex, optionIndex) {
+            const optionsContainer = document.getElementById(`options-${questionIndex}`);
+            const optionInputs = optionsContainer.querySelectorAll('.option-text');
+            
+            if (optionInputs[optionIndex]) {
+                optionInputs[optionIndex].parentElement.remove();
+                
+                // 更新选项标签
+                updateOptionLabels(questionIndex);
+            }
+        }
+
+        // 更新选项标签
+        function updateOptionLabels(questionIndex) {
+            const optionsContainer = document.getElementById(`options-${questionIndex}`);
+            const optionInputs = optionsContainer.querySelectorAll('.option-text');
+            
+            optionInputs.forEach((input, index) => {
+                input.placeholder = `选项 ${index + 1}`;
+            });
+        }
+
+        // 创建新quiz
+        function createNewQuiz() {
+            contentTitle.textContent = '创建新 Quiz';
+            
+            quizDetails.innerHTML = `
+                <form class="quiz-form" id="quizForm">
+                    <div class="form-group">
+                        <label for="quizTitle">标题</label>
+                        <input type="text" id="quizTitle" class="form-control" placeholder="输入Quiz标题">
+                    </div>
+                    <div class="form-group">
+                        <label for="quizDescription">描述</label>
+                        <textarea id="quizDescription" class="form-control" rows="3" placeholder="输入Quiz描述"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="quizCategory">分类</label>
+                        <input type="text" id="quizCategory" class="form-control" placeholder="输入分类名称">
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary" onclick="saveNewQuiz()">创建</button>
+                    </div>
+                </form>
+            `;
+            
+            // 设置当前quiz ID为null，表示是新quiz
+            currentQuizId = null;
+        }
+
+        // 保存新quiz
+        function saveNewQuiz() {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const title = document.getElementById('quizTitle').value;
+            const description = document.getElementById('quizDescription').value;
+            const category = document.getElementById('quizCategory').value;
+            
+            if (!title || !category) {
+                showStatus('标题和分类是必填项', 'error');
+                return;
+            }
+            
+            // 生成唯一ID
+            const quizId = database.ref().child('quizzes').push().key;
+            
+            // 创建quiz对象
+            const quizData = {
+                title,
+                description,
+                questions: []
+            };
+            
+            // 保存到Firebase
+            const updates = {};
+            updates[`quizzes/${user.uid}/${category}/${quizId}`] = quizData;
+            
+            database.ref().update(updates)
+                .then(() => {
+                    showStatus('Quiz 创建成功', 'success');
+                    // 选择新创建的quiz
+                    selectQuiz(category, quizId, quizData);
+                })
+                .catch(error => {
+                    console.error('保存quiz失败:', error);
+                    showStatus('保存失败: ' + error.message, 'error');
+                });
+        }
+
+        // 保存quiz
+        function saveQuiz() {
+            if (!currentQuizId) return;
+            
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const title = document.getElementById('quizTitle').value;
+            const description = document.getElementById('quizDescription').value;
+            const category = document.getElementById('quizCategory').value;
+            
+            if (!title || !category) {
+                showStatus('标题和分类是必填项', 'error');
+                return;
+            }
+            
+            // 收集问题数据
+            const questions = [];
+            const questionItems = document.querySelectorAll('.question-item');
+            
+            questionItems.forEach(item => {
+                const questionText = item.querySelector('.question-text').value;
+                const correctAnswer = parseInt(item.querySelector('.correct-answer').value) || 0;
+                
+                // 收集选项
+                const options = [];
+                const optionInputs = item.querySelectorAll('.option-text');
+                optionInputs.forEach(input => {
+                    if (input.value.trim()) {
+                        options.push(input.value);
+                    }
+                });
+                
+                if (questionText.trim() && options.length > 0) {
+                    questions.push({
+                        text: questionText,
+                        options: options,
+                        correctIndex: correctAnswer
+                    });
+                }
+            });
+            
+            // 创建quiz对象
+            const quizData = {
+                title,
+                description,
+                questions
+            };
+            
+            // 如果分类改变了，需要删除旧数据并创建新数据
+            const oldCategory = currentQuizId.category;
+            const quizId = currentQuizId.quizId;
+            
+            if (category !== oldCategory) {
+                // 删除旧分类下的数据
+                const updates = {};
+                updates[`quizzes/${user.uid}/${oldCategory}/${quizId}`] = null;
+                updates[`quizzes/${user.uid}/${category}/${quizId}`] = quizData;
+                
+                database.ref().update(updates)
+                    .then(() => {
+                        showStatus('Quiz 保存成功', 'success');
+                        // 更新当前quiz ID
+                        currentQuizId = { category, quizId };
+                    })
+                    .catch(error => {
+                        console.error('保存quiz失败:', error);
+                        showStatus('保存失败: ' + error.message, 'error');
+                    });
+            } else {
+                // 直接更新数据
+                database.ref(`quizzes/${user.uid}/${category}/${quizId}`).set(quizData)
+                    .then(() => {
+                        showStatus('Quiz 保存成功', 'success');
+                    })
+                    .catch(error => {
+                        console.error('保存quiz失败:', error);
+                        showStatus('保存失败: ' + error.message, 'error');
+                    });
+            }
+        }
+
+        // 删除quiz
+        function deleteQuiz() {
+            if (!currentQuizId || !confirm('确定要删除这个 Quiz 吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const { category, quizId } = currentQuizId;
+            
+            database.ref(`quizzes/${user.uid}/${category}/${quizId}`).remove()
+                .then(() => {
+                    showStatus('Quiz 删除成功', 'success');
+                    // 清空内容区
+                    contentTitle.textContent = '请选择一个 Quiz 进行编辑';
+                    quizDetails.innerHTML = '<p>请从左侧选择一个 Quiz 或创建新的 Quiz。</p>';
+                    currentQuizId = null;
+                })
+                .catch(error => {
+                    console.error('删除quiz失败:', error);
+                    showStatus('删除失败: ' + error.message, 'error');
+                });
+        }
+
+        // 显示状态消息
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message';
+            
+            if (type === 'success') {
+                statusMessage.classList.add('status-success');
+            } else if (type === 'error') {
+                statusMessage.classList.add('status-error');
+            }
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                statusMessage.className = 'status-message';
+            }, 3000);
+        }
+
+        // 初始化应用
+        window.onload = initApp;
+    </script>
+</body>
+</html>

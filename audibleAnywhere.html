@@ -425,6 +425,8 @@
                 lessonList.innerHTML = '';
                 
                 if (lessons) {
+
+                    /*
                     Object.keys(lessons).forEach(key => {
                         const lesson = lessons[key];
                         const li = document.createElement('li');
@@ -438,6 +440,34 @@
                         });
                         lessonList.appendChild(li);
                     });
+                    */
+                    let keys = Object.keys(lessons) ;
+                    let jsonLessons=[] ;
+                    for(let i=0;i<keys.length;i++){
+                        let jsonLesson = lessons[keys[i]] ;
+                        jsonLesson.key = keys[i] ;
+                        jsonLessons.push(jsonLesson) ;
+                    }
+                    function sortByTitle(arr) {
+                        return arr.slice().sort((a, b) => {
+                            const titleA = a.title.toLowerCase();
+                            const titleB = b.title.toLowerCase();
+                            return titleA.localeCompare(titleB);
+                        });
+                    }
+                    const orderedLessons = sortByTitle(jsonLessons) ;
+                    orderedLessons.forEach(lesson=>{
+                        const li = document.createElement('li');
+                        li.className = 'lesson-item';
+                        li.textContent = lesson.title;
+                        li.dataset.key = lesson.key;
+                        li.addEventListener('click', () => {
+                            loadLesson(lesson) ;
+                            activeLesson = lesson ;
+                            activeLesson.key = key ;
+                        });
+                        lessonList.appendChild(li);
+                    }) ;
                     
                     document.getElementById('totalLessons').textContent = Object.keys(lessons).length;
                 } else {
