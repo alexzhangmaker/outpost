@@ -159,11 +159,15 @@
                 let jsonDictEntry ;
                 try{
                     jsonDictEntry = JSON.parse(jsonResult.result) ;
-
                 }catch{
                     let rawResult = jsonResult.result.replace("```json","") ;
                     rawResult = rawResult.replace("```","") ;
-                    jsonDictEntry = JSON.parse(rawResult) ;
+                    try{
+                        jsonDictEntry = JSON.parse(rawResult) ;
+                    }catch{
+                        console.log(rawResult);
+                        continue ;
+                    }
                 }
 
                 tagDictEntry.innerHTML=`
