@@ -21,6 +21,7 @@
             color: #d4d4d4;
             overflow: hidden;
             height: 100vh;
+            font-size: 18px;
         }
         
         .console-container {
@@ -91,7 +92,7 @@
         
         /* 左侧导航 */
         .sidebar {
-            width: 300px;
+            width: 400px;
             background-color: #252526;
             border-right: 1px solid #3e3e42;
             display: flex;
@@ -318,6 +319,80 @@
             to { transform: rotate(360deg); }
         }
     </style>
+    <style>
+        .craneAccordion {
+            padding-top: 10px;
+            width: 100%;
+            margin: auto;
+            padding-left:10px;
+            padding-right:10px;
+            height:90vh;
+            overflow-y: auto;
+        }
+
+        .craneAccordion h1 {
+        font-size: 2em;
+        font-weight: 500;
+        }
+
+
+        .craneAccordion details[open] summary ~ * {
+        animation: open 0.3s ease-in-out;
+        }
+
+        @keyframes open {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .craneAccordion details summary::-webkit-details-marker {
+        display: none;
+        }
+
+        .craneAccordion details summary {
+        width: 100%;
+        padding: 0.5rem 0;
+        border-top: 1px solid black;
+        position: relative;
+        cursor: pointer;
+        font-size: 1.25em;
+        font-weight: 300;
+        list-style: none;
+        }
+
+        .craneAccordion details summary:after {
+        content: "+";
+        color: black;
+        position: absolute;
+        font-size: 1.75em;
+        line-height: 0;
+        margin-top: 0.75rem;
+        right: 0;
+        font-weight: 200;
+        transform-origin: center;
+        transition: 200ms linear;
+        }
+
+        .craneAccordion details[open] summary:after {
+        transform: rotate(45deg);
+        font-size: 2em;
+        }
+
+        .craneAccordion details summary {
+        outline: 0;
+        }
+
+        .craneAccordion details p {
+        font-size: 0.95rem;
+        margin: 0 0 1rem;
+        padding-top: 1rem;
+        }
+
+    </style>
 </head>
 <body>
     <div class="console-container">
@@ -335,8 +410,34 @@
             <!-- 左侧导航 -->
             <div class="sidebar">
                 <div class="sidebar-header">Quiz 列表</div>
+                <!-- 这里将通过JS动态生成quiz列表 -->
+                <section class="craneAccordion">
+                    <!------
+                    <h1>Hypertext Accordion</h1>
+                    -->
+                    
+                    
+                    <details>
+                        <summary>025231 Quiz</summary>
+                        <div id="idQuiz025231">
+                            
+                        </div>
+                    </details>
+                    <details>
+                        <summary>025233 Quiz</summary>
+                        <div id="idQuiz025233">
+                           
+                        </div>
+                    </details>
+                    <details>
+                        <summary>001223 Quiz</summary>
+                        <div id="idQuiz001223">
+                            
+                        </div>
+                    </details>
+                </section>
+
                 <div class="quiz-list" id="quizList">
-                    <!-- 这里将通过JS动态生成quiz列表 -->
                 </div>
             </div>
             
@@ -507,6 +608,34 @@
                 });
         }
 
+        function renderQuizSection(container,jsonQuiz){
+            const accordion = document.createElement('div');
+            accordion.className = 'accordion';
+            
+            const header = document.createElement('div');
+            header.className = 'accordion-header';
+            header.innerHTML = `
+                <span>${jsonQuiz.name}</span>
+                <span>▼</span>
+            `;
+            header.onclick = function() { toggleAccordion(this); };
+            const content = document.createElement('div');
+            content.className = 'accordion-content';
+            
+            
+            accordion.appendChild(header);
+            accordion.appendChild(content);
+            container.appendChild(accordion);
+
+            accordion.dataset.dataPath = jsonQuiz.path;
+            accordion.dataset.dataPathFull = jsonQuiz.fullPath;
+
+            accordion.addEventListener('click',(event)=>{
+                //alert('dsfds') ;
+                window.open(`http://localhost:3010/quizAnywhereV3.html?quiz=${jsonQuiz.path}/${jsonQuiz.name}`,"_blank") ;
+            }) ;
+        }
+
         let jsonQuizzes=[] ;
         // 从Firebase加载quiz数据
         async function loadQuizzes() {
@@ -514,6 +643,9 @@
             if (!user) return;
             
             let quiz001223=[] ;
+
+            //idQuiz001223
+            let tagQuizzes001223 = document.getElementById("idQuiz001223") ;
             const ref001223 = `001223` ;
             //const quizzesRef = database.ref('quizzes/' + user.uid);
             let snapshot = await database.ref(`${ref001223}`).once('value');
@@ -529,10 +661,16 @@
                         path:`001223/${key}`,
                         fullPath:`001223/${key}/${quizName}`
                     } ;
-                    jsonQuizzes.push(jsonQuiz) ;
+                    //jsonQuizzes.push(jsonQuiz) ;
+                    renderQuizSection(tagQuizzes001223,jsonQuiz) ;
                 }) ;
             }) ;
             
+
+            
+
+            //idQuiz025231
+            let tagQuizzes025231 = document.getElementById("idQuiz025231");
             const ref025231 = `025231` ;
             snapshot = await database.ref(`${ref025231}`).once('value');
             let jsonQUiz025231 = snapshot.val();
@@ -544,10 +682,14 @@
                     path:`025231`,
                     fullPath:`025231/${key}`
                 } ;
-                jsonQuizzes.push(jsonQuiz) ;
+                //jsonQuizzes.push(jsonQuiz) ;
+                //tagQuizzes025231
+                renderQuizSection(tagQuizzes025231,jsonQuiz) ;
             }) ;
             
 
+            //idQuiz025233
+            let tagQuizzes025233 = document.getElementById("idQuiz025233") ;
             const ref025233 = `025233` ;
             snapshot = await database.ref(`${ref025233}`).once('value');
             let jsonQUiz025233 = snapshot.val();
@@ -559,7 +701,9 @@
                     path:`025233`,
                     fullPath:`025233/${key}`
                 } ;
-                jsonQuizzes.push(jsonQuiz) ;
+                //jsonQuizzes.push(jsonQuiz) ;
+                renderQuizSection(tagQuizzes025233,jsonQuiz) ;
+
             }) ;
             
 

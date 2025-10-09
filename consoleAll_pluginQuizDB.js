@@ -4,14 +4,14 @@ const _funcDoQuiz_001223 = async (rowCells) => {
     let QuizKey = rowCells[0].data ;
     let QuizPath = `/${UnitKey}/${QuizKey}`
     console.log(QuizPath) ;
-    let urlQuiz=`http://localhost:3010/quizAnywhereV2.html?quiz=001223${QuizPath}` ;
+    let urlQuiz=`http://localhost:3010/quizAnywhereV3.html?quiz=001223${QuizPath}` ;
     window.open(urlQuiz,"_blank") ;
 }
 
 const _funcDoQuiz_025233 = async (rowCells) => {
     let QuizKey = rowCells[0].data ;
     console.log(QuizKey) ;
-    let urlQuiz=`http://localhost:3010/quizAnywhereV2.html?quiz=025233/${QuizKey}` ;
+    let urlQuiz=`http://localhost:3010/quizAnywhereV3.html?quiz=025233/${QuizKey}` ;
     window.open(urlQuiz,"_blank") ;
 }
 

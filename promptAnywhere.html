@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt 生成与数据校验系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- 使用UMD版本的Ajv -->
+    <script src="https://cdn.jsdelivr.net/npm/ajv@8.12.0/dist/ajv.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --console-bg: #1e1e1e;
+            --console-text: #d4d4d4;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+        }
+        
+        /* 左侧导航栏 */
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-color);
+            padding: 20px 0;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            text-align: center;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .logo h1 {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+        }
+        
+        .nav-menu {
+            list-style: none;
+        }
+        
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .nav-item.active {
+            background-color: var(--secondary-color);
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .auth-section {
+            display: flex;
+            align-items: center;
+        }
+        
+        /* 控制台风格内容区 */
+        .console-container {
+            background-color: var(--console-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .console-header {
+            background-color: var(--dark-color);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .console-title {
+            font-weight: 600;
+            color: var(--light-color);
+        }
+        
+        .console-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .console-body {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+        
+        .input-section, .output-section {
+            background-color: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            padding: 15px;
+        }
+        
+        .section-title {
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: var(--light-color);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 4px;
+            color: var(--light-color);
+            font-size: 0.9rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+        
+        .prompt-container {
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            position: relative;
+        }
+        
+        .prompt-text {
+            font-family: monospace;
+            white-space: pre-wrap;
+            color: var(--console-text);
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn i {
+            margin-right: 5px;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        .btn-danger {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .json-container {
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            min-height: 200px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            color: var(--console-text);
+        }
+        
+        .validation-result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .validation-success {
+            background-color: rgba(46, 204, 113, 0.2);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+        
+        .validation-error {
+            background-color: rgba(231, 76, 60, 0.2);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+        }
+        
+        /* 登录界面 */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: var(--dark-color);
+        }
+        
+        .login-box {
+            background-color: var(--primary-color);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--secondary-color);
+        }
+        
+        .login-message {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .login-message.error {
+            background-color: rgba(231, 76, 60, 0.2);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar .logo h1, .sidebar .nav-item span {
+                display: none;
+            }
+            
+            .sidebar .nav-item {
+                justify-content: center;
+            }
+            
+            .sidebar .nav-item i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-box">
+            <h2 class="login-title">AI Prompt 系统</h2>
+            <p style="text-align: center; margin-bottom: 20px;">请使用您的Gmail账户登录</p>
+            <div class="form-group">
+                <button id="googleLogin" class="btn btn-primary" style="width: 100%;">
+                    <i class="fab fa-google"></i> 使用 Google 登录
+                </button>
+            </div>
+            <div id="loginMessage" class="login-message"></div>
+        </div>
+    </div>
+
+    <!-- 主应用界面 -->
+    <div id="appContainer" class="container" style="display: none;">
+        <!-- 左侧导航栏 -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>AI Prompt 系统</h1>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active" data-template="product">
+                    <i class="fas fa-box"></i>
+                    <span>产品信息生成</span>
+                </li>
+                <li class="nav-item" data-template="article">
+                    <i class="fas fa-newspaper"></i>
+                    <span>文章摘要</span>
+                </li>
+                <li class="nav-item" data-template="code">
+                    <i class="fas fa-code"></i>
+                    <span>代码生成</span>
+                </li>
+                <li class="nav-item" data-template="thaiVocabulary">
+                    <i class="fas fa-code"></i>
+                    <span>泰语单词</span>
+                </li>
+                <li class="nav-item" data-template="schema">
+                    <i class="fas fa-cogs"></i>
+                    <span>Schema 管理</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <div class="header">
+                <div class="user-info">
+                    <img id="userAvatar" src="" alt="用户头像">
+                    <span id="userName">用户</span>
+                </div>
+                <div class="auth-section">
+                    <button id="logoutBtn" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt"></i> 退出登录
+                    </button>
+                </div>
+            </div>
+
+            <div class="console-container">
+                <div class="console-header">
+                    <div class="console-title" id="consoleTitle">产品信息生成</div>
+                    <div class="console-actions">
+                        <button id="clearBtn" class="btn btn-warning">
+                            <i class="fas fa-eraser"></i> 清除
+                        </button>
+                        <button id="helpBtn" class="btn btn-primary">
+                            <i class="fas fa-question-circle"></i> 帮助
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="console-body">
+                    <!-- 输入区域 -->
+                    <div class="input-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-keyboard"></i> 输入关键信息
+                        </h3>
+                        <div id="inputFields">
+                            <!-- 动态生成的输入字段 -->
+                        </div>
+                        <div class="prompt-container">
+                            <div class="section-title">
+                                <i class="fas fa-code"></i> 生成的 Prompt
+                            </div>
+                            <div id="promptText" class="prompt-text">
+                                <!-- 生成的prompt将显示在这里 -->
+                            </div>
+                            <button id="copyPromptBtn" class="btn btn-primary">
+                                <i class="fas fa-copy"></i> 复制 Prompt
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 输出区域 -->
+                    <div class="output-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-download"></i> AI 输出结果
+                        </h3>
+                        <div class="form-group">
+                            <label for="aiOutput">粘贴 AI 返回的 JSON 数据</label>
+                            <textarea id="aiOutput" class="form-control" rows="8" placeholder="在此粘贴AI返回的JSON数据..."></textarea>
+                        </div>
+                        
+                        <div class="validation-result" id="validationResult">
+                            <!-- 验证结果将显示在这里 -->
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button id="validateBtn" class="btn btn-warning">
+                                <i class="fas fa-check-circle"></i> 验证 JSON
+                            </button>
+                            <button id="saveBtn" class="btn btn-success" disabled>
+                                <i class="fas fa-save"></i> 保存到数据库
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        /*
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
+        */
+
+        // 使用Google登录
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then(result => {
+                    // 登录成功
+                    const user = result.user;
+                    if (user.email.endsWith('@gmail.com')) {
+                        showApp();
+                    } else {
+                        auth.signOut();
+                        showLoginMessage('错误：只允许使用Gmail账户登录。', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('登录错误:', error);
+                    showLoginMessage('登录失败: ' + error.message, 'error');
+                });
+        }
+
+        // 退出登录
+        function signOut() {
+            auth.signOut();
+        }
+
+    </script>
+    <script>
+        
+        const PromptTemplate_thaiWord=`请为泰语单词 "{thaiWord}" 生成完整的词汇卡片信息。
+            请严格按照以下JSON格式返回数据，包含所有字段：
+            {
+                "word_id": "生成基于单词的唯一ID",
+                "thai": {
+                    "word": "泰语单词",
+                    "pronunciation": "泰语发音（国际音标或拼音）",
+                    "spelling_breakdown": "拼写分解和组成分析"
+                },
+                "pos": "词性（名词/动词/形容词/副词等）",
+                "level": "CEFR级别（A1/A2/B1/B2/C1/C2）",
+                "topic": ["相关主题分类1", "相关主题分类2"],
+                "definitions": [
+                    {
+                        "en": "英文释义1",
+                        "zh": "中文释义1"
+                    },
+                    {
+                        "en": "英文释义2", 
+                        "zh": "中文释义2"
+                    }
+                ],
+                "grammar_notes": "详细的语法说明和使用规则",
+                "conjugations": {
+                    "过去式": "过去式形式（如适用）",
+                    "未来式": "未来式形式（如适用）",
+                    "否定形式": "否定形式（如适用）"
+                },
+                "common_phrases": [
+                    {
+                        "phrase": "包含该单词的常见泰语短语1",
+                        "translation": "短语的中文翻译1"
+                    },
+                    {
+                        "phrase": "包含该单词的常见泰语短语2",
+                        "translation": "短语的中文翻译2"
+                    }
+                ],
+                "synonyms": ["近义词1", "近义词2"],
+                "antonyms": ["反义词1", "反义词2"],
+                "tags": ["相关标签1", "相关标签2"]
+            }
+
+            要求：
+            1. 所有字段都必须提供，不能为空
+            2. word_id 请基于泰语单词生成唯一标识符
+            3. pronunciation 请提供准确的发音标注
+            4. spelling_breakdown 请分析单词的拼写结构
+            5. definitions 至少提供2个不同角度的释义
+            6. common_phrases 至少提供2个常用短语例子
+            7. 请确保所有信息准确且符合泰语语言规范
+        ` ;
+
+        const schema_thaiWord = {
+            "type": "object",
+            "properties": {
+            "word_id": {
+                "type": "string"
+            },
+            "thai": {
+                "type": "object",
+                "properties": {
+                "word": { "type": "string" },
+                "pronunciation": { "type": "string" },
+                "spelling_breakdown": { "type": "string" }
+                },
+                "required": ["word", "pronunciation", "spelling_breakdown"],
+                "additionalProperties": false
+            },
+            "pos": {
+                "type": "string"
+            },
+            "level": {
+                "type": "string",
+                "enum": ["A1", "A2", "B1", "B2", "C1", "C2"]
+            },
+            "topic": {
+                "type": "array",
+                "items": { "type": "string" },
+                "minItems": 1
+            },
+            "definitions": {
+                "type": "array",
+                "items": {
+                "type": "object",
+                "properties": {
+                    "en": { "type": "string" },
+                    "zh": { "type": "string" }
+                },
+                "required": ["en", "zh"],
+                "additionalProperties": false
+                },
+                "minItems": 1
+            },
+            "grammar_notes": {
+                "type": "string"
+            },
+            "conjugations": {
+                "type": "object",
+                "patternProperties": {
+                "^.*$": { "type": "string" }
+                }
+            },
+            "common_phrases": {
+                "type": "array",
+                "items": {
+                "type": "object",
+                "properties": {
+                    "phrase": { "type": "string" },
+                    "translation": { "type": "string" }
+                },
+                "required": ["phrase", "translation"],
+                "additionalProperties": false
+                },
+                "minItems": 1
+            },
+            "synonyms": {
+                "type": "array",
+                "items": { "type": "string" }
+            },
+            "antonyms": {
+                "type": "array", 
+                "items": { "type": "string" }
+            },
+            "tags": {
+                "type": "array",
+                "items": { "type": "string" }
+            }
+            },
+            "required": [
+            "word_id",
+            "thai", 
+            "pos",
+            "level",
+            "topic",
+            "definitions",
+            "grammar_notes",
+            "conjugations",
+            "common_phrases",
+            "synonyms",
+            "antonyms",
+            "tags"
+            ],
+            "additionalProperties": false
+        };
+        
+        // 应用状态
+        const appState = {
+            currentUser: null,
+            currentTemplate: 'product',
+            templates: {
+                thaiVocabulary: {
+                    name: '泰语词汇生成',
+                    fields: [
+                        { id: 'thaiWord', label: '泰语单词', type: 'text', required: true }
+                    ],
+                    promptTemplate: PromptTemplate_thaiWord,
+                    schema: schema_thaiWord
+                },
+                product: {
+                    name: '产品信息生成',
+                    fields: [
+                        { id: 'productName', label: '产品名称', type: 'text', required: true },
+                        { id: 'productCategory', label: '产品类别', type: 'text', required: true },
+                        { id: 'targetAudience', label: '目标用户', type: 'text', required: true },
+                        { id: 'keyFeatures', label: '主要功能', type: 'textarea', required: true }
+                    ],
+                    promptTemplate: `请为以下产品生成详细描述：
+产品名称: {productName}
+产品类别: {productCategory}
+目标用户: {targetAudience}
+主要功能: {keyFeatures}
+
+请以JSON格式返回以下结构的数据：
+{
+    "productName": "产品名称",
+    "productCategory": "产品类别",
+    "targetAudience": "目标用户描述",
+    "keyFeatures": ["功能1", "功能2", "功能3"],
+    "description": "详细的产品描述",
+    "uniqueSellingPoints": ["卖点1", "卖点2"]
+}`,
+                    schema: {
+                        type: "object",
+                        properties: {
+                            productName: { type: "string" },
+                            productCategory: { type: "string" },
+                            targetAudience: { type: "string" },
+                            keyFeatures: { type: "array", items: { type: "string" } },
+                            description: { type: "string" },
+                            uniqueSellingPoints: { type: "array", items: { type: "string" } }
+                        },
+                        required: ["productName", "productCategory", "targetAudience", "keyFeatures", "description", "uniqueSellingPoints"]
+                    }
+                },
+                article: {
+                    name: '文章摘要',
+                    fields: [
+                        { id: 'articleTitle', label: '文章标题', type: 'text', required: true },
+                        { id: 'articleContent', label: '文章内容', type: 'textarea', required: true },
+                        { id: 'summaryLength', label: '摘要长度', type: 'select', options: ['短', '中', '长'], required: true }
+                    ],
+                    promptTemplate: `请为以下文章生成摘要：
+文章标题: {articleTitle}
+文章内容: {articleContent}
+摘要长度: {summaryLength}
+
+请以JSON格式返回以下结构的数据：
+{
+    "articleTitle": "文章标题",
+    "summary": "文章摘要内容",
+    "keyPoints": ["要点1", "要点2", "要点3"],
+    "sentiment": "文章情感倾向",
+    "readTime": "预计阅读时间"
+}`,
+                    schema: {
+                        type: "object",
+                        properties: {
+                            articleTitle: { type: "string" },
+                            summary: { type: "string" },
+                            keyPoints: { type: "array", items: { type: "string" } },
+                            sentiment: { type: "string" },
+                            readTime: { type: "string" }
+                        },
+                        required: ["articleTitle", "summary", "keyPoints", "sentiment", "readTime"]
+                    }
+                },
+                code: {
+                    name: '代码生成',
+                    fields: [
+                        { id: 'functionality', label: '功能描述', type: 'textarea', required: true },
+                        { id: 'programmingLanguage', label: '编程语言', type: 'text', required: true },
+                        { id: 'codeComplexity', label: '代码复杂度', type: 'select', options: ['简单', '中等', '复杂'], required: true }
+                    ],
+                    promptTemplate: `请根据以下要求生成代码：
+功能描述: {functionality}
+编程语言: {programmingLanguage}
+代码复杂度: {codeComplexity}
+
+请以JSON格式返回以下结构的数据：
+{
+    "functionality": "功能描述",
+    "programmingLanguage": "编程语言",
+    "code": "生成的代码",
+    "explanation": "代码解释",
+    "complexity": "代码复杂度评估"
+}`,
+                    schema: {
+                        type: "object",
+                        properties: {
+                            functionality: { type: "string" },
+                            programmingLanguage: { type: "string" },
+                            code: { type: "string" },
+                            explanation: { type: "string" },
+                            complexity: { type: "string" }
+                        },
+                        required: ["functionality", "programmingLanguage", "code", "explanation", "complexity"]
+                    }
+                }
+            }
+        };
+
+        // DOM 元素
+        const loginContainer = document.getElementById('loginContainer');
+        const appContainer = document.getElementById('appContainer');
+        const googleLoginBtn = document.getElementById('googleLogin');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const navItems = document.querySelectorAll('.nav-item');
+        const inputFields = document.getElementById('inputFields');
+        const promptText = document.getElementById('promptText');
+        const copyPromptBtn = document.getElementById('copyPromptBtn');
+        const aiOutput = document.getElementById('aiOutput');
+        const validateBtn = document.getElementById('validateBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const validationResult = document.getElementById('validationResult');
+        const clearBtn = document.getElementById('clearBtn');
+        const consoleTitle = document.getElementById('consoleTitle');
+
+        // 简单的JSON Schema验证函数
+        function validateJsonSchema(data, schema) {
+            const errors = [];
+            
+            // 检查必需字段
+            if (schema.required) {
+                for (const field of schema.required) {
+                    if (data[field] === undefined || data[field] === null || data[field] === '') {
+                        errors.push(`缺少必需字段: ${field}`);
+                    }
+                }
+            }
+            
+            // 检查字段类型
+            if (schema.properties) {
+                for (const [field, definition] of Object.entries(schema.properties)) {
+                    if (data[field] !== undefined) {
+                        const value = data[field];
+                        
+                        switch (definition.type) {
+                            case 'string':
+                                if (typeof value !== 'string') {
+                                    errors.push(`字段 ${field} 应该是字符串类型`);
+                                }
+                                break;
+                            case 'number':
+                                if (typeof value !== 'number') {
+                                    errors.push(`字段 ${field} 应该是数字类型`);
+                                }
+                                break;
+                            case 'boolean':
+                                if (typeof value !== 'boolean') {
+                                    errors.push(`字段 ${field} 应该是布尔类型`);
+                                }
+                                break;
+                            case 'array':
+                                if (!Array.isArray(value)) {
+                                    errors.push(`字段 ${field} 应该是数组类型`);
+                                } else if (definition.items) {
+                                    // 检查数组元素类型
+                                    for (let i = 0; i < value.length; i++) {
+                                        if (definition.items.type === 'string' && typeof value[i] !== 'string') {
+                                            errors.push(`字段 ${field}[${i}] 应该是字符串类型`);
+                                        }
+                                    }
+                                }
+                                break;
+                            case 'object':
+                                if (typeof value !== 'object' || Array.isArray(value)) {
+                                    errors.push(`字段 ${field} 应该是对象类型`);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+            
+            return {
+                valid: errors.length === 0,
+                errors: errors
+            };
+        }
+
+        // 初始化应用
+        function initApp() {
+            // 监听认证状态变化
+            auth.onAuthStateChanged(user => {
+                if (user && user.emailVerified && user.email.endsWith('@gmail.com')) {
+                    // 用户已登录且是Gmail账户
+                    appState.currentUser = user;
+                    showApp();
+                } else {
+                    // 用户未登录或不是Gmail账户
+                    appState.currentUser = null;
+                    showLogin();
+                }
+            });
+
+            // 事件监听器
+            googleLoginBtn.addEventListener('click', signInWithGoogle);
+            logoutBtn.addEventListener('click', signOut);
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // 更新活动导航项
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    // 更新当前模板
+                    const templateId = item.getAttribute('data-template');
+                    if (templateId === 'schema') {
+                        showSchemaManager();
+                    } else {
+                        switchTemplate(templateId);
+                    }
+                });
+            });
+            
+            copyPromptBtn.addEventListener('click', copyPromptToClipboard);
+            validateBtn.addEventListener('click', validateJson);
+            saveBtn.addEventListener('click', saveToDatabase);
+            clearBtn.addEventListener('click', clearForm);
+            
+            // 输入字段变化时更新prompt
+            inputFields.addEventListener('input', updatePrompt);
+            
+            // 初始化默认模板
+            switchTemplate('product');
+        }
+
+        
+        // 显示登录界面
+        function showLogin() {
+            loginContainer.style.display = 'flex';
+            appContainer.style.display = 'none';
+        }
+
+        // 显示应用界面
+        function showApp() {
+            loginContainer.style.display = 'none';
+            appContainer.style.display = 'flex';
+            
+            // 更新用户信息
+            if (appState.currentUser) {
+                userAvatar.src = appState.currentUser.photoURL || 'https://via.placeholder.com/40';
+                userName.textContent = appState.currentUser.displayName || appState.currentUser.email;
+            }
+        }
+
+        // 显示登录消息
+        function showLoginMessage(message, type) {
+            const loginMessage = document.getElementById('loginMessage');
+            loginMessage.textContent = message;
+            loginMessage.className = `login-message ${type}`;
+            loginMessage.style.display = 'block';
+        }
+
+        // 切换模板
+        function switchTemplate(templateId) {
+            if (!appState.templates[templateId]) return;
+            
+            appState.currentTemplate = templateId;
+            const template = appState.templates[templateId];
+            
+            // 更新控制台标题
+            consoleTitle.textContent = template.name;
+            
+            // 生成输入字段
+            generateInputFields(template.fields);
+            
+            // 更新prompt
+            updatePrompt();
+            
+            // 清除之前的验证结果
+            clearValidation();
+            
+            // 确保输出区域可见
+            document.querySelector('.output-section').style.display = 'block';
+        }
+
+        // 生成输入字段
+        function generateInputFields(fields) {
+            inputFields.innerHTML = '';
+            
+            fields.forEach(field => {
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
+                
+                const label = document.createElement('label');
+                label.textContent = field.label + (field.required ? ' *' : '');
+                label.setAttribute('for', field.id);
+                
+                let input;
+                if (field.type === 'textarea') {
+                    input = document.createElement('textarea');
+                    input.rows = 4;
+                } else if (field.type === 'select') {
+                    input = document.createElement('select');
+                    field.options.forEach(option => {
+                        const optionElement = document.createElement('option');
+                        optionElement.value = option;
+                        optionElement.textContent = option;
+                        input.appendChild(optionElement);
+                    });
+                } else {
+                    input = document.createElement('input');
+                    input.type = field.type;
+                }
+                
+                input.id = field.id;
+                input.className = 'form-control';
+                input.placeholder = `请输入${field.label}`;
+                
+                formGroup.appendChild(label);
+                formGroup.appendChild(input);
+                inputFields.appendChild(formGroup);
+            });
+        }
+
+        // 更新prompt
+        function updatePrompt() {
+            const template = appState.templates[appState.currentTemplate];
+            let prompt = template.promptTemplate;
+            
+            // 替换占位符
+            template.fields.forEach(field => {
+                const input = document.getElementById(field.id);
+                if (input) {
+                    const value = input.value || `[${field.label}]`;
+                    prompt = prompt.replace(`{${field.id}}`, value);
+                }
+            });
+            
+            promptText.textContent = prompt;
+        }
+
+        // 复制prompt到剪贴板
+        function copyPromptToClipboard() {
+            navigator.clipboard.writeText(promptText.textContent)
+                .then(() => {
+                    // 显示成功消息
+                    const originalText = copyPromptBtn.innerHTML;
+                    copyPromptBtn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                    setTimeout(() => {
+                        copyPromptBtn.innerHTML = originalText;
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('复制失败: ', err);
+                    alert('复制失败，请手动复制文本。');
+                });
+        }
+
+        // 验证JSON
+        function validateJson() {
+            const jsonText = aiOutput.value.trim();
+            
+            if (!jsonText) {
+                showValidationResult('错误：请输入JSON数据。', false);
+                return;
+            }
+            
+            try {
+                const jsonData = JSON.parse(jsonText);
+                const template = appState.templates[appState.currentTemplate];
+                
+                // 使用自定义验证函数
+                const validationResult = validateJsonSchema(jsonData, template.schema);
+                
+                if (validationResult.valid) {
+                    showValidationResult('验证成功：JSON数据符合Schema要求。', true);
+                    saveBtn.disabled = false;
+                } else {
+                    showValidationResult(`验证失败：\n${validationResult.errors.join('\n')}`, false);
+                    saveBtn.disabled = true;
+                }
+            } catch (error) {
+                showValidationResult(`JSON解析错误：${error.message}`, false);
+                saveBtn.disabled = true;
+            }
+        }
+
+        // 显示验证结果
+        function showValidationResult(message, isSuccess) {
+            validationResult.textContent = message;
+            validationResult.className = `validation-result ${isSuccess ? 'validation-success' : 'validation-error'}`;
+            validationResult.style.display = 'block';
+        }
+
+        // 清除验证结果
+        function clearValidation() {
+            validationResult.style.display = 'none';
+            saveBtn.disabled = true;
+        }
+
+        // 保存到数据库
+        function saveToDatabase() {
+            const jsonText = aiOutput.value.trim();
+            
+            if (!jsonText) {
+                alert('错误：没有可保存的数据。');
+                return;
+            }
+            
+            try {
+                const jsonData = JSON.parse(jsonText);
+                const template = appState.templates[appState.currentTemplate];
+                
+                // 使用自定义验证函数再次验证
+                const validationResult = validateJsonSchema(jsonData, template.schema);
+                
+                if (!validationResult.valid) {
+                    alert('错误：数据验证失败，请重新验证。');
+                    return;
+                }
+                
+                // 生成唯一ID
+                const dataId = Date.now().toString();
+                
+                // 准备保存的数据
+                const saveData = {
+                    ...jsonData,
+                    _metadata: {
+                        template: appState.currentTemplate,
+                        createdAt: new Date().toISOString(),
+                        createdBy: appState.currentUser.uid,
+                        createdByName: appState.currentUser.displayName || appState.currentUser.email
+                    }
+                };
+                
+                // 保存到Firebase
+                database.ref(`ai-data/${appState.currentUser.uid}/${appState.currentTemplate}/${dataId}`)
+                    .set(saveData)
+                    .then(() => {
+                        alert('数据保存成功！');
+                        clearForm();
+                    })
+                    .catch(error => {
+                        console.error('保存失败:', error);
+                        alert('保存失败: ' + error.message);
+                    });
+                    
+            } catch (error) {
+                alert('保存失败: ' + error.message);
+            }
+        }
+
+        // 清除表单
+        function clearForm() {
+            // 清除输入字段
+            const inputs = inputFields.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                if (input.tagName === 'SELECT') {
+                    input.selectedIndex = 0;
+                } else {
+                    input.value = '';
+                }
+            });
+            
+            // 清除输出区域
+            aiOutput.value = '';
+            
+            // 清除验证结果
+            clearValidation();
+            
+            // 更新prompt
+            updatePrompt();
+        }
+
+        // 显示Schema管理器
+        function showSchemaManager() {
+            consoleTitle.textContent = 'Schema 管理';
+            
+            // 生成Schema管理界面
+            inputFields.innerHTML = `
+                <div class="form-group">
+                    <h3>当前模板的Schema</h3>
+                    <div id="schemaDisplay" class="json-container"></div>
+                </div>
+                <div class="form-group">
+                    <h3>编辑Schema</h3>
+                    <textarea id="schemaEditor" class="form-control" rows="10" placeholder="在此编辑JSON Schema..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button id="updateSchemaBtn" class="btn btn-primary">
+                        <i class="fas fa-sync"></i> 更新Schema
+                    </button>
+                </div>
+            `;
+            
+            // 显示当前模板的Schema
+            const schemaDisplay = document.getElementById('schemaDisplay');
+            const currentSchema = appState.templates[appState.currentTemplate].schema;
+            schemaDisplay.textContent = JSON.stringify(currentSchema, null, 2);
+            
+            // 初始化编辑器
+            const schemaEditor = document.getElementById('schemaEditor');
+            schemaEditor.value = JSON.stringify(currentSchema, null, 2);
+            
+            // 更新Schema按钮事件
+            document.getElementById('updateSchemaBtn').addEventListener('click', updateSchema);
+            
+            // 隐藏输出区域
+            document.querySelector('.output-section').style.display = 'none';
+        }
+
+        // 更新Schema
+        function updateSchema() {
+            const schemaEditor = document.getElementById('schemaEditor');
+            const schemaText = schemaEditor.value.trim();
+            
+            try {
+                const newSchema = JSON.parse(schemaText);
+                appState.templates[appState.currentTemplate].schema = newSchema;
+                
+                // 更新显示
+                const schemaDisplay = document.getElementById('schemaDisplay');
+                schemaDisplay.textContent = JSON.stringify(newSchema, null, 2);
+                
+                alert('Schema更新成功！');
+            } catch (error) {
+                alert('Schema更新失败: ' + error.message);
+            }
+        }
+
+        // 初始化应用
+        initApp();
+    </script>
+</body>
+</html>

@@ -4,69 +4,281 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thai Word Quiz - แบบทดสอบคำศัพท์ภาษาไทย</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-----
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
---->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-----
-    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
-    -->
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/tippy.js@6"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-
     <script src="./js/modalFactoryV2.js"></script>
+    
     <style>
+        /* Base styles from original file */
         body {
             font-family: 'Sarabun', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem; /* p-4 */
+        }
+        
+        #app-container {
+            width: 100%; /* w-full */
+            max-width: 1200px; /* arbitrary max-width for better centering */
+            margin-left: auto;
+            margin-right: auto;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
         }
 
+        /* Quiz Card & Results Card General Styles */
+        #quiz-card, #results-card {
+            background-color: #ffffff; /* bg-white */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            padding: 1.5rem; /* p-6 */
+            width: 80%; /* style="width:80% !important;" */
+            /*max-width: 80%;*//*800px; *//* Add a max-width for better centering on large screens */
+        }
+
+        @media (min-width: 768px) {
+            #quiz-card, #results-card {
+                padding: 2rem; /* md:p-8 */
+            }
+        }
+
+        /* Quiz Content */
+        #question-counter {
+            font-size: 0.875rem; /* text-sm */
+            color: #6b7280; /* text-gray-500 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+
+        #question-text {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* font-bold */
+            color: #1f2937; /* text-gray-800 */
+            margin-bottom: 1.5rem; /* mb-6 */
+        }
+
+        #options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem; /* space-y-3 */
+        }
+
+        /* Option Button */
+        #options-container button {
+            width: 100%; /* w-full */
+            display: flex;
+            align-items: center;
+            text-align: left; /* text-left */
+            padding: 0.75rem; /* p-3 */
+            background-color: #f9fafb; /* bg-gray-50 */
+            border-radius: 0.5rem; /* rounded-lg */
+            border: 1px solid #e5e7eb; /* border border-gray-200 */
+            transition: all 200ms ease-in-out; /* transition-all duration-200 */
+            cursor: pointer;
+        }
+
+        #options-container button:hover {
+            background-color: #eff6ff; /* hover:bg-blue-100 */
+            border-color: #93c5fd; /* hover:border-blue-300 */
+        }
+
+        #options-container button span:first-child {
+            background-color: #e5e7eb; /* bg-gray-200 */
+            color: #374151; /* text-gray-700 */
+            font-weight: 700; /* font-bold */
+            width: 2rem; /* w-8 */
+            height: 2rem; /* h-8 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem; /* rounded-md */
+            margin-right: 1rem; /* mr-4 */
+        }
+
+        #options-container button span:last-child {
+            flex: 1; /* flex-1 */
+        }
+
+        /* Feedback */
+        #feedback-container {
+            margin-top: 1rem; /* mt-4 */
+            text-align: center; /* text-center */
+        }
+        #feedback-container .text-green-600 {
+            color: #059669;
+            font-weight: 700;
+        }
+        #feedback-container .text-red-600 {
+            color: #dc2626;
+            font-weight: 700;
+        }
         
+        /* Selected/Correct/Incorrect Styles */
+        .bg-green-500 { background-color: #10b981 !important; }
+        .bg-red-500 { background-color: #ef4444 !important; }
+        .bg-green-200 { background-color: #d1fae5 !important; }
+        .border-green-600 { border-color: #059669 !important; }
+        .border-red-600 { border-color: #dc2626 !important; }
+        .border-green-400 { border-color: #34d399 !important; }
+        .text-white { color: #fff !important; }
+        .cursor-not-allowed { cursor: not-allowed !important; }
+        .hover\:bg-blue-100:hover, .hover\:border-blue-300:hover { /* Override hover for disabled state */
+            background-color: inherit !important;
+            border-color: inherit !important;
+        }
+
+        /* Next Button */
+        #next-button, #restart-button {
+            margin-top: 1.5rem; /* mt-6 */
+            width: 100%; /* w-full */
+            font-weight: 700; /* font-bold */
+            padding: 0.75rem 1rem; /* py-3 px-4 */
+            border-radius: 0.5rem; /* rounded-lg */
+            transition: background-color 150ms ease-in-out; /* transition-colors */
+            border: none;
+            cursor: pointer;
+        }
+        #next-button {
+            background-color: #2563eb; /* bg-blue-600 */
+            color: #fff; /* text-white */
+        }
+        #next-button:hover {
+            background-color: #1d4ed8; /* hover:bg-blue-700 */
+        }
+        #next-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); /* focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 */
+        }
+
+        /* Results Card */
+        #results-card {
+            text-align: center;
+        }
+
+        #results-card h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 700; /* font-bold */
+            color: #1f2937; /* text-gray-800 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+
+        #results-card p.text-gray-600 {
+            color: #4b5563; /* text-gray-600 */
+            margin-bottom: 1.5rem; /* mb-6 */
+        }
+
+        .bg-blue-50 {
+            background-color: #eff6ff; /* bg-blue-50 */
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            margin-bottom: 1.5rem; /* mb-6 */
+        }
+        
+        .bg-blue-50 p.text-lg {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* text-gray-700 */
+        }
+        
+        #final-score {
+            font-size: 3rem; /* text-5xl */
+            font-weight: 700; /* font-bold */
+            color: #2563eb; /* text-blue-600 */
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem; /* my-2 */
+            line-height: 1; /* Adjust line height */
+        }
+
+        #final-percentage {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600; /* font-semibold */
+            color: #3b82f6; /* text-blue-500 */
+        }
+
+        /* Previous Score Container */
+        #previous-score-container {
+            text-align: left; /* text-left */
+            margin-bottom: 1.5rem; /* mb-6 */
+            padding: 1rem; /* p-4 */
+            border: 1px solid #e5e7eb; /* border */
+            border-radius: 0.5rem; /* rounded-lg */
+            background-color: #f9fafb; /* bg-gray-50 */
+        }
+
+        #previous-score-container h3 {
+            font-weight: 700; /* font-bold */
+            color: #374151; /* text-gray-700 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        
+        #previous-score-container p {
+            color: #4b5563; /* text-gray-600 */
+        }
+
+        /* Restart Button */
+        #restart-button {
+            background-color: #16a34a; /* bg-green-600 */
+            color: #fff; /* text-white */
+        }
+        #restart-button:hover {
+            background-color: #15803d; /* hover:bg-green-700 */
+        }
+        #restart-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.5); /* focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 */
+        }
+        
+        /* Utility for hiding elements */
+        .hidden {
+            display: none !important;
+        }
+
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-    <div id="app-container" class="w-full mx-auto" style="display: flex; flex-direction:row;  align-items: center;justify-content: center;">
-        <!-- Quiz Card -->
-        <div id="quiz-card" class="bg-white rounded-xl shadow-lg p-6 md:p-8" style="width:80% !important;">
+    <div id="app-container">
+        <div id="quiz-card">
             <div id="quiz-content">
-                <p id="question-counter" class="text-sm text-gray-500 mb-2">คำถาม 1 / 10</p>
-                <h2 id="question-text" class="text-2xl font-bold text-gray-800 mb-6"></h2>
-                <div id="options-container" class="space-y-3">
-                    <!-- Options will be dynamically inserted here -->
-                </div>
-                <div id="feedback-container" class="mt-4 text-center">
-                    <!-- Feedback (correct/incorrect) will be shown here -->
-                </div>
+                <p id="question-counter">คำถาม 1 / 10</p>
+                <h2 id="question-text"></h2>
+                <div id="options-container">
+                    </div>
+                <div id="feedback-container">
+                    </div>
             </div>
-            <button id="next-button" class="mt-6 w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 hidden">
+            <button id="next-button" class="hidden">
                 คำถามถัดไป
             </button>
         </div>
 
-        <!-- Results Card -->
-        <div id="results-card" class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center hidden">
-            <h2 class="text-3xl font-bold text-gray-800 mb-2">เสร็จสิ้น!</h2>
-            <p class="text-gray-600 mb-6">นี่คือผลลัพธ์ของคุณ:</p>
-            <div class="bg-blue-50 p-6 rounded-lg mb-6">
-                <p class="text-lg text-gray-700">คุณตอบถูก</p>
-                <p id="final-score" class="text-5xl font-bold text-blue-600 my-2">0/0</p>
-                <p id="final-percentage" class="text-xl font-semibold text-blue-500">0%</p>
+        <div id="results-card" class="hidden">
+            <h2>เสร็จสิ้น!</h2>
+            <p class="text-gray-600">นี่คือผลลัพธ์ของคุณ:</p>
+            <div class="bg-blue-50">
+                <p class="text-lg">คุณตอบถูก</p>
+                <p id="final-score">0/0</p>
+                <p id="final-percentage">0%</p>
             </div>
-             <div id="previous-score-container" class="text-left mb-6 p-4 border rounded-lg bg-gray-50 hidden">
-                <h3 class="font-bold text-gray-700 mb-2">ผลลัพธ์ครั้งก่อน:</h3>
-                <p id="previous-score-text" class="text-gray-600"></p>
+             <div id="previous-score-container" class="hidden">
+                <h3>ผลลัพธ์ครั้งก่อน:</h3>
+                <p id="previous-score-text"></p>
             </div>
-            <button id="restart-button" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+            <button id="restart-button">
                 ทำแบบทดสอบอีกครั้ง
             </button>
         </div>
@@ -101,11 +313,20 @@
                 const promises = [];
 
                 if (!hasPopper) {
-                    promises.push(injectResource('script', 'https://unpkg.com/@popperjs/core@2'));
+                    // Check if the script is already in the head (should be, but just in case)
+                    if (!document.querySelector('script[src*="@popperjs/core"]')) {
+                        promises.push(injectResource('script', 'https://unpkg.com/@popperjs/core@2'));
+                    }
                 }
                 if (!hasTippy) {
-                    promises.push(injectResource('script', 'https://unpkg.com/tippy.js@6'));
-                    promises.push(injectResource('style', 'https://unpkg.com/tippy.js@6/dist/tippy.css'));
+                    // Check if the script is already in the head (should be, but just in case)
+                    if (!document.querySelector('script[src*="tippy.js"]')) {
+                        promises.push(injectResource('script', 'https://unpkg.com/tippy.js@6'));
+                    }
+                    // Check if the stylesheet is already in the head
+                    if (!document.querySelector('link[href*="tippy.css"]')) {
+                        promises.push(injectResource('style', 'https://unpkg.com/tippy.js@6/dist/tippy.css'));
+                    }
                 }
 
                 await Promise.all(promises);
@@ -251,14 +472,36 @@
         let score = 0;
         let answerSelected = false;
 
+        // CSS class helpers (Replaces Tailwind classes)
+        const cssClasses = {
+            correctButton: 'bg-green-500 text-white border-green-600',
+            incorrectButton: 'bg-red-500 text-white border-red-600',
+            correctHighlight: 'bg-green-200 border-green-400',
+            defaultButton: 'bg-gray-50 border-gray-200 hover:bg-blue-100 hover:border-blue-300',
+            disabled: 'cursor-not-allowed',
+            hidden: 'hidden'
+        };
+
+        function addClasses(element, classString) {
+            classString.split(' ').forEach(cls => {
+                if (cls) element.classList.add(cls);
+            });
+        }
+        
+        function removeClasses(element, classString) {
+            classString.split(' ').forEach(cls => {
+                if (cls) element.classList.remove(cls);
+            });
+        }
+
         // --- Core Functions ---
 
         function startQuiz() {
             currentQuestionIndex = 0;
             score = 0;
             answerSelected = false;
-            resultsCard.classList.add('hidden');
-            quizCard.classList.remove('hidden');
+            addClasses(resultsCard, cssClasses.hidden);
+            removeClasses(quizCard, cssClasses.hidden);
             loadQuestion();
             checkPreviousScores();
         }
@@ -266,7 +509,7 @@
         function loadQuestion() {
             answerSelected = false;
             feedbackContainer.innerHTML = '';
-            nextButton.classList.add('hidden');
+            addClasses(nextButton, cssClasses.hidden);
             optionsContainer.innerHTML = '';
 
             const currentQuestion = quizData[currentQuestionIndex];
@@ -278,8 +521,16 @@
 
             shuffledOptions.forEach(option => {
                 const button = document.createElement('button');
-                button.innerHTML = `<span class="bg-gray-200 text-gray-700 font-bold w-8 h-8 flex items-center justify-center rounded-md mr-4">${option.id}</span> <span class="text-left flex-1">${option.text}</span>`;
-                button.className = 'w-full flex items-center text-left p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200';
+                // Use innerHTML for structure matching original template
+                button.innerHTML = `<span style="background-color: #e5e7eb; color: #374151; font-weight: 700; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem; margin-right: 1rem;">${option.id}</span> <span style="text-align: left; flex: 1;">${option.text}</span>`;
+                
+                // Apply default CSS class from the style block
+                button.className = 'default-option-button'; // A helper class for the custom CSS block
+                button.classList.add('w-full', 'flex', 'items-center', 'text-left', 'p-3', 'bg-gray-50', 'rounded-lg', 'border', 'border-gray-200', 'hover:bg-blue-100', 'hover:border-blue-300', 'transition-all', 'duration-200'); // Dummy classes to be removed after CSS is applied
+                button.className = ''; // Reset, and apply the correct default class
+                addClasses(button, 'w-full flex items-center text-left p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200');
+
+
                 button.onclick = () => selectAnswer(option.id, button);
                 optionsContainer.appendChild(button);
             });
@@ -291,22 +542,32 @@
 
             const currentQuestion = quizData[currentQuestionIndex];
             const isCorrect = selectedId === currentQuestion.correct_answer;
+            
+            // Remove hover classes for proper state display
+            removeClasses(buttonElement, 'hover:bg-blue-100 hover:border-blue-300');
+
 
             // Update score
             if (isCorrect) {
                 score++;
-                buttonElement.classList.remove('bg-gray-50', 'hover:bg-blue-100');
-                buttonElement.classList.add('bg-green-500', 'text-white', 'border-green-600');
+                removeClasses(buttonElement, cssClasses.defaultButton);
+                addClasses(buttonElement, cssClasses.correctButton);
                 feedbackContainer.innerHTML = `<p class="text-green-600 font-bold">ถูกต้อง!</p>`;
             } else {
-                buttonElement.classList.remove('bg-gray-50', 'hover:bg-blue-100');
-                buttonElement.classList.add('bg-red-500', 'text-white', 'border-red-600');
+                removeClasses(buttonElement, cssClasses.defaultButton);
+                addClasses(buttonElement, cssClasses.incorrectButton);
                 feedbackContainer.innerHTML = `<p class="text-red-600 font-bold">ผิด! คำตอบที่ถูกต้องคือ: ${currentQuestion.correct_answer}</p>`;
+                
                 // Highlight the correct answer
-                const correctButton = Array.from(optionsContainer.children).find(btn => btn.innerText.startsWith(currentQuestion.correct_answer));
+                const correctButton = Array.from(optionsContainer.children).find(btn => {
+                    // Find the button whose first inner span text starts with the correct answer ID
+                    const optionIdSpan = btn.querySelector('span:first-child');
+                    return optionIdSpan && optionIdSpan.textContent.trim() === currentQuestion.correct_answer;
+                });
+
                 if (correctButton) {
-                    correctButton.classList.remove('bg-gray-50', 'hover:bg-blue-100');
-                    correctButton.classList.add('bg-green-200', 'border-green-400');
+                    removeClasses(correctButton, cssClasses.defaultButton);
+                    addClasses(correctButton, cssClasses.correctHighlight);
                 }
 
                 globalQuizInProgress.failed.push(currentQuestion) ;
@@ -317,16 +578,16 @@
             // Disable all option buttons
             Array.from(optionsContainer.children).forEach(btn => {
                 btn.disabled = true;
-                btn.classList.add('cursor-not-allowed');
-                btn.classList.remove('hover:bg-blue-100', 'hover:border-blue-300');
+                addClasses(btn, cssClasses.disabled);
+                removeClasses(btn, 'hover:bg-blue-100 hover:border-blue-300'); // Ensure hover styles are gone
             });
 
-            nextButton.classList.remove('hidden');
+            removeClasses(nextButton, cssClasses.hidden);
         }
 
         async function showResults() {
-            quizCard.classList.add('hidden');
-            resultsCard.classList.remove('hidden');
+            addClasses(quizCard, cssClasses.hidden);
+            removeClasses(resultsCard, cssClasses.hidden);
             
             const percentage = ((score / quizData.length) * 100).toFixed(0);
             document.getElementById('final-score').textContent = `${score}/${quizData.length}`;
@@ -353,13 +614,13 @@
                 if (lastResult) {
                     document.getElementById('previous-score-text').textContent = 
                         `คะแนน: ${lastResult.score}/${lastResult.total} (${lastResult.percentage}%) - เมื่อ: ${lastResult.timestamp}`;
-                    previousScoreContainer.classList.remove('hidden');
+                    removeClasses(previousScoreContainer, cssClasses.hidden);
                 } else {
-                    previousScoreContainer.classList.add('hidden');
+                    addClasses(previousScoreContainer, cssClasses.hidden);
                 }
             } catch (err) {
                  console.error("Error reading from LocalForage:", err);
-                 previousScoreContainer.classList.add('hidden');
+                 addClasses(previousScoreContainer, cssClasses.hidden);
             }
         }
 
@@ -597,6 +858,11 @@
             const cancelBtn = document.createElement('button');
             cancelBtn.textContent = 'Cancel';
             cancelBtn.style.padding = '6px 12px';
+            cancelBtn.style.background = '#e5e7eb'; /* bg-gray-200 equivalent */
+            cancelBtn.style.color = '#1f2937'; /* text-gray-800 equivalent */
+            cancelBtn.style.border = '1px solid #d1d5db'; /* border-gray-300 equivalent */
+            cancelBtn.style.borderRadius = '4px';
+            cancelBtn.style.cursor = 'pointer';
             cancelBtn.onclick = () => {
                 callbacks.onCancel?.();
                 modal.remove();
@@ -605,10 +871,11 @@
             const confirmBtn = document.createElement('button');
             confirmBtn.textContent = 'Confirm';
             confirmBtn.style.padding = '6px 12px';
-            confirmBtn.style.background = '#007bff';
+            confirmBtn.style.background = '#2563eb'; /* bg-blue-600 equivalent */
             confirmBtn.style.color = '#fff';
             confirmBtn.style.border = 'none';
             confirmBtn.style.borderRadius = '4px';
+            confirmBtn.style.cursor = 'pointer';
             confirmBtn.onclick = () => {
                 schema.forEach(field => {
                 const el = box.querySelector(`[name="${field.name}"]`);
@@ -632,4 +899,3 @@
 
 </body>
 </html>
- 
