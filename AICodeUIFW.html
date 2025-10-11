@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI常用布局模式</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --accent-color: #7209b7;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--success-color);
+            padding-bottom: 10px;
+        }
+
+        .layout-list {
+            list-style-type: none;
+        }
+
+        .layout-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: var(--border-radius);
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: var(--transition);
+            border-left: 4px solid transparent;
+        }
+
+        .layout-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .layout-item.active {
+            background: #e7f1ff;
+            border-left-color: var(--primary-color);
+        }
+
+        .layout-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .layout-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .preview-area {
+            min-height: 500px;
+            border: 2px dashed #ddd;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            background: #f8f9fa;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-container {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .layout-header, .layout-footer {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .layout-sidebar {
+            background: #e9ecef;
+            padding: 15px;
+        }
+
+        .layout-main {
+            background: white;
+            padding: 20px;
+            min-height: 200px;
+        }
+
+        .layout-grid-item {
+            background: var(--success-color);
+            color: white;
+            padding: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .code-area {
+            margin-top: 30px;
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .code-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--light-color);
+        }
+
+        .use-cases {
+            margin-top: 20px;
+            padding: 15px;
+            background: #edf2f7;
+            border-radius: var(--border-radius);
+        }
+
+        .use-cases-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+
+        .use-cases-list {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        .use-cases-list li {
+            margin-bottom: 8px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            padding: 8px 15px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .control-btn:hover {
+            background: var(--secondary-color);
+        }
+
+        .responsive-indicator {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .size-btn {
+            padding: 5px 10px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .size-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* 布局样式 */
+        /* 单列布局 */
+        .single-column {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* 两列布局 */
+        .two-column {
+            display: flex;
+            height: 100%;
+        }
+
+        .two-column .layout-sidebar {
+            width: 200px;
+            flex-shrink: 0;
+        }
+
+        .two-column .layout-main {
+            flex-grow: 1;
+        }
+
+        /* 三列布局 */
+        .three-column {
+            display: flex;
+            height: 100%;
+        }
+
+        .three-column .layout-sidebar {
+            width: 150px;
+            flex-shrink: 0;
+        }
+
+        .three-column .layout-main {
+            flex-grow: 1;
+        }
+
+        /* 网格布局 */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding: 15px;
+            height: 100%;
+        }
+
+        /* 圣杯布局 */
+        .holy-grail {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .holy-grail .layout-body {
+            display: flex;
+            flex-grow: 1;
+        }
+
+        .holy-grail .layout-sidebar {
+            width: 150px;
+            flex-shrink: 0;
+        }
+
+        .holy-grail .layout-main {
+            flex-grow: 1;
+        }
+
+        /* 卡片布局 */
+        .card-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 15px;
+            height: 100%;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
+
+        /* 响应式布局 */
+        .responsive-layout .layout-body {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .responsive-layout .layout-sidebar {
+            width: 200px;
+            flex-shrink: 0;
+        }
+
+        .responsive-layout .layout-main {
+            flex-grow: 1;
+            min-width: 300px;
+        }
+
+        @media (max-width: 768px) {
+            .responsive-layout .layout-body {
+                flex-direction: column;
+            }
+            
+            .responsive-layout .layout-sidebar {
+                width: 100%;
+            }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>UI常用布局模式</h1>
+            <p class="subtitle">探索各种布局方式及其适用场景</p>
+        </header>
+
+        <div class="main-content">
+            <div class="section">
+                <h2 class="section-title">布局分类</h2>
+                <ul class="layout-list">
+                    <li class="layout-item active" data-layout="single-column">
+                        <div class="layout-name">单列布局</div>
+                        <div class="layout-desc">内容垂直排列，适合阅读和移动设备</div>
+                    </li>
+                    <li class="layout-item" data-layout="two-column">
+                        <div class="layout-name">两列布局</div>
+                        <div class="layout-desc">侧边栏+主内容区，常见于博客和文档</div>
+                    </li>
+                    <li class="layout-item" data-layout="three-column">
+                        <div class="layout-name">三列布局</div>
+                        <div class="layout-desc">两侧边栏+主内容区，适合内容丰富的网站</div>
+                    </li>
+                    <li class="layout-item" data-layout="grid">
+                        <div class="layout-name">网格布局</div>
+                        <div class="layout-desc">CSS Grid实现的灵活网格系统</div>
+                    </li>
+                    <li class="layout-item" data-layout="holy-grail">
+                        <div class="layout-name">圣杯布局</div>
+                        <div class="layout-desc">经典的三栏布局，中间内容优先渲染</div>
+                    </li>
+                    <li class="layout-item" data-layout="card">
+                        <div class="layout-name">卡片布局</div>
+                        <div class="layout-desc">信息以卡片形式展示，适合内容聚合</div>
+                    </li>
+                    <li class="layout-item" data-layout="responsive">
+                        <div class="layout-name">响应式布局</div>
+                        <div class="layout-desc">自适应不同屏幕尺寸，移动优先</div>
+                    </li>
+                </ul>
+
+                <div class="use-cases">
+                    <div class="use-cases-title">布局选择指南</div>
+                    <ul class="use-cases-list">
+                        <li><strong>内容型网站</strong>：单列或两列布局</li>
+                        <li><strong>管理后台</strong>：两列或三列布局</li>
+                        <li><strong>电商网站</strong>：网格或卡片布局</li>
+                        <li><strong>新闻门户</strong>：多列或网格布局</li>
+                        <li><strong>移动应用</strong>：响应式单列布局</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">布局预览</h2>
+                
+                <div class="responsive-indicator">
+                    <button class="size-btn active" data-size="desktop">桌面</button>
+                    <button class="size-btn" data-size="tablet">平板</button>
+                    <button class="size-btn" data-size="mobile">手机</button>
+                </div>
+                
+                <div class="preview-area">
+                    <div class="preview-container single-column" id="preview-container">
+                        <div class="layout-header">网站标题</div>
+                        <div class="layout-main">
+                            <h3>主内容区域</h3>
+                            <p>这是单列布局的示例，内容垂直排列，适合阅读和移动设备。</p>
+                        </div>
+                        <div class="layout-footer">版权信息 &copy; 2023</div>
+                    </div>
+                </div>
+
+                <div class="code-area">
+                    <div class="code-title">CSS代码示例：</div>
+                    <pre id="code-example">.single-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.layout-header, .layout-footer {
+  background: #4361ee;
+  color: white;
+  padding: 15px;
+  text-align: center;
+}
+
+.layout-main {
+  flex-grow: 1;
+  padding: 20px;
+}</pre>
+                </div>
+
+                <div class="use-cases">
+                    <div class="use-cases-title">适用场景</div>
+                    <ul class="use-cases-list" id="use-cases-detail">
+                        <li>博客和文章页面</li>
+                        <li>移动端应用界面</li>
+                        <li>产品介绍页面</li>
+                        <li>简单的内容展示</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2023 UI布局模式指南 | 帮助开发者选择合适的布局方式</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const layoutItems = document.querySelectorAll('.layout-item');
+            const previewContainer = document.getElementById('preview-container');
+            const codeExample = document.getElementById('code-example');
+            const useCasesDetail = document.getElementById('use-cases-detail');
+            const sizeButtons = document.querySelectorAll('.size-btn');
+            
+            // 布局配置数据
+            const layoutConfigs = {
+                'single-column': {
+                    html: `
+                        <div class="layout-header">网站标题</div>
+                        <div class="layout-main">
+                            <h3>主内容区域</h3>
+                            <p>这是单列布局的示例，内容垂直排列，适合阅读和移动设备。</p>
+                        </div>
+                        <div class="layout-footer">版权信息 &copy; 2023</div>
+                    `,
+                    css: `.single-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.layout-header, .layout-footer {
+  background: #4361ee;
+  color: white;
+  padding: 15px;
+  text-align: center;
+}
+
+.layout-main {
+  flex-grow: 1;
+  padding: 20px;
+}`,
+                    useCases: [
+                        '博客和文章页面',
+                        '移动端应用界面',
+                        '产品介绍页面',
+                        '简单的内容展示'
+                    ]
+                },
+                'two-column': {
+                    html: `
+                        <div class="layout-header">网站标题</div>
+                        <div class="layout-body">
+                            <div class="layout-sidebar">
+                                <h4>导航菜单</h4>
+                                <ul>
+                                    <li>首页</li>
+                                    <li>产品</li>
+                                    <li>服务</li>
+                                    <li>关于我们</li>
+                                </ul>
+                            </div>
+                            <div class="layout-main">
+                                <h3>主内容区域</h3>
+                                <p>这是两列布局的示例，左侧为导航菜单，右侧为主内容区域。</p>
+                            </div>
+                        </div>
+                        <div class="layout-footer">版权信息 &copy; 2023</div>
+                    `,
+                    css: `.two-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.layout-body {
+  display: flex;
+  flex-grow: 1;
+}
+
+.layout-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: #e9ecef;
+  padding: 15px;
+}
+
+.layout-main {
+  flex-grow: 1;
+  padding: 20px;
+}`,
+                    useCases: [
+                        '博客和文档网站',
+                        '管理后台系统',
+                        '新闻网站',
+                        '电子商务网站'
+                    ]
+                },
+                'three-column': {
+                    html: `
+                        <div class="layout-header">网站标题</div>
+                        <div class="layout-body">
+                            <div class="layout-sidebar">
+                                <h4>主导航</h4>
+                                <ul>
+                                    <li>首页</li>
+                                    <li>产品</li>
+                                    <li>服务</li>
+                                </ul>
+                            </div>
+                            <div class="layout-main">
+                                <h3>主内容区域</h3>
+                                <p>这是三列布局的示例，两侧为侧边栏，中间为主内容区域。</p>
+                            </div>
+                            <div class="layout-sidebar">
+                                <h4>侧边栏</h4>
+                                <p>相关链接或广告区域</p>
+                            </div>
+                        </div>
+                        <div class="layout-footer">版权信息 &copy; 2023</div>
+                    `,
+                    css: `.three-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.layout-body {
+  display: flex;
+  flex-grow: 1;
+}
+
+.layout-sidebar {
+  width: 150px;
+  flex-shrink: 0;
+  background: #e9ecef;
+  padding: 15px;
+}
+
+.layout-main {
+  flex-grow: 1;
+  padding: 20px;
+}`,
+                    useCases: [
+                        '内容丰富的门户网站',
+                        '新闻聚合平台',
+                        '社交媒体网站',
+                        '多功能管理后台'
+                    ]
+                },
+                'grid': {
+                    html: `
+                        <div class="layout-header">网站标题</div>
+                        <div class="grid-layout">
+                            <div class="layout-grid-item">项目 1</div>
+                            <div class="layout-grid-item">项目 2</div>
+                            <div class="layout-grid-item">项目 3</div>
+                            <div class="layout-grid-item">项目 4</div>
+                            <div class="layout-grid-item">项目 5</div>
+                            <div class="layout-grid-item">项目 6</div>
+                        </div>
+                        <div class="layout-footer">版权信息 &copy; 2023</div>
+                    `,
+                    css: `.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  padding: 15px;
+  height: 100%;
+}
+
+.layout-grid-item {
+  background: #4cc9f0;
+  color: white;
+  padding: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}`,
+                    useCases: [
+                        '图片画廊',
+                        '产品展示页面',
+                        '仪表板和数据可视化',
+                        '作品集网站'
+                    ]
+                },
+                'holy-grail': {
+                    html: `
+                        <div class="layout-header">网站标题</div>
+                        <div class="layout-body">
+                            <div class="layout-sidebar">
+                                <h4>左侧边栏</h4>
+                                <p>导航或分类信息</p>
+                            </div>
+                            <div class="layout-main">
+                                <h3>主内容区域</h3>
+                                <p>这是圣杯布局的示例，中间内容优先渲染，适合SEO优化。</p>
+                            </div>
+                            <div class="layout-sidebar">
+                                <h4>右侧边栏</h4>
+                                <p>相关链接或广告区域</p>
+                            </div>
+                        </div>
+                        <div class="layout-footer">版权信息 &copy; 2023</div>
+                    `,
+                    css: `.holy-grail {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.layout-body {
+  display: flex;
+  flex-grow: 1;
+}
+
+.layout-sidebar {
+  width: 150px;
+  flex-shrink: 0;
+  background: #e9ecef;
+  padding: 15px;
+}
+
+.layout-main {
+  flex-grow: 1;
+  padding: 20px;
+  order: 2; /* 确保主内容在中间 */
+}
+
+.layout-body .layout-sidebar:first-child {
+  order: 1;
+}
+
+.layout-body .layout-sidebar:last-child {
+  order: 3;
+}`,
+                    useCases: [
+                        '内容优先的网站',
+                        '需要良好SEO的网站',
+                        '新闻和杂志网站',
+                        '博客平台'
+                    ]
+                },
+                'card': {
+                    html: `
+                        <div class="layout-header">产品展示</div>
+                        <div class="card-layout">
+                            <div class="card">
+                                <h4>产品 1</h4>
+                                <p>产品描述信息...</p>
+                                <button>查看详情</button>
+                            </div>
+                            <div class="card">
+                                <h4>产品 2</h4>
+                                <p>产品描述信息...</p>
+                                <button>查看详情</button>
+                            </div>
+                            <div class="card">
+                                <h4>产品 3</h4>
+                                <p>产品描述信息...</p>
+                                <button>查看详情</button>
+                            </div>
+                            <div class="card">
+                                <h4>产品 4</h4>
+                                <p>产品描述信息...</p>
+                                <button>查看详情</button>
+                            </div>
+                        </div>
+                        <div class="layout-footer">版权信息 &copy; 2023</div>
+                    `,
+                    css: `.card-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+  padding: 15px;
+  height: 100%;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 15px;
+}`,
+                    useCases: [
+                        '电子商务网站',
+                        '社交媒体动态',
+                        '新闻聚合应用',
+                        '作品集展示'
+                    ]
+                },
+                'responsive': {
+                    html: `
+                        <div class="layout-header">响应式网站</div>
+                        <div class="layout-body">
+                            <div class="layout-sidebar">
+                                <h4>导航菜单</h4>
+                                <ul>
+                                    <li>首页</li>
+                                    <li>产品</li>
+                                    <li>服务</li>
+                                    <li>关于我们</li>
+                                </ul>
+                            </div>
+                            <div class="layout-main">
+                                <h3>主内容区域</h3>
+                                <p>这是响应式布局的示例，在不同屏幕尺寸下自动调整布局。</p>
+                                <div class="card-layout" style="margin-top: 15px;">
+                                    <div class="card">卡片 1</div>
+                                    <div class="card">卡片 2</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layout-footer">版权信息 &copy; 2023</div>
+                    `,
+                    css: `.responsive-layout .layout-body {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.responsive-layout .layout-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: #e9ecef;
+  padding: 15px;
+}
+
+.responsive-layout .layout-main {
+  flex-grow: 1;
+  min-width: 300px;
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .responsive-layout .layout-body {
+    flex-direction: column;
+  }
+  
+  .responsive-layout .layout-sidebar {
+    width: 100%;
+  }
+}`,
+                    useCases: [
+                        '需要适配多设备的网站',
+                        '移动优先的应用',
+                        '现代企业网站',
+                        '个人作品集'
+                    ]
+                }
+            };
+            
+            // 布局切换功能
+            layoutItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // 移除所有项目的active类
+                    layoutItems.forEach(i => i.classList.remove('active'));
+                    // 添加当前项目的active类
+                    this.classList.add('active');
+                    
+                    // 获取布局类型
+                    const layoutType = this.getAttribute('data-layout');
+                    
+                    // 更新预览区域
+                    previewContainer.className = 'preview-container ' + layoutType;
+                    previewContainer.innerHTML = layoutConfigs[layoutType].html;
+                    
+                    // 更新代码示例
+                    codeExample.textContent = layoutConfigs[layoutType].css;
+                    
+                    // 更新适用场景
+                    useCasesDetail.innerHTML = '';
+                    layoutConfigs[layoutType].useCases.forEach(useCase => {
+                        const li = document.createElement('li');
+                        li.textContent = useCase;
+                        useCasesDetail.appendChild(li);
+                    });
+                });
+            });
+            
+            // 响应式预览功能
+            sizeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除所有按钮的active类
+                    sizeButtons.forEach(b => b.classList.remove('active'));
+                    // 添加当前按钮的active类
+                    this.classList.add('active');
+                    
+                    // 获取尺寸类型
+                    const sizeType = this.getAttribute('data-size');
+                    
+                    // 更新预览区域尺寸
+                    previewContainer.style.width = 
+                        sizeType === 'desktop' ? '100%' : 
+                        sizeType === 'tablet' ? '768px' : '375px';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

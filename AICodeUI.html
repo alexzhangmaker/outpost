@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI风格分类与AI沟通指南</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --accent-color: #7209b7;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--success-color);
+            padding-bottom: 10px;
+        }
+
+        .ui-styles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .style-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: var(--transition);
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .style-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .style-card.active {
+            border-color: var(--accent-color);
+            background-color: #f0f4ff;
+        }
+
+        .style-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .style-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .style-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .ai-tips-list {
+            list-style-type: none;
+        }
+
+        .ai-tips-list li {
+            margin-bottom: 15px;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .ai-tips-list li:before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .example-area {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .example-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+
+        .example-code {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .prompt-example {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-top: 10px;
+            border-left: 3px solid var(--success-color);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .style-demo {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            background: #f8f9fa;
+            display: none;
+        }
+
+        .style-demo.active {
+            display: block;
+        }
+
+        .demo-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            transition: var(--transition);
+        }
+
+        .demo-button:hover {
+            background: var(--secondary-color);
+        }
+
+        .demo-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+            width: 200px;
+        }
+
+        .demo-card {
+            background: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 10px 0;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>HTML/JS UI风格分类与AI沟通指南</h1>
+            <p class="subtitle">了解主要UI风格分类，掌握与AI高效沟通进行应用开发</p>
+        </header>
+
+        <div class="main-content">
+            <div class="section">
+                <h2 class="section-title">主要UI风格分类</h2>
+                <div class="ui-styles-grid">
+                    <div class="style-card active" data-style="material">
+                        <div class="style-icon">🎨</div>
+                        <div class="style-name">Material Design</div>
+                        <div class="style-desc">Google推出的设计语言，强调阴影、层次和动画效果</div>
+                    </div>
+                    <div class="style-card" data-style="flat">
+                        <div class="style-icon">📱</div>
+                        <div class="style-name">扁平化设计</div>
+                        <div class="style-desc">简洁、无多余装饰，强调色彩和排版</div>
+                    </div>
+                    <div class="style-card" data-style="skeuomorphic">
+                        <div class="style-icon">📒</div>
+                        <div class="style-name">拟物化设计</div>
+                        <div class="style-desc">模拟真实物体的纹理、阴影和质感</div>
+                    </div>
+                    <div class="style-card" data-style="neumorphic">
+                        <div class="style-icon">🔘</div>
+                        <div class="style-name">新拟物设计</div>
+                        <div class="style-desc">柔和的阴影创造凸起/凹陷效果</div>
+                    </div>
+                    <div class="style-card" data-style="glass">
+                        <div class="style-icon">🪟</div>
+                        <div class="style-name">玻璃拟态</div>
+                        <div class="style-desc">半透明背景与模糊效果，类似毛玻璃</div>
+                    </div>
+                    <div class="style-card" data-style="brutalist">
+                        <div class="style-icon">🏗️</div>
+                        <div class="style-name">粗野主义</div>
+                        <div class="style-desc">原始、未修饰的界面，强调功能而非形式</div>
+                    </div>
+                </div>
+
+                <div id="material" class="style-demo active">
+                    <h3>Material Design 示例</h3>
+                    <button class="demo-button" style="background:#4361ee;">带阴影按钮</button>
+                    <div class="demo-card" style="box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                        <p>Material Design卡片示例</p>
+                        <button class="demo-button" style="background:#3a0ca3;">操作按钮</button>
+                    </div>
+                </div>
+
+                <div id="flat" class="style-demo">
+                    <h3>扁平化设计示例</h3>
+                    <button class="demo-button" style="background:#e63946; box-shadow:none;">扁平按钮</button>
+                    <div class="demo-card" style="box-shadow:none; border:1px solid #ddd;">
+                        <p>扁平设计卡片示例</p>
+                        <button class="demo-button" style="background:#e63946; box-shadow:none;">操作按钮</button>
+                    </div>
+                </div>
+
+                <div id="skeuomorphic" class="style-demo">
+                    <h3>拟物化设计示例</h3>
+                    <button class="demo-button" style="background:linear-gradient(to bottom, #8b4513, #a0522d); border:1px solid #5d2906; box-shadow:inset 0 1px 0 rgba(255,255,255,0.4);">木质按钮</button>
+                    <div class="demo-card" style="background:linear-gradient(to bottom, #f5f5f5, #e5e5e5); border:1px solid #ccc; box-shadow:0 2px 5px rgba(0,0,0,0.2);">
+                        <p>拟物化卡片示例</p>
+                        <button class="demo-button" style="background:linear-gradient(to bottom, #4a90e2, #357abd); border:1px solid #2d5aa0; box-shadow:inset 0 1px 0 rgba(255,255,255,0.4);">操作按钮</button>
+                    </div>
+                </div>
+
+                <div id="neumorphic" class="style-demo">
+                    <h3>新拟物设计示例</h3>
+                    <button class="demo-button" style="background:#e0e5ec; color:#666; box-shadow:5px 5px 10px #b8b9be, -5px -5px 10px #fff;">新拟物按钮</button>
+                    <div class="demo-card" style="background:#e0e5ec; box-shadow:5px 5px 10px #b8b9be, -5px -5px 10px #fff;">
+                        <p>新拟物卡片示例</p>
+                        <button class="demo-button" style="background:#e0e5ec; color:#666; box-shadow:3px 3px 6px #b8b9be, -3px -3px 6px #fff;">操作按钮</button>
+                    </div>
+                </div>
+
+                <div id="glass" class="style-demo">
+                    <h3>玻璃拟态示例</h3>
+                    <button class="demo-button" style="background:rgba(255,255,255,0.2); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3);">玻璃按钮</button>
+                    <div class="demo-card" style="background:rgba(255,255,255,0.2); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3);">
+                        <p>玻璃拟态卡片示例</p>
+                        <button class="demo-button" style="background:rgba(255,255,255,0.3); backdrop-filter:blur(5px); border:1px solid rgba(255,255,255,0.4);">操作按钮</button>
+                    </div>
+                </div>
+
+                <div id="brutalist" class="style-demo">
+                    <h3>粗野主义示例</h3>
+                    <button class="demo-button" style="background:black; color:yellow; border:3px solid yellow; box-shadow:none; font-weight:bold;">原始按钮</button>
+                    <div class="demo-card" style="background:white; border:3px solid black; box-shadow:none;">
+                        <p style="font-weight:bold; font-size:1.2rem;">粗野主义卡片</p>
+                        <p>功能优先，形式随意</p>
+                        <button class="demo-button" style="background:black; color:yellow; border:3px solid yellow; box-shadow:none; font-weight:bold;">操作按钮</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">与AI沟通开发应用的技巧</h2>
+                <ul class="ai-tips-list">
+                    <li><strong>明确指定UI风格</strong> - 直接告诉AI你想要的风格，如"使用Material Design风格"</li>
+                    <li><strong>提供具体示例</strong> - 分享你喜欢的网站或应用截图作为参考</li>
+                    <li><strong>详细描述功能需求</strong> - 明确说明应用需要实现的具体功能</li>
+                    <li><strong>分步骤请求</strong> - 将复杂需求分解为多个简单请求</li>
+                    <li><strong>指定技术栈</strong> - 明确使用的前端框架(React、Vue等)和UI库</li>
+                    <li><strong>要求响应式设计</strong> - 确保应用在不同设备上都能良好显示</li>
+                    <li><strong>请求代码注释</strong> - 要求AI在代码中添加详细注释，便于理解</li>
+                </ul>
+
+                <div class="example-area">
+                    <div class="example-title">AI提示词示例：</div>
+                    <div class="prompt-example">
+                        "创建一个任务管理应用的登录页面，使用Material Design风格。要求包含：<br>
+                        1. 应用标题和Logo区域<br>
+                        2. 邮箱和密码输入框<br>
+                        3. 记住密码复选框<br>
+                        4. 登录按钮<br>
+                        5. 忘记密码链接<br>
+                        使用React和Material-UI实现，确保响应式设计。"
+                    </div>
+
+                    <div class="example-title">AI提示词示例：</div>
+                    <div class="prompt-example">
+                        "设计一个电商产品卡片组件，使用玻璃拟态风格。要求：<br>
+                        1. 产品图片区域<br>
+                        2. 产品名称和价格<br>
+                        3. 评分星星和评论数量<br>
+                        4. 添加到购物车按钮<br>
+                        使用HTML/CSS实现，背景模糊效果，半透明边框。"
+                    </div>
+
+                    <div class="example-title">代码示例（Material Design按钮）：</div>
+                    <div class="example-code">
+/* Material Design 按钮样式 */
+.material-button {
+  background-color: #4361ee;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.material-button:hover {
+  background-color: #3a0ca3;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.material-button:active {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2023 UI风格分类与AI沟通指南 | 帮助开发者更好地与AI协作进行应用开发</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const styleCards = document.querySelectorAll('.style-card');
+            const styleDemos = document.querySelectorAll('.style-demo');
+            
+            styleCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // 移除所有卡片的active类
+                    styleCards.forEach(c => c.classList.remove('active'));
+                    // 添加当前卡片的active类
+                    this.classList.add('active');
+                    
+                    // 隐藏所有演示区域
+                    styleDemos.forEach(demo => demo.classList.remove('active'));
+                    
+                    // 显示对应的演示区域
+                    const styleName = this.getAttribute('data-style');
+                    const targetDemo = document.getElementById(styleName);
+                    if (targetDemo) {
+                        targetDemo.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

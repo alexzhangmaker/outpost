@@ -7,10 +7,11 @@ const _funcDict_PubAnki = async (rowCells) => {
     console.log(rowCells) ;
     let wordSetKey = rowCells[0].data ;
     console.log(wordSetKey) ;
-    await _PublishWordSet2Anki(wordSetKey) ;
+    let l1Title = rowCells[3].data ;
+    await _PublishWordSet2Anki(wordSetKey,l1Title) ;
 };
 
-async function _PublishWordSet2Anki(wordSetKey) {
+async function _PublishWordSet2Anki(wordSetKey,title) {
     let keyEncode =encodeURIComponent(wordSetKey) ;
     let cDate = new Date() ;
 
@@ -20,7 +21,7 @@ async function _PublishWordSet2Anki(wordSetKey) {
         "createdAt":cDate.toDateString(),
         "nextReview":cDate.toDateString(),
         "wordSetID":wordSetKey,
-        "title":wordSetKey,
+        "title":title,//wordSetKey,
         "wordSetURL":urlWordSet
     };
     // 在实际应用中，这里应该调用Firebase的发布API
