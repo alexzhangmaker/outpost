@@ -280,152 +280,8 @@
         </div>
     </div>
 
+<script src="./mockData/mockData_CloseReading.js"></script>
 <script>
-    // 模拟的文章数据JSON对象
-    const mockArticles = [
-        {
-            id: 'chiang-mai-trip',
-            title: "清迈之旅 (A Trip to Chiang Mai)",
-            paragraphs: [
-                {
-                    pid: 0,
-                    sentences: [
-                        { thai: "เชียงใหม่เป็นเมืองที่สวยงามในภาคเหนือของประเทศไทย", english: "Chiang Mai is a beautiful city in the northern part of Thailand." },
-                        { thai: "มีชื่อเสียงในด้านวัดวาอารามที่งดงาม ภูเขาเขียวชอุ่ม และวัฒนธรรมที่มีชีวิตชีวา", english: "It is famous for its beautiful temples, lush mountains, and vibrant culture." }
-                    ]
-                },
-                {
-                    pid: 1,
-                    sentences: [
-                        { thai: "นักท่องเที่ยวสามารถเยี่ยมชมดอยสุเทพซึ่งเป็นวัดที่มีชื่อเสียงบนภูเขา", english: "Tourists can visit Doi Suthep, a famous temple on a mountain." },
-                        { thai: "จากที่นั่น คุณสามารถมองเห็นทิวทัศน์ที่น่าทึ่งของเมืองได้", english: "From there, you can see a stunning view of the city." },
-                        { thai: "ตลาดกลางคืนเป็นอีกหนึ่งสถานที่ที่น่าสนใจซึ่งคุณสามารถหาของที่ระลึกและอาหารท้องถิ่นได้", english: "The night bazaar is another attraction where you can find souvenirs and local food." }
-                    ]
-                },
-                {
-                    pid: 2,
-                    sentences: [
-                        { thai: "อาหารในเชียงใหม่ก็อร่อยมาก", english: "The food in Chiang Mai is also very delicious." },
-                        { thai: "อย่าลืมลองข้าวซอย ซึ่งเป็นเมนูขึ้นชื่อของท้องถิ่น", english: "Don't forget to try Khao Soi, a famous local dish." }
-                    ]
-                },
-                {
-                    pid: 3,
-                    sentences: [
-                        { thai: "การเดินทางในเมืองนั้นง่ายดายด้วยรถตุ๊กตุ๊กและรถสองแถว", english: "Getting around the city is easy with tuk-tuks and songthaews." },
-                        { thai: "ผู้คนในท้องถิ่นเป็นมิตรและให้การต้อนรับเป็นอย่างดี", english: "The local people are very friendly and welcoming." }
-                    ]
-                },
-                 {
-                    pid: 4,
-                    sentences: [
-                        { thai: "โดยรวมแล้ว เชียงใหม่เป็นสถานที่ที่ยอดเยี่ยมสำหรับการพักผ่อนและสัมผัสกับวัฒนธรรมไทย", english: "Overall, Chiang Mai is a fantastic place to relax and experience Thai culture." }
-                    ]
-                }
-            ]
-        },
-        {
-            id: 'bangkok-city',
-            title: '曼谷：天使之城 (Bangkok: City of Angels)',
-            paragraphs: [
-                {
-                    pid: 0,
-                    sentences: [
-                        { thai: "กรุงเทพฯ เป็นเมืองหลวงและเมืองที่มีประชากรมากที่สุดของประเทศไทย", english: "Bangkok is the capital and most populous city of Thailand." },
-                        { thai: "เป็นที่รู้จักกันในชื่อท้องถิ่นว่ากรุงเทพมหานคร", english: "It is known in Thai as Krung Thep Maha Nakhon." }
-                    ]
-                },
-                {
-                    pid: 1,
-                    sentences: [
-                        { thai: "เมืองนี้มีชื่อเสียงด้านชีวิตชีวาบนท้องถนนและศาลเจ้าทางวัฒนธรรม", english: "The city is famous for its vibrant street life and cultural landmarks." },
-                        { thai: "วัดอรุณและพระบรมมหาราชวังเป็นสถานที่ท่องเที่ยวที่ต้องไปเยือน", english: "Wat Arun and the Grand Palace are must-visit tourist spots." }
-                    ]
-                }
-            ]
-        },
-        {
-            uuid: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-            title: "Everyone has their own Everest to climb",
-            paragraphs: [
-                {
-                    pid: 0,
-                    sentences: [
-                        { thai: "นี่เป็นคำที่ วานดา รุทคีเยวิช นักปีนเขาหญิงชาวโปแลนด์ และสตรีคนที่ 3 ของโลกที่สามารถพิชิตยอดเขาเอเวอเรสต์ เมื่อ พ.ศ. 2521 กล่าวเอาไว้", english: "This is a quote by Wanda Rutkiewicz, a Polish female mountaineer and the third woman in the world to conquer Mount Everest in 1978." },
-                        { thai: "เป็นประโยคเปรียบเทียบว่า ทุกคนต่างมีเป้าหมายยิ่งใหญ่", english: "It's a metaphor stating that everyone has their own great goal." },
-                        { thai: "สำหรับแพทย์หญิงวัย 35 ปี จาก จ.ขอนแก่น “เอเวอเรสต์” ของเธอ ไม่ได้แค่คำเปรียบเทียบ", english: "For a 35-year-old female doctor from Khon Kaen province, her 'Everest' is not just a metaphor." }
-                    ]
-                },
-                {
-                    pid: 1,
-                    sentences: [
-                        { thai: "แต่เป็นยอดเขาจริง ๆ ซึ่งเธอพิชิตสำเร็จเมื่อวันที่ 25 พ.ค. 2566 เวลา 8.15 น. ตามเวลาท้องถิ่น", english: "But it is a real mountain peak, which she successfully conquered on May 25, 2023, at 8:15 a.m. local time." }
-                    ]
-                },
-                {
-                    pid: 2,
-                    sentences: [
-                        { thai: "“ฉันอยู่ที่จุดสูงที่สุดในโลกแล้ว ฉันทำให้พ่อภูมิใจแล้ว” พญ.มัณฑนา ถวิไธสง บอกกับบีบีซีไทยถึงความรู้สึกตอนที่ได้สัมผัสยอดภูเขาสูงที่สุดในโลก ณ ความสูง 8,848 เมตร", english: "'I am at the highest point in the world. I have made my father proud,' Dr. Manthana Thawisaisong told BBC Thai about her feelings upon reaching the world's highest peak at an altitude of 8,848 meters." },
-                        { thai: "แต่ความสำเร็จยิ่งใหญ่ที่เธอคนจะทำได้ มี “ราคา” มากมายที่ต้องจ่าย ไม่ว่าจะเป็น 8 ปีแห่งการฝึกซ้อม ต้องลาออกจากงาน เงินกว่า 3 ล้านบาทที่หยอดอมจากหยาดเหงื่อที่ตั้งใจหามาด้วยตนเอง และประตูสู่ความตายที่อยู่ใกล้ทุกขณะของอยู่บนหลังคาโลก", english: "But the great success she achieved came at a great 'price,' including 8 years of training, resigning from her job, over 3 million baht saved from her own hard-earned sweat, and the door to death that was ever-present on the roof of the world." }
-                    ]
-                },
-                {
-                    pid: 3,
-                    sentences: [
-                        { thai: "“เรารู้ว่าการเสี่ยงขึ้นวันนี้มันเป็นความเสี่ยง การเสียชีวิตอะ หรือหาย เป็นสิ่งที่เราต้องยอมรับได้” มัณฑนา กล่าวเสียงสั่น พร้อมน้ำตา และรอยน้ำตา ในการสัมภาษณ์กับสำนักข่าวต่างประเทศชั้นนำ", english: "'We knew that taking the risk to ascend today was a risk. Death or disappearance is something we had to accept,' Manthana said with a trembling voice, tears, and tear stains in an interview with a leading international news agency." },
-                        { thai: "ไม่ผ่านแพทย์หญิงก็เสียชีวิตหนึ่งชั่วโมงก่อนที่จะเสียชีวิตเพียงชั่วโมงกว่า", english: "Another female doctor had passed away just over an hour before." },
-                        { thai: "“มันไม่มีอะไรที่ไม่คุ้ม ต่อให้ตายก็คุ้ม” เธอกล่าว", english: "'There's nothing that isn't worth it. Even if I died, it would be worth it,' she said." }
-                    ]
-                },
-                {
-                    pid: 4,
-                    sentences: [
-                        { thai: "คือบทสนทนาที่บีบีซีไทยได้พูดคุยกับคนไทยคนที่ 5 และสตรีไทยคนที่ 2 ที่พิชิตเอเวอเรสต์สำเร็จ ในฤดูการปีนเขาที่มีมรณะที่สุด เพราะมีนักปีนเขา-เชอร์ปา เสียชีวิตมากเป็นประวัติการณ์", english: "This is the conversation BBC Thai had with the 5th Thai person and the 2nd Thai woman to successfully conquer Everest, during the deadliest climbing season on record, with a record number of mountaineer-sherpa deaths." }
-                    ]
-                },
-                {
-                    pid: 5,
-                    sentences: [
-                        { thai: "“มันเป็นสิ่งที่ยากที่สุดในชีวิต ไม่ได้ทำมันคนเดียว ทุกคนในบ้านช่วยกัน… รู้สึกตื่นตันใจ เราไม่ได้ทำให้พ่อเขาผิดหวัง” มัณฑนาบอกกับบีบีซีไทย", english: "'It was the hardest thing in my life. I didn't do it alone; everyone in my family helped... I feel overwhelmed. I didn't disappoint my father,' Manthana told BBC Thai." },
-                        { thai: "และเธอร้องไห้อีกครั้งเหมือนที่เคยร้องบนยอดสุดหลังจากโลก", english: "And she cried again, just as she had cried on the top of the world." }
-                    ]
-                },
-                {
-                    pid: 6,
-                    sentences: [
-                        { thai: "มัณฑนาเล่าให้บีบีซีไทยฟังว่า เมื่อเธอเดินลงจากยอดเขา ตาของเธอมองไม่ค่อยเห็น และเท้าถูกหิมะกัดรุนแรง", english: "Manthana told BBC Thai that as she descended from the summit, her vision was blurred, and her feet were severely frostbitten." },
-                        { thai: "“ถ้าเรามองไม่เห็น โอกาสที่จะลงมาก… ถ้าไม่มีคนจริงใจ กับเรา เขาหนีเราทิ้ง ๆ ๆ”", english: "'If I couldn't see, the chance of getting down... If there weren't sincere people with me, they would have abandoned me.'" },
-                        { thai: "ตอนนั้นเธอเป็นภาวะที่อยู่กึ่งกลางการตัดสินใจของตน จนกระทั่งเฮลิคอปเตอร์รับเธอไปที่หมู่บ้านลูกลา แล้วอพยพไปกรุงกาฐมาณฑุ และต้องเร่งเดินทางกลับไทยในวันที่ 28 พ.ค. หรือ 3 วันหลังพิชิตเอเวอเรสต์ เพราะยารักษาอาการหิมะกัด “หมดประเทศ” ไม่มีเหลืออยู่ในเนปาล", english: "At that time, she was in a state of indecision until a helicopter picked her up and took her to Lukla village, then evacuated her to Kathmandu. She had to rush back to Thailand on May 28, 3 days after conquering Everest, because the medicine for frostbite had 'run out of the country' and was no longer available in Nepal." },
-                        { thai: "และนี่คือสิ่งที่แพทย์จาก รพ.ศรีนครินทร์วิเคราะห์ว่า อาการบาดเจ็บของเธอ หากเป็นไปได้ เธออยากกลับไปเป็นแพทย์อีกครั้ง ซึ่งสิ่งนี้เป็น “เอเวอเรสต์” ทางจิตวิญญาณของเธอ", english: "And this is what doctors from Srinagarind Hospital analyzed about her injuries. If possible, she wants to return to being a doctor again, which is her spiritual 'Everest.'" }
-                    ]
-                },
-                {
-                    pid: 7,
-                    sentences: [
-                        { thai: "“ความรู้พื้นฐานคือได้อยู่กับคนไข้ ทำให้เข้มแข็งขึ้น… เราอยากกลับไปเป็นคนที่ทำงานแบบนั้นได้ แม้วันที่ยังมีลำบาก”", english: "'The basic knowledge is being with patients, it makes you stronger... I want to go back to being a person who can do that kind of work, even on difficult days.'" }
-                    ]
-                },
-                {
-                    pid: 8,
-                    sentences: [
-                        { thai: "จนถึงปัจจุบัน มีคนไทยที่พิชิตยอดเขาเอเวอเรสต์สำเร็จเพียง 5 คน", english: "To date, only 5 Thais have successfully conquered Mount Everest." },
-                        { thai: "โดยหญิงไทยคนแรกที่ขึ้นถึงความสูง 8,848 เมตร คือ ทันตแพทย์หญิงนภัสพร ชำนาญสุทธิ์ เมื่อปี 2559", english: "The first Thai woman to reach the height of 8,848 meters was Dr. Napassaporn Chumnansut in 2016." }
-                    ]
-                }
-            ],
-            words: [
-                { thai: "นักปีนเขา", definition: "(nák-bpiin-khǎo) mountaineer, climber. A person who climbs mountains as a sport or profession." },
-                { thai: "พิชิต", definition: "(phí-chít) to conquer, to overcome. To successfully overcome a problem or weakness." },
-                { thai: "ยอดเขา", definition: "(yâwt-khǎo) mountain peak, summit. The pointed top of a mountain." },
-                { thai: "เปรียบเทียบ", definition: "(bprìap-thîap) to compare, metaphor. A figure of speech in which a word or phrase is applied to an object or action to which it is not literally applicable." },
-                { thai: "หยาดเหงื่อ", definition: "(yàat-ngùea) sweat, hard work. A poetic way to refer to the effort and labor someone puts into their work." },
-                { thai: "หลังคาโลก", definition: "(lǎng-khaa-lôok) roof of the world. A term often used to refer to the high-altitude regions of the Himalayas, especially Mount Everest." },
-                { thai: "หิมะกัด", definition: "(hì-má-gàt) frostbite. Injury to body tissues caused by exposure to extreme cold." },
-                { thai: "จิตวิญญาณ", definition: "(jìt-win-yaan) spirit, soul, spiritual. Relating to or affecting the human spirit or soul as opposed to material or physical things." }
-            ]
-        }
-    ];
-
     document.addEventListener('DOMContentLoaded', () => {
         const articleListEl = document.getElementById('article-list');
         const articleTitleEl = document.getElementById('article-title');
@@ -450,8 +306,40 @@
             const article = mockArticles.find(a => (a.id || a.uuid) === articleId);
             if (!article) return;
 
-            articleTitleEl.textContent = article.title;
+            const svgICON = `<svg xmlns="http://www.w3.org/2000/svg" class="BTNPlayAudible" width="24" height="24" viewBox="0 0 24 24"><path fill="#000000" d="M12.008 17.362L24 9.885v2.028l-11.992 7.509L0 11.912V9.886l12.008 7.477zm0-9.378c-2.709 0-5.085 1.363-6.448 3.47c.111-.111.175-.175.286-.254c3.374-2.804 8.237-2.17 10.883 1.362l1.758-1.124c-1.394-2.044-3.786-3.454-6.48-3.454m0 3.47a4.392 4.392 0 0 0-3.548 1.821a3.597 3.597 0 0 1 2.139-.697c1.299 0 2.455.666 3.232 1.79l1.679-1.045c-.729-1.157-2.028-1.87-3.501-1.87M3.897 8.412c4.943-3.897 11.929-2.836 15.652 2.344l.031.032l1.822-1.125a11.214 11.214 0 0 0-9.394-5.085c-3.897 0-7.366 1.996-9.394 5.085c.364-.412.824-.903 1.283-1.251"/></svg>`
+            articleTitleEl.innerHTML = `
+                <span>${article.title}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" id="idBTNPlayAudible" width="24" height="24" viewBox="0 0 24 24"><path fill="#000000" d="M12.008 17.362L24 9.885v2.028l-11.992 7.509L0 11.912V9.886l12.008 7.477zm0-9.378c-2.709 0-5.085 1.363-6.448 3.47c.111-.111.175-.175.286-.254c3.374-2.804 8.237-2.17 10.883 1.362l1.758-1.124c-1.394-2.044-3.786-3.454-6.48-3.454m0 3.47a4.392 4.392 0 0 0-3.548 1.821a3.597 3.597 0 0 1 2.139-.697c1.299 0 2.455.666 3.232 1.79l1.679-1.045c-.729-1.157-2.028-1.87-3.501-1.87M3.897 8.412c4.943-3.897 11.929-2.836 15.652 2.344l.031.032l1.822-1.125a11.214 11.214 0 0 0-9.394-5.085c-3.897 0-7.366 1.996-9.394 5.085c.364-.412.824-.903 1.283-1.251"/></svg>
+            `;
             
+            articleTitleEl.querySelector("#idBTNPlayAudible").addEventListener('click',async (event)=>{
+                //alert('fdsf') ;
+                //let tagThaiArticle = 
+                console.log(article) ;
+                const sleep = (milliseconds) => {
+                    return new Promise(resolve => setTimeout(resolve, milliseconds));
+                };
+
+                function playAudioUntilEnd(audio) {
+                    return new Promise((resolve) => {
+                        audio.addEventListener('ended', resolve, { once: true });
+                        audio.play();
+                    });
+                }
+
+                for(let i=0;i<article.paragraphs.length;i++){
+                    let paragraph = article.paragraphs[i] ;
+                    for(let j=0;j<paragraph.sentences.length;j++){
+                        let sentence = paragraph.sentences[j] ;
+                        let urlAudible = `${sentence.audioURI}` ;
+                        const audio = new Audio(urlAudible);
+                        //await audio.play();
+                        await playAudioUntilEnd(audio) ;
+                        await sleep(2000); 
+                    }
+                }
+                
+            }) ;
             thaiContentEl.innerHTML = '';
             englishContentEl.innerHTML = '';
             
@@ -467,7 +355,14 @@
                 para.sentences.forEach((sent, sIndex) => {
                     const thaiSpan = document.createElement('span');
                     thaiSpan.id = `thai-sent-${pIndex}-${sIndex}`;
-                    thaiSpan.textContent = sent.thai + ' ';
+                    //thaiSpan.textContent = sent.thai + ' ';
+                    thaiSpan.innerHTML = `${sent.thai} ${svgICON} `;
+                    thaiSpan.querySelector('.BTNPlayAudible').addEventListener('click',async (event)=>{
+                        //alert('fdsfds') ;
+                        let urlAudible = `${sent.audioURI}` ;
+                        const audio = new Audio(urlAudible);
+                        audio.play();
+                    }) ;
                     thaiParaDiv.appendChild(thaiSpan);
 
                     const englishSpan = document.createElement('span');
