@@ -639,6 +639,10 @@
         // 打印文档
         function printDocument() {
             const content = editor.getHTML();
+            const markdownContent = editor.getMarkdown();
+            localStorage.setItem('markdown-print-content', markdownContent);
+            window.open('mdPrintAnywhere.html?storageKey=markdown-print-content&autoPrint=false', '_blank');
+            /*
             const printArea = document.getElementById('print-area');
             
             // 创建打印友好的HTML
@@ -665,6 +669,7 @@
             
             // 触发打印
             window.print();
+            */
         }
 
         // 生成唯一ID

@@ -900,8 +900,14 @@
                         tagNote.querySelector('#idBTNPrintNote').addEventListener('click',(event)=>{
                             event.stopPropagation() ;
                             event.preventDefault() ;
+                            /*
                             let noteID = tagNote.getAttribute("data-note-id") ;
                             window.open(`./noteMarkdownPrint.html?app=noteAnywhere&note=${noteID}`,"_blank") ;
+                            */
+                            //const content = editorInstance.getHTML();
+                            const markdownContent = editorInstance.getMarkdown();
+                            localStorage.setItem('markdown-print-content', markdownContent);
+                            window.open('mdPrintAnywhere.html?storageKey=markdown-print-content&autoPrint=false', '_blank');
                         }) ;
                         //idBTNSaveNote
                         tagNote.querySelector('#idBTNSaveNote').addEventListener('click',async (event)=>{
