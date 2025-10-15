@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown 打印样式测试平台</title>
+    
+    <!-- 引入 Marked.js 用于 Markdown 解析 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 引入 Noto Sans 字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --border-color: #e2e8f0;
+            --hover-color: #f1f5f9;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            background: #f8fafc;
+            color: #334155;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        /* 左侧编辑和控制面板 */
+        .control-panel {
+            flex: 0 0 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+        
+        .editor-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .style-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        textarea {
+            width: 100%;
+            height: 200px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        /* 右侧预览区域 */
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .preview-toolbar {
+            padding: 15px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .preview-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f1f5f9;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* 样式选项 */
+        .style-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .style-option {
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .style-option:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .style-option.active {
+            border-color: var(--primary-color);
+            background: var(--hover-color);
+        }
+        
+        /* 精细控制样式 */
+        .control-group {
+            margin: 15px 0;
+        }
+        
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #475569;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .control-input {
+            width: 80px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .control-unit {
+            color: #64748b;
+            font-size: 12px;
+        }
+        
+        /* A4 页面容器 */
+        .a4-pages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            width: 100%;
+        }
+        
+        /* 单个 A4 页面 */
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            padding: 20mm;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+            page-break-after: always;
+            position: relative;
+        }
+        
+        .a4-page:last-child {
+            page-break-after: auto;
+        }
+        
+        .page-number {
+            position: absolute;
+            bottom: 15mm;
+            right: 20mm;
+            font-size: 10pt;
+            color: #94a3b8;
+        }
+        
+        /* 打印样式 - 隐藏所有控制元素 */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body, html {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+            }
+            
+            .container {
+                display: block !important;
+                height: auto !important;
+                padding: 0 !important;
+            }
+            
+            .control-panel {
+                display: none !important;
+            }
+            
+            .preview-panel {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                background: white !important;
+            }
+            
+            .preview-toolbar {
+                display: none !important;
+            }
+            
+            .preview-content {
+                padding: 0 !important;
+                background: white !important;
+                overflow: visible !important;
+            }
+            
+            .a4-pages-container {
+                gap: 0 !important;
+            }
+            
+            .a4-page {
+                width: 100% !important;
+                min-height: 277mm !important; /* 297mm - 上下边距 */
+                height: 277mm !important;
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 20mm !important;
+                page-break-inside: avoid;
+            }
+            
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+    </style>
+    
+    <!-- 不同的打印样式 -->
+    <style id="print-styles">
+        /* 默认样式会在 JavaScript 中动态加载 */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧控制面板 -->
+        <div class="control-panel no-print">
+            <div class="editor-section style-section">
+                <h3>Markdown 内容</h3>
+                <textarea id="markdown-input" placeholder="在这里输入 Markdown 内容..."># Markdown 打印样式测试文档
+
+这是一个用于测试打印样式的 Markdown 文档。你可以在这里尝试不同的样式配置，查看分页效果。
+
+## 文档结构测试
+
+### 三级标题示例
+
+这里是段落内容，包含**粗体文本**和*斜体文本*，以及`行内代码`的展示。这个段落相对较长，用于测试文本换行和段落间距的设置效果。
+
+#### 四级标题测试
+
+这是一个更小的标题，用于测试标题层级和相应的间距配置。
+
+### 列表示例
+
+无序列表：
+- 列表项一 - 这是一个较长的列表项内容，用于测试列表项内部的文本换行和行高设置
+- 列表项二
+- 列表项三
+  - 嵌套列表项一
+  - 嵌套列表项二 - 测试嵌套列表的缩进和间距
+
+有序列表：
+1. 第一项 - 有序列表的测试内容
+2. 第二项
+3. 第三项
+
+### 引用和代码块
+
+> 这是一个引用块。引用通常用于突出重要的内容或者引用他人的话语。可以包含多行内容，测试引用块的边距和背景色设置。
+
+行内代码示例：`const example = "Hello World";`
+
+代码块测试：
+
+\`\`\`javascript
+function calculateSum(a, b) {
+    // 这是一个示例函数，用于测试代码块的样式
+    const result = a + b;
+    console.log("计算结果:", result);
+    return result;
+}
+
+// 调用函数
+const total = calculateSum(5, 3);
+\`\`\`
+
+### 表格样式测试
+
+| 姓名 | 年龄 | 职业 | 所在城市 | 备注信息 |
+|------|------|------|----------|----------|
+| 张三 | 28 | 软件工程师 | 北京市海淀区 | 高级工程师，负责后端开发 |
+| 李四 | 32 | UI设计师 | 上海市浦东新区 | 资深设计师，擅长移动端设计 |
+| 王五 | 25 | 产品经理 | 深圳市南山区 | 负责产品规划和需求分析 |
+
+### 另一个章节
+
+这部分内容用于测试分页效果，当内容超过一页时会自动分页到第二页。
+
+#### 分页测试
+
+继续添加内容以测试分页功能...
+
+这是新的一段内容，用于填充页面。
+
+### 第三个章节
+
+更多的测试内容来确保分页功能正常工作。
+
+#### 特性列表
+
+- 特性一：优秀的分页支持
+- 特性二：灵活的样式配置
+- 特性三：精确的间距控制
+- 特性四：多语言字体支持
+
+### 最后一个章节
+
+这是文档的结尾部分，用于测试最后一页的显示效果。
+
+---
+
+*文档结束 - 感谢测试打印样式*</textarea>
+            </div>
+            
+            <div class="style-section">
+                <h3>打印样式选择</h3>
+                <div class="style-options">
+                    <div class="style-option active" data-style="default">默认样式</div>
+                    <div class="style-option" data-style="compact">紧凑样式</div>
+                    <div class="style-option" data-style="elegant">优雅样式</div>
+                    <div class="style-option" data-style="academic">学术样式</div>
+                </div>
+            </div>
+            
+            <div class="style-section">
+                <h3>字体设置</h3>
+                <div class="style-options">
+                    <div class="style-option active" data-font="noto">Noto Sans</div>
+                    <div class="style-option" data-font="serif">衬线字体</div>
+                    <div class="style-option" data-font="mono">等宽字体</div>
+                    <div class="style-option" data-font="system">系统字体</div>
+                </div>
+            </div>
+            
+            <div class="style-section">
+                <h3>精细样式控制</h3>
+                
+                <div class="control-group">
+                    <label class="control-label">段落设置</label>
+                    <div class="control-row">
+                        <span>行高:</span>
+                        <input type="number" id="line-height" class="control-input" value="1.6" step="0.1" min="1.0" max="3.0">
+                        <span class="control-unit">倍</span>
+                    </div>
+                    <div class="control-row">
+                        <span>段前距:</span>
+                        <input type="number" id="para-margin-top" class="control-input" value="10" step="1" min="0" max="50">
+                        <span class="control-unit">pt</span>
+                    </div>
+                    <div class="control-row">
+                        <span>段后距:</span>
+                        <input type="number" id="para-margin-bottom" class="control-input" value="10" step="1" min="0" max="50">
+                        <span class="control-unit">pt</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">列表设置</label>
+                    <div class="control-row">
+                        <span>行高:</span>
+                        <input type="number" id="list-line-height" class="control-input" value="1.5" step="0.1" min="1.0" max="3.0">
+                        <span class="control-unit">倍</span>
+                    </div>
+                    <div class="control-row">
+                        <span>项间距:</span>
+                        <input type="number" id="list-item-spacing" class="control-input" value="4" step="1" min="0" max="20">
+                        <span class="control-unit">pt</span>
+                    </div>
+                    <div class="control-row">
+                        <span>缩进:</span>
+                        <input type="number" id="list-indent" class="control-input" value="24" step="2" min="10" max="50">
+                        <span class="control-unit">pt</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">表格设置</label>
+                    <div class="control-row">
+                        <span>字体大小:</span>
+                        <input type="number" id="table-font-size" class="control-input" value="11" step="0.5" min="8" max="14">
+                        <span class="control-unit">pt</span>
+                    </div>
+                    <div class="control-row">
+                        <span>单元格内边距:</span>
+                        <input type="number" id="table-cell-padding" class="control-input" value="8" step="1" min="4" max="20">
+                        <span class="control-unit">pt</span>
+                    </div>
+                    <div class="control-row">
+                        <span>行高:</span>
+                        <input type="number" id="table-line-height" class="control-input" value="1.4" step="0.1" min="1.0" max="2.0">
+                        <span class="control-unit">倍</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="style-section">
+                <h3>操作</h3>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="update-preview">更新预览</button>
+                    <button class="btn btn-secondary" id="print-test">打印测试</button>
+                    <button class="btn btn-secondary" id="export-style">导出样式</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧预览面板 -->
+        <div class="preview-panel">
+            <div class="preview-toolbar no-print">
+                <h3>打印预览 - A4 分页显示</h3>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="actual-print">实际打印</button>
+                    <button class="btn btn-secondary" id="toggle-live">实时更新: 开启</button>
+                    <span id="page-count" style="margin-left: 10px; color: #64748b;">共 1 页</span>
+                </div>
+            </div>
+            <div class="preview-content">
+                <div class="a4-pages-container" id="pages-container">
+                    <!-- 分页内容将通过 JavaScript 动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 样式定义
+        const printStyles = {
+            default: `
+                .a4-page {
+                    font-size: 12pt;
+                    line-height: 1.6;
+                    color: #333;
+                }
+                .a4-page h1 { 
+                    font-size: 18pt; 
+                    margin-top: 24pt; 
+                    margin-bottom: 12pt;
+                    border-bottom: 2px solid #e2e8f0;
+                    padding-bottom: 6pt;
+                    color: #1e293b;
+                }
+                .a4-page h2 { 
+                    font-size: 16pt; 
+                    margin-top: 20pt; 
+                    margin-bottom: 10pt;
+                    color: #334155;
+                }
+                .a4-page h3 { 
+                    font-size: 14pt; 
+                    margin-top: 16pt; 
+                    margin-bottom: 8pt;
+                    color: #475569;
+                }
+                .a4-page h4 { 
+                    font-size: 13pt; 
+                    margin-top: 14pt; 
+                    margin-bottom: 7pt;
+                    color: #64748b;
+                }
+                .a4-page p {
+                    margin-bottom: 10pt;
+                    text-align: justify;
+                }
+                .a4-page ul, .a4-page ol {
+                    margin-bottom: 10pt;
+                    padding-left: 24pt;
+                }
+                .a4-page li {
+                    margin-bottom: 4pt;
+                }
+                .a4-page blockquote {
+                    border-left: 4px solid #cbd5e1;
+                    padding: 12pt 16pt;
+                    margin: 16pt 0;
+                    background: #f8fafc;
+                    color: #475569;
+                }
+                .a4-page code {
+                    background: #f1f5f9;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    font-size: 0.9em;
+                    color: #dc2626;
+                }
+                .a4-page pre {
+                    background: #1e293b;
+                    color: #e2e8f0;
+                    padding: 16pt;
+                    border-radius: 8px;
+                    overflow-x: auto;
+                    margin: 16pt 0;
+                    border: 1px solid #334155;
+                }
+                .a4-page pre code {
+                    background: none;
+                    color: inherit;
+                    padding: 0;
+                }
+                .a4-page table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 16pt 0;
+                    font-size: 11pt;
+                }
+                .a4-page th, .a4-page td {
+                    border: 1px solid #cbd5e1;
+                    padding: 8pt 12pt;
+                    text-align: left;
+                }
+                .a4-page th {
+                    background: #f1f5f9;
+                    font-weight: 600;
+                    color: #334155;
+                }
+                .a4-page a {
+                    color: #2563eb;
+                    text-decoration: none;
+                }
+                .a4-page img {
+                    max-width: 100%;
+                    height: auto;
+                    margin: 8pt 0;
+                }
+                .a4-page hr {
+                    border: none;
+                    border-top: 1px solid #cbd5e1;
+                    margin: 24pt 0;
+                }
+            `,
+            compact: `
+                .a4-page {
+                    font-size: 11pt;
+                    line-height: 1.5;
+                    color: #333;
+                }
+                .a4-page h1 { 
+                    font-size: 16pt; 
+                    margin-top: 18pt; 
+                    margin-bottom: 9pt;
+                    border-bottom: 1px solid #e2e8f0;
+                    padding-bottom: 4pt;
+                }
+                .a4-page h2 { 
+                    font-size: 14pt; 
+                    margin-top: 16pt; 
+                    margin-bottom: 8pt;
+                }
+                .a4-page h3 { 
+                    font-size: 13pt; 
+                    margin-top: 14pt; 
+                    margin-bottom: 7pt;
+                }
+                .a4-page p {
+                    margin-bottom: 8pt;
+                }
+                .a4-page ul, .a4-page ol {
+                    margin-bottom: 8pt;
+                    padding-left: 20pt;
+                }
+                .a4-page blockquote {
+                    border-left: 3px solid #cbd5e1;
+                    padding: 8pt 12pt;
+                    margin: 12pt 0;
+                }
+                .a4-page pre {
+                    padding: 12pt;
+                    margin: 12pt 0;
+                }
+                .a4-page table {
+                    margin: 12pt 0;
+                    font-size: 10pt;
+                }
+                .a4-page th, .a4-page td {
+                    padding: 6pt 8pt;
+                }
+            `,
+            elegant: `
+                .a4-page {
+                    font-size: 13pt;
+                    line-height: 1.7;
+                    color: #2d3748;
+                }
+                .a4-page h1 { 
+                    font-size: 22pt; 
+                    margin-top: 32pt; 
+                    margin-bottom: 16pt;
+                    text-align: center;
+                    border-bottom: 3px double #cbd5e1;
+                    padding-bottom: 8pt;
+                    font-weight: 300;
+                    letter-spacing: 1px;
+                }
+                .a4-page h2 { 
+                    font-size: 18pt; 
+                    margin-top: 28pt; 
+                    margin-bottom: 14pt;
+                    font-weight: 400;
+                    border-left: 4px solid #2563eb;
+                    padding-left: 12pt;
+                }
+                .a4-page h3 { 
+                    font-size: 16pt; 
+                    margin-top: 24pt; 
+                    margin-bottom: 12pt;
+                    font-style: italic;
+                }
+                .a4-page blockquote {
+                    border-left: 4px solid #2563eb;
+                    padding: 16pt 20pt;
+                    margin: 20pt 0;
+                    background: linear-gradient(90deg, #f8fafc, transparent);
+                    font-style: italic;
+                    border-radius: 0 8px 8px 0;
+                }
+                .a4-page pre {
+                    background: #2d3748;
+                    border-left: 4px solid #2563eb;
+                }
+            `,
+            academic: `
+                .a4-page {
+                    font-size: 12pt;
+                    line-height: 1.8;
+                    text-align: justify;
+                    color: #2d3748;
+                }
+                .a4-page h1 { 
+                    font-size: 16pt; 
+                    margin-top: 24pt; 
+                    margin-bottom: 12pt;
+                    text-align: center;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                }
+                .a4-page h2 { 
+                    font-size: 14pt; 
+                    margin-top: 20pt; 
+                    margin-bottom: 10pt;
+                    border-bottom: 1px solid #4a5568;
+                    padding-bottom: 4pt;
+                }
+                .a4-page h3 { 
+                    font-size: 13pt; 
+                    margin-top: 18pt; 
+                    margin-bottom: 9pt;
+                    font-variant: small-caps;
+                }
+                .a4-page p {
+                    text-indent: 24pt;
+                    margin-bottom: 12pt;
+                }
+                .a4-page p:first-of-type {
+                    text-indent: 0;
+                }
+                .a4-page blockquote {
+                    border: 1px solid #cbd5e1;
+                    padding: 16pt;
+                    margin: 20pt 0;
+                    background: #f7fafc;
+                    border-radius: 4px;
+                }
+                .a4-page table {
+                    border: 2px solid #4a5568;
+                }
+                .a4-page th {
+                    background: #4a5568;
+                    color: white;
+                    border: 1px solid #718096;
+                }
+            `
+        };
+
+        const fontStyles = {
+            noto: `font-family: "Noto Sans SC", "Noto Sans", sans-serif;`,
+            serif: `font-family: "Times New Roman", "SimSun", "Noto Serif SC", serif;`,
+            mono: `font-family: "Monaco", "Menlo", "Consolas", "Courier New", monospace;`,
+            system: `font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;`
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const markdownInput = document.getElementById('markdown-input');
+            const pagesContainer = document.getElementById('pages-container');
+            const printStylesElement = document.getElementById('print-styles');
+            const pageCountElement = document.getElementById('page-count');
+            let liveUpdate = true;
+            
+            // 配置 marked
+            marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
+            
+            // 精细控制元素
+            const fineControls = {
+                lineHeight: document.getElementById('line-height'),
+                paraMarginTop: document.getElementById('para-margin-top'),
+                paraMarginBottom: document.getElementById('para-margin-bottom'),
+                listLineHeight: document.getElementById('list-line-height'),
+                listItemSpacing: document.getElementById('list-item-spacing'),
+                listIndent: document.getElementById('list-indent'),
+                tableFontSize: document.getElementById('table-font-size'),
+                tableCellPadding: document.getElementById('table-cell-padding'),
+                tableLineHeight: document.getElementById('table-line-height')
+            };
+            
+            // 生成精细控制样式
+            function generateFineControlStyles() {
+                return `
+                    .a4-page {
+                        line-height: ${fineControls.lineHeight.value};
+                    }
+                    .a4-page p {
+                        margin-top: ${fineControls.paraMarginTop.value}pt;
+                        margin-bottom: ${fineControls.paraMarginBottom.value}pt;
+                    }
+                    .a4-page ul, .a4-page ol {
+                        line-height: ${fineControls.listLineHeight.value};
+                        padding-left: ${fineControls.listIndent.value}pt;
+                    }
+                    .a4-page li {
+                        margin-bottom: ${fineControls.listItemSpacing.value}pt;
+                    }
+                    .a4-page table {
+                        font-size: ${fineControls.tableFontSize.value}pt;
+                        line-height: ${fineControls.tableLineHeight.value};
+                    }
+                    .a4-page th, .a4-page td {
+                        padding: ${fineControls.tableCellPadding.value}pt;
+                    }
+                `;
+            }
+            
+            // 改进的分页函数
+            function paginateContent(htmlContent) {
+                pagesContainer.innerHTML = '';
+                
+                // 创建临时容器来计算内容
+                const tempContainer = document.createElement('div');
+                tempContainer.style.width = '210mm';
+                tempContainer.style.padding = '20mm';
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.top = '-9999px';
+                tempContainer.style.visibility = 'hidden';
+                tempContainer.innerHTML = htmlContent;
+                document.body.appendChild(tempContainer);
+                
+                // 应用当前样式到临时容器
+                const currentStyle = document.querySelector('.style-option[data-style].active').dataset.style;
+                const currentFont = document.querySelector('.style-option[data-font].active').dataset.font;
+                const tempStyle = document.createElement('style');
+                tempStyle.textContent = printStyles[currentStyle] + ` div { ${fontStyles[currentFont]} }` + generateFineControlStyles();
+                tempContainer.appendChild(tempStyle);
+                
+                // 强制重绘以确保样式应用
+                tempContainer.offsetHeight;
+                
+                const pageHeight = 297 * 3.78 - 40; // A4 页面高度 (297mm) 转换为像素，减去 padding
+                let currentPage = createPage(1);
+                let currentHeight = 0;
+                let pageNumber = 1;
+                
+                // 获取所有顶级元素
+                const elements = Array.from(tempContainer.children).filter(child => child.tagName !== 'STYLE');
+                
+                for (let i = 0; i < elements.length; i++) {
+                    const element = elements[i];
+                    const elementHeight = element.offsetHeight;
+                    
+                    // 如果当前元素单独就超过一页，需要特殊处理
+                    if (elementHeight > pageHeight) {
+                        // 如果当前页面已经有内容，先保存当前页面
+                        if (currentPage.children.length > 1) { // 大于1是因为有页码元素
+                            pageNumber++;
+                            currentPage = createPage(pageNumber);
+                            currentHeight = 0;
+                        }
+                        // 直接将大元素放在新页面
+                        currentPage.appendChild(element.cloneNode(true));
+                        pageNumber++;
+                        currentPage = createPage(pageNumber);
+                        currentHeight = 0;
+                    } 
+                    // 如果当前元素可以放在当前页面
+                    else if (currentHeight + elementHeight <= pageHeight) {
+                        currentPage.appendChild(element.cloneNode(true));
+                        currentHeight += elementHeight;
+                    } 
+                    // 如果当前元素放不下，创建新页面
+                    else {
+                        pageNumber++;
+                        currentPage = createPage(pageNumber);
+                        currentPage.appendChild(element.cloneNode(true));
+                        currentHeight = elementHeight;
+                    }
+                }
+                
+                // 清理临时容器
+                document.body.removeChild(tempContainer);
+                
+                // 更新页面计数
+                pageCountElement.textContent = `共 ${pageNumber} 页`;
+            }
+            
+            function createPage(number) {
+                const page = document.createElement('div');
+                page.className = 'a4-page';
+                
+                const pageNumber = document.createElement('div');
+                pageNumber.className = 'page-number';
+                pageNumber.textContent = number;
+                
+                page.appendChild(pageNumber);
+                pagesContainer.appendChild(page);
+                
+                return page;
+            }
+            
+            // 更新预览函数
+            function updatePreview() {
+                const markdown = markdownInput.value;
+                try {
+                    const html = marked.parse(markdown);
+                    paginateContent(html);
+                } catch (error) {
+                    pagesContainer.innerHTML = `<div class="a4-page"><p style="color: red;">Markdown 解析错误: ${error.message}</p></div>`;
+                }
+            }
+            
+            // 应用样式
+            function applyStyle(styleName) {
+                const currentFont = document.querySelector('.style-option[data-font].active')?.dataset.font || 'noto';
+                const fontStyle = fontStyles[currentFont];
+                const fineControlStyle = generateFineControlStyles();
+                
+                printStylesElement.textContent = printStyles[styleName] + ` .a4-page { ${fontStyle} }` + fineControlStyle;
+                
+                if (liveUpdate) {
+                    // 延迟更新以确保样式已应用
+                    setTimeout(updatePreview, 100);
+                }
+            }
+            
+            // 初始化事件监听
+            document.getElementById('update-preview').addEventListener('click', updatePreview);
+            
+            document.getElementById('print-test').addEventListener('click', function() {
+                window.print();
+            });
+            
+            document.getElementById('actual-print').addEventListener('click', function() {
+                window.print();
+            });
+            
+            document.getElementById('toggle-live').addEventListener('click', function() {
+                liveUpdate = !liveUpdate;
+                this.textContent = `实时更新: ${liveUpdate ? '开启' : '关闭'}`;
+            });
+            
+            document.getElementById('export-style').addEventListener('click', function() {
+                const currentStyle = document.querySelector('.style-option[data-style].active').dataset.style;
+                const currentFont = document.querySelector('.style-option[data-font].active').dataset.font;
+                
+                const exportData = {
+                    style: currentStyle,
+                    font: currentFont,
+                    fineControls: {
+                        lineHeight: fineControls.lineHeight.value,
+                        paraMarginTop: fineControls.paraMarginTop.value,
+                        paraMarginBottom: fineControls.paraMarginBottom.value,
+                        listLineHeight: fineControls.listLineHeight.value,
+                        listItemSpacing: fineControls.listItemSpacing.value,
+                        listIndent: fineControls.listIndent.value,
+                        tableFontSize: fineControls.tableFontSize.value,
+                        tableCellPadding: fineControls.tableCellPadding.value,
+                        tableLineHeight: fineControls.tableLineHeight.value
+                    },
+                    css: printStyles[currentStyle] + ` .a4-page { ${fontStyles[currentFont]} }` + generateFineControlStyles()
+                };
+                
+                console.log('导出配置:', exportData);
+                alert(`当前配置已导出到控制台！\n\n打开开发者工具查看详细信息。`);
+            });
+            
+            // 样式选择事件
+            document.querySelectorAll('.style-option[data-style]').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.style-option[data-style]').forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    applyStyle(this.dataset.style);
+                });
+            });
+            
+            // 字体选择事件
+            document.querySelectorAll('.style-option[data-font]').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.style-option[data-font]').forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    const currentStyle = document.querySelector('.style-option[data-style].active').dataset.style;
+                    applyStyle(currentStyle);
+                });
+            });
+            
+            // 精细控制事件
+            Object.values(fineControls).forEach(control => {
+                control.addEventListener('input', function() {
+                    if (liveUpdate) {
+                        const currentStyle = document.querySelector('.style-option[data-style].active').dataset.style;
+                        applyStyle(currentStyle);
+                    }
+                });
+            });
+            
+            // 实时更新监听
+            markdownInput.addEventListener('input', function() {
+                if (liveUpdate) updatePreview();
+            });
+            
+            // 初始化
+            applyStyle('default');
+            updatePreview();
+        });
+    </script>
+</body>
+</html>

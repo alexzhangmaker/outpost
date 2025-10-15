@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown 打印应用</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --border-color: #e2e8f0;
+            --hover-color: #f1f5f9;
+            --base-font-size: 16px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 14px;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .control-panel {
+            flex: 0 0 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+        
+        .editor-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .style-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        textarea {
+            width: 100%;
+            height: 200px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .preview-toolbar {
+            padding: 15px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .preview-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f1f5f9;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .style-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .style-option {
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .style-option:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .style-option.active {
+            border-color: var(--primary-color);
+            background: var(--hover-color);
+        }
+        
+        .control-group {
+            margin: 15px 0;
+        }
+        
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #475569;
+            font-size: 14px;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .control-input {
+            width: 80px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .control-unit {
+            color: #64748b;
+            font-size: 12px;
+        }
+        
+        .single-page-preview {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            padding: 20mm;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .page-info {
+            text-align: center;
+            margin: 10px 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .force-page-break {
+            position: relative;
+            border: 2px solid #dc2626;
+            border-left: 6px solid #dc2626;
+            background: linear-gradient(135deg, #fef2f2, #fecaca);
+            padding: 12px 16px;
+            margin: 20px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .force-page-break::before {
+            content: "🚩 强制分页点";
+            display: block;
+            font-weight: 600;
+            color: #dc2626;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .force-page-break::after {
+            content: "点击移除分页";
+            display: block;
+            font-size: 12px;
+            color: #ef4444;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .force-page-break:hover {
+            background: linear-gradient(135deg, #fecaca, #fca5a5);
+            transform: translateX(4px);
+        }
+        
+        .force-page-break:hover::after {
+            opacity: 1;
+        }
+
+        .clickable-element {
+            position: relative;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+            padding: 2px 4px;
+            margin: 2px 0;
+        }
+        
+        .clickable-element:hover {
+            background: #f0f9ff;
+            box-shadow: 0 0 0 2px #bae6fd;
+        }
+        
+        .clickable-element::after {
+            content: "📄 点击在此分页";
+            position: absolute;
+            top: -20px;
+            right: 0;
+            background: #2563eb;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .clickable-element:hover::after {
+            opacity: 1;
+        }
+
+        /* 打印样式 */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body, html {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+            }
+            
+            .container {
+                display: block !important;
+                height: auto !important;
+                padding: 0 !important;
+            }
+            
+            .control-panel, .preview-toolbar {
+                display: none !important;
+            }
+            
+            .preview-panel {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                background: white !important;
+            }
+            
+            .preview-content {
+                padding: 0 !important;
+                background: white !important;
+                overflow: visible !important;
+            }
+            
+            .single-page-preview {
+                width: 100% !important;
+                min-height: 277mm !important;
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 20mm !important;
+                page-break-after: always;
+            }
+            
+            .single-page-preview:last-child {
+                page-break-after: auto;
+            }
+            
+            .page-info {
+                display: none !important;
+            }
+
+            .force-page-break {
+                page-break-before: always;
+                border: none !important;
+                background: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                height: 0 !important;
+                min-height: 0 !important;
+            }
+            
+            .force-page-break::before,
+            .force-page-break::after {
+                display: none !important;
+            }
+
+            .clickable-element::after {
+                display: none !important;
+            }
+            
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+
+        .font-size-control {
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        
+        .font-size-slider {
+            width: 100%;
+            margin: 8px 0;
+        }
+        
+        .font-size-value {
+            text-align: center;
+            font-size: 14px;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #1e293b;
+        }
+
+        /* 加载状态 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .status-error {
+            background: #fecaca;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+        
+        .status-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+    </style>
+    
+    <style id="print-styles"></style>
+</head>
+<body>
+    <div class="container">
+        <div class="control-panel no-print">
+            <div class="editor-section style-section">
+                <h3>Markdown 内容</h3>
+                <div id="status-area"></div>
+                <textarea id="markdown-input" placeholder="正在加载内容..."></textarea>
+            </div>
+            
+            <div class="style-section">
+                <h3>根字体大小控制</h3>
+                <div class="font-size-control">
+                    <input type="range" id="root-font-size" class="font-size-slider" 
+                           min="10" max="24" step="1" value="16">
+                    <div class="font-size-value">
+                        基准字体大小: <span id="font-size-display">16</span>px
+                    </div>
+                </div>
+            </div>
+            
+            <div class="style-section">
+                <h3>打印样式选择</h3>
+                <div class="style-options">
+                    <div class="style-option active" data-style="default">默认样式</div>
+                    <div class="style-option" data-style="compact">紧凑样式</div>
+                    <div class="style-option" data-style="elegant">优雅样式</div>
+                    <div class="style-option" data-style="academic">学术样式</div>
+                </div>
+            </div>
+            
+            <div class="style-section">
+                <h3>字体设置</h3>
+                <div class="style-options">
+                    <div class="style-option active" data-font="noto">Noto Sans</div>
+                    <div class="style-option" data-font="serif">衬线字体</div>
+                    <div class="style-option" data-font="mono">等宽字体</div>
+                    <div class="style-option" data-font="system">系统字体</div>
+                </div>
+            </div>
+            
+            <div class="style-section">
+                <h3>精细样式控制</h3>
+                
+                <div class="control-group">
+                    <label class="control-label">段落设置</label>
+                    <div class="control-row">
+                        <span>行高:</span>
+                        <input type="number" id="line-height" class="control-input" value="1.6" step="0.1" min="1.0" max="3.0">
+                        <span class="control-unit">倍</span>
+                    </div>
+                    <div class="control-row">
+                        <span>段前距:</span>
+                        <input type="number" id="para-margin-top" class="control-input" value="0" step="1" min="0" max="50">
+                        <span class="control-unit">pt</span>
+                    </div>
+                    <div class="control-row">
+                        <span>段后距:</span>
+                        <input type="number" id="para-margin-bottom" class="control-input" value="10" step="1" min="0" max="50">
+                        <span class="control-unit">pt</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">列表设置</label>
+                    <div class="control-row">
+                        <span>行高:</span>
+                        <input type="number" id="list-line-height" class="control-input" value="1.5" step="0.1" min="1.0" max="3.0">
+                        <span class="control-unit">倍</span>
+                    </div>
+                    <div class="control-row">
+                        <span>项间距:</span>
+                        <input type="number" id="list-item-spacing" class="control-input" value="4" step="1" min="0" max="20">
+                        <span class="control-unit">pt</span>
+                    </div>
+                    <div class="control-row">
+                        <span>缩进:</span>
+                        <input type="number" id="list-indent" class="control-input" value="24" step="2" min="10" max="50">
+                        <span class="control-unit">pt</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">表格设置</label>
+                    <div class="control-row">
+                        <span>字体大小:</span>
+                        <input type="number" id="table-font-size" class="control-input" value="11" step="0.5" min="8" max="14">
+                        <span class="control-unit">pt</span>
+                    </div>
+                    <div class="control-row">
+                        <span>单元格内边距:</span>
+                        <input type="number" id="table-cell-padding" class="control-input" value="8" step="1" min="4" max="20">
+                        <span class="control-unit">pt</span>
+                    </div>
+                    <div class="control-row">
+                        <span>行高:</span>
+                        <input type="number" id="table-line-height" class="control-input" value="1.4" step="0.1" min="1.0" max="2.0">
+                        <span class="control-unit">倍</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="style-section">
+                <h3>操作</h3>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="update-preview">更新预览</button>
+                    <button class="btn btn-secondary" id="print-preview">打印预览</button>
+                    <button class="btn btn-secondary" id="export-style">导出样式</button>
+                    <button class="btn btn-secondary" id="clear-page-breaks">清除所有分页</button>
+                </div>
+                <div style="margin-top: 10px; font-size: 12px; color: #64748b;">
+                    💡 提示：点击预览中的任何元素可添加强制分页，点击分页指示器可移除
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview-panel">
+            <div class="preview-toolbar no-print">
+                <h3>打印预览 - 支持强制分页</h3>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="actual-print">实际打印</button>
+                    <button class="btn btn-secondary" id="toggle-live">实时更新: 开启</button>
+                </div>
+            </div>
+            <div class="preview-content">
+                <div id="single-preview-container">
+                    <div class="single-page-preview">
+                        <p>正在加载内容...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 动态生成基于根字体大小的样式
+        function generatePrintStyles(baseFontSize) {
+            const baseSize = baseFontSize;
+            
+            return {
+                default: `
+                    .single-page-preview {
+                        font-size: ${baseSize * 0.75}px;
+                        line-height: 1.6;
+                        color: #333;
+                    }
+                    .single-page-preview h1 { 
+                        font-size: ${baseSize * 1.125}px;
+                        margin-top: ${baseSize * 1.5}px;
+                        margin-bottom: ${baseSize * 0.75}px;
+                        border-bottom: 2px solid #e2e8f0;
+                        padding-bottom: ${baseSize * 0.375}px;
+                        color: #1e293b;
+                    }
+                    .single-page-preview h2 { 
+                        font-size: ${baseSize}px;
+                        margin-top: ${baseSize * 1.25}px;
+                        margin-bottom: ${baseSize * 0.625}px;
+                        color: #334155;
+                    }
+                    .single-page-preview h3 { 
+                        font-size: ${baseSize * 0.875}px;
+                        margin-top: ${baseSize}px;
+                        margin-bottom: ${baseSize * 0.5}px;
+                        color: #475569;
+                    }
+                    .single-page-preview h4 { 
+                        font-size: ${baseSize * 0.8125}px;
+                        margin-top: ${baseSize * 0.875}px;
+                        margin-bottom: ${baseSize * 0.4375}px;
+                        color: #64748b;
+                    }
+                    .single-page-preview p {
+                        margin-bottom: ${baseSize * 0.625}px;
+                        text-align: justify;
+                    }
+                    .single-page-preview ul, .single-page-preview ol {
+                        margin-bottom: ${baseSize * 0.625}px;
+                        padding-left: ${baseSize * 1.5}px;
+                    }
+                    .single-page-preview li {
+                        margin-bottom: ${baseSize * 0.25}px;
+                    }
+                    .single-page-preview blockquote {
+                        border-left: 4px solid #cbd5e1;
+                        padding: ${baseSize * 0.75}px ${baseSize}px;
+                        margin: ${baseSize}px 0;
+                        background: #f8fafc;
+                        color: #475569;
+                    }
+                    .single-page-preview code {
+                        background: #f1f5f9;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-size: 0.9em;
+                        color: #dc2626;
+                    }
+                    .single-page-preview pre {
+                        background: #1e293b;
+                        color: #e2e8f0;
+                        padding: ${baseSize}px;
+                        border-radius: 8px;
+                        overflow-x: auto;
+                        margin: ${baseSize}px 0;
+                        border: 1px solid #334155;
+                    }
+                    .single-page-preview pre code {
+                        background: none;
+                        color: inherit;
+                        padding: 0;
+                    }
+                    .single-page-preview table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: ${baseSize}px 0;
+                        font-size: ${baseSize * 0.6875}px;
+                    }
+                    .single-page-preview th, .single-page-preview td {
+                        border: 1px solid #cbd5e1;
+                        padding: ${baseSize * 0.5}px ${baseSize * 0.75}px;
+                        text-align: left;
+                    }
+                    .single-page-preview th {
+                        background: #f1f5f9;
+                        font-weight: 600;
+                        color: #334155;
+                    }
+                    .single-page-preview a {
+                        color: #2563eb;
+                        text-decoration: none;
+                    }
+                    .single-page-preview img {
+                        max-width: 100%;
+                        height: auto;
+                        margin: ${baseSize * 0.5}px 0;
+                    }
+                    .single-page-preview hr {
+                        border: none;
+                        border-top: 1px solid #cbd5e1;
+                        margin: ${baseSize * 1.5}px 0;
+                    }
+
+                    @media print {
+                        h1, h2, h3, h4, h5, h6 {
+                            page-break-after: avoid;
+                        }
+                        pre, blockquote, table, img {
+                            page-break-inside: avoid;
+                        }
+                        ul, ol {
+                            page-break-inside: avoid;
+                        }
+                        p {
+                            orphans: 3;
+                            widows: 3;
+                        }
+                    }
+                `,
+                compact: `
+                    .single-page-preview {
+                        font-size: ${baseSize * 0.6875}px;
+                        line-height: 1.5;
+                        color: #333;
+                    }
+                    .single-page-preview h1 { 
+                        font-size: ${baseSize}px;
+                        margin-top: ${baseSize * 1.125}px;
+                        margin-bottom: ${baseSize * 0.5625}px;
+                        border-bottom: 1px solid #e2e8f0;
+                        padding-bottom: ${baseSize * 0.25}px;
+                    }
+                    .single-page-preview h2 { 
+                        font-size: ${baseSize * 0.875}px;
+                        margin-top: ${baseSize}px;
+                        margin-bottom: ${baseSize * 0.5}px;
+                    }
+                    .single-page-preview h3 { 
+                        font-size: ${baseSize * 0.8125}px;
+                        margin-top: ${baseSize * 0.875}px;
+                        margin-bottom: ${baseSize * 0.4375}px;
+                    }
+                    .single-page-preview p {
+                        margin-bottom: ${baseSize * 0.5}px;
+                    }
+                    .single-page-preview ul, .single-page-preview ol {
+                        margin-bottom: ${baseSize * 0.5}px;
+                        padding-left: ${baseSize * 1.25}px;
+                    }
+                    .single-page-preview blockquote {
+                        border-left: 3px solid #cbd5e1;
+                        padding: ${baseSize * 0.5}px ${baseSize * 0.75}px;
+                        margin: ${baseSize * 0.75}px 0;
+                    }
+                    .single-page-preview pre {
+                        padding: ${baseSize * 0.75}px;
+                        margin: ${baseSize * 0.75}px 0;
+                    }
+                    .single-page-preview table {
+                        margin: ${baseSize * 0.75}px 0;
+                        font-size: ${baseSize * 0.625}px;
+                    }
+                    .single-page-preview th, .single-page-preview td {
+                        padding: ${baseSize * 0.375}px ${baseSize * 0.5}px;
+                    }
+                `,
+                elegant: `/* 优雅样式... */`,
+                academic: `/* 学术样式... */`
+            };
+        }
+
+        const fontStyles = {
+            noto: `font-family: "Noto Sans SC", "Noto Sans", sans-serif;`,
+            serif: `font-family: "Times New Roman", "SimSun", "Noto Serif SC", serif;`,
+            mono: `font-family: "Monaco", "Menlo", "Consolas", "Courier New", monospace;`,
+            system: `font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;`
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const markdownInput = document.getElementById('markdown-input');
+            const previewContainer = document.getElementById('single-preview-container');
+            const printStylesElement = document.getElementById('print-styles');
+            const rootFontSizeSlider = document.getElementById('root-font-size');
+            const fontSizeDisplay = document.getElementById('font-size-display');
+            const statusArea = document.getElementById('status-area');
+            
+            let liveUpdate = true;
+            let pageBreaks = new Set();
+            let currentBaseFontSize = 16;
+            
+            marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
+            
+            const fineControls = {
+                lineHeight: document.getElementById('line-height'),
+                paraMarginTop: document.getElementById('para-margin-top'),
+                paraMarginBottom: document.getElementById('para-margin-bottom'),
+                listLineHeight: document.getElementById('list-line-height'),
+                listItemSpacing: document.getElementById('list-item-spacing'),
+                listIndent: document.getElementById('list-indent'),
+                tableFontSize: document.getElementById('table-font-size'),
+                tableCellPadding: document.getElementById('table-cell-padding'),
+                tableLineHeight: document.getElementById('table-line-height')
+            };
+
+            // 显示状态信息
+            function showStatus(message, type = 'info') {
+                statusArea.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+            }
+
+            // 解析 URL 参数
+            function getUrlParams() {
+                const params = new URLSearchParams(window.location.search);
+                return {
+                    content: params.get('content'),
+                    storageKey: params.get('storageKey'),
+                    url: params.get('url'),
+                    autoPrint: params.get('autoPrint') === 'true'
+                };
+            }
+
+            // 从 localStorage 获取内容
+            async function getContentFromStorage(key) {
+                return new Promise((resolve) => {
+                    if (typeof localStorage !== 'undefined') {
+                        const content = localStorage.getItem(key);
+                        resolve(content);
+                    } else {
+                        resolve(null);
+                    }
+                });
+            }
+
+            // 从网络 URL 获取内容
+            async function getContentFromUrl(url) {
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        return await response.text();
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    throw new Error(`无法获取内容: ${error.message}`);
+                }
+            }
+
+            // 初始化内容
+            async function initializeContent() {
+                const params = getUrlParams();
+                let content = '';
+                let source = '';
+
+                showStatus('<span class="loading"></span>正在加载内容...', 'info');
+
+                try {
+                    // 优先级: 直接内容 > storageKey > URL
+                    if (params.content) {
+                        content = decodeURIComponent(params.content);
+                        source = 'URL 参数';
+                    } else if (params.storageKey) {
+                        content = await getContentFromStorage(params.storageKey);
+                        if (content) {
+                            source = `localStorage (key: ${params.storageKey})`;
+                        } else {
+                            throw new Error(`在 localStorage 中找不到键: ${params.storageKey}`);
+                        }
+                    } else if (params.url) {
+                        content = await getContentFromUrl(params.url);
+                        source = `网络地址: ${params.url}`;
+                    } else {
+                        // 没有参数，使用默认内容
+                        content = `# Markdown 打印应用
+
+欢迎使用 Markdown 打印应用！
+
+## 使用方法
+
+您可以通过以下方式传入内容：
+
+1. **直接内容**: \`?content=编码后的Markdown内容\`
+2. **localStorage**: \`?storageKey=您的存储键\`
+3. **网络地址**: \`?url=您的Markdown文件地址\`
+
+## 示例
+
+这是一个示例文档，您可以开始编辑或传入您自己的内容。`;
+                        source = '默认内容';
+                    }
+
+                    if (content) {
+                        markdownInput.value = content;
+                        showStatus(`✅ 成功从 ${source} 加载内容`, 'success');
+                        
+                        // 如果设置了自动打印，延迟执行打印预览
+                        if (params.autoPrint) {
+                            setTimeout(() => {
+                                openPrintPreview();
+                            }, 1000);
+                        }
+                    } else {
+                        throw new Error('未找到有效的内容');
+                    }
+                } catch (error) {
+                    console.error('内容加载失败:', error);
+                    showStatus(`❌ 内容加载失败: ${error.message}`, 'error');
+                    markdownInput.placeholder = '内容加载失败，请手动输入或检查参数';
+                }
+
+                // 初始化预览
+                updateSinglePagePreview();
+            }
+            
+            // 根字体大小控制
+            function updateRootFontSize() {
+                currentBaseFontSize = parseInt(rootFontSizeSlider.value);
+                fontSizeDisplay.textContent = currentBaseFontSize;
+                
+                if (liveUpdate) {
+                    applyStyle(document.querySelector('.style-option[data-style].active').dataset.style);
+                }
+            }
+            
+            rootFontSizeSlider.addEventListener('input', updateRootFontSize);
+            
+            function generateFineControlStyles() {
+                return `
+                    .single-page-preview {
+                        line-height: ${fineControls.lineHeight.value};
+                    }
+                    .single-page-preview p {
+                        margin-top: ${fineControls.paraMarginTop.value}pt;
+                        margin-bottom: ${fineControls.paraMarginBottom.value}pt;
+                    }
+                    .single-page-preview ul, .single-page-preview ol {
+                        line-height: ${fineControls.listLineHeight.value};
+                        padding-left: ${fineControls.listIndent.value}pt;
+                    }
+                    .single-page-preview li {
+                        margin-bottom: ${fineControls.listItemSpacing.value}pt;
+                    }
+                    .single-page-preview table {
+                        font-size: ${fineControls.tableFontSize.value}pt;
+                        line-height: ${fineControls.tableLineHeight.value};
+                    }
+                    .single-page-preview th, .single-page-preview td {
+                        padding: ${fineControls.tableCellPadding.value}pt;
+                    }
+                `;
+            }
+            
+            // 单页预览模式
+            function updateSinglePagePreview() {
+                const markdown = markdownInput.value;
+                try {
+                    const html = marked.parse(markdown);
+                    const tempContainer = document.createElement('div');
+                    tempContainer.innerHTML = html;
+                    
+                    processPageBreaks(tempContainer);
+                    
+                    previewContainer.innerHTML = `
+                        <div class="single-page-preview">
+                            ${tempContainer.innerHTML}
+                        </div>
+                        <div class="page-info no-print">
+                            💡 点击任何元素可添加强制分页，点击分页指示器可移除 | 当前分页点: ${pageBreaks.size}
+                        </div>
+                    `;
+                    
+                    bindClickEvents();
+                } catch (error) {
+                    previewContainer.innerHTML = `
+                        <div class="single-page-preview">
+                            <p style="color: red;">Markdown 解析错误: ${error.message}</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            function processPageBreaks(container) {
+                const elements = container.querySelectorAll('h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, pre, table');
+                
+                elements.forEach((element, index) => {
+                    element.classList.add('clickable-element');
+                    element.setAttribute('data-element-id', index);
+                    
+                    if (pageBreaks.has(index)) {
+                        const pageBreak = document.createElement('div');
+                        pageBreak.className = 'force-page-break';
+                        pageBreak.setAttribute('data-break-id', index);
+                        element.parentNode.insertBefore(pageBreak, element);
+                    }
+                });
+            }
+            
+            function bindClickEvents() {
+                const clickableElements = previewContainer.querySelectorAll('.clickable-element');
+                clickableElements.forEach(element => {
+                    element.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const elementId = this.getAttribute('data-element-id');
+                        togglePageBreak(parseInt(elementId));
+                    });
+                });
+                
+                const pageBreaks = previewContainer.querySelectorAll('.force-page-break');
+                pageBreaks.forEach(breakElement => {
+                    breakElement.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const breakId = this.getAttribute('data-break-id');
+                        removePageBreak(parseInt(breakId));
+                    });
+                });
+            }
+            
+            function togglePageBreak(elementId) {
+                if (pageBreaks.has(elementId)) {
+                    removePageBreak(elementId);
+                } else {
+                    addPageBreak(elementId);
+                }
+            }
+            
+            function addPageBreak(elementId) {
+                pageBreaks.add(elementId);
+                updateSinglePagePreview();
+            }
+            
+            function removePageBreak(elementId) {
+                pageBreaks.delete(elementId);
+                updateSinglePagePreview();
+            }
+            
+            function clearAllPageBreaks() {
+                pageBreaks.clear();
+                updateSinglePagePreview();
+            }
+            
+            // 打印预览功能
+            function openPrintPreview() {
+                const markdown = markdownInput.value;
+                try {
+                    const html = marked.parse(markdown);
+                    const tempContainer = document.createElement('div');
+                    tempContainer.innerHTML = html;
+                    
+                    processPageBreaksForPrint(tempContainer);
+                    
+                    const printWindow = window.open('', '_blank');
+                    
+                    const currentStyle = document.querySelector('.style-option[data-style].active').dataset.style;
+                    const currentFont = document.querySelector('.style-option[data-font].active').dataset.font;
+                    const fineControlStyle = generateFineControlStyles();
+                    const printStyles = generatePrintStyles(currentBaseFontSize);
+                    
+                    const fullStyle = printStyles[currentStyle] + ` .print-content { ${fontStyles[currentFont]} }` + fineControlStyle;
+                    
+                    printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>打印预览</title>
+                            <style>
+                                ${fullStyle}
+                                body {
+                                    margin: 0;
+                                    padding: 20mm;
+                                }
+                                .print-content {
+                                    max-width: 100%;
+                                }
+                                .force-page-break {
+                                    page-break-before: always;
+                                    border: none !important;
+                                    background: none !important;
+                                    padding: 0 !important;
+                                    margin: 0 !important;
+                                    height: 0 !important;
+                                    min-height: 0 !important;
+                                }
+                                .force-page-break::before,
+                                .force-page-break::after {
+                                    display: none !important;
+                                }
+                                @page {
+                                    size: A4;
+                                    margin: 0;
+                                }
+                                @media print {
+                                    body {
+                                        padding: 0;
+                                    }
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="print-content">
+                                ${tempContainer.innerHTML}
+                            </div>
+                            <script>
+                                window.onload = function() {
+                                    setTimeout(() => {
+                                        window.print();
+                                    }, 500);
+                                };
+                            <\/script>
+                        </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                } catch (error) {
+                    alert('生成打印预览时出错: ' + error.message);
+                }
+            }
+            
+            function processPageBreaksForPrint(container) {
+                const elements = container.querySelectorAll('h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, pre, table');
+                
+                elements.forEach((element, index) => {
+                    if (pageBreaks.has(index)) {
+                        const pageBreak = document.createElement('div');
+                        pageBreak.className = 'force-page-break';
+                        element.parentNode.insertBefore(pageBreak, element);
+                    }
+                });
+            }
+            
+            function applyStyle(styleName) {
+                const currentFont = document.querySelector('.style-option[data-font].active')?.dataset.font || 'noto';
+                const fontStyle = fontStyles[currentFont];
+                const fineControlStyle = generateFineControlStyles();
+                const printStyles = generatePrintStyles(currentBaseFontSize);
+                
+                printStylesElement.textContent = printStyles[styleName] + ` .single-page-preview { ${fontStyle} }` + fineControlStyle;
+                
+                if (liveUpdate) {
+                    updateSinglePagePreview();
+                }
+            }
+            
+            // 事件监听
+            document.getElementById('update-preview').addEventListener('click', updateSinglePagePreview);
+            document.getElementById('print-preview').addEventListener('click', openPrintPreview);
+            document.getElementById('actual-print').addEventListener('click', function() {
+                window.print();
+            });
+            document.getElementById('clear-page-breaks').addEventListener('click', clearAllPageBreaks);
+            
+            document.getElementById('toggle-live').addEventListener('click', function() {
+                liveUpdate = !liveUpdate;
+                this.textContent = `实时更新: ${liveUpdate ? '开启' : '关闭'}`;
+            });
+            
+            document.getElementById('export-style').addEventListener('click', function() {
+                const currentStyle = document.querySelector('.style-option[data-style].active').dataset.style;
+                const currentFont = document.querySelector('.style-option[data-font].active').dataset.font;
+                
+                const exportData = {
+                    style: currentStyle,
+                    font: currentFont,
+                    rootFontSize: currentBaseFontSize,
+                    fineControls: {
+                        lineHeight: fineControls.lineHeight.value,
+                        paraMarginTop: fineControls.paraMarginTop.value,
+                        paraMarginBottom: fineControls.paraMarginBottom.value,
+                        listLineHeight: fineControls.listLineHeight.value,
+                        listItemSpacing: fineControls.listItemSpacing.value,
+                        listIndent: fineControls.listIndent.value,
+                        tableFontSize: fineControls.tableFontSize.value,
+                        tableCellPadding: fineControls.tableCellPadding.value,
+                        tableLineHeight: fineControls.tableLineHeight.value
+                    },
+                    pageBreaks: Array.from(pageBreaks),
+                    css: generatePrintStyles(currentBaseFontSize)[currentStyle] + ` .single-page-preview { ${fontStyles[currentFont]} }` + generateFineControlStyles()
+                };
+                
+                console.log('导出配置:', exportData);
+                alert('当前配置已导出到控制台！包含 ' + pageBreaks.size + ' 个分页点');
+            });
+            
+            document.querySelectorAll('.style-option[data-style]').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.style-option[data-style]').forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    applyStyle(this.dataset.style);
+                });
+            });
+            
+            document.querySelectorAll('.style-option[data-font]').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.style-option[data-font]').forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    const currentStyle = document.querySelector('.style-option[data-style].active').dataset.style;
+                    applyStyle(currentStyle);
+                });
+            });
+            
+            Object.values(fineControls).forEach(control => {
+                control.addEventListener('input', function() {
+                    if (liveUpdate) {
+                        const currentStyle = document.querySelector('.style-option[data-style].active').dataset.style;
+                        applyStyle(currentStyle);
+                    }
+                });
+            });
+            
+            markdownInput.addEventListener('input', function() {
+                if (liveUpdate) updateSinglePagePreview();
+            });
+            
+            // 初始化
+            initializeContent(); // 从 URL 参数初始化内容
+            applyStyle('default');
+        });
+    </script>
+</body>
+</html>

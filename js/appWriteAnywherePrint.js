@@ -1,5 +1,15 @@
-
 function _formatPrint() {
+  const markdownContent = editor.getMarkdown();
+  const htmlContent = editor.getHTML();
+
+  // 在 Markdown 编辑器中调用
+  localStorage.setItem('markdown-print-content', markdownContent);
+  window.open('mdPrintAnywhere.html?storageKey=markdown-print-content&autoPrint=false', '_blank');
+  //const printWindow = window.open('', '_blank');
+
+}
+
+function _formatPrint_V0() {
   const markdownContent = editor.getMarkdown();
   const htmlContent = editor.getHTML();
 
