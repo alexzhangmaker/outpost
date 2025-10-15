@@ -13,6 +13,9 @@
             box-sizing: border-box;
         }
         
+        html{
+            font-size: 16px; /* 1rem = 16px */
+        }
         body {
             font-family: 'Noto Sans SC', sans-serif;
             background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
@@ -404,7 +407,9 @@
                     <div class="stat-label">掌握程度</div>
                     <div class="stat-value" id="mastery-level">0%</div>
                 </div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" class="svgBTN" id="idBTNPlayer" viewBox="0 0 32 32"><path fill="#000000" d="m15.969 0l-.464.016c-.432.025-1.027.083-1.505.145C9.615.76 5.869 2.964 3.344 6.245a16.266 16.266 0 0 0-1.631 2.583c-.077.161-.156.317-.229.479c-.12.267-.239.532-.348.803c-.141.349-.267.697-.381 1.052l-.061.193a15.965 15.965 0 0 0-.693 4.624v.052C.017 24.855 7.178 32 16.001 32c8.213 0 15.088-6.219 15.917-14.385l.004-.031c.052-.521.079-1.043.079-1.557v-.068a15.922 15.922 0 0 0-1.027-5.573a9.015 9.015 0 0 0-.167-.416a10.992 10.992 0 0 0-.301-.677C28.527 5.089 24.777 1.84 20.246.616C19.23.34 17.605.095 16.49.028a13.044 13.044 0 0 0-.459-.027zm3.094 3.839c.224.005.505.079.901.213c2.375.812 5.031 2.875 6.473 5.021c1 1.489 1.781 3.233 1.781 3.979c0 .479-.464.912-.964.912c-.468 0-.948-.412-1.072-.912c-.172-.697-1.109-2.468-1.797-3.375c-1.219-1.609-3.104-3.016-4.959-3.704c-1.301-.489-1.64-1.061-1.036-1.78c.203-.245.385-.355.672-.355zM13.88 5.708c.349 0 .661.073.937.219c1.745.885 1.652 3.423-.167 4.12c-2.244.855-3.375 1.76-4.109 3.251c-1.536 3.119-.281 6.801 2.828 8.291c2.287 1.095 4.891.715 6.709-.963c.828-.771 1.281-1.432 1.687-2.505c.573-1.5 1.224-2.063 2.391-2.063c1.489 0 2.516 1.26 2.213 2.703c-.62 2.839-3.005 5.693-5.896 7.032c-1.593.735-2.468.921-4.484.921c-1.979 0-2.839-.177-4.375-.875c-4.193-1.896-6.765-6.437-6.235-10.943a10.83 10.83 0 0 1 7.349-8.979c.421-.141.807-.215 1.151-.209zm4.62 1.276c.292.005.667.141 1.219.412c2.251 1.068 4.109 3.036 5.109 5.38c.375.896.188 1.479-.541 1.708c-.563.167-.937-.135-1.423-1.151c-.911-1.921-2.203-3.251-4.02-4.145c-1.057-.511-1.188-.631-1.292-1.131c-.047-.265 0-.417.245-.708c.208-.245.411-.371.703-.365zm-.531 3.261c.307 0 .661.14 1.119.443c1.281.839 2.724 2.645 2.724 3.4c0 .385-.369.876-.744.969c-.5.131-.86-.12-1.385-.943c-.568-.875-1.235-1.536-1.923-1.885c-.593-.308-.765-.536-.765-1.027a.772.772 0 0 1 .323-.687a.97.97 0 0 1 .652-.271z"/></svg>
+                <button id="idBTNPlayer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" class="svgBTN" viewBox="0 0 32 32"><path fill="#000000" d="m15.969 0l-.464.016c-.432.025-1.027.083-1.505.145C9.615.76 5.869 2.964 3.344 6.245a16.266 16.266 0 0 0-1.631 2.583c-.077.161-.156.317-.229.479c-.12.267-.239.532-.348.803c-.141.349-.267.697-.381 1.052l-.061.193a15.965 15.965 0 0 0-.693 4.624v.052C.017 24.855 7.178 32 16.001 32c8.213 0 15.088-6.219 15.917-14.385l.004-.031c.052-.521.079-1.043.079-1.557v-.068a15.922 15.922 0 0 0-1.027-5.573a9.015 9.015 0 0 0-.167-.416a10.992 10.992 0 0 0-.301-.677C28.527 5.089 24.777 1.84 20.246.616C19.23.34 17.605.095 16.49.028a13.044 13.044 0 0 0-.459-.027zm3.094 3.839c.224.005.505.079.901.213c2.375.812 5.031 2.875 6.473 5.021c1 1.489 1.781 3.233 1.781 3.979c0 .479-.464.912-.964.912c-.468 0-.948-.412-1.072-.912c-.172-.697-1.109-2.468-1.797-3.375c-1.219-1.609-3.104-3.016-4.959-3.704c-1.301-.489-1.64-1.061-1.036-1.78c.203-.245.385-.355.672-.355zM13.88 5.708c.349 0 .661.073.937.219c1.745.885 1.652 3.423-.167 4.12c-2.244.855-3.375 1.76-4.109 3.251c-1.536 3.119-.281 6.801 2.828 8.291c2.287 1.095 4.891.715 6.709-.963c.828-.771 1.281-1.432 1.687-2.505c.573-1.5 1.224-2.063 2.391-2.063c1.489 0 2.516 1.26 2.213 2.703c-.62 2.839-3.005 5.693-5.896 7.032c-1.593.735-2.468.921-4.484.921c-1.979 0-2.839-.177-4.375-.875c-4.193-1.896-6.765-6.437-6.235-10.943a10.83 10.83 0 0 1 7.349-8.979c.421-.141.807-.215 1.151-.209zm4.62 1.276c.292.005.667.141 1.219.412c2.251 1.068 4.109 3.036 5.109 5.38c.375.896.188 1.479-.541 1.708c-.563.167-.937-.135-1.423-1.151c-.911-1.921-2.203-3.251-4.02-4.145c-1.057-.511-1.188-.631-1.292-1.131c-.047-.265 0-.417.245-.708c.208-.245.411-.371.703-.365zm-.531 3.261c.307 0 .661.14 1.119.443c1.281.839 2.724 2.645 2.724 3.4c0 .385-.369.876-.744.969c-.5.131-.86-.12-1.385-.943c-.568-.875-1.235-1.536-1.923-1.885c-.593-.308-.765-.536-.765-1.027a.772.772 0 0 1 .323-.687a.97.97 0 0 1 .652-.271z"/></svg>
+                </button>
             </div>
         </header>
         
@@ -517,7 +522,7 @@
 
 
         // 示例单词数据
-        const wordList = [];
+        let wordList = [];
 
         // 应用状态
         let currentIndex = 0;
@@ -697,7 +702,6 @@
                 });
             }
             
-            
             // 更新常用短语
             const phrasesContainer = document.getElementById('phrases-container');
             phrasesContainer.innerHTML = '';
@@ -725,7 +729,6 @@
                     btn.disabled = false;
                 });
             }
-            
             updateStats();
         }
         
@@ -773,7 +776,7 @@
         // 初始化应用
         async function initApp(refWordList) {
             
-
+            wordList=[] ;
             await _loadFireBaseWordSet(refWordList) ;
 
             loadProgress();
@@ -783,41 +786,41 @@
             document.getElementById('flashcard').addEventListener('click', function() {
                 this.classList.toggle('flipped');
             });
-            
-            // 评分按钮事件
-            document.querySelectorAll('.rating-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const rating = parseInt(this.getAttribute('data-rating'));
-                    
-                    // 检查是否已经评分
-                    const existingIndex = learnedWords.findIndex(w => w.index === currentIndex);
-                    if (existingIndex !== -1) {
-                        learnedWords[existingIndex].rating = rating;
-                    } else {
-                        learnedWords.push({
-                            index: currentIndex,
-                            word: wordList[currentIndex].thai,
-                            rating: rating,
-                            timestamp: new Date().toISOString()
-                        });
-                    }
-                    
-                    // 保存进度
-                    saveProgress();
-                    
-                    // 禁用评分按钮
-                    document.querySelectorAll('.rating-btn').forEach(btn => {
-                        btn.disabled = true;
-                    });
-                    
-                    // 自动前进到下一个单词
-                    setTimeout(nextWord, 500);
-                });
-            });
-            
+                        
             // 重置按钮事件
             document.getElementById('reset-btn').addEventListener('click', resetApp);
         }
+
+        // 评分按钮事件
+        document.querySelectorAll('.rating-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const rating = parseInt(this.getAttribute('data-rating'));
+                
+                // 检查是否已经评分
+                const existingIndex = learnedWords.findIndex(w => w.index === currentIndex);
+                if (existingIndex !== -1) {
+                    learnedWords[existingIndex].rating = rating;
+                } else {
+                    learnedWords.push({
+                        index: currentIndex,
+                        word: wordList[currentIndex].thai,
+                        rating: rating,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                
+                // 保存进度
+                saveProgress();
+                
+                // 禁用评分按钮
+                document.querySelectorAll('.rating-btn').forEach(btn => {
+                    btn.disabled = true;
+                });
+                
+                // 自动前进到下一个单词
+                setTimeout(nextWord, 500);
+            });
+        });
         
         function formatDateToYYYYMMDD(date) {
             // Ensure input is a Date object
@@ -906,15 +909,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', async (event)=>{
             console.log('DOMContentLoaded') ;
-            /*
-            const queryString = window.location.search; // ?quiz=001223/Unit4/Quiz_Vocabulary4_1
-            const urlParams = new URLSearchParams(queryString);
-            let quizPath = urlParams.get('quiz'); // "purple"
-            if(quizPath){
-                loadQuizData(quizPath) ;
-                return ;
-            }
-            */
 
             const svgBTNSize = 18 ;
             createStickyToolbar({
@@ -976,6 +970,58 @@
 
             initApp(refWordList);
         });
+    </script>
+    <script>
+        const hotKeyCall_A = (event)=>{
+            console.log("hotKeyCall_A called:"+event.key) ;
+            let tagBTNPlayer = document.getElementById('idBTNPlayer') ;
+            tagBTNPlayer.click() ;
+        } ;
+        const hotKeyCall_Num1 = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            let tagBTNRating = document.querySelector(".rating-1") ;
+            tagBTNRating.click() ;
+        } ;
+        const hotKeyCall_Num2 = (event)=>{
+            console.log("hotKeyCall_Num2 called:"+event.key) ;
+            let tagBTNRating = document.querySelector(".rating-2") ;
+            tagBTNRating.click() ;
+        } ;
+        const hotKeyCall_Num3 = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            let tagBTNRating = document.querySelector(".rating-3") ;
+            tagBTNRating.click() ;
+        } ;
+        const hotKeyCall_Num4 = (event)=>{
+            console.log("hotKeyCall_Num2 called:"+event.key) ;
+            let tagBTNRating = document.querySelector(".rating-4") ;
+            tagBTNRating.click() ;
+        } ;
+        const hotKeyCall_Num5 = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            let tagBTNRating = document.querySelector(".rating-5") ;
+            tagBTNRating.click() ;
+        } ;
+        
+
+        const hotKeyCalls={
+            'a':hotKeyCall_A,
+            '1':hotKeyCall_Num1,
+            '2':hotKeyCall_Num2,
+            '3':hotKeyCall_Num3,
+            '4':hotKeyCall_Num4,
+            '5':hotKeyCall_Num5
+        };
+
+        document.addEventListener('keydown', (event) =>{
+            let hotKeyCall = hotKeyCalls[event.key] ;
+            if(hotKeyCall){
+                console.log("The hotKeyCall key was pressed!");
+                event.preventDefault() ;
+                event.stopPropagation() ;
+                hotKeyCall(event) ;
+            }
+        }) ;
     </script>
 </body>
 </html>
