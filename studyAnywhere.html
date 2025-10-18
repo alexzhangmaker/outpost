@@ -296,7 +296,7 @@ html{
                 </div>
               </button>
             </div>
-            <div
+            <div id="idBTNSignIn"
               class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
               style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAK2BgkYwYlqS5GC_s6EHalzO4rmbmFQbMORyjtssa5lYQ7pzOcrpXpdiBg32d4hErtR91cB-jv08-qBMsZ7-_yM4SHUCUesO3gvquoWTrrAna1O_1U_L0Sye4gdptfoxVFopkSp0ANtdlkRCq4FMy1Jm5JhsfnE4-PA5-IsqShT0I6hzvkKrQuePjJD6OqyOVF9F70K9INBoPPl5I7USkavyJx-xDCC4vfNNwf7t0q2vxvg-zA6W9VmrV7PdoFkiJD2BYir43qPUw");'
             ></div>
@@ -345,6 +345,12 @@ html{
       </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+
+    <script src="./js/firebaseAnkiAnywhere.js"></script>
     <script src="./JSON/mockMemo.js"></script>
     <script>
         const gMemoCards=mockKMCards ;
@@ -789,6 +795,67 @@ html{
             let btnCheck = document.querySelector('.btnRating[data-rating="5"]'); 
             if(btnCheck.classList.contains('noShow')!= true && btnCheck.disabled == false)btnCheck.click() ;
         } ;
+
+        const hotKeyCall_A = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            //let btnCheck = document.querySelector('.btnRating[data-rating="5"]'); 
+            //if(btnCheck.classList.contains('noShow')!= true && btnCheck.disabled == false)btnCheck.click() ;
+            //choices-container
+            let tagQuizContainer = document.querySelector('.cardQuiz') ;
+            if(tagQuizContainer.classList.contains('noShow')==true) return ;
+
+            let tagQuizChoices = document.querySelector('#choices-container') ;
+            if(tagQuizChoices==null) return ;
+
+            let tagChoices = tagQuizChoices.querySelectorAll(".choice") ;
+            tagChoices[0].click() ;
+
+        } ;
+        const hotKeyCall_B = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            //let btnCheck = document.querySelector('.btnRating[data-rating="5"]'); 
+            //if(btnCheck.classList.contains('noShow')!= true && btnCheck.disabled == false)btnCheck.click() ;
+            //choices-container
+            let tagQuizContainer = document.querySelector('.cardQuiz') ;
+            if(tagQuizContainer.classList.contains('noShow')==true) return ;
+            
+            let tagQuizChoices = document.querySelector('#choices-container') ;
+            if(tagQuizChoices==null) return ;
+
+            let tagChoices = tagQuizChoices.querySelectorAll(".choice") ;
+            tagChoices[1].click() ;
+
+        } ;
+        const hotKeyCall_C = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            //let btnCheck = document.querySelector('.btnRating[data-rating="5"]'); 
+            //if(btnCheck.classList.contains('noShow')!= true && btnCheck.disabled == false)btnCheck.click() ;
+            //choices-container
+            let tagQuizContainer = document.querySelector('.cardQuiz') ;
+            if(tagQuizContainer.classList.contains('noShow')==true) return ;
+            
+            let tagQuizChoices = document.querySelector('#choices-container') ;
+            if(tagQuizChoices==null) return ;
+
+            let tagChoices = tagQuizChoices.querySelectorAll(".choice") ;
+            tagChoices[2].click() ;
+
+        } ;
+        const hotKeyCall_D = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            //let btnCheck = document.querySelector('.btnRating[data-rating="5"]'); 
+            //if(btnCheck.classList.contains('noShow')!= true && btnCheck.disabled == false)btnCheck.click() ;
+            //choices-container
+            let tagQuizContainer = document.querySelector('.cardQuiz') ;
+            if(tagQuizContainer.classList.contains('noShow')==true) return ;
+            
+            let tagQuizChoices = document.querySelector('#choices-container') ;
+            if(tagQuizChoices==null) return ;
+
+            let tagChoices = tagQuizChoices.querySelectorAll(".choice") ;
+            tagChoices[3].click() ;
+
+        } ;
         
 
         const hotKeyCalls={
@@ -797,7 +864,19 @@ html{
             '2':hotKeyCall_2,
             '3':hotKeyCall_3,
             '4':hotKeyCall_4,
-            '5':hotKeyCall_5
+            '5':hotKeyCall_5,
+
+            'a':hotKeyCall_A,
+            'A':hotKeyCall_A,
+            
+            'b':hotKeyCall_B,
+            'B':hotKeyCall_B,
+            
+            'c':hotKeyCall_C,
+            'C':hotKeyCall_C,
+            
+            'd':hotKeyCall_D,
+            'D':hotKeyCall_D
         };
 
         document.addEventListener('keydown', (event) =>{
@@ -808,6 +887,10 @@ html{
                 event.stopPropagation() ;
                 hotKeyCall(event) ;
             }
+        }) ;
+
+        document.querySelector("#idBTNSignIn").addEventListener('click',async (event)=>{
+          signInWithGoogle() ;
         }) ;
     </script>
   </body>
