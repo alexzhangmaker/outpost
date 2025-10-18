@@ -349,6 +349,7 @@ html{
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
+    <script src="./jsResource/marked.umd.js"></script>
 
     <script src="./js/firebaseAnkiAnywhere.js"></script>
     <script src="./JSON/mockMemo.js"></script>
@@ -450,17 +451,17 @@ html{
             outpostCardBack.classList.toggle('noShow') ;
         }
 
-        
+        //marked.parse('# Marked in the browser\n\nRendered by **marked**.');
         const callRenderMasterCard = (tagOutpstCard,jsonCard)=>{
             tagOutpstCard.innerHTML= `
                 <div class="outpostCardFront">
                     <div class="cardQuestion">${jsonCard.core_concept_card.question}</div>
                 </div>
                 <div class="outpostCardBack noShow">
-                    <div class="cardQuestionInBack">${jsonCard.core_concept_card.question}</div>
+                    <div class="cardQuestionInBack">${marked.parse(jsonCard.core_concept_card.question)}</div>
                     <div class="cardExplaination">
-                      <div class="cardAnwser">${jsonCard.core_concept_card.answer}</div>
-                      <div class="cardSummary">${jsonCard.core_concept_card.summary}</div>
+                      <div class="cardAnwser">${marked.parse(jsonCard.core_concept_card.answer)}</div>
+                      <div class="cardSummary">${marked.parse(jsonCard.core_concept_card.summary)}</div>
                       <div class="cardQuiz quiz-container noShow">Quiz</div>
                       <div class="cardExamples noShow"></div>
                       <div class="cardHintsConnections noShow"></div>

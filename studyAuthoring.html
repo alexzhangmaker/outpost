@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识树生成器</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --text-color: #cccccc;
+            --accent-color: #569cd6;
+            --success-color: #4ec9b0;
+            --warning-color: #ce9178;
+            --error-color: #f44747;
+            --panel-bg: #252526;
+            --border-color: #3e3e42;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .console {
+            flex: 1;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            margin: 10px;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            white-space: pre-wrap;
+        }
+        
+        .input-area {
+            padding: 10px;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+        }
+        
+        textarea, input, select, button {
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            margin: 5px 0;
+            font-family: inherit;
+        }
+        
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 8px 16px;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        button:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+        }
+        
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .message.success {
+            background-color: rgba(78, 201, 176, 0.2);
+            border: 1px solid var(--success-color);
+        }
+        
+        .message.error {
+            background-color: rgba(244, 71, 71, 0.2);
+            border: 1px solid var(--error-color);
+        }
+        
+        .message.warning {
+            background-color: rgba(206, 145, 120, 0.2);
+            border: 1px solid var(--warning-color);
+        }
+        
+        .json-editor {
+            width: 100%;
+            height: 400px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        
+        .prompt-display {
+            background-color: var(--panel-bg);
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            margin: 10px 0;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .status-bar {
+            padding: 8px 15px;
+            background-color: var(--panel-bg);
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h3>知识树生成器</h3>
+            <div class="form-group">
+                <label for="subjectInput">学习主题</label>
+                <textarea id="subjectInput" rows="3" placeholder="输入您要学习的内容主题，例如：泰语词汇 'ที่' (thîi) 的常用用法"></textarea>
+            </div>
+            <button id="generatePromptBtn">生成Prompt</button>
+            <button id="copyPromptBtn" disabled>复制Prompt</button>
+            <button id="generateContentBtn" disabled>生成内容</button>
+            
+            <div class="form-group" style="margin-top: 20px;">
+                <label for="jsonInput">JSON内容</label>
+                <textarea id="jsonInput" rows="5" placeholder="粘贴从AI获取的JSON内容"></textarea>
+            </div>
+            <button id="loadJsonBtn">加载JSON</button>
+            <button id="saveToFirebaseBtn" disabled>保存到Firebase</button>
+        </div>
+        
+        <div class="main-content">
+            <div class="tab-container">
+                <div class="tab active" data-tab="console">控制台</div>
+                <div class="tab" data-tab="settings">系统设置</div>
+                <div class="tab" data-tab="review">内容审阅</div>
+            </div>
+            
+            <div class="tab-content active" id="console-tab">
+                <div class="console" id="consoleOutput">
+知识树生成器 v1.0
+等待指令...
+                </div>
+                <div class="input-area">
+                    <input type="text" id="commandInput" placeholder="输入命令...">
+                    <button id="executeBtn">执行</button>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="settings-tab">
+                <h3>AI API 设置</h3>
+                <div class="form-group">
+                    <label for="apiProvider">API提供商</label>
+                    <select id="apiProvider">
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic (Claude)</option>
+                        <option value="google">Google (Gemini)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="apiKey">API Key</label>
+                    <input type="password" id="apiKey" placeholder="输入您的API密钥">
+                </div>
+                
+                <div class="form-group">
+                    <label for="apiBaseUrl">API Base URL (可选)</label>
+                    <input type="text" id="apiBaseUrl" placeholder="例如: https://api.openai.com/v1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="modelName">模型名称</label>
+                    <input type="text" id="modelName" placeholder="例如: gpt-4, claude-3-sonnet">
+                </div>
+                
+                <h3>Firebase 设置</h3>
+                <div class="form-group">
+                    <label for="firebaseConfig">Firebase 配置</label>
+                    <textarea id="firebaseConfig" rows="6" placeholder='{
+  "apiKey": "your-api-key",
+  "authDomain": "your-project.firebaseapp.com",
+  "databaseURL": "https://your-project.firebaseio.com",
+  "projectId": "your-project",
+  "storageBucket": "your-project.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "your-app-id"
+}'></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="firebasePath">数据存储路径</label>
+                    <input type="text" id="firebasePath" placeholder="例如: knowledge_trees/thai_grammar">
+                </div>
+                
+                <button id="saveSettingsBtn">保存设置</button>
+                <div id="settingsMessage"></div>
+            </div>
+            
+            <div class="tab-content" id="review-tab">
+                <h3>内容审阅与编辑</h3>
+                <div class="form-group">
+                    <label for="jsonEditor">JSON 编辑器</label>
+                    <textarea id="jsonEditor" class="json-editor"></textarea>
+                </div>
+                <button id="validateJsonBtn">验证JSON</button>
+                <button id="formatJsonBtn">格式化JSON</button>
+                <button id="saveChangesBtn">保存更改</button>
+                <div id="reviewMessage"></div>
+            </div>
+            
+            <div class="status-bar">
+                <div id="statusText">就绪</div>
+                <div id="connectionStatus">未连接</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+
+    <script src="./js/firebaseAnkiAnywhere.js"></script>
+    <script>
+        // 应用状态管理
+        const appState = {
+            currentPrompt: '',
+            currentJson: null,
+            settings: {
+                apiProvider: 'openai',
+                apiKey: '',
+                apiBaseUrl: '',
+                modelName: 'gpt-4',
+                firebaseConfig: null,
+                firebasePath: 'knowledge_trees'
+            },
+            firebaseApp: null,
+            firebaseDatabase: null
+        };
+
+        // DOM 元素引用
+        const elements = {
+            consoleOutput: document.getElementById('consoleOutput'),
+            commandInput: document.getElementById('commandInput'),
+            executeBtn: document.getElementById('executeBtn'),
+            subjectInput: document.getElementById('subjectInput'),
+            generatePromptBtn: document.getElementById('generatePromptBtn'),
+            copyPromptBtn: document.getElementById('copyPromptBtn'),
+            generateContentBtn: document.getElementById('generateContentBtn'),
+            jsonInput: document.getElementById('jsonInput'),
+            loadJsonBtn: document.getElementById('loadJsonBtn'),
+            saveToFirebaseBtn: document.getElementById('saveToFirebaseBtn'),
+            apiProvider: document.getElementById('apiProvider'),
+            apiKey: document.getElementById('apiKey'),
+            apiBaseUrl: document.getElementById('apiBaseUrl'),
+            modelName: document.getElementById('modelName'),
+            firebaseConfig: document.getElementById('firebaseConfig'),
+            firebasePath: document.getElementById('firebasePath'),
+            saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+            settingsMessage: document.getElementById('settingsMessage'),
+            jsonEditor: document.getElementById('jsonEditor'),
+            validateJsonBtn: document.getElementById('validateJsonBtn'),
+            formatJsonBtn: document.getElementById('formatJsonBtn'),
+            saveChangesBtn: document.getElementById('saveChangesBtn'),
+            reviewMessage: document.getElementById('reviewMessage'),
+            statusText: document.getElementById('statusText'),
+            connectionStatus: document.getElementById('connectionStatus')
+        };
+
+        // 初始化应用
+        function initApp() {
+            loadSettings();
+            setupEventListeners();
+            setupTabs();
+            updateStatus('应用已就绪', 'success');
+        }
+
+        // 加载设置
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('knowledgeTreeSettings');
+            if (savedSettings) {
+                appState.settings = { ...appState.settings, ...JSON.parse(savedSettings) };
+                elements.apiProvider.value = appState.settings.apiProvider;
+                elements.apiKey.value = appState.settings.apiKey;
+                elements.apiBaseUrl.value = appState.settings.apiBaseUrl;
+                elements.modelName.value = appState.settings.modelName;
+                elements.firebaseConfig.value = appState.settings.firebaseConfig ? 
+                    JSON.stringify(appState.settings.firebaseConfig, null, 2) : '';
+                elements.firebasePath.value = appState.settings.firebasePath;
+            }
+        }
+
+        // 保存设置
+        function saveSettings() {
+            try {
+                appState.settings.apiProvider = elements.apiProvider.value;
+                appState.settings.apiKey = elements.apiKey.value;
+                appState.settings.apiBaseUrl = elements.apiBaseUrl.value;
+                appState.settings.modelName = elements.modelName.value;
+                appState.settings.firebasePath = elements.firebasePath.value;
+                
+                if (elements.firebaseConfig.value.trim()) {
+                    appState.settings.firebaseConfig = JSON.parse(elements.firebaseConfig.value);
+                    initializeFirebase();
+                }
+                
+                localStorage.setItem('knowledgeTreeSettings', JSON.stringify(appState.settings));
+                showMessage(elements.settingsMessage, '设置已保存', 'success');
+            } catch (error) {
+                showMessage(elements.settingsMessage, `保存设置失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 初始化 Firebase
+        function initializeFirebase() {
+            if (!appState.settings.firebaseConfig) {
+                elements.connectionStatus.textContent = 'Firebase 未配置';
+                return;
+            }
+            
+            try {
+                // 动态加载 Firebase SDK
+                if (typeof firebase === 'undefined') {
+                    console.log('Firebase SDK 未加载');
+                    return;
+                }
+                
+                if (!appState.firebaseApp) {
+                    appState.firebaseApp = firebase.initializeApp(appState.settings.firebaseConfig);
+                    appState.firebaseDatabase = firebase.database();
+                }
+                
+                elements.connectionStatus.textContent = 'Firebase 已连接';
+                updateStatus('Firebase 初始化成功', 'success');
+            } catch (error) {
+                console.error('Firebase 初始化失败:', error);
+                elements.connectionStatus.textContent = 'Firebase 连接失败';
+                updateStatus('Firebase 初始化失败', 'error');
+            }
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 控制台命令
+            elements.executeBtn.addEventListener('click', executeCommand);
+            elements.commandInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') executeCommand();
+            });
+
+            // 主要功能按钮
+            elements.generatePromptBtn.addEventListener('click', generatePrompt);
+            elements.copyPromptBtn.addEventListener('click', copyPrompt);
+            elements.generateContentBtn.addEventListener('click', generateContent);
+            elements.loadJsonBtn.addEventListener('click', loadJson);
+            elements.saveToFirebaseBtn.addEventListener('click', saveToFirebase);
+
+            // 设置
+            elements.saveSettingsBtn.addEventListener('click', saveSettings);
+
+            // 审阅功能
+            elements.validateJsonBtn.addEventListener('click', validateJson);
+            elements.formatJsonBtn.addEventListener('click', formatJson);
+            elements.saveChangesBtn.addEventListener('click', saveChanges);
+        }
+
+        // 标签页切换
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 移除所有active类
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // 添加active类到当前标签
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+        }
+
+        // 生成 Prompt
+        function generatePrompt() {
+            const subject = elements.subjectInput.value.trim();
+            if (!subject) {
+                updateStatus('请输入学习主题', 'error');
+                return;
+            }
+
+            const prompt = `# 角色
+你是我的高级课程设计与评估专家，精通建构主义教学法和形成性评价。你擅长将复杂知识解构为有层次的概念体系，并设计精准的测验来促进主动回忆与深度理解。
+
+# 核心任务
+基于我提供的【学习主题】，请你执行"知识树构建法"，创建完整的JSON学习结构。关键要求是：在每一个\`satellite_cards\`中，都必须包含一个\`quizzes\`字段，该字段是一个包含至少一个测验题的数组。
+
+# "知识树"结构生成要求
+
+1. 寻找树根：首先，提炼一张核心概念卡，捕捉该知识点最本质、可迁移的第一性原理。
+2. 培育枝干：创建多个卫星卡，每张卡从一个独特维度展开（如：应用、原理、辨析、误区）。
+3. 挂载果实与检查点：在每个卫星卡中，除了常规内容，必须包含一个\`quizzes\`数组。该数组需满足：
+   - 数量：至少包含1个测验对象，鼓励2-3个以从不同角度验证理解。
+   - 目标明确：每个测验都应直接验证本张卫星卡所传授的核心内容。
+   - 激发主动回忆：问题形式需迫使学习者主动提取信息，而非被动识别。
+   - 即时反馈：提供清晰的答案与解析，解析中要点明所考察的知识点。
+
+# 输出格式规范
+请输出一个整洁的JSON对象，严格遵循以下格式：
+
+{
+  "master_topic": "总体主题名称",
+  "master_id": "唯一标识符",
+  "core_concept_card": {
+    "question": "用于引发对核心原理思考的问题",
+    "answer": "清晰简洁的核心原理陈述",
+    "summary": "一句话总结"
+  },
+  "satellite_cards": [
+    {
+      "card_id": "卫星卡1_id",
+      "aspect": "此卡片的探讨维度，如「生物应用」",
+      "question": "用于学习此维度内容的问题",
+      "answer": "该问题的答案",
+      "examples": [
+        {
+          "context": "例句的上下文或类别",
+          "content": "具体的例句或场景",
+          "translation_or_note": "翻译或备注"
+        }
+      ],
+      "quizzes": [
+        {
+          "question": "一个用于直接验证本卫星卡内容的测验问题",
+          "options": [
+            {"id": "A", "text": "选项A的文本"},
+            {"id": "B", "text": "选项B的文本"},
+            {"id": "C", "text": "选项C的文本"},
+            {"id": "D", "text": "选项D的文本"}
+          ],
+          "correct_answer": "正确选项的ID，如 'B'",
+          "explanation": "对答案的解析，说明为什么这是正确的，并关联回本卡片的要点。"
+        }
+      ]
+    }
+  ]
+}
+
+# 学习主题
+现在，请针对以下主题生成内容：
+${subject}`;
+
+            appState.currentPrompt = prompt;
+            elements.copyPromptBtn.disabled = false;
+            elements.generateContentBtn.disabled = false;
+            
+            // 在控制台显示生成的 prompt
+            logToConsole(`生成的 Prompt:\n\n${prompt}\n\nPrompt 已生成，可以复制到剪贴板或直接调用AI生成内容。`);
+            updateStatus('Prompt 生成成功', 'success');
+        }
+
+        // 复制 Prompt 到剪贴板
+        function copyPrompt() {
+            navigator.clipboard.writeText(appState.currentPrompt).then(() => {
+                updateStatus('Prompt 已复制到剪贴板', 'success');
+            }).catch(err => {
+                updateStatus('复制失败: ' + err, 'error');
+            });
+        }
+
+        // 调用 AI API 生成内容
+        async function generateContent() {
+            if (!appState.settings.apiKey) {
+                updateStatus('请先配置API密钥', 'error');
+                return;
+            }
+
+            updateStatus('正在生成内容...', 'warning');
+            
+            try {
+                let result;
+                switch (appState.settings.apiProvider) {
+                    case 'openai':
+                        result = await callOpenAI();
+                        break;
+                    case 'anthropic':
+                        result = await callAnthropic();
+                        break;
+                    case 'google':
+                        result = await callGoogleAI();
+                        break;
+                    default:
+                        throw new Error('不支持的API提供商');
+                }
+                
+                appState.currentJson = result;
+                elements.jsonEditor.value = JSON.stringify(result, null, 2);
+                elements.saveToFirebaseBtn.disabled = false;
+                
+                logToConsole(`AI 生成的内容:\n\n${JSON.stringify(result, null, 2)}`);
+                updateStatus('内容生成成功', 'success');
+                
+                // 切换到审阅标签页
+                document.querySelector('[data-tab="review"]').click();
+                
+            } catch (error) {
+                updateStatus(`生成失败: ${error.message}`, 'error');
+                logToConsole(`错误: ${error.message}`);
+            }
+        }
+
+        // 调用 OpenAI API
+        async function callOpenAI() {
+            const response = await fetch(appState.settings.apiBaseUrl || 'https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${appState.settings.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: appState.settings.modelName || 'gpt-4',
+                    messages: [
+                        {
+                            role: 'user',
+                            content: appState.currentPrompt
+                        }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 4000
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API 请求失败: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            const content = data.choices[0].message.content;
+            
+            // 尝试从响应中提取 JSON
+            return extractJsonFromResponse(content);
+        }
+
+        // 调用 Anthropic API (示例实现)
+        async function callAnthropic() {
+            // 这里需要根据 Anthropic 的 API 规范实现
+            throw new Error('Anthropic API 实现待完成');
+        }
+
+        // 调用 Google AI API (示例实现)
+        async function callGoogleAI() {
+            // 这里需要根据 Google AI 的 API 规范实现
+            throw new Error('Google AI API 实现待完成');
+        }
+
+        // 从响应中提取 JSON
+        function extractJsonFromResponse(content) {
+            try {
+                // 尝试直接解析
+                return JSON.parse(content);
+            } catch (e) {
+                // 尝试从代码块中提取 JSON
+                const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                if (jsonMatch) {
+                    try {
+                        return JSON.parse(jsonMatch[1]);
+                    } catch (e2) {
+                        throw new Error('无法从响应中提取有效的 JSON');
+                    }
+                }
+                throw new Error('响应不包含有效的 JSON');
+            }
+        }
+
+        // 加载 JSON 内容
+        function loadJson() {
+            const jsonText = elements.jsonInput.value.trim();
+            if (!jsonText) {
+                updateStatus('请输入JSON内容', 'error');
+                return;
+            }
+
+            try {
+                const jsonData = JSON.parse(jsonText);
+                appState.currentJson = jsonData;
+                elements.jsonEditor.value = JSON.stringify(jsonData, null, 2);
+                elements.saveToFirebaseBtn.disabled = false;
+                updateStatus('JSON 加载成功', 'success');
+                
+                // 切换到审阅标签页
+                document.querySelector('[data-tab="review"]').click();
+                
+            } catch (error) {
+                updateStatus(`JSON 解析失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 验证 JSON
+        function validateJson() {
+            try {
+                const jsonData = JSON.parse(elements.jsonEditor.value);
+                
+                // 基本结构验证
+                const requiredFields = ['master_topic', 'master_id', 'core_concept_card', 'satellite_cards'];
+                const missingFields = requiredFields.filter(field => !(field in jsonData));
+                
+                if (missingFields.length > 0) {
+                    throw new Error(`缺少必要字段: ${missingFields.join(', ')}`);
+                }
+                
+                // 验证卫星卡结构
+                if (!Array.isArray(jsonData.satellite_cards)) {
+                    throw new Error('satellite_cards 必须是数组');
+                }
+                
+                jsonData.satellite_cards.forEach((card, index) => {
+                    if (!card.quizzes || !Array.isArray(card.quizzes) || card.quizzes.length === 0) {
+                        throw new Error(`卫星卡 ${index} (${card.card_id}) 缺少 quizzes 数组或数组为空`);
+                    }
+                });
+                
+                showMessage(elements.reviewMessage, 'JSON 验证通过', 'success');
+                appState.currentJson = jsonData;
+                
+            } catch (error) {
+                showMessage(elements.reviewMessage, `验证失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 格式化 JSON
+        function formatJson() {
+            try {
+                const jsonData = JSON.parse(elements.jsonEditor.value);
+                elements.jsonEditor.value = JSON.stringify(jsonData, null, 2);
+                showMessage(elements.reviewMessage, 'JSON 已格式化', 'success');
+            } catch (error) {
+                showMessage(elements.reviewMessage, `格式化失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 保存更改
+        function saveChanges() {
+            try {
+                const jsonData = JSON.parse(elements.jsonEditor.value);
+                appState.currentJson = jsonData;
+                showMessage(elements.reviewMessage, '更改已保存', 'success');
+            } catch (error) {
+                showMessage(elements.reviewMessage, `保存失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 保存到 Firebase
+        async function saveToFirebase() {
+            if (!appState.firebaseDatabase) {
+                updateStatus('Firebase 未初始化', 'error');
+                return;
+            }
+
+            if (!appState.currentJson) {
+                updateStatus('没有可保存的内容', 'error');
+                return;
+            }
+
+            try {
+                const path = appState.settings.firebasePath + '/' + appState.currentJson.master_id;
+                await appState.firebaseDatabase.ref(path).set(appState.currentJson);
+                updateStatus('内容已保存到 Firebase', 'success');
+                logToConsole(`内容已保存到 Firebase 路径: ${path}`);
+            } catch (error) {
+                updateStatus(`保存到 Firebase 失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 控制台命令执行
+        function executeCommand() {
+            const command = elements.commandInput.value.trim();
+            if (!command) return;
+
+            logToConsole(`> ${command}`);
+            elements.commandInput.value = '';
+
+            // 简单的命令解析
+            const [cmd, ...args] = command.split(' ');
+            
+            switch (cmd.toLowerCase()) {
+                case 'help':
+                    logToConsole(`可用命令:
+- help: 显示帮助
+- clear: 清空控制台
+- status: 显示状态
+- generate: 生成Prompt
+- settings: 显示设置
+- load <json>: 加载JSON内容`);
+                    break;
+                case 'clear':
+                    elements.consoleOutput.textContent = '知识树生成器 v1.0\n';
+                    break;
+                case 'status':
+                    logToConsole(`当前状态:
+主题: ${elements.subjectInput.value || '未设置'}
+Prompt: ${appState.currentPrompt ? '已生成' : '未生成'}
+JSON: ${appState.currentJson ? '已加载' : '未加载'}
+Firebase: ${appState.firebaseDatabase ? '已连接' : '未连接'}`);
+                    break;
+                case 'generate':
+                    generatePrompt();
+                    break;
+                case 'load':
+                    const jsonContent = args.join(' ');
+                    if (jsonContent) {
+                        elements.jsonInput.value = jsonContent;
+                        loadJson();
+                    }
+                    break;
+                default:
+                    logToConsole(`未知命令: ${cmd}。输入 'help' 查看可用命令。`);
+            }
+        }
+
+        // 工具函数
+        function logToConsole(message) {
+            elements.consoleOutput.textContent += `\n${message}`;
+            elements.consoleOutput.scrollTop = elements.consoleOutput.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            elements.statusText.textContent = message;
+            elements.statusText.style.color = 
+                type === 'success' ? 'var(--success-color)' : 
+                type === 'error' ? 'var(--error-color)' : 
+                type === 'warning' ? 'var(--warning-color)' : 'var(--text-color)';
+            
+            logToConsole(`[${new Date().toLocaleTimeString()}] ${message}`);
+        }
+
+        function showMessage(element, message, type) {
+            element.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => {
+                element.innerHTML = '';
+            }, 5000);
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+    
+    
+</body>
+</html>
