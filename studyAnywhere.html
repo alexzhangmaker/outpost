@@ -481,7 +481,7 @@ html{
                     <div class="cardQuestionInBack">${jsonCard.question}</div>
                     <div class="cardExplaination">
                       <div class="cardAnwser">${jsonCard.answer}</div>
-                      <div class="cardSummary">${jsonCard.summary}</div>
+                      ${jsonCard.hasOwnProperty("summary")?'<div class="cardSummary">'+jsonCard.summary+'</div>':''}
                       <div class="cardQuiz quiz-container noShow">Quiz</div>
                       <div class="cardExamples noShow"></div>
                       <div class="cardHintsConnections noShow"></div>
@@ -729,7 +729,10 @@ html{
             document.querySelector(".cardQuestionInBack").classList.remove("noShow") ;
             
             document.querySelector(".cardAnwser").classList.add("noShow") ;
-            document.querySelector(".cardSummary").classList.add("noShow") ;
+
+            let tagSummary = document.querySelector(".cardSummary");
+            if(agSummary)agSummary.classList.add("noShow") ;
+            
             document.querySelector(".cardExamples").classList.add("noShow") ;
             document.querySelector(".cardQuiz").classList.remove("noShow") ;
 
