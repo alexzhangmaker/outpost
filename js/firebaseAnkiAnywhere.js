@@ -59,7 +59,11 @@ async function loadAnki(pathAnki){
     keys.forEach(key=>{
         gMemoCards.push(jsonAnkiSets[key]) ;
     }) ;
+}
 
-    
 
+async function saveReviewStat(classCode){
+    let date = new Date() ;
+    let pathLog = `/reviewLog/${classCode}/${date.getTime()}` ;
+    await database.ref(pathLog).set(gMemoCards) ;
 }
