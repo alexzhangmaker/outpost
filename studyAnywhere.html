@@ -3,29 +3,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
-    <link
-      rel="stylesheet"
-      as="style"
-      onload="this.rel='stylesheet'"
-      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40400%3B500%3B700%3B900&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900"/>
+    <link rel="stylesheet" as="style" onload="this.rel='stylesheet'" href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40400%3B500%3B700%3B900&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900"/>
 
-    <title>studyMemo</title>
+    <title>学习之旅</title>
     <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <style>
+      @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Roboto+Flex:opsz,wght@8..144,100..1000&display=swap');
+
+      .oswald-400 {
+        font-family: "Oswald", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+      }
+
+      .roboto-flex-400 {
+  font-family: "Roboto Flex", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings:
+    "slnt" 0,
+    "wdth" 100,
+    "GRAD" 0,
+    "XOPQ" 96,
+    "XTRA" 468,
+    "YOPQ" 79,
+    "YTAS" 750,
+    "YTDE" -203,
+    "YTFI" 738,
+    "YTLC" 514,
+    "YTUC" 712;
+}
+
+html{
+  font-size: 18px;;
+}
+      body{
+        font-family: "Oswald", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+      }
+  </style>
+    <style>
         .noShow{
-            display: none;
+            display: none !important;
+        }
+
+        button:disabled {
+          background-color: #cccccc; /* A light grey color */
+          color: #666666; /* A darker grey for text */
+          cursor: not-allowed; /* Indicates the element is not interactive */
+          opacity: 0.7; /* Reduces the opacity slightly for a faded look */
+        }
+        button{
+          min-width: 60px;
+
+          font-family: "Oswald", sans-serif;
+          font-optical-sizing: auto;
+          font-weight: 400;
+          font-style: normal;
+        }
+
+        button span{
+          font-family: "Oswald", sans-serif;
+          font-optical-sizing: auto;
+          font-weight: 400;
+          font-style: normal;
         }
 
         .quiz-container {
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-}
+          max-width: 600px;
+          margin: 20px auto;
+          padding: 20px;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          background-color: #f9f9f9;
+        }
 
 #question {
   text-align: center;
@@ -72,6 +129,66 @@
 .choice-wrong{
   background-color: chartreuse;
 }
+    </style>
+    <style>
+      .outpostCard{
+        border-radius: 5px; /* Adjust the value to control the roundness */
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3); /* Your desired shadow properties */
+
+        display: flex;
+        flex-direction: column;
+      }
+      .outpostCardFront{
+        font-family: "Roboto Flex", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+        font-size:2rem ;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        align-content: center;
+        justify-content: center;
+
+        flex-grow: 1;
+      }
+
+      .outpostCardBack{
+        font-family: "Oswald", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        align-content: center;
+        justify-content: space-between;
+
+        flex-grow: 1;
+      }
+      .cardQuestionInBack{
+        font-style: italic;
+        font-size: 0.8rem ;
+      }
+
+      .cardAnwser{
+        font-style: normal;
+        font-weight: bold;
+        font-size: 1.2rem;
+      }
+      .cardSummary{
+        font-style: normal;
+        color: #666666;
+        font-size: 1.2rem;
+      }
+      .cardExamples{
+        color: blue;
+      }
+      .cardHintsConnections{
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -180,6 +297,10 @@
             <div class="flex justify-stretch">
               <div class="flex flex-1 gap-3 flex-wrap px-4 py-3 justify-between">
                 <button disabled id="idBTNNextCard"><span class="truncate">Next</span></button>
+                <div class="masterCardCtrl noShow">
+                  <button disabled id="idBTNNextSubCard"><span class="truncate">Next-Sub</span></button>
+                </div>
+
                 <button id="idBTNCheckAnswer"><span class="truncate">Answer</span></button>
                 <button id="idBTNQuiz" class="noShow"><span class="truncate">Start Quiz</span></button>
                 <button id="idBTNQuizNext" class="noShow"><span class="truncate">Next Quiz</span></button>
@@ -201,8 +322,94 @@
     <script src="./JSON/mockMemo.js"></script>
     <script>
         const gMemoCards=mockKMCards ;
-        let gCurrentIndex = 1 ;
+        let gCurrentIndex = 0 ;
+        let gSubCardIndex = -1 ;
         let gQuizIndex=0 ;
+        
+
+        async function loadMemoCards(cardsPath){
+
+        }
+        async function saveReviewStat(){
+
+        }
+
+        function recordRating(rating){
+          const allowedRating=new Set([1,2,3,4,5]) ;
+          if(allowedRating.has(rating)!=true){
+            console.err('wrong value') ;
+            return ;
+          }
+
+          if(gMemoCards[gCurrentIndex].hasOwnProperty("core_concept_card")){
+            if(gSubCardIndex==-1){//master card itself
+              gMemoCards[gCurrentIndex].core_concept_card["rating"]= rating ;
+              return ;
+            }
+            gMemoCards[gCurrentIndex].satellite_cards[gSubCardIndex]["rating"] = rating ;
+            return ;
+          }else{
+            gMemoCards[gCurrentIndex]["rating"]= rating ;
+            return ;
+          }
+        }
+
+        function recordQuizResult(bCorrect){
+          if(gMemoCards[gCurrentIndex].hasOwnProperty("core_concept_card")){
+            gMemoCards[gCurrentIndex].satellite_cards[gSubCardIndex].quizzes[gQuizIndex]["correct"] = bCorrect  ;
+          }else{
+            gMemoCards[gCurrentIndex].quizzes[gQuizIndex]["correct"] = bCorrect  ;
+          }
+        }
+
+        function _getQuiz(indexQuiz){
+          let jsonCard = gMemoCards[gCurrentIndex] ;
+          if(jsonCard.hasOwnProperty("core_concept_card")){
+            return gMemoCards[gCurrentIndex].satellite_cards[gSubCardIndex].quizzes[indexQuiz] ;
+          }
+          return gMemoCards[gCurrentIndex].quizzes[indexQuiz] ;
+        }
+
+        function _getQuizzes(){
+          let jsonCard = gMemoCards[gCurrentIndex] ;
+          if(jsonCard.hasOwnProperty("core_concept_card")){
+            return gMemoCards[gCurrentIndex].satellite_cards[gSubCardIndex].quizzes ;
+          }
+          return gMemoCards[gCurrentIndex].quizzes ;
+        }
+        
+
+        //idBTNNextCard idBTNNextSubCard 
+        function _enterMasterMode(){
+            document.querySelector('.masterCardCtrl').classList.remove('noShow') ;
+            document.querySelector("#idBTNNextCard").classList.add('noShow') ;
+            gSubCardIndex=-1 ;//
+        }
+        function _exitMasterMode(){
+          document.querySelector('.masterCardCtrl').classList.add('noShow') ;
+          document.querySelector("#idBTNNextCard").classList.remove('noShow') ;
+          document.querySelector("#idBTNNextCard").disabled = false ;
+          gSubCardIndex = -1 ;
+        }
+
+        function _enterSubCardMode(){
+          document.querySelector("#idBTNNextSubCard").disabled = true ;
+        }
+        function _exitSubCardMode(){
+          
+        }
+
+        function _enterStandardMode(){
+            document.querySelector('.masterCardCtrl').classList.add('noShow') ;
+            document.querySelector("#idBTNNextCard").classList.remove('noShow') ;           
+        }
+        function _exitStandardMode(){
+
+        }
+        function inStateMasterCard(){
+          return ! document.querySelector('.masterCardCtrl').classList.contains('noShow') ;
+        }
+
 
         function typeOfCard(jsonCard){
             if(jsonCard.hasOwnProperty("core_concept_card"))return "masterCard" ;
@@ -215,10 +422,30 @@
             let outpostCardBack = document.querySelector('.outpostCardBack') ;
             outpostCardBack.classList.toggle('noShow') ;
         }
+
+        
         const callRenderMasterCard = (tagOutpstCard,jsonCard)=>{
-            tagOutpstCard.innerHTML= 'mastercard' ;
+            tagOutpstCard.innerHTML= `
+                <div class="outpostCardFront">
+                    <div class="cardQuestion">${jsonCard.core_concept_card.question}</div>
+                </div>
+                <div class="outpostCardBack noShow">
+                    <div class="cardQuestionInBack">${jsonCard.core_concept_card.question}</div>
+                    <div>
+                      <div class="cardAnwser">${jsonCard.core_concept_card.answer}</div>
+                      <div class="cardSummary">${jsonCard.core_concept_card.summary}</div>
+                      <div class="cardQuiz quiz-container noShow">Quiz</div>
+                      <div class="cardExamples noShow"></div>
+                      <div class="cardHintsConnections noShow"></div>
+                    </div>
+                </div>
+            ` ;
+            _enterMasterMode() ;
         } ;
+
         const callRenderDetailCard = (tagOutpstCard,jsonCard)=>{
+            _enterStandardMode() ;
+            
             tagOutpstCard.innerHTML= `
                 <div class="outpostCardFront">
                     <div class="cardQuestion">${jsonCard.question}</div>
@@ -232,7 +459,6 @@
                     <div class="cardHintsConnections noShow"></div>
                 </div>
             ` ;
-            //cardQuestionInBack cardSummary cardQuiz cardExamples
 
             if(jsonCard.hasOwnProperty("examples")&& jsonCard.examples.length>0){
                 let tagExamples = tagOutpstCard.querySelector(".cardExamples") ;
@@ -256,93 +482,52 @@
             }
         } ;
 
-        const callRenderQuizCard = (tagOutpstCard,jsonCard)=>{
-            tagOutpstCard.innerHTML= 'quiz card' ;
-        } ;
-
-        const renderCardCalls={
-            "masterCard":callRenderMasterCard,
-            "detailCard":callRenderDetailCard,
-            "quizCard":callRenderQuizCard,
-        } ;
-
-        function _renderOutpostCard(tagOutpostCard,jsonCard){
-            let type = typeOfCard(jsonCard) ;
-            renderCardCalls[type](tagOutpostCard,jsonCard) ;
-        }
-
-        
-        document.addEventListener('DOMContentLoaded', async (event)=>{
-            let tagOutpostCard = document.querySelector(".outpostCard");
-            _renderOutpostCard(tagOutpostCard,gMemoCards[gCurrentIndex]) ;
-
-            let ratingBTNs = document.querySelectorAll(".btnRating") ;
-            ratingBTNs.forEach(btnRating=>{
-                btnRating.addEventListener('click',(event)=>{
-                    let rating = parseInt( btnRating.getAttribute("data-rating") );
-                    //alert(rating) ;
-                    let tagBTNQuiz = document.querySelector('#idBTNQuiz') ;
-                    if(tagBTNQuiz.classList.contains('noShow')==false){
-                      tagBTNQuiz.disabled = false ;
-                      document.querySelector("#idBTNCheckAnswer").disabled = true;
-                      document.querySelector("#idBTNNextCard").disabled = true;
-                      return ;
-                    }
-                    //document.querySelector("#idBTNCheckAnswer").disabled = false;
-                    document.querySelector("#idBTNNextCard").disabled = false;
-                    ratingBTNs.forEach(rating=>{
-                      rating.disabled = true ;
-                    })
-                }) ;
-            }) ;
-
-            let nextBTN = document.querySelector("#idBTNNextCard").addEventListener('click',(event)=>{
-                gCurrentIndex=gCurrentIndex+1 ;
-                if(gCurrentIndex>=gMemoCards.length)return ;
-
-                document.querySelector("#idBTNNextCard").disabled = true;
-                document.querySelector("#idBTNCheckAnswer").disabled = false;
-                let tagOutpostCard = document.querySelector(".outpostCard");
-                _renderOutpostCard(tagOutpostCard,gMemoCards[gCurrentIndex]) ;
-            }) ;
-        }) ;
-
-        document.querySelector("#idBTNCheckAnswer").addEventListener('click', async (event)=>{
-            flipCard() ;
-            document.querySelector("#idBTNCheckAnswer").disabled = true;
-            let ratingBTNs = document.querySelectorAll(".btnRating") ;
-            ratingBTNs.forEach(btnRating=>{
-                btnRating.disabled = false ;
-            }) ;
-        }) ;
-
-        function callQuizOption(event){
-          let tagChoice = event.target;
-          if(tagChoice.getAttribute("data-answer") == gMemoCards[gCurrentIndex].quizzes[gQuizIndex].correct_answer){
-            tagChoice.classList.add('choice-right');
-          }else{
-            tagChoice.classList.add('choice-wrong');
-          }
-
-          let tagContainer = document.querySelector("#choices-container");
-          tagContainer.querySelectorAll(".choice").forEach(choice=>{
-            choice.removeEventListener('click', callQuizOption);
-          });
-
-          if(gQuizIndex==gMemoCards[gCurrentIndex].quizzes.length-1){
-            document.querySelector("#idBTNQuizNext").disabled = false ;
-            document.querySelector("#idBTNQuizNext").classList.add("noShow");
-
-            document.querySelector("#idBTNQuizEnd").classList.remove("noShow");
-          }else{
-            document.querySelector("#idBTNQuizNext").disabled = false ;
-            gQuizIndex++ ;
+        const callRenderSubCard = (tagOutpstCard,jsonCard)=>{
+            _enterSubCardMode() ;
             
-          }
-         
+            tagOutpstCard.innerHTML= `
+                <div class="outpostCardFront">
+                    <div class="cardQuestion">${jsonCard.question}</div>
+                </div>
+                <div class="outpostCardBack noShow">
+                    <div class="cardQuestionInBack">${jsonCard.question}</div>
+                    <div>
+                      <div class="cardAnwser">${jsonCard.answer}</div>
+                      ${jsonCard.hasOwnProperty("summary")?'<div class="cardSummary">'+jsonCard.summary+'</div>':''}
+                      
+                      <div class="cardQuiz quiz-container noShow">Quiz</div>
+                      <div class="cardExamples noShow"></div>
+                      <div class="cardHintsConnections noShow"></div>
+                    </div>
+                </div>
+            ` ;
 
-        }
+            if(jsonCard.hasOwnProperty("examples")&& jsonCard.examples.length>0){
+                let tagExamples = tagOutpstCard.querySelector(".cardExamples") ;
+                tagExamples.innerHTML=`
+                <span>举例说明</span>
+                ` ;
+                tagExamples.classList.remove("noShow") ;
+                for(let i=0;i<jsonCard.examples.length;i++){
+                    let example = jsonCard.examples[i] ;
+                    let tagExample = document.createElement('div') ;
+                    tagExample.classList.add("cardExample") ;
+                    tagExamples.appendChild(tagExample) ;
+                    tagExample.innerHTML=`
+                        <div class="cardExampleContent">${example.content}</div>
+                    ` ;
+                }
+            }
+            //quizzes
+            if(jsonCard.hasOwnProperty("quizzes")&& jsonCard.quizzes.length>0){
+                //idBTNQuiz
+                let tagBTNQuiz = document.querySelector('#idBTNQuiz') ;
+                tagBTNQuiz.classList.remove('noShow') ;
+                tagBTNQuiz.disabled = true ;
+            }
+        } ;
 
+        const callRenderQuizCard = _renderQuiz ;
         function _renderQuiz(tagQuiz,jsonQuiz){
             tagQuiz.innerHTML=`
               <h2 id="question">${jsonQuiz.question}</h2>
@@ -371,13 +556,144 @@
             }) ;
         }
 
+        const renderCardCalls={
+            "masterCard":callRenderMasterCard,
+            "detailCard":callRenderDetailCard,
+            "quizCard":callRenderQuizCard,
+        } ;
+
+        function _renderOutpostCard(tagOutpostCard,jsonCard,isSub=false){
+          if(isSub){
+            callRenderSubCard(tagOutpostCard,jsonCard) ;
+            return;
+          }
+          let type = typeOfCard(jsonCard) ;
+          renderCardCalls[type](tagOutpostCard,jsonCard) ;
+        }
+
+        document.addEventListener('DOMContentLoaded', async (event)=>{
+          let tagOutpostCard = document.querySelector(".outpostCard");
+          _renderOutpostCard(tagOutpostCard,gMemoCards[gCurrentIndex]) ;
+
+          let ratingBTNs = document.querySelectorAll(".btnRating") ;
+          ratingBTNs.forEach(btnRating=>{
+            btnRating.addEventListener('click',(event)=>{
+              let rating = parseInt( btnRating.getAttribute("data-rating") );
+              recordRating(rating) ;
+              let tagBTNQuiz = document.querySelector('#idBTNQuiz') ;
+              if(tagBTNQuiz.classList.contains('noShow')==false){
+                tagBTNQuiz.disabled = false ;
+                document.querySelector("#idBTNCheckAnswer").disabled = true;
+                document.querySelector("#idBTNNextCard").disabled = true;
+                document.querySelector("#idBTNNextSubCard").disabled = true;
+                ratingBTNs.forEach(rating=>{rating.disabled = true ;}) ;
+
+                tagBTNQuiz.click() ;
+
+                return ;
+              }
+              
+              if(inStateMasterCard()){
+                document.querySelector("#idBTNNextSubCard").disabled = false;
+                ratingBTNs.forEach(rating=>{rating.disabled = true ;}) ;
+
+                document.querySelector("#idBTNNextSubCard").click() ;
+                return ;
+              }
+
+              document.querySelector("#idBTNNextCard").disabled = false;
+              ratingBTNs.forEach(rating=>{rating.disabled = true ;}) ;
+              document.querySelector("#idBTNNextCard").click() ;
+            }) ;
+          }) ;
+
+        }) ;
+
+
+        document.querySelector("#idBTNNextCard").addEventListener('click',(event)=>{
+          gCurrentIndex=gCurrentIndex+1 ;
+          if(gCurrentIndex>=gMemoCards.length){
+            alert('done') ;
+            document.querySelector("#idBTNNextCard").disabled = true;
+            console.log(gMemoCards) ;
+            saveReviewStat() ;
+            return ;
+          }
+
+          document.querySelector("#idBTNNextCard").disabled = true;
+          document.querySelector("#idBTNCheckAnswer").disabled = false;
+          let tagOutpostCard = document.querySelector(".outpostCard");
+          _renderOutpostCard(tagOutpostCard,gMemoCards[gCurrentIndex]) ;
+        }) ;
+
+        document.querySelector("#idBTNNextSubCard").addEventListener('click',(event)=>{
+          //gCurrentIndex=gCurrentIndex+1 ;
+          if(gSubCardIndex==-1){
+            if(gMemoCards[gCurrentIndex].satellite_cards.length==0){
+              _exitMasterMode() ;
+              return ;
+            }
+          }
+          
+          gSubCardIndex=gSubCardIndex+1 ;
+          if(gSubCardIndex>=gMemoCards[gCurrentIndex].satellite_cards.length){
+            _exitMasterMode() ;
+            return ;
+          }
+
+          document.querySelector("#idBTNCheckAnswer").disabled = false;
+          let tagOutpostCard = document.querySelector(".outpostCard");
+          _renderOutpostCard(tagOutpostCard,gMemoCards[gCurrentIndex].satellite_cards[gSubCardIndex],true) ;
+        }) ;
+
+        document.querySelector("#idBTNCheckAnswer").addEventListener('click', async (event)=>{
+            flipCard() ;
+            document.querySelector("#idBTNCheckAnswer").disabled = true;
+            let ratingBTNs = document.querySelectorAll(".btnRating") ;
+            ratingBTNs.forEach(btnRating=>{
+                btnRating.disabled = false ;
+            }) ;
+        }) ;
+
+        function callQuizOption(event){
+          let tagChoice = event.target;
+          let jsonQuiz = _getQuiz(gQuizIndex) ;
+          if(tagChoice.getAttribute("data-answer") == jsonQuiz.correct_answer){
+            tagChoice.classList.add('choice-right');
+            recordQuizResult(true) ;
+          }else{
+            tagChoice.classList.add('choice-wrong');
+            recordQuizResult(false) ;
+          }
+
+          let tagContainer = document.querySelector("#choices-container");
+          tagContainer.querySelectorAll(".choice").forEach(choice=>{
+            choice.removeEventListener('click', callQuizOption);
+          });
+
+          let jsonQuizzes = _getQuizzes() ;
+          if(gQuizIndex==jsonQuizzes.length-1){
+            document.querySelector("#idBTNQuizNext").disabled = false ;
+            document.querySelector("#idBTNQuizNext").classList.add("noShow");
+
+            document.querySelector("#idBTNQuizEnd").classList.remove("noShow");
+            document.querySelector("#idBTNQuizEnd").disabled = false ;
+            gQuizIndex = 0 ;
+          }else{
+            document.querySelector("#idBTNQuizNext").disabled = false ;
+            gQuizIndex++ ;
+          }
+        }
+
         document.querySelector('#idBTNQuiz').addEventListener('click', async (event)=>{
             let ratingBTNs = document.querySelectorAll(".btnRating") ;
             ratingBTNs.forEach(btnRating=>{
                 btnRating.disabled = true ;
             }) ;
 
-            document.querySelector(".cardQuestionInBack").classList.add("noShow") ;
+            document.querySelector(".cardQuestionInBack").classList.remove("noShow") ;
+            
+            document.querySelector(".cardAnwser").classList.add("noShow") ;
             document.querySelector(".cardSummary").classList.add("noShow") ;
             document.querySelector(".cardExamples").classList.add("noShow") ;
             document.querySelector(".cardQuiz").classList.remove("noShow") ;
@@ -386,20 +702,25 @@
             document.querySelector('#idBTNQuizNext').classList.remove('noShow') ;
             document.querySelector("#idBTNQuizNext").disabled = true ;
             gQuizIndex=0 ;
-            _renderQuiz(document.querySelector(".cardQuiz"),gMemoCards[gCurrentIndex].quizzes[gQuizIndex]);
+            let jsonQuiz = _getQuiz(gQuizIndex) ;
+            _renderQuiz(document.querySelector(".cardQuiz"),jsonQuiz);
 
         }) ;
-        
-        
 
-        ////idBTNQuizNext idBTNQuizEnd
         document.querySelector("#idBTNQuizNext").addEventListener("click",(event)=>{
           _renderQuiz(document.querySelector(".cardQuiz"),gMemoCards[gCurrentIndex].quizzes[gQuizIndex]) ;
         }) ;
 
         document.querySelector("#idBTNQuizEnd").addEventListener("click",(event)=>{
-          event.target.classList.add('noShow') ;
-          document.querySelector("#idBTNNextCard").disabled = false ;
+          document.querySelector("#idBTNQuizEnd").classList.add('noShow') ;
+          document.querySelector("#idBTNQuizEnd").disabled = true ;
+          if(inStateMasterCard()==false){
+            event.target.classList.add('noShow') ;
+            document.querySelector("#idBTNNextCard").disabled = false ;
+            return ;
+          }
+
+          document.querySelector("#idBTNNextSubCard").disabled = false ;
         }) ;
     </script>
   </body>
