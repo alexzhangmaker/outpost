@@ -163,14 +163,29 @@ html{
         display: flex;
         flex-direction: column;
         align-items: center;
-        align-content: center;
+        align-content: left;
         justify-content: space-between;
 
         flex-grow: 1;
       }
       .cardQuestionInBack{
-        font-style: italic;
+        /*font-style: italic;*/
         font-size: 0.8rem ;
+
+        width:100% ;
+        text-align: left;
+        color: darkcyan;
+      }
+
+      .cardExplaination{
+        flex-grow: 1;
+        width:100% ;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        
       }
 
       .cardAnwser{
@@ -188,6 +203,17 @@ html{
       }
       .cardHintsConnections{
         display: none;
+      }
+
+      .cardQuiz{
+        flex-grow: 1;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        width:90%;
+
       }
     </style>
   </head>
@@ -431,7 +457,7 @@ html{
                 </div>
                 <div class="outpostCardBack noShow">
                     <div class="cardQuestionInBack">${jsonCard.core_concept_card.question}</div>
-                    <div>
+                    <div class="cardExplaination">
                       <div class="cardAnwser">${jsonCard.core_concept_card.answer}</div>
                       <div class="cardSummary">${jsonCard.core_concept_card.summary}</div>
                       <div class="cardQuiz quiz-container noShow">Quiz</div>
@@ -452,11 +478,13 @@ html{
                 </div>
                 <div class="outpostCardBack noShow">
                     <div class="cardQuestionInBack">${jsonCard.question}</div>
-                    <div class="cardAnwser">${jsonCard.answer}</div>
-                    <div class="cardSummary">${jsonCard.summary}</div>
-                    <div class="cardQuiz quiz-container noShow">Quiz</div>
-                    <div class="cardExamples noShow"></div>
-                    <div class="cardHintsConnections noShow"></div>
+                    <div class="cardExplaination">
+                      <div class="cardAnwser">${jsonCard.answer}</div>
+                      <div class="cardSummary">${jsonCard.summary}</div>
+                      <div class="cardQuiz quiz-container noShow">Quiz</div>
+                      <div class="cardExamples noShow"></div>
+                      <div class="cardHintsConnections noShow"></div>
+                    </div>
                 </div>
             ` ;
 
@@ -491,7 +519,7 @@ html{
                 </div>
                 <div class="outpostCardBack noShow">
                     <div class="cardQuestionInBack">${jsonCard.question}</div>
-                    <div>
+                    <div class="cardExplaination">
                       <div class="cardAnwser">${jsonCard.answer}</div>
                       ${jsonCard.hasOwnProperty("summary")?'<div class="cardSummary">'+jsonCard.summary+'</div>':''}
                       
@@ -530,6 +558,7 @@ html{
         const callRenderQuizCard = _renderQuiz ;
         function _renderQuiz(tagQuiz,jsonQuiz){
             tagQuiz.innerHTML=`
+            <div>
               <h2 id="question">${jsonQuiz.question}</h2>
               <div id="choices-container">
                 <div class="choice" data-answer="A">
@@ -550,6 +579,7 @@ html{
                 </div>
               </div>
               <div class="quizResult"></div>
+              </div>
             ` ;
             tagQuiz.querySelectorAll(".choice").forEach(tagChoice=>{
               tagChoice.addEventListener('click',callQuizOption) ;
@@ -721,6 +751,63 @@ html{
           }
 
           document.querySelector("#idBTNNextSubCard").disabled = false ;
+        }) ;
+
+        const hotKeyCall_SPACE = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            let btnCheck = document.querySelector("#idBTNCheckAnswer") ;
+            if(btnCheck.classList.contains('noShow')!= true && btnCheck.disabled == false)btnCheck.click() ;
+            //alert('fdsfdsf') ;
+        } ;
+
+        const hotKeyCall_1 = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            let btnCheck = document.querySelector('.btnRating[data-rating="1"]'); 
+            if(btnCheck.classList.contains('noShow')!= true && btnCheck.disabled == false)btnCheck.click() ;
+        } ;
+
+        const hotKeyCall_2 = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            let btnCheck = document.querySelector('.btnRating[data-rating="2"]'); 
+            if(btnCheck.classList.contains('noShow')!= true && btnCheck.disabled == false)btnCheck.click() ;
+        } ;
+        
+        const hotKeyCall_3 = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            let btnCheck = document.querySelector('.btnRating[data-rating="3"]'); 
+            if(btnCheck.classList.contains('noShow')!= true && btnCheck.disabled == false)btnCheck.click() ;
+        } ;
+        
+        const hotKeyCall_4 = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            let btnCheck = document.querySelector('.btnRating[data-rating="4"]'); 
+            if(btnCheck.classList.contains('noShow')!= true && btnCheck.disabled == false)btnCheck.click() ;
+        } ;
+        
+        const hotKeyCall_5 = (event)=>{
+            console.log("hotKeyCall_Num1 called:"+event.key) ;
+            let btnCheck = document.querySelector('.btnRating[data-rating="5"]'); 
+            if(btnCheck.classList.contains('noShow')!= true && btnCheck.disabled == false)btnCheck.click() ;
+        } ;
+        
+
+        const hotKeyCalls={
+            ' ':hotKeyCall_SPACE,
+            '1':hotKeyCall_1,
+            '2':hotKeyCall_2,
+            '3':hotKeyCall_3,
+            '4':hotKeyCall_4,
+            '5':hotKeyCall_5
+        };
+
+        document.addEventListener('keydown', (event) =>{
+            let hotKeyCall = hotKeyCalls[event.key] ;
+            if(hotKeyCall){
+                console.log("The hotKeyCall key was pressed!");
+                event.preventDefault() ;
+                event.stopPropagation() ;
+                hotKeyCall(event) ;
+            }
         }) ;
     </script>
   </body>
