@@ -558,6 +558,18 @@ html{
 
         const callRenderQuizCard = _renderQuiz ;
         function _renderQuiz(tagQuiz,jsonQuiz){
+          if(jsonQuiz.options.length==4){
+            _render4ChoiceQuiz(tagQuiz,jsonQuiz) ;
+            return ;
+          }
+
+          if(jsonQuiz.options.length==2){
+            _render2ChoiceQuiz(tagQuiz,jsonQuiz) ;
+            return ;
+          }
+        }
+
+        function _render4ChoiceQuiz(tagQuiz,jsonQuiz){
             tagQuiz.innerHTML=`
             <div>
               <h2 id="question">${jsonQuiz.question}</h2>
@@ -578,6 +590,29 @@ html{
                   <p class="choice-prefix">D</p>
                   <p class="choice-text">${jsonQuiz.options[3].text}</p>
                 </div>
+              </div>
+              <div class="quizResult"></div>
+              </div>
+            ` ;
+            tagQuiz.querySelectorAll(".choice").forEach(tagChoice=>{
+              tagChoice.addEventListener('click',callQuizOption) ;
+            }) ;
+        }
+
+        function _render2ChoiceQuiz(tagQuiz,jsonQuiz){
+            tagQuiz.innerHTML=`
+            <div>
+              <h2 id="question">${jsonQuiz.question}</h2>
+              <div id="choices-container">
+                <div class="choice" data-answer="A">
+                  <p class="choice-prefix">A</p>
+                  <p class="choice-text">${jsonQuiz.options[0].text}</p>
+                </div>
+                <div class="choice" data-answer="B">
+                  <p class="choice-prefix">B</p>
+                  <p class="choice-text">${jsonQuiz.options[1].text}</p>
+                </div>
+                
               </div>
               <div class="quizResult"></div>
               </div>
@@ -746,7 +781,10 @@ html{
         }) ;
 
         document.querySelector("#idBTNQuizNext").addEventListener("click",(event)=>{
-          _renderQuiz(document.querySelector(".cardQuiz"),gMemoCards[gCurrentIndex].quizzes[gQuizIndex]) ;
+          let jsonQuiz = _getQuiz(gQuizIndex) ;
+          _renderQuiz(document.querySelector(".cardQuiz"),jsonQuiz);
+
+          //_renderQuiz(document.querySelector(".cardQuiz"),gMemoCards[gCurrentIndex].quizzes[gQuizIndex]) ;
         }) ;
 
         document.querySelector("#idBTNQuizEnd").addEventListener("click",(event)=>{
