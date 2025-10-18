@@ -608,6 +608,12 @@ html{
         }
 
         document.addEventListener('DOMContentLoaded', async (event)=>{
+          
+
+        }) ;
+
+        async function initStudyApp(){
+          await loadAnki("/025231") ;
           let tagOutpostCard = document.querySelector(".outpostCard");
           _renderOutpostCard(tagOutpostCard,gMemoCards[gCurrentIndex]) ;
 
@@ -642,9 +648,7 @@ html{
               document.querySelector("#idBTNNextCard").click() ;
             }) ;
           }) ;
-
-        }) ;
-
+        }
 
         document.querySelector("#idBTNNextCard").addEventListener('click',(event)=>{
           gCurrentIndex=gCurrentIndex+1 ;
@@ -890,7 +894,7 @@ html{
         }) ;
 
         document.querySelector("#idBTNSignIn").addEventListener('click',async (event)=>{
-          signInWithGoogle() ;
+          signInWithGoogle(initStudyApp,()=>{console.log('tbd for auth fail')}) ;
         }) ;
     </script>
   </body>

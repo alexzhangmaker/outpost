@@ -34,13 +34,32 @@ function fetchDataFromFirebase(path) {
 }
 
 // The correct way to call the function in V8
-function signInWithGoogle() {
+function signInWithGoogle(callAuthed,callFailAuth) {
     auth.signInWithPopup(provider).then((result) => {
         // User signed in successfully.
         const user = result.user;
         console.log("User:", user);
+        callAuthed() ;
     }).catch((error) => {
         // Handle Errors here.
         console.error("Sign-in error:", error);
+        callFailAuth() ;
     });
+}
+
+async function loadAnki(pathAnki){
+    let snapshot = await database.ref(pathAnki).once('value');
+    let jsonAnkiSets = snapshot.val();
+    console.log(jsonAnkiSets) ;
+
+    let keys = Object.keys(jsonAnkiSets) ;
+    console.log(keys) ;
+
+    gMemoCards=[] ;
+    keys.forEach(key=>{
+        gMemoCards.push(jsonAnkiSets[key]) ;
+    }) ;
+
+    
+
 }
