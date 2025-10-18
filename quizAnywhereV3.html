@@ -250,6 +250,24 @@
         }
 
     </style>
+    <style>
+       
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Roboto+Flex:opsz,wght@8..144,100..1000&display=swap');
+
+        #question-text{
+            font-family: "Oswald", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400 !important;
+            font-style: normal;
+        }
+
+        .optionText{
+            font-family: "Roboto Flex", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
     <div id="app-container">
@@ -524,7 +542,7 @@
             shuffledOptions.forEach(option => {
                 const button = document.createElement('button');
                 // Use innerHTML for structure matching original template
-                button.innerHTML = `<span style="background-color: #e5e7eb; color: #374151; font-weight: 700; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem; margin-right: 1rem;">${option.id}</span> <span style="text-align: left; flex: 1;font-size:2rem;">${option.text}</span>`;
+                button.innerHTML = `<span style="background-color: #e5e7eb; color: #374151; font-weight: 700; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem; margin-right: 1rem;">${option.id}</span> <span class="optionText" style="text-align: left; flex: 1;font-size:2rem;">${option.text}</span>`;
                 
                 // Apply default CSS class from the style block
                 button.className = 'default-option-button'; // A helper class for the custom CSS block
