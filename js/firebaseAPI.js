@@ -1,3 +1,4 @@
+/*
 const firebaseConfig = {
     apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
     authDomain: "outpost-8d74e.firebaseapp.com",
@@ -9,7 +10,7 @@ const firebaseConfig = {
     measurementId: "G-QPHWRTH6BH"
 };
 
-
+*/
 
 const localForageConfig={
     name: 'signpostPWA',

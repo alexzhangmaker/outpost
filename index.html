@@ -32,8 +32,9 @@
     <link rel="stylesheet" href="./css/componentOutpost.css">
 
 
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
     <script src="./jsResource/localforage.min.js"></script>
     <script src="./jsResource/mousetrap.min.js"></script>
     <script src="./js/flowType.js"></script>
@@ -108,12 +109,16 @@
 
 <script src="./js/outpostCommon.js"></script>
 <script src="./js/scheduleAnywhere.js"></script>
+
+<!----
 <script src="./js/firebaseAPI.js"></script>
+-->
 <script src="./js/dictAnywhere.js"></script>
 <script src="./js/todoAnywhere.js"></script>
 <script src="./js/dictationAnywhere.js"></script>
 <script src="./js/APIWriteFB.js"></script>
 <script src="./outpostSharedWorkerUser.js"></script>
+
 
 
 
@@ -167,10 +172,7 @@ async function _onClick_Dictation(event){
 }
 
 async function _onClick_CloudSafe(event){
-    let tagWndContent = document.querySelector('#idWndContent') ;
-    //await _renderDictationMode(tagWndContent) ;
-    window.open("https://alexzhangmaker.github.io/outpost/memoAnywhere.html", "_blank");
-
+    alert('tdb')
 }
 
 
@@ -293,7 +295,7 @@ document.querySelector('#idBTNToDo').addEventListener('click',_onClick_ToDo) ;
 document.querySelector('#idBTNDictAnywhere').addEventListener('click',_onClick_DictAnywhere) ;
 document.querySelector('#idBTNDictationTh').addEventListener('click',_onClick_Dictation) ;
 document.querySelector('#idBTNCloudSafe').addEventListener('click',_onClick_CloudSafe) ;
-document.querySelector('#idBTNSetting').addEventListener('click',_onClick_AnkiAnywhere) ;
+document.querySelector('#idBTNSetting').addEventListener('click',(event)=>{alert('tdb')}) ;
 
 
 
