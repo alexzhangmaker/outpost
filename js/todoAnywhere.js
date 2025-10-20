@@ -99,6 +99,59 @@ function renderMemoV2(tagContainer,jsonMemo){
     const formatter = new Intl.DateTimeFormat('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const formattedDate = formatter.format(cDate);
     console.log(formattedDate);
+
+    tagMemo.innerHTML=`
+        <div class="todoItem">
+            <div class="todoCheck">
+                <div class="noShow"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="#000000" d="m10.6 16.2l7.05-7.05l-1.4-1.4l-5.65 5.65l-2.85-2.85l-1.4 1.4l4.25 4.25ZM5 21q-.825 0-1.413-.588T3 19V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.588 1.413T19 21H5Zm0-2h14V5H5v14ZM5 5v14V5Z"/></svg></div>
+                <div class="outpostBTN"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="#000000" d="M5 21q-.825 0-1.413-.588T3 19V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.588 1.413T19 21H5Zm0-2h14V5H5v14Z"/></svg></div>
+            </div>
+            <div class="todoContents">
+                <div class="todoContent">${jsonMemo.title}</div>
+                <div class="todoMetaParts">
+                    <div class="todoDueDate">Due:$${formattedDate}</div>
+                    <div class="todoTags">
+                        <span class="todoTag">demo</span>
+                        <span class="todoTag">AI Tech</span>
+                    </div>
+                </div>
+                <div class="todoMetaParts">
+                    <div class="todoAssignee">${jsonMemo.assignee}</div>
+                    <div class="todoPriority">
+                        <div class="outpostBTN"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20"><path fill="#000000" d="M10 3a2 2 0 0 0-2 2c0 2.065.746 4.915 1.184 6.403a.842.842 0 0 0 .817.597a.84.84 0 0 0 .816-.595C11.255 9.925 12 7.09 12 5a2 2 0 0 0-2-2ZM7 5a3 3 0 0 1 6 0c0 2.25-.788 5.214-1.224 6.69A1.84 1.84 0 0 1 10 13c-.811 0-1.542-.52-1.776-1.315C7.789 10.204 7 7.227 7 5Zm3 10a1 1 0 1 0 0 2a1 1 0 0 0 0-2Zm-2 1a2 2 0 1 1 4 0a2 2 0 0 1-4 0Z"/></svg></div>
+                    </div>
+                </div>
+                
+            </div>
+            <div class="todoTools">
+                <div class="outpostBTN"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="#000000" d="M5.615 21q-.69 0-1.152-.462Q4 20.075 4 19.385V6.615q0-.69.463-1.152Q4.925 5 5.615 5h1.77V3.308q0-.233.153-.386q.152-.153.385-.153t.386.153q.153.153.153.386V5h7.153V3.27q0-.214.144-.357t.356-.144q.214 0 .357.143t.143.357V5h1.77q.69 0 1.152.463q.463.462.463 1.152v4.602q0 .214-.143.357q-.144.143-.357.143t-.357-.143Q19 11.431 19 11.217v-.602H5v8.77q0 .23.192.423q.193.192.423.192h5.731q.214 0 .357.143q.143.144.143.357t-.143.357q-.143.143-.357.143h-5.73ZM5 9.615h14v-3q0-.23-.192-.423Q18.615 6 18.385 6H5.615q-.23 0-.423.192Q5 6.385 5 6.615v3Zm0 0V6v3.615Zm9.23 10.577V19.12q0-.161.057-.3q.055-.14.186-.27l5.09-5.066q.149-.148.308-.2q.16-.052.32-.052q.165 0 .334.064t.298.193l.925.945q.123.148.188.307q.064.16.064.32t-.062.322q-.061.162-.19.31l-5.065 5.066q-.131.13-.27.186q-.14.056-.301.056h-1.074q-.348 0-.577-.23q-.23-.23-.23-.578Zm6.885-5.132l-.925-.945l.925.945Zm-6 5.055h.95l3.468-3.473l-.47-.475l-.455-.488l-3.493 3.486v.95Zm3.948-3.948l-.455-.488l.925.963l-.47-.475Z"/></svg></div>
+                <div class="outpostBTN btnDeleteTodo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 15 15"><path fill="#000000" fill-rule="evenodd" d="M5.5 1a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1h-4ZM3 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1H11v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4h-.5a.5.5 0 0 1-.5-.5ZM5 4h5v8H5V4Z" clip-rule="evenodd"/></svg></div>
+            </div>
+        </div>
+    ` ;
+
+    tagContainer.prepend(tagMemo) ;
+    
+    tagMemo.dataset.memoID = jsonMemo.id ;
+    tagMemo.querySelector('.btnDeleteTodo').addEventListener('click',async (event)=>{
+        for(let i=0;i<jsonOutpostTasks.length;i++){
+            if(jsonOutpostTasks[i].ttm == parseInt(tagMemo.dataset.memoID)){
+                jsonOutpostTasks.splice(i,1) ;
+                break ;
+            }
+        }
+        tagMemo.remove() ;
+        await FirebaseService.deleteTodo(tagMemo.dataset.memoID) ;
+    }) ;
+}
+function renderMemoV2Pre(tagContainer,jsonMemo){
+    let tagMemo = document.createElement('li') ;
+    tagMemo.classList.add('liMemo') ;
+
+    let cDate = new Date(jsonMemo.endDate);//new Date(jsonMemo.date.year, jsonMemo.date.month-1, jsonMemo.date.day)
+    const formatter = new Intl.DateTimeFormat('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const formattedDate = formatter.format(cDate);
+    console.log(formattedDate);
     tagMemo.innerHTML=`       
         <div class="DIVMemo">
             <div class="memoHeader">
