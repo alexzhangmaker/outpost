@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多选题 Quiz 组件</title>
+    <style>
+        /* 基础样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* Quiz 容器 */
+        #quiz-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin: 20px;
+        }
+
+        /* Quiz 卡片和结果卡片 */
+        #quiz-card, #results-card {
+            padding: 24px 30px;
+        }
+
+        /* 题号 */
+        #question-number {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        /* 题目文本 */
+        #question-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+        
+        #question-hint {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 24px;
+            margin-top: -16px;
+        }
+
+        /* 选项列表 */
+        #options-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* 选项 */
+        #options-list li {
+            font-size: 16px;
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        /* 选项悬停效果 (当题目未回答时) */
+        #options-list:not(.answered) li:hover {
+            background-color: #e9ecef;
+        }
+
+        /* 选项被选中时的状态 (toggle) */
+        #options-list li.selected {
+            background-color: #e7f3ff;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+        }
+
+        /* --- 答案检查后的状态 --- */
+        
+        /* 选项回答正确 (该项是正确答案) */
+        #options-list li.correct {
+            background-color: #e6f7ec;
+            border-color: #28a745;
+            color: #208538;
+            font-weight: 600;
+        }
+
+        /* 选项回答错误 (该项被用户选了，但不是正确答案) */
+        #options-list li.wrong {
+            background-color: #fbebee;
+            border-color: #dc3545;
+            color: #c42f3e;
+            font-weight: 600;
+            /* 覆盖 .correct，如果用户选了但选错了 */
+        }
+
+        /* 当题目已回答时，禁止选项的鼠标事件 */
+        #options-list.answered li {
+            pointer-events: none;
+        }
+        
+        /* 按钮通用样式 */
+        .quiz-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 20px;
+        }
+
+        .quiz-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* “下一题”按钮，默认隐藏 */
+        #next-btn {
+            display: none;
+        }
+        
+        /* “重新开始”按钮 */
+        #restart-btn {
+            background-color: #28a745;
+        }
+        #restart-btn:hover {
+            background-color: #218838;
+        }
+
+        /* 反馈信息 */
+        #feedback {
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        #feedback.correct {
+            color: #28a745;
+        }
+
+        #feedback.wrong {
+            color: #dc3545;
+        }
+
+        /* 结果卡片 */
+        #results-card {
+            text-align: center;
+        }
+
+        #score-text {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="quiz-container">
+        <div id="quiz-card">
+            <h2 id="question-number"></h2>
+            <p id="question-text"></p>
+            <p id="question-hint">(请选择所有正确答案)</p>
+            <ul id="options-list">
+                </ul>
+            <div id="feedback"></div>
+            <button id="check-btn" class="quiz-btn">确认答案</button>
+            <button id="next-btn" class="quiz-btn">下一题</button>
+        </div>
+
+        <div id="results-card" style="display: none;">
+            <h2 id="score-text"></h2>
+            <button id="restart-btn" class="quiz-btn">重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. JSON 数据结构 (多选) ---
+        const quizData = [
+            {
+                question: "以下哪些是 JavaScript 的基本数据类型 (Primitive Types)？",
+                options: ["String", "Number", "Array", "Boolean", "Object", "BigInt"],
+                // 答案是索引 0, 1, 3, 5
+                answerIndices: [0, 1, 3, 5] 
+            },
+            {
+                question: "CSS 中的 'CSS' 代表什么？",
+                options: ["Computer Style Sheets", "Creative Style Sheets", "Cascading Style Sheets", "Colorful Style Sheets"],
+                // 答案是索引 2 (这题是单选，但结构保持一致)
+                answerIndices: [2] 
+            },
+            {
+                question: "以下哪些是有效的 HTML 标签？",
+                options: ["<div>", "<section>", "<block>", "<article>"],
+                // 答案是索引 0, 1, 3
+                answerIndices: [0, 1, 3] 
+            },
+            {
+                question: "以下哪些方法可以用来在 JavaScript 数组末尾添加元素？",
+                options: [".push()", ".pop()", ".append()", ".unshift()"],
+                // 答案是索引 0
+                answerIndices: [0] 
+            }
+        ];
+
+        // --- 2. JavaScript 交互逻辑 ---
+
+        document.addEventListener("DOMContentLoaded", () => {
+            
+            // 获取 DOM 元素
+            const quizCard = document.getElementById('quiz-card');
+            const resultsCard = document.getElementById('results-card');
+            
+            const questionNumberEl = document.getElementById('question-number');
+            const questionTextEl = document.getElementById('question-text');
+            const questionHintEl = document.getElementById('question-hint');
+            const optionsListEl = document.getElementById('options-list');
+            const feedbackEl = document.getElementById('feedback');
+            
+            const checkBtn = document.getElementById('check-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            const scoreTextEl = document.getElementById('score-text');
+
+            // Quiz 状态变量
+            let currentQuestionIndex = 0;
+            let score = 0;
+
+            /**
+             * 开始或重新开始 Quiz
+             */
+            function startQuiz() {
+                currentQuestionIndex = 0;
+                score = 0;
+                resultsCard.style.display = 'none';
+                quizCard.style.display = 'block';
+                loadQuestion();
+            }
+
+            /**
+             * 加载当前题目
+             */
+            function loadQuestion() {
+                // 检查是否还有题目
+                if (currentQuestionIndex < quizData.length) {
+                    // 重置上一题的状态
+                    resetState();
+                    
+                    const question = quizData[currentQuestionIndex];
+                    
+                    questionNumberEl.textContent = `题目 ${currentQuestionIndex + 1} / ${quizData.length}`;
+                    questionTextEl.textContent = question.question;
+
+                    // 根据答案数量显示提示
+                    if (question.answerIndices.length > 1) {
+                        questionHintEl.textContent = "(请选择所有正确答案)";
+                    } else {
+                        questionHintEl.textContent = "(请选择一个正确答案)";
+                    }
+
+                    // 动态创建选项
+                    question.options.forEach((option, index) => {
+                        const li = document.createElement('li');
+                        li.textContent = option;
+                        li.dataset.index = index;
+                        
+                        // 为选项添加点击事件 (用于切换选中状态)
+                        li.addEventListener('click', selectOption);
+                        
+                        optionsListEl.appendChild(li);
+                    });
+                } else {
+                    // Quiz 结束，显示结果
+                    showResults();
+                }
+            }
+
+            /**
+             * 重置状态（清除选项、反馈、隐藏/显示按钮）
+             */
+            function resetState() {
+                optionsListEl.innerHTML = '';
+                feedbackEl.textContent = '';
+                feedbackEl.className = '';
+                
+                nextBtn.style.display = 'none'; // 隐藏“下一题”
+                checkBtn.style.display = 'block'; // 显示“确认答案”
+                
+                // 移除 "answered" 状态，使选项可以再次被点击
+                optionsListEl.classList.remove('answered');
+            }
+
+            /**
+             * 用户点击选项，切换选中状态
+             * @param {Event} e - 点击事件对象
+             */
+            function selectOption(e) {
+                // 如果已回答，则禁止切换
+                if (optionsListEl.classList.contains('answered')) {
+                    return;
+                }
+                
+                // 切换 .selected 类
+                e.target.classList.toggle('selected');
+            }
+
+            /**
+             * 检查答案 (由 "确认答案" 按钮触发)
+             */
+            function checkAnswer() {
+                // 1. 锁定选项
+                optionsListEl.classList.add('answered');
+                
+                // 2. 切换按钮显示
+                checkBtn.style.display = 'none';
+                nextBtn.style.display = 'block';
+
+                // 3. 获取正确答案数组
+                const correctIndices = quizData[currentQuestionIndex].answerIndices;
+                
+                // 4. 获取用户选择的答案数组
+                const selectedOptions = optionsListEl.querySelectorAll('li.selected');
+                const userSelectedIndices = [];
+                selectedOptions.forEach(li => {
+                    userSelectedIndices.push(parseInt(li.dataset.index));
+                });
+
+                // 5. 比较答案
+                // 为了正确比较，我们将两个数组排序后转为字符串
+                const userAnswersStr = userSelectedIndices.sort().join(',');
+                const correctAnswersStr = correctIndices.sort().join(',');
+
+                const isCorrect = (userAnswersStr === correctAnswersStr);
+
+                // 6. 提供视觉反馈
+                optionsListEl.querySelectorAll('li').forEach(li => {
+                    const index = parseInt(li.dataset.index);
+                    
+                    if (correctIndices.includes(index)) {
+                        // 如果这个是正确答案 (无论用户是否选中)
+                        li.classList.add('correct');
+                    } else if (userSelectedIndices.includes(index)) {
+                        // 如果这个不是正确答案，但用户选了
+                        li.classList.add('wrong');
+                    }
+                });
+                
+                // 7. 更新分数和反馈文本
+                if (isCorrect) {
+                    score++;
+                    feedbackEl.textContent = "回答正确！";
+                    feedbackEl.className = 'correct';
+                } else {
+                    feedbackEl.textContent = "回答错误。绿色为正确答案，红色为你的错误选择。";
+                    feedbackEl.className = 'wrong';
+                }
+            }
+
+            /**
+             * 显示最终的 Quiz 结果
+             */
+            function showResults() {
+                quizCard.style.display = 'none';
+                resultsCard.style.display = 'block';
+                scoreTextEl.textContent = `你的得分: ${score} / ${quizData.length}`;
+            }
+
+            // --- 3. 事件监听 ---
+
+            // “确认答案”按钮点击
+            checkBtn.addEventListener('click', checkAnswer);
+
+            // “下一题”按钮点击
+            nextBtn.addEventListener('click', () => {
+                currentQuestionIndex++;
+                loadQuestion();
+            });
+
+            // “重新开始”按钮点击
+            restartBtn.addEventListener('click', startQuiz);
+
+            // --- 
+            // 初始启动 Quiz
+            startQuiz();
+        });
+    </script>
+
+</body>
+</html>

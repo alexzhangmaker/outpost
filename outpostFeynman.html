@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI增强型费曼学习工具</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入图标库 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <!-- 引入Markdown解析库 (用于美化AI输出) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* 自定义字体和基础样式 */
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Arial', 'sans-serif', 'Microsoft YaHei';
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* 自定义滚动条样式 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        .main-panel { transition: background-color 0.3s ease; }
+        .concept-item.selected { background-color: #e0f2fe; color: #0c4a6e; }
+
+        /* AI反馈区域的Markdown样式 */
+        #ai-feedback-area h1, #ai-feedback-area h2, #ai-feedback-area h3 { font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; }
+        #ai-feedback-area h1 { font-size: 1.25rem; }
+        #ai-feedback-area h2 { font-size: 1.1rem; }
+        #ai-feedback-area ul { list-style-type: disc; margin-left: 1.5rem; }
+        #ai-feedback-area ol { list-style-type: decimal; margin-left: 1.5rem; }
+        #ai-feedback-area p { margin-bottom: 0.5em; line-height: 1.6; }
+        #ai-feedback-area strong { font-weight: 600; }
+        #ai-feedback-area code { background-color: #f1f5f9; color: #475569; padding: 2px 4px; border-radius: 4px; font-size: 0.9em; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+    <!-- 主容器 -->
+    <div id="app" class="flex flex-col h-screen p-4 gap-4">
+        <!-- 头部 -->
+        <header class="flex items-center justify-between bg-white p-4 rounded-lg shadow-md">
+            <div class="flex items-center gap-3">
+                <i class="ph-brain text-3xl text-sky-600"></i>
+                <h1 class="text-2xl font-bold text-slate-700">AI增强型费曼学习工具</h1>
+            </div>
+            <div id="auth-status" class="text-sm text-slate-500">连接中...</div>
+        </header>
+
+        <!-- 主内容区，Grid布局 -->
+        <main class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow h-full min-h-0">
+            
+            <!-- 左侧: 概念管理区 -->
+            <div class="main-panel bg-white rounded-lg shadow-md p-4 flex flex-col gap-4 md:col-span-1">
+                <div class="flex items-center gap-2">
+                    <i class="ph-books text-xl text-sky-700"></i>
+                    <h2 class="text-lg font-semibold">概念管理区</h2>
+                </div>
+                <!-- ... (与之前版本相同的HTML结构) ... -->
+                <div class="flex flex-col gap-2">
+                    <label for="concept-title" class="text-sm font-medium text-slate-600">输入或选择一个概念：</label>
+                    <input type="text" id="concept-title" placeholder="例如：牛顿第一定律" class="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-new" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-md transition duration-200 flex items-center justify-center gap-2">
+                        <i class="ph-plus-circle"></i>新建
+                    </button>
+                    <button id="btn-save" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200 flex items-center justify-center gap-2">
+                        <i class="ph-floppy-disk"></i>保存
+                    </button>
+                    <button id="btn-delete" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md transition duration-200 flex items-center justify-center gap-2">
+                        <i class="ph-trash"></i>删除
+                    </button>
+                </div>
+                <div class="border-t border-slate-200 mt-2 pt-2 flex-grow min-h-0">
+                    <h3 class="font-semibold mb-2 text-slate-600">已保存的概念</h3>
+                    <div id="concepts-list" class="overflow-y-auto h-full pr-2">
+                        <p class="text-slate-400 text-sm">暂无已保存的概念...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧: 工作区 -->
+            <div class="md:col-span-2 flex flex-col gap-4 min-h-0">
+                <!-- 面板1: 标准要点 -->
+                <div class="main-panel bg-white rounded-lg shadow-md p-4 flex flex-col">
+                     <div class="flex items-center gap-2 mb-4">
+                        <div class="bg-indigo-100 text-indigo-700 rounded-full h-8 w-8 flex items-center justify-center font-bold text-sm">1</div>
+                        <h2 class="text-lg font-semibold">输入标准要点</h2>
+                    </div>
+                    <textarea id="standard-points-area" class="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition h-32 resize-y" placeholder="请在此处粘贴或输入该概念的标准定义或核心要点..."></textarea>
+                </div>
+
+                <!-- 面板2: 我的解释 -->
+                <div class="main-panel bg-white rounded-lg shadow-md p-4 flex flex-col flex-grow">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="bg-sky-100 text-sky-700 rounded-full h-8 w-8 flex items-center justify-center font-bold text-sm">2</div>
+                        <h2 class="text-lg font-semibold">我的解释 (费曼复述)</h2>
+                    </div>
+                    <textarea id="explanation-area" class="w-full h-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition flex-grow resize-none" placeholder="想象你在教一个完全不懂的人，用最简单的语言和比喻来解释这个概念..."></textarea>
+                </div>
+
+                <!-- 面板3: AI 批改与个人总结 -->
+                <div class="main-panel bg-white rounded-lg shadow-md p-4 flex flex-col flex-grow">
+                    <div class="flex items-center justify-between mb-4">
+                         <div class="flex items-center gap-2">
+                            <div class="bg-teal-100 text-teal-700 rounded-full h-8 w-8 flex items-center justify-center font-bold text-sm">3</div>
+                            <h2 class="text-lg font-semibold">智能批改与总结</h2>
+                        </div>
+                        <button id="btn-ai-check" class="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-4 rounded-md transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-wait">
+                            <i class="ph-sparkle"></i> AI 批改
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow min-h-0">
+                        <!-- AI 反馈 -->
+                        <div id="ai-feedback-container" class="border border-slate-200 bg-slate-50 rounded-md p-3 overflow-y-auto flex flex-col">
+                            <h3 class="font-semibold text-slate-600 mb-2 flex-shrink-0">AI 反馈</h3>
+                            <!-- 加载动画 -->
+                            <div id="ai-loading" class="hidden flex-grow items-center justify-center">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+                            </div>
+                            <!-- AI 反馈内容 -->
+                            <div id="ai-feedback-area" class="text-sm text-slate-700 flex-grow">
+                               <p class="text-slate-400">点击 "AI 批改" 按钮，智能助手将分析您的解释并提供反馈。</p>
+                            </div>
+                        </div>
+                        <!-- 个人总结 (原检查回顾区) -->
+                        <div class="flex flex-col">
+                            <h3 class="font-semibold text-slate-600 mb-2">我的总结与盲区</h3>
+                            <textarea id="review-area" class="w-full h-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition flex-grow resize-none" placeholder="根据AI的反馈，在这里精炼您的总结，或记录下需要巩固的知识点..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ... (删除确认模态框和Toast通知与之前版本相同) ... -->
+    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
+            <h3 class="text-lg font-bold text-slate-800">确认删除</h3>
+            <p class="mt-2 text-slate-600">您确定要删除这个概念及其所有复习记录吗？此操作无法撤销。</p>
+            <div class="mt-6 flex justify-end gap-3">
+                <button id="modal-cancel" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md transition">取消</button>
+                <button id="modal-confirm" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition">确认删除</button>
+            </div>
+        </div>
+    </div>
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-white py-2 px-5 rounded-lg shadow-xl opacity-0 translate-y-10 transition-all duration-300">
+        <p id="toast-message"></p>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, setDoc, deleteDoc, serverTimestamp, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- 全局变量和状态 ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        let db, auth;
+        let userId = null;
+        let reviewsUnsubscribe = null;
+        let reviewsCache = [];
+        let currentReviewId = null;
+
+        // --- DOM 元素引用 (新增) ---
+        const standardPointsArea = document.getElementById('standard-points-area');
+        const btnAICheck = document.getElementById('btn-ai-check');
+        const aiLoading = document.getElementById('ai-loading');
+        const aiFeedbackArea = document.getElementById('ai-feedback-area');
+        
+        const conceptTitleInput = document.getElementById('concept-title');
+        const explanationArea = document.getElementById('explanation-area');
+        const reviewArea = document.getElementById('review-area');
+        const conceptsListDiv = document.getElementById('concepts-list');
+        const btnNew = document.getElementById('btn-new');
+        const btnSave = document.getElementById('btn-save');
+        const btnDelete = document.getElementById('btn-delete');
+        const authStatus = document.getElementById('auth-status');
+        const deleteModal = document.getElementById('delete-modal');
+        const modalConfirm = document.getElementById('modal-confirm');
+        const modalCancel = document.getElementById('modal-cancel');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        function showToast(message, duration = 3000) {
+            toastMessage.textContent = message;
+            toast.classList.remove('opacity-0', 'translate-y-10');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-10');
+            }, duration);
+        }
+
+        // --- 核心功能函数 (已更新) ---
+        function clearInputs() {
+            conceptTitleInput.value = '';
+            standardPointsArea.value = '';
+            explanationArea.value = '';
+            reviewArea.value = '';
+            aiFeedbackArea.innerHTML = '<p class="text-slate-400">点击 "AI 批改" 按钮，智能助手将分析您的解释并提供反馈。</p>';
+            currentReviewId = null;
+            document.querySelectorAll('.concept-item').forEach(el => el.classList.remove('selected'));
+            conceptTitleInput.focus();
+        }
+        
+        function renderConceptsList(reviews) {
+            conceptsListDiv.innerHTML = '';
+            if (reviews.length === 0) {
+                conceptsListDiv.innerHTML = '<p class="text-slate-400 text-sm">暂无已保存的概念...</p>';
+                return;
+            }
+            const sortedReviews = reviews.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
+
+            sortedReviews.forEach(review => {
+                const item = document.createElement('div');
+                item.className = 'concept-item p-2 rounded-md cursor-pointer hover:bg-slate-100 transition';
+                item.textContent = review.concept;
+                item.dataset.id = review.id;
+                if (review.id === currentReviewId) {
+                    item.classList.add('selected');
+                }
+                item.addEventListener('click', () => loadReview(review.id));
+                conceptsListDiv.appendChild(item);
+            });
+        }
+        
+        function loadReview(id) {
+            const review = reviewsCache.find(r => r.id === id);
+            if (!review) return;
+            
+            currentReviewId = id;
+            conceptTitleInput.value = review.concept || '';
+            standardPointsArea.value = review.standardPoints || '';
+            explanationArea.value = review.explanation || '';
+            reviewArea.value = review.summary || '';
+            aiFeedbackArea.innerHTML = '<p class="text-slate-400">加载完成。您可以重新进行AI批改。</p>';
+            
+            document.querySelectorAll('.concept-item').forEach(el => {
+                el.classList.toggle('selected', el.dataset.id === id);
+            });
+        }
+        
+        async function saveReview() {
+            const concept = conceptTitleInput.value.trim();
+            if (!concept) {
+                showToast('概念名称不能为空！');
+                return;
+            }
+            
+            const reviewData = {
+                concept: concept,
+                standardPoints: standardPointsArea.value.trim(),
+                explanation: explanationArea.value.trim(),
+                summary: reviewArea.value.trim(),
+                userId: userId,
+                updatedAt: serverTimestamp()
+            };
+            
+            try {
+                const collectionRef = collection(db, `artifacts/${appId}/users/${userId}/feynman_reviews`);
+                if (currentReviewId) {
+                    const docRef = doc(collectionRef, currentReviewId);
+                    await setDoc(docRef, reviewData, { merge: true });
+                    showToast('更新成功！');
+                } else {
+                    const newDoc = await addDoc(collectionRef, reviewData);
+                    currentReviewId = newDoc.id;
+                    showToast('保存成功！');
+                }
+            } catch (error) {
+                console.error("保存失败: ", error);
+                showToast('保存失败，请检查网络连接。');
+            }
+        }
+        
+        async function deleteReview() {
+            if (!currentReviewId) {
+                showToast('请先选择一个要删除的概念。');
+                return;
+            }
+            deleteModal.classList.remove('hidden');
+            const userConfirmation = new Promise((resolve) => {
+                modalConfirm.onclick = () => resolve(true);
+                modalCancel.onclick = () => resolve(false);
+            });
+            const confirmed = await userConfirmation;
+            deleteModal.classList.add('hidden');
+            
+            if (confirmed) {
+                try {
+                    const docRef = doc(db, `artifacts/${appId}/users/${userId}/feynman_reviews`, currentReviewId);
+                    await deleteDoc(docRef);
+                    showToast('删除成功！');
+                    clearInputs();
+                } catch (error) {
+                    console.error("删除失败: ", error);
+                    showToast('删除失败，请检查网络连接。');
+                }
+            }
+        }
+
+        // --- AI 批改功能 (新增) ---
+        async function getAIAssessment() {
+            const standardPoints = standardPointsArea.value.trim();
+            const explanation = explanationArea.value.trim();
+
+            if (!standardPoints || !explanation) {
+                showToast('“标准要点”和“我的解释”都不能为空！');
+                return;
+            }
+            
+            // UI状态: 开始加载
+            btnAICheck.disabled = true;
+            aiLoading.classList.remove('hidden');
+            aiLoading.classList.add('flex');
+            aiFeedbackArea.innerHTML = '';
+            
+            const systemPrompt = `你是一位专业的AI辅导老师。你的任务是对比“标准要点”和“学生的解释”，然后提供反馈。请遵循以下要求：
+1. **分析准确性**：判断学生的解释是否准确地反映了标准要点。
+2. **分析覆盖度**：指出学生覆盖了哪些要点，遗漏了哪些要点。
+3. **提供改进建议**：给出具体、可行的建议，帮助学生改进他们的理解和解释。
+4. **鼓励性语气**：使用积极、鼓励的语言。
+5. **结构化输出**：使用Markdown格式化你的回答，例如使用标题、列表和粗体字，使其清晰易读。
+6. **使用中文**：全程使用中文进行回答。`;
+
+            const userQuery = `请根据以下信息，为学生的解释提供反馈：
+
+--- 标准要点 ---
+${standardPoints}
+
+--- 学生的解释 ---
+${explanation}
+
+--- AI反馈 ---
+`;
+            
+            const apiKey = ""; 
+            const apiUrl = `https://generativela'nguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            let responseText = "请求AI服务时发生错误，请稍后重试。";
+            try {
+                // 使用指数退避法重试
+                let response;
+                let retries = 3;
+                let delay = 1000;
+                for (let i = 0; i < retries; i++) {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) break;
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    responseText = candidate.content.parts[0].text;
+                } else {
+                    responseText = "AI未能生成有效反馈，请检查输入内容或稍后再试。";
+                }
+            } catch (error) {
+                console.error("AI批改失败:", error);
+            } finally {
+                // UI状态: 结束加载
+                aiLoading.classList.add('hidden');
+                aiLoading.classList.remove('flex');
+                aiFeedbackArea.innerHTML = marked.parse(responseText); // 使用marked库解析Markdown
+                btnAICheck.disabled = false;
+            }
+        }
+
+
+        // --- Firebase 初始化和认证 ---
+        async function initializeFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        authStatus.textContent = `已连接 (用户ID: ${userId.substring(0, 8)}...)`;
+                        authStatus.classList.add('text-green-600');
+                        setupFirestoreListener();
+                    } else {
+                        try {
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        } catch (error) {
+                            console.error("登录失败:", error);
+                            authStatus.textContent = "认证失败";
+                            authStatus.classList.add('text-red-600');
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase 初始化失败: ", error);
+                authStatus.textContent = "初始化失败";
+            }
+        }
+        
+        function setupFirestoreListener() {
+            if (reviewsUnsubscribe) {
+                reviewsUnsubscribe();
+            }
+            const reviewsCol = collection(db, `artifacts/${appId}/users/${userId}/feynman_reviews`);
+            const q = query(reviewsCol);
+            reviewsUnsubscribe = onSnapshot(q, (snapshot) => {
+                reviewsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderConceptsList(reviewsCache);
+            }, (error) => {
+                console.error("数据监听失败: ", error);
+                showToast('无法加载数据，请刷新页面。');
+            });
+        }
+        
+        // --- 事件监听器绑定 ---
+        btnNew.addEventListener('click', clearInputs);
+        btnSave.addEventListener('click', saveReview);
+        btnDelete.addEventListener('click', deleteReview);
+        btnAICheck.addEventListener('click', getAIAssessment);
+
+        // --- 启动应用 ---
+        document.addEventListener('DOMContentLoaded', initializeFirebase);
+    </script>
+</body>
+</html>

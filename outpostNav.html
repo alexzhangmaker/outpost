@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导航主页</title>
+    <!-- 引入Tailwind CSS以快速构建现代化界面 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定义滚动条样式，提升美观度 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* 添加卡片悬浮时的动效 */
+        .app-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+    <div class="flex h-screen">
+        <!-- 左侧垂直工具条 -->
+        <aside class="w-16 bg-white shadow-md flex flex-col items-center py-4 space-y-6">
+            <!-- Logo/主图标 -->
+            <div class="w-10 h-10 p-2 bg-indigo-600 text-white rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.79-2.73 9.563M12 11c0-3.517.99-6.79 2.73-9.563M12 11h.01M4.86 19.14a9 9 0 01-1.73-9.563M21.14 19.14a9 9 0 00-1.73-9.563" />
+                </svg>
+            </div>
+            <!-- 其他图标按钮 -->
+            <button class="p-2 rounded-lg hover:bg-gray-200 text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+            </button>
+            <button class="p-2 rounded-lg hover:bg-gray-200 text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a4 4 0 014-4h10a4 4 0 014 4v12a4 4 0 01-4 4H7z" />
+                </svg>
+            </button>
+            <button class="p-2 rounded-lg hover:bg-gray-200 text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </button>
+        </aside>
+
+        <!-- 主内容区 -->
+        <div class="flex-1 flex flex-col">
+            <!-- 顶部导航条 -->
+            <header class="bg-white shadow-sm flex items-center justify-between px-6 py-3">
+                <h1 class="text-xl font-semibold text-gray-700">我的主页</h1>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 rounded-full hover:bg-gray-200 text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                    </button>
+                    <button class="p-2 rounded-full hover:bg-gray-200 text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                    <button class="p-2 rounded-full hover:bg-gray-200 text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.096 2.572-1.065z" />
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 应用卡片网格 -->
+            <main class="flex-1 p-6 overflow-y-auto">
+                <div id="app-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-6">
+                    <!-- App 卡片将通过JS动态插入这里 -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 添加新APP的浮动按钮 -->
+    <button id="add-app-button" class="fixed bottom-8 right-8 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 transition-transform transform hover:scale-110">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+    </button>
+
+    <!-- 添加/编辑 App 的模态对话框 (默认隐藏) -->
+    <div id="app-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md m-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">添加新应用</h2>
+                <button id="close-modal-button" class="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <form id="app-form">
+                <div class="mb-4">
+                    <label for="appName" class="block text-sm font-medium text-gray-700 mb-1">应用名称</label>
+                    <input type="text" id="appName" name="appName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="appUrl" class="block text-sm font-medium text-gray-700 mb-1">URL链接</label>
+                    <input type="url" id="appUrl" name="appUrl" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="appIcon" class="block text-sm font-medium text-gray-700 mb-1">图标 (SVG代码)</label>
+                    <textarea id="appIcon" name="appIcon" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required></textarea>
+                </div>
+                <div class="mb-6">
+                    <label for="appRemark" class="block text-sm font-medium text-gray-700 mb-1">备注</label>
+                    <input type="text" id="appRemark" name="appRemark" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancel-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // 初始化的应用数据
+    const initialApps = [
+        {
+            name: 'GitHub',
+            url: 'https://github.com',
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-gray-700"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>`,
+            remark: '代码托管平台'
+        },
+        {
+            name: 'Vercel',
+            url: 'https://vercel.com',
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-gray-700"><polygon points="12 2 22 21 2 21 12 2"></polygon></svg>`,
+            remark: '前端部署平台'
+        },
+        {
+            name: 'Figma',
+            url: 'https://figma.com',
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-gray-700"><path d="M12 12h.01"></path><path d="M16 6H8a4 4 0 0 0-4 4v8a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-8a4 4 0 0 0-4-4z"></path><path d="M12 18a6 6 0 0 0 6-6h-6v6z"></path></svg>`,
+            remark: '在线设计工具'
+        },
+        {
+            name: 'Notion',
+            url: 'https://notion.so',
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-gray-700"><path d="M12.5 4H5.8A1.8 1.8 0 0 0 4 5.8v12.4A1.8 1.8 0 0 0 5.8 20h12.4a1.8 1.8 0 0 0 1.8-1.8V11.5"></path><path d="M8 14h5.5"></path><path d="M8 10h8"></path><path d="M8 6h8"></path><path d="M18 4.5l-3.5 3.5"></path></svg>`,
+            remark: '多功能笔记应用'
+        },
+         {
+            name: 'Slack',
+            url: 'https://slack.com',
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-gray-700"><path d="M12.5 4H5.8A1.8 1.8 0 0 0 4 5.8v12.4A1.8 1.8 0 0 0 5.8 20h12.4a1.8 1.8 0 0 0 1.8-1.8V11.5"></path><path d="M8 14h5.5"></path><path d="M8 10h8"></path><path d="M8 6h8"></path><path d="M18 4.5l-3.5 3.5"></path></svg>`,
+            remark: '团队协作工具'
+        },
+        {
+            name: 'Trello',
+            url: 'https://trello.com',
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-gray-700"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="7" y1="7" x2="7" y2="17"></line><line x1="12" y1="7" x2="12" y2="12"></line><line x1="17" y1="7" x2="17" y2="15"></line></svg>`,
+            remark: '项目管理看板'
+        },
+        {
+            name: '泰语阅读',
+            url: 'https://alexzhangmaker.github.io/outpost/articleAnywhere.html',
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 36 36"><path fill="#A7122D" d="M0 26.518V27a4 4 0 0 0 4 4h28a4 4 0 0 0 4-4v-.482H0z"/><path fill="#EEE" d="M0 22.181h36v4.485H0z"/><path fill="#292648" d="M0 13.513h36v8.821H0z"/><path fill="#EEE" d="M0 9.181h36v4.485H0z"/><path fill="#A7122D" d="M0 9.333V9a4 4 0 0 1 4-4h28a4 4 0 0 1 4 4v.333H0z"/></svg>`,
+            remark: '泰语阅读任务'
+        },
+        {
+            name: '英语阅读',
+            url: 'https://alexzhangmaker.github.io/outpost/articleAnywhereEN.html',
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48"><path fill="#5C6BC0" d="M40 40c-6.9 0-16 4-16 4V22s9-4 18-4l-2 22z"/><path fill="#7986CB" d="M8 40c6.9 0 16 4 16 4V22s-9-4-18-4l2 22z"/><g fill="#FFB74D"><circle cx="24" cy="12" r="8"/><path d="M41 32h1c.6 0 1-.4 1-1v-4c0-.6-.4-1-1-1h-1c-1.7 0-3 1.3-3 3s1.3 3 3 3zM7 26H6c-.6 0-1 .4-1 1v4c0 .6.4 1 1 1h1c1.7 0 3-1.3 3-3s-1.3-3-3-3z"/></g></svg>`,
+            remark: '英语阅读任务'
+        },
+        {
+            name: '泰语精读',
+            url: 'https://alexzhangmaker.github.io/outpost/articleAnywhereV3.html',
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 1024 1024"><path fill="#000000" d="M352 896h320q32 0 32 32t-32 32H352q-32 0-32-32t32-32zm-44.672-768l-99.52 448h608.384l-99.52-448H307.328zm-25.6-64h460.608a32 32 0 0 1 31.232 25.088l113.792 512A32 32 0 0 1 856.128 640H167.872a32 32 0 0 1-31.232-38.912l113.792-512A32 32 0 0 1 281.664 64z"/><path fill="#000000" d="M672 576q32 0 32 32v128q0 32-32 32t-32-32V608q0-32 32-32zm-192-.064h64V960h-64z"/></svg>`,
+            remark: '泰语精读与语音'
+        },
+        {
+            name: 'Quiz',
+            url: 'https://alexzhangmaker.github.io/outpost/consoleQuizMan.html',
+            icon: `<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 1 9 9c0 1.76-.5 3.4-1.38 4.79L21 18.17V20a1 1 0 0 1-1 1h-1.82l-1.39-1.38A8.887 8.887 0 0 1 12 21a9 9 0 0 1-9-9a9 9 0 0 1 9-9m0 4a5 5 0 0 0-5 5a5 5 0 0 0 5 5c.65 0 1.26-.12 1.83-.35l-2.88-2.88c-.78-.77-.78-2.05 0-2.83c.78-.78 2.05-.78 2.83 0l2.88 2.88c.22-.56.34-1.18.34-1.82a5 5 0 0 0-5-5z" fill="#000000"/></svg>`,
+            remark: 'Quiz驱动的学习'
+        },
+        {
+            name: 'Anki',
+            url: 'https://alexzhangmaker.github.io/outpost/studyAnywhere.html',
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48"><g fill="none" stroke="#000"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4.667" d="M19.036 44.0002C18.0561 40.8046 16.5778 38.4223 14.6011 36.8533C11.636 34.4998 6.92483 35.9625 5.18458 33.535C3.44433 31.1074 6.40382 26.6432 7.44234 24.0091C8.48086 21.3751 3.46179 20.4437 4.04776 19.6959C4.43842 19.1974 6.97471 17.7588 11.6567 15.3802C12.987 7.79356 17.9008 4.00024 26.3982 4.00024C39.1441 4.00024 44 14.8062 44 21.6791C44 28.5521 38.1201 35.9564 29.7441 37.5529C28.9951 38.6437 30.0754 40.7928 32.9848 44.0002"/><path fill="#2F88FF" fill-rule="evenodd" stroke-linejoin="round" stroke-width="4" d="M19.4997 14.5001C18.8464 17.0344 19.0408 18.8139 20.0829 19.8386C21.125 20.8634 22.9011 21.5335 25.4112 21.849C24.8417 25.1177 25.5361 26.6512 27.4942 26.4494C29.4524 26.2476 30.6289 25.434 31.0239 24.0084C34.0842 24.8685 35.7428 24.1487 35.9997 21.849C36.3852 18.3994 34.525 15.6476 33.7624 15.6476C32.9997 15.6476 31.0239 15.5548 31.0239 14.5001C31.0239 13.4453 28.7159 12.8494 26.6329 12.8494C24.5499 12.8494 25.8035 11.4453 22.9432 12.0001C21.0363 12.3699 19.8885 13.2032 19.4997 14.5001Z" clip-rule="evenodd"/><path stroke-linecap="round" stroke-width="4" d="M30.5002 25.5002C29.4833 26.1313 28.0878 27.1805 27.5002 28.0002C26.0313 30.0497 24.8398 31.2976 24.5791 32.6083"/></g></svg>`,
+            remark: '学习之旅'
+        },
+        {
+            name: '泰语听力',
+            url: 'https://alexzhangmaker.github.io/outpost/audibleAnywhere.html',
+            icon: `<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path fill="#000000" d="M640 199.9v54l-320 200L0 254v-54l320 200zm-194.5 72l47.1-29.4c-37.2-55.8-100.7-92.6-172.7-92.6s-135.5 36.7-172.6 92.4h.3c2.5-2.3 5.1-4.5 7.7-6.7c89.7-74.4 219.4-58.1 290.2 36.3m-220.1 18.8c16.9-11.9 36.5-18.7 57.4-18.7c34.4 0 65.2 18.4 86.4 47.6l45.4-28.4c-20.9-29.9-55.6-49.5-94.8-49.5c-38.9 0-73.4 19.4-94.4 49M103.6 161.1c131.8-104.3 318.2-76.4 417.5 62.1l.7 1l48.8-30.4C517.1 112.1 424.8 58.1 319.9 58.1c-103.5 0-196.6 53.5-250.5 135.6c9.9-10.5 22.7-23.5 34.2-32.6"/></svg>`,
+            remark: '泰语听力练习'
+        }
+        
+        
+    ];
+
+    // 从 localStorage 加载数据，如果不存在则使用初始数据
+    let apps = JSON.parse(localStorage.getItem('dashboardApps')) || initialApps;
+
+    const appGrid = document.getElementById('app-grid');
+    const modal = document.getElementById('app-modal');
+    const addAppButton = document.getElementById('add-app-button');
+    const closeModalButton = document.getElementById('close-modal-button');
+    const cancelButton = document.getElementById('cancel-button');
+    const appForm = document.getElementById('app-form');
+
+    // 渲染所有应用卡片的函数
+    const renderApps = () => {
+        appGrid.innerHTML = ''; // 清空现有卡片
+        apps.forEach(app => {
+            const card = document.createElement('div');
+            card.className = 'app-card bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center space-y-3 cursor-pointer transition-all duration-300';
+            card.innerHTML = `
+                <div class="icon-container w-16 h-16 flex items-center justify-center bg-gray-100 rounded-full">
+                    ${app.icon}
+                </div>
+                <div class="text-center">
+                    <p class="font-semibold text-gray-800">${app.name}</p>
+                    <p class="text-xs text-gray-500">${app.remark}</p>
+                </div>
+            `;
+            card.addEventListener('click', () => {
+                window.open(app.url, '_blank');
+            });
+            appGrid.appendChild(card);
+        });
+    };
+
+    // 保存数据到 localStorage
+    const saveApps = () => {
+        localStorage.setItem('dashboardApps', JSON.stringify(apps));
+    };
+
+    // 显示模态框
+    const showModal = () => {
+        modal.classList.remove('hidden');
+    };
+
+    // 隐藏模态框
+    const hideModal = () => {
+        modal.classList.add('hidden');
+        appForm.reset();
+    };
+
+    // 事件监听
+    addAppButton.addEventListener('click', showModal);
+    closeModalButton.addEventListener('click', hideModal);
+    cancelButton.addEventListener('click', hideModal);
+    
+    // 点击模态框背景区域关闭
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            hideModal();
+        }
+    });
+
+    // 表单提交处理
+    appForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newApp = {
+            name: e.target.appName.value,
+            url: e.target.appUrl.value,
+            icon: e.target.appIcon.value,
+            remark: e.target.appRemark.value
+        };
+        apps.push(newApp);
+        saveApps();
+        renderApps();
+        hideModal();
+    });
+
+    // 初始化渲染
+    renderApps();
+});
+</script>
+
+</body>
+</html>
