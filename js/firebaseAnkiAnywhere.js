@@ -19,7 +19,7 @@ const app = firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth(); // Correct: auth() is the function
 const database = firebase.database();
 const provider = new firebase.auth.GoogleAuthProvider();
-const gReviewService = new ReviewService() ;
+let gReviewService = null ;
 /*
 function fetchDataFromFirebase(path) {
     return new Promise((resolve, reject) => {
@@ -62,6 +62,7 @@ async function loadAnki(pathAnki){
         gMemoCards.push(jsonAnkiSets[key]) ;
     }) ;
 
+    gReviewService = new ReviewService() ;
     let cueCards = await gReviewService.getDueCards("rayZhang") ;
     console.log(cueCards) ;
 }
