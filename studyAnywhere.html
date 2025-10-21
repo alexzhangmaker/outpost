@@ -934,5 +934,135 @@ html{
           signInWithGoogle(initStudyApp,()=>{console.log('tbd for auth fail')}) ;
         }) ;
     </script>
+
+    <script>
+      export class CardTemplateGenerator {
+  /**
+   * 从知识树生成独立的卡片模板
+   */
+  static generateCardTemplates(knowledgeTree) {
+    const { master_id, master_topic, core_concept_card, satellite_cards } = knowledgeTree;
+    const templates = {};
+    
+    // 生成核心概念卡
+    if (core_concept_card) {
+      const coreCardId = `${master_id}_core`;
+      templates[coreCardId] = {
+        cardId: coreCardId,
+        masterId: master_id,
+        type: 'core_concept',
+        content: {
+          question: core_concept_card.question,
+          answer: core_concept_card.answer,
+          summary: core_concept_card.summary
+        },
+        metadata: {
+          aspect: '核心概念',
+          difficulty: 'medium',
+          tags: [master_topic, '核心概念'],
+          estimatedStudyTime: 8
+        }
+      };
+    }
+    
+    // 生成卫星卡
+    satellite_cards.forEach(satellite => {
+      const satelliteCardId = `${master_id}_${satellite.card_id}`;
+      templates[satelliteCardId] = {
+        cardId: satelliteCardId,
+        masterId: master_id,
+        type: 'satellite',
+        content: {
+          question: satellite.question,
+          answer: satellite.answer,
+          aspect: satellite.aspect,
+          examples: satellite.examples,
+          quizzes: satellite.quizzes
+        },
+        metadata: {
+          aspect: satellite.aspect,
+          difficulty: this.calculateDifficulty(satellite),
+          tags: [master_topic, satellite.aspect],
+          estimatedStudyTime: 5
+        }
+      };
+    });
+    
+    return templates;
+  }
+  
+  /**
+   * 计算卡片难度
+   */
+  static calculateDifficulty(satellite) {
+    const quizCount = satellite.quizzes ? satellite.quizzes.length : 0;
+    const exampleCount = satellite.examples ? satellite.examples.length : 0;
+    
+    if (quizCount >= 3 && exampleCount >= 3) return 'hard';
+    if (quizCount >= 2 || exampleCount >= 2) return 'medium';
+    return 'easy';
+  }
+
+  /**
+   * 验证知识树结构的完整性
+   */
+  static validateKnowledgeTree(knowledgeTree) {
+    const required = ['master_id', 'master_topic', 'satellite_cards'];
+    const missing = required.filter(field => !knowledgeTree[field]);
+    
+    if (missing.length > 0) {
+      throw new Error(`知识树缺少必要字段: ${missing.join(', ')}`);
+    }
+    
+    if (!Array.isArray(knowledgeTree.satellite_cards)) {
+      throw new Error('satellite_cards 必须是数组');
+    }
+    
+    // 验证卫星卡结构
+    knowledgeTree.satellite_cards.forEach((satellite, index) => {
+      if (!satellite.card_id) {
+        throw new Error(`卫星卡 ${index} 缺少 card_id`);
+      }
+      if (!satellite.question || !satellite.answer) {
+        throw new Error(`卫星卡 ${satellite.card_id} 缺少 question 或 answer`);
+      }
+    });
+    
+    return true;
+  }
+
+  /**
+   * 为Web App生成学习视图所需的数据结构
+   */
+  static generateLearningView(knowledgeTree, userProgress = {}) {
+    const templates = this.generateCardTemplates(knowledgeTree);
+    const learningData = {
+      master_id: knowledgeTree.master_id,
+      master_topic: knowledgeTree.master_topic,
+      core_concept_card: knowledgeTree.core_concept_card,
+      satellite_cards: knowledgeTree.satellite_cards,
+      cards: []
+    };
+    
+    Object.values(templates).forEach(template => {
+      learningData.cards.push({
+        ...template,
+        userProgress: userProgress[template.cardId] || null
+      });
+    });
+    
+    return learningData;
+  }
+}
+    </script>
+    <script>
+      
+    </script>
+    <script>
+      
+    </script>
+    <script>
+      
+    </script>
   </body>
 </html>

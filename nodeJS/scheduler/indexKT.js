@@ -1,7 +1,7 @@
+// scheduler/index.js
 const admin = require('firebase-admin');
-const SpacedRepetitionScheduler = require('./SpacedRepetitionScheduler');
-const NewCardScheduler = require('./NewCardScheduler'); // 新增
-const EnhancedScheduler = require('./EnhancedScheduler'); // 新增增强调度器
+const NewCardScheduler = require('./NewCardScheduler');
+const KnowledgeTreeScheduler = require('./KnowledgeTreeScheduler'); // 替换为知识树调度器
 
 // 环境变量配置
 const config = {
@@ -37,26 +37,24 @@ try {
 }
 // 创建所有调度服务实例
 console.log('🔧 创建调度服务实例...');
-const repetitionScheduler = new SpacedRepetitionScheduler();    // 基础重复调度
-const newCardScheduler = new NewCardScheduler();               // 新卡片调度  
-const enhancedScheduler = new EnhancedScheduler();             // 增强调度（知识树感知）
+const newCardScheduler = new NewCardScheduler();
+const knowledgeTreeScheduler = new KnowledgeTreeScheduler();
 
 // 更新配置
-Object.assign(repetitionScheduler.config, config.scheduler);
+
 Object.assign(newCardScheduler.config, config.newCardScheduler || {});
-Object.assign(enhancedScheduler.config, config.enhancedScheduler || {});
+Object.assign(newCardScheduler.config, config.enhancedScheduler || {});
 
 console.log('🎯 调度服务配置:');
-console.log(`   - 基础重复调度间隔: ${repetitionScheduler.config.scanInterval / 1000}秒`);
-console.log(`   - 新卡片调度间隔: ${newCardScheduler.config.scanInterval / 1000}秒`);
-console.log(`   - 增强调度间隔: ${enhancedScheduler.config.scanInterval / 1000}秒`);
 console.log(`   - 数据库: ${config.firebase.databaseURL}`);
 
 // 启动所有调度服务
 console.log('🚀 启动所有调度服务...');
-repetitionScheduler.start();    // 保持向后兼容
-newCardScheduler.start();       // 新卡片处理
-enhancedScheduler.start();      // 新增的知识树感知调度
+newCardScheduler.start();
+knowledgeTreeScheduler.start();
+console.log('✅ 知识树调度架构运行中:');
+console.log('   - NewCardScheduler: 处理新卡片初始调度');
+console.log('   - KnowledgeTreeScheduler: 以知识树为单元的整体调度');
 
 // 健康检查端点
 if (process.env.ENABLE_HEALTH_CHECK) {
@@ -122,10 +120,3 @@ process.on('SIGINT', gracefulShutdown('SIGINT'));
 console.log('✅ 所有调度服务已启动并运行');
 console.log('💡 使用 Ctrl+C 来停止服务');
 
-// 导出用于测试
-module.exports = { 
-  repetitionScheduler, 
-  newCardScheduler, 
-  enhancedScheduler,
-  admin 
-};
