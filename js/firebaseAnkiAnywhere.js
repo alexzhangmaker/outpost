@@ -202,7 +202,7 @@ class ReviewService {
 
 //import { db, ref, update, get, query, orderByChild, equalTo, onValue, off } from '../config/firebase-client.js';
 
-export class ReviewService {
+class ReviewService {
   constructor() {
     this.templatesRef = ref(db, 'card_templates');
     this.progressRef = ref(db, 'user_progress');
@@ -540,7 +540,7 @@ export class ReviewService {
 
 //import { db, ref, get, update } from '../config/firebase-client.js';
 
-export class UserService {
+class UserService {
   constructor() {
     this.usersRef = ref(db, 'users');
     this.progressRef = ref(db, 'user_progress');
@@ -686,7 +686,7 @@ export class UserService {
 //import { db, ref, set, get, update } from '../config/firebase-client.js';
 //import { CardTemplateGenerator } from './CardTemplateGenerator.js';
 
-export class AdminService {
+class AdminService {
   constructor() {
     this.templatesRef = ref(db, 'card_templates');
   }
