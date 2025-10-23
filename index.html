@@ -251,8 +251,8 @@ async function _onClick_ToDo(event){
     //let cloudData = await _dumpFireStore("outpost") ;
     let tagWndContent = document.querySelector('#idWndContent') ;
     tagWndContent.innerHTML=`
-        <div class="editor">
-            <input type="text" id="idInputMemo" name="fname" onfocus="this.value=''" placeholder="@mmddyyyy +about something to do"><br><br>
+        <div class="editor" style="min-height:5rem;">
+            <input type="text" style="font-size:2rem;" id="idInputMemo" name="fname" onfocus="this.value=''" placeholder="@mmddyyyy +about something to do"><br><br>
             <button onclick="onClickSubmitMemo()" id="idBTNSubmit"><i class="bi-journal-text outpostBTN"></i></button>
         </div>
         <div class="memoContainer"></div>

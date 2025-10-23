@@ -35,26 +35,18 @@ try {
   console.error('❌ Firebase Admin初始化失败:', error);
   process.exit(1);
 }
-// 创建所有调度服务实例
-console.log('🔧 创建调度服务实例...');
+
+// 只启动两个调度器
 const newCardScheduler = new NewCardScheduler();
 const knowledgeTreeScheduler = new KnowledgeTreeScheduler();
 
-// 更新配置
-
-Object.assign(newCardScheduler.config, config.newCardScheduler || {});
-Object.assign(newCardScheduler.config, config.enhancedScheduler || {});
-
-console.log('🎯 调度服务配置:');
-console.log(`   - 数据库: ${config.firebase.databaseURL}`);
-
-// 启动所有调度服务
-console.log('🚀 启动所有调度服务...');
 newCardScheduler.start();
 knowledgeTreeScheduler.start();
-console.log('✅ 知识树调度架构运行中:');
+
+console.log('✅ 基于reviewLog的调度架构运行中:');
 console.log('   - NewCardScheduler: 处理新卡片初始调度');
-console.log('   - KnowledgeTreeScheduler: 以知识树为单元的整体调度');
+console.log('   - KnowledgeTreeScheduler: 基于reviewLog的智能调度');
+
 
 // 健康检查端点
 if (process.env.ENABLE_HEALTH_CHECK) {
@@ -67,17 +59,16 @@ if (process.env.ENABLE_HEALTH_CHECK) {
         service: 'enhanced-spaced-repetition-scheduler',
         timestamp: new Date().toISOString(),
         services: {
-          repetition: repetitionScheduler.getStatus(),
-          newCards: newCardScheduler.getStatus(),
-          enhanced: enhancedScheduler.getStatus()
+          repetition: knowledgeTreeScheduler.getStatus(),
+          newCards: newCardScheduler.getStatus()
+          
         }
       }));
     } else if (req.url === '/status') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
-        repetition: repetitionScheduler.getStatus(),
-        newCards: newCardScheduler.getStatus(), 
-        enhanced: enhancedScheduler.getStatus()
+        repetition: knowledgeTreeScheduler.getStatus(),
+        newCards: newCardScheduler.getStatus()
       }));
     } else {
       res.writeHead(404);
@@ -97,9 +88,9 @@ function gracefulShutdown(signal) {
     console.log(`\n📩 收到 ${signal} 信号，开始优雅关闭...`);
     
     // 停止所有调度服务
-    repetitionScheduler.stop();
+    knowledgeTreeScheduler.stop();
     newCardScheduler.stop();
-    enhancedScheduler.stop();
+    
     
     // 关闭Firebase连接
     admin.app().delete().then(() => {

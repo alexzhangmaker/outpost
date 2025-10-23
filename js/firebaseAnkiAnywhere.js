@@ -50,6 +50,7 @@ function signInWithGoogle(callAuthed,callFailAuth) {
 }
 
 async function loadAnki(pathAnki){
+    /*
     let snapshot = await database.ref(pathAnki).once('value');
     let jsonAnkiSets = snapshot.val();
     console.log(jsonAnkiSets) ;
@@ -61,225 +62,80 @@ async function loadAnki(pathAnki){
     keys.forEach(key=>{
         gMemoCards.push(jsonAnkiSets[key]) ;
     }) ;
+     */
 
 
     gReviewService = new ReviewService() ;
-    let cueCards = await gReviewService.getDueCards("rayZhang") ;
+    let cueCards = await gReviewService.getDueCardsByKnowledgeTree("rayZhang") ;
     console.log(cueCards) ;
+    gMemoCards=[] ;
+    gMemoCards=[...cueCards] ;
+
 }
 
 
 async function saveReviewStat(classCode){
     let date = new Date() ;
-    let pathLog = `/reviewLog/${classCode}/${date.getTime()}` ;
+    let pathLog = `/reviewLog/rayZhang/${classCode}/${date.getTime()}` ;
     await database.ref(pathLog).set(gMemoCards) ;
 }
 
-/*
-//import { db } from '../config/firebase-client';
 
 class ReviewService {
   constructor() {
+
     this.templatesRef = database.ref('card_templates');
     this.progressRef = database.ref('user_progress');
     this.schedulingRef = database.ref('scheduling_queue');
     this.sessionsRef = database.ref('review_sessions');
   }
 
-  
-    //* 获取用户今日需要复习的卡片
-   
-  async getDueCards(userId) {
-    try {
-      const now = Date.now();
-      
-      // 直接从调度队列获取到期卡片
-      const snapshot = await this.schedulingRef
-        .child(userId)
-        .orderByChild('nextReviewDate')
-        .endAt(now)
-        .once('value');
-      
-      const scheduledCards = snapshot.val() || {};
-      const cardIds = Object.keys(scheduledCards);
-      
-      // 并行获取卡片内容
-      const cardPromises = cardIds.map(cardId => 
-        this.templatesRef.child(cardId).once('value')
-      );
-      
-      const cardSnapshots = await Promise.all(cardPromises);
-      
-      // 合并数据
-      const dueCards = cardIds.map((cardId, index) => ({
-        ...scheduledCards[cardId],
-        ...cardSnapshots[index].val(),
-        cardId
-      }));
-      
-      // 按优先级排序
-      return dueCards.sort((a, b) => b.priority - a.priority);
-      
-    } catch (error) {
-      console.error('获取到期卡片错误:', error);
-      return [];
-    }
+  async getData(refPath){
+    let ref = database.ref(refPath);
+    const snapshot = await ref.once('value');
+    let data = snapshot.val() || {};
+    return data ;
   }
-
-
-   //* 提交复习结果（Web App调用）
-
-  async submitReviewResult(userId, session) {
-    try {
-      const sessionId = `sess_${Date.now()}`;
-      const updates = {};
-      
-      // 为每个复习的卡片创建进度记录
-      session.reviews.forEach(review => {
-        const progressPath = `user_progress/${userId}/${review.cardId}`;
-        updates[progressPath] = {
-          lastReviewed: Date.now(),
-          subjectiveScore: review.subjectiveScore,
-          quizResults: review.quizResults,
-          computedQuality: review.computedQuality, // Web App可以计算基础质量分数
-          needsReschedule: true  // 标记需要重新调度
-        };
-      });
-      
-      // 创建会话记录
-      const sessionPath = `review_sessions/${userId}/${sessionId}`;
-      updates[sessionPath] = {
-        timestamp: Date.now(),
-        cardsReviewed: session.reviews.map(r => r.cardId),
-        duration: session.duration,
-        averageQuality: this.calculateSessionQuality(session.reviews)
-      };
-      
-      // 原子性写入所有更新
-      await database.ref().update(updates);
-      
-      return { success: true, sessionId };
-      
-    } catch (error) {
-      console.error('提交复习结果错误:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  
-  // * 计算会话平均质量（简化版，供Web App使用）
-   
-  calculateSessionQuality(reviews) {
-    const total = reviews.reduce((sum, review) => {
-      const quizScore = review.quizResults.correct / review.quizResults.total;
-      // 简单加权平均
-      return sum + (review.subjectiveScore * 0.4 + quizScore * 4 * 0.6);
-    }, 0);
-    
-    return total / reviews.length;
-  }
-
-  
-   //* 监听复习队列变化（实时更新）
-   
-  listenToDueCards(userId, callback) {
-    const now = Date.now();
-    
-    return this.schedulingRef
-      .child(userId)
-      .orderByChild('nextReviewDate')
-      .endAt(now)
-      .on('value', (snapshot) => {
-        const dueCards = snapshot.val() || {};
-        callback({
-          count: Object.keys(dueCards).length,
-          cards: dueCards
-        });
-      });
-  }
-}
-*/
-
-//import { db, ref, update, get, query, orderByChild, equalTo, onValue, off } from '../config/firebase-client.js';
-
-class ReviewService {
-  constructor() {
-    this.templatesRef = ref(db, 'card_templates');
-    this.progressRef = ref(db, 'user_progress');
-    this.schedulingRef = ref(db, 'scheduling_queue');
-    this.sessionsRef = ref(db, 'review_sessions');
-  }
-
   /**
    * 获取用户今日需要复习的卡片（按知识树分组）
    */
   async getDueCardsByKnowledgeTree(userId) {
     try {
-      const now = Date.now();
-      
-      // 直接从调度队列获取到期卡片
-      const schedulingQuery = query(
-        ref(db, `scheduling_queue/${userId}`),
-        orderByChild('nextReviewDate'),
-        equalTo(true) // 这里需要修复，应该是 <= now
-      );
-      
-      const snapshot = await get(schedulingQuery);
-      const scheduledCards = snapshot.val() || {};
-      
-      // 手动过滤到期卡片（因为Firebase查询限制）
-      const dueCardIds = Object.keys(scheduledCards).filter(cardId => {
-        return scheduledCards[cardId].nextReviewDate <= now;
-      });
-      
-      if (dueCardIds.length === 0) {
-        return [];
-      }
-      
-      // 并行获取卡片内容和用户进度
-      const [templatesSnapshot, progressSnapshot] = await Promise.all([
-        this.getCardTemplates(dueCardIds),
-        get(ref(db, `user_progress/${userId}`))
-      ]);
-      
-      const templates = templatesSnapshot.val() || {};
-      const userProgress = progressSnapshot.val() || {};
-      
-      // 按知识树分组
-      const groupedByTree = {};
-      
-      dueCardIds.forEach(cardId => {
-        const template = templates[cardId];
-        if (!template) return;
+        const now = Date.now();
         
-        const masterId = template.masterId;
-        if (!groupedByTree[masterId]) {
-          groupedByTree[masterId] = {
-            masterId,
-            masterTopic: template.masterTopic || '未知主题',
-            cards: []
-          };
+        // 直接从调度队列获取到期卡片
+        const snapshot = await this.schedulingRef
+            .child(userId)
+            .orderByChild('nextReviewDate')
+            //.endAt(now)
+            .once('value');
+        
+        const scheduledCards = snapshot.val() || {};
+        
+        // 手动过滤到期卡片（因为Firebase查询限制）
+        const dueCardIds = [] ;
+        let cardKeys = Object.keys(scheduledCards);
+        const dueCards = [] ;
+        for(let i=0;i<cardKeys.length;i++){
+            let key = cardKeys[i] ;
+            if(scheduledCards[key].nextReviewDate <= now){
+                dueCardIds.push(key) ;
+                let jsonCard = await this.getData(`025231/${key}`) ;
+                console.log(jsonCard) ;
+                dueCards.push(jsonCard) ;
+            }else{
+                console.log(`${scheduledCards[key].nextReviewDate}vs ${now}`) ;
+            }
         }
-        
-        groupedByTree[masterId].cards.push({
-          ...template,
-          schedule: scheduledCards[cardId],
-          userProgress: userProgress[cardId] || null,
-          cardId
-        });
-      });
-      
-      // 计算每个知识树的优先级
-      Object.values(groupedByTree).forEach(tree => {
-        tree.priority = this.calculateTreePriority(tree);
-      });
-      
-      // 按优先级排序
-      return Object.values(groupedByTree).sort((a, b) => b.priority - a.priority);
-      
+       
+        console.log(dueCardIds) ;
+        if (dueCardIds.length === 0) {
+            return [];
+        }
+        return dueCards ;
     } catch (error) {
-      console.error('获取到期卡片错误:', error);
-      return [];
+        console.error('获取到期卡片错误:', error);
+        return [];
     }
   }
 
@@ -291,11 +147,18 @@ class ReviewService {
     const templates = {};
     
     for (const cardId of cardIds) {
+        
       try {
+        //getData(`card_templates/${cardId}`) 
+        /*
         const snapshot = await get(ref(db, `card_templates/${cardId}`));
         if (snapshot.exists()) {
           templates[cardId] = snapshot.val();
         }
+        */
+       let card = getData(`card_templates/${cardId}`) ;
+       if(card!={})
+       templates[cardId] = card;//getData(`card_templates/${cardId}`) ;
       } catch (error) {
         console.error(`获取卡片模板错误 ${cardId}:`, error);
       }
@@ -327,62 +190,117 @@ class ReviewService {
   }
 
   /**
-   * 提交复习结果
+   * 提交复习结果到reviewLog（新方法）
    */
-  async submitReviewResult(userId, session) {
+  async submitReviewResultToLog(userId, reviewResult) {
     try {
-      const sessionId = `sess_${Date.now()}`;
-      const updates = {};
+      const timestamp = Date.now();
+      const dateStr = new Date(timestamp).toISOString().split('T')[0].replace(/-/g, '');
       
-      // 为每个复习的卡片创建进度记录
-      session.reviews.forEach(review => {
-        const progressPath = `user_progress/${userId}/${review.cardId}`;
-        
-        // 计算基础质量分数（调度服务会重新计算）
-        const computedQuality = this.calculateBasicQuality(
-          review.subjectiveScore, 
-          review.quizResults
-        );
-        
-        updates[progressPath] = {
-          lastReviewed: Date.now(),
-          subjectiveScore: review.subjectiveScore,
-          quizResults: review.quizResults,
-          computedQuality: computedQuality,
-          needsReschedule: true,  // 标记需要重新调度
-          masterId: review.masterId,
-          cardType: review.cardType,
-          aspect: review.aspect,
-          updatedAt: Date.now()
-        };
-        
-        // 如果之前没有记录，添加创建时间
-        if (!review.existingProgress) {
-          updates[progressPath].createdAt = Date.now();
-          updates[progressPath].repetition = 0;
-          updates[progressPath].interval = 0;
-          updates[progressPath].easeFactor = 2.5;
+      // 生成唯一ID (yyyyMMdd-xxxx)
+      const uniqueId = await this.generateUniqueReviewId(userId, dateStr);
+      const logPath = `reviewLog/${userId}/${dateStr}-${uniqueId}/${reviewResult.master_id}`;
+      
+      // 使用KnowledgeTreeAssessor计算评估结果
+      const assessor = new KnowledgeTreeAssessor();
+      const assessment = assessor.assessKnowledgeTree(reviewResult);
+      
+      // 构建review log记录
+      const reviewLog = {
+        timestamp: timestamp,
+        master_id: reviewResult.master_id,
+        master_topic: reviewResult.master_topic,
+        core_concept_card: {
+          rating: reviewResult.core_concept_card.rating,
+          reviewed_at: timestamp
+        },
+        satellite_cards: reviewResult.satellite_cards.map(satellite => ({
+          card_id: satellite.card_id,
+          aspect: satellite.aspect,
+          rating: satellite.rating,
+          quizzes: satellite.quizzes ? satellite.quizzes.map(quiz => ({
+            question: quiz.question,
+            correct: quiz.correct || false
+          })) : [],
+          reviewed_at: timestamp
+        })),
+        assessment: {
+          overall_score: assessment.overall_score,
+          mastery_level: assessment.mastery_level.level,
+          needs_reschedule: true, // 标记需要调度
+          calculated_at: timestamp,
+          details: assessment.assessment_details
         }
-      });
-      
-      // 创建会话记录
-      const sessionPath = `review_sessions/${userId}/${sessionId}`;
-      updates[sessionPath] = {
-        timestamp: Date.now(),
-        cardsReviewed: session.reviews.map(r => r.cardId),
-        duration: session.duration,
-        averageQuality: this.calculateSessionQuality(session.reviews),
-        masterIds: [...new Set(session.reviews.map(r => r.masterId))] // 去重
       };
       
-      // 原子性写入所有更新
-      await update(ref(db), updates);
+      // 写入review log
+      await set(ref(db, logPath), reviewLog);
       
-      return { success: true, sessionId };
+      console.log(`✅ 复习记录已保存: ${logPath}`);
+      
+      return { 
+        success: true, 
+        logId: `${dateStr}-${uniqueId}`,
+        assessment: assessment
+      };
       
     } catch (error) {
-      console.error('提交复习结果错误:', error);
+      console.error('提交复习记录错误:', error);
       return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * 生成唯一的复习记录ID
+   */
+  async generateUniqueReviewId(userId, dateStr) {
+    try {
+      // 查找当天的现有记录
+      const snapshot = await get(ref(db, `reviewLog/${userId}`));
+      const existingLogs = snapshot.val() || {};
+      
+      // 提取当天的记录并计数
+      const todayLogs = Object.keys(existingLogs).filter(key => 
+        key.startsWith(dateStr)
+      );
+      
+      // 生成新的序列号 (0001, 0002, ...)
+      const nextSequence = (todayLogs.length + 1).toString().padStart(4, '0');
+      return nextSequence;
+      
+    } catch (error) {
+      console.error('生成唯一ID错误:', error);
+      return '0001'; // 默认值
+    }
+  }
+
+  /**
+   * 获取用户的复习历史
+   */
+  async getUserReviewHistory(userId, masterId = null, limit = 50) {
+    try {
+      const snapshot = await get(ref(db, `reviewLog/${userId}`));
+      const reviewLogs = snapshot.val() || {};
+      
+      // 转换为数组并排序（最新的在前）
+      const history = Object.keys(reviewLogs)
+        .flatMap(logId => {
+          const logEntry = reviewLogs[logId];
+          return Object.keys(logEntry).map(masterId => ({
+            logId,
+            masterId,
+            ...logEntry[masterId]
+          }));
+        })
+        .filter(entry => masterId ? entry.master_id === masterId : true)
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, limit);
+      
+      return history;
+      
+    } catch (error) {
+      console.error('获取复习历史错误:', error);
+      return [];
     }
   }
 

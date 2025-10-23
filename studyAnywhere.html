@@ -936,10 +936,9 @@ html{
     </script>
 
     <script>
-      export class CardTemplateGenerator {
-  /**
-   * 从知识树生成独立的卡片模板
-   */
+      /*
+      class CardTemplateGenerator {
+
   static generateCardTemplates(knowledgeTree) {
     const { master_id, master_topic, core_concept_card, satellite_cards } = knowledgeTree;
     const templates = {};
@@ -991,9 +990,7 @@ html{
     return templates;
   }
   
-  /**
-   * 计算卡片难度
-   */
+
   static calculateDifficulty(satellite) {
     const quizCount = satellite.quizzes ? satellite.quizzes.length : 0;
     const exampleCount = satellite.examples ? satellite.examples.length : 0;
@@ -1003,9 +1000,7 @@ html{
     return 'easy';
   }
 
-  /**
-   * 验证知识树结构的完整性
-   */
+
   static validateKnowledgeTree(knowledgeTree) {
     const required = ['master_id', 'master_topic', 'satellite_cards'];
     const missing = required.filter(field => !knowledgeTree[field]);
@@ -1031,9 +1026,7 @@ html{
     return true;
   }
 
-  /**
-   * 为Web App生成学习视图所需的数据结构
-   */
+
   static generateLearningView(knowledgeTree, userProgress = {}) {
     const templates = this.generateCardTemplates(knowledgeTree);
     const learningData = {
@@ -1054,6 +1047,7 @@ html{
     return learningData;
   }
 }
+*/
     </script>
     <script>
       
