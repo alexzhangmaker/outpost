@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习笔记查看器 - 学生版</title>
+    
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/white.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <style>
+        /* 整体布局 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        /* 登录界面 */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .login-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .login-subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        
+        .gmail-login-btn {
+            background: #dd4b39;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background 0.3s;
+        }
+        
+        .gmail-login-btn:hover {
+            background: #c23321;
+        }
+        
+        .gmail-icon {
+            font-size: 20px;
+        }
+        
+        /* 顶部导航 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            font-size: 28px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        
+        .course-info {
+            text-align: right;
+        }
+        
+        .course-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .course-meta {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        /* 控制面板 */
+        .controls {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        
+        .control-btn {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .control-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.secondary {
+            background: #95a5a6;
+        }
+        
+        .control-btn.secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .doc-selector {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            min-width: 200px;
+        }
+        
+        .progress-container {
+            flex: 1;
+            margin: 0 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #ecf0f1;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        /* 主要内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            position: relative;
+        }
+        
+        /* 幻灯片区域 */
+        .slides-container {
+            flex: 1;
+            background: white;
+            position: relative;
+        }
+        
+        .reveal {
+            height: 100%;
+        }
+        
+        .reveal .slides {
+            text-align: left;
+        }
+        
+        .reveal .slide-content {
+            text-align: left;
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+            font-size: 28px;
+            line-height: 1.6;
+        }
+        
+        .reveal h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .reveal h2 {
+            color: #3498db;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .reveal h3 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        
+        .reveal ul, .reveal ol {
+            margin-left: 30px;
+        }
+        
+        .reveal li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        
+        .reveal strong {
+            color: #e74c3c;
+        }
+        
+        .reveal code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #e83e8c;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .reveal pre {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        
+        .reveal pre code {
+            background: none;
+            color: #ecf0f1;
+            padding: 0;
+        }
+        
+        /* 自定义语义块样式 */
+        .key-point {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(243, 156, 18, 0.1);
+        }
+        
+        .grammar-block {
+            background: linear-gradient(135deg, #d1ecf1, #a2d9f3);
+            border-left: 4px solid #17a2b8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(23, 162, 184, 0.1);
+        }
+        
+        .example-block {
+            background: linear-gradient(135deg, #d4edda, #a3e4b9);
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(40, 167, 69, 0.1);
+        }
+        
+        .exercise-block {
+            background: linear-gradient(135deg, #e2e3e5, #c8ced0);
+            border-left: 4px solid #6c757d;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.1);
+        }
+        
+        .question {
+            color: #2c3e50;
+            font-weight: bold;
+            background: rgba(52, 152, 219, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            margin: 12px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .answer {
+            color: #27ae60;
+            font-weight: bold;
+            background: rgba(39, 174, 96, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            margin: 12px 0;
+            border-left: 4px solid #27ae60;
+        }
+        
+        /* 状态指示器 */
+        .status {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="login-container" class="login-container">
+        <div class="login-box">
+            <div class="login-title">学习笔记查看器</div>
+            <div class="login-subtitle">学生版 - 请使用Gmail登录</div>
+            <button id="gmail-login-btn" class="gmail-login-btn">
+                <span class="gmail-icon">📧</span>
+                使用Gmail登录
+            </button>
+        </div>
+    </div>
+
+    <!-- 主应用界面 -->
+    <div id="app-container" class="app-container" style="display: none;">
+        <!-- 顶部导航 -->
+        <div class="header">
+            <div class="logo">
+                <span class="logo-icon">📚</span>
+                <span>学习笔记查看器 - 学生版</span>
+            </div>
+            
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <div class="user-name" id="user-name">用户</div>
+                <button class="logout-btn" id="logout-btn">退出</button>
+            </div>
+            
+            <div class="course-info">
+                <div class="course-title" id="course-title">请选择学习内容</div>
+                <div class="course-meta" id="course-meta">未选择文档</div>
+            </div>
+        </div>
+        
+        <!-- 控制面板 -->
+        <div class="controls">
+            <select class="doc-selector" id="doc-selector">
+                <option value="">选择学习文档...</option>
+            </select>
+            
+            <button class="control-btn" id="prev-btn">← 上一页</button>
+            <button class="control-btn" id="next-btn">下一页 →</button>
+            <button class="control-btn secondary" id="fullscreen-btn">全屏模式</button>
+            
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progress-text">0/0</div>
+            </div>
+        </div>
+        
+        <!-- 主要内容区域 -->
+        <div class="main-content">
+            <!-- 幻灯片区域 -->
+            <div class="slides-container">
+                <div class="reveal">
+                    <div class="slides" id="slides-container">
+                        <section>
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <h3>请选择学习文档...</h3>
+                                <p>从上方下拉菜单选择要学习的内容</p>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reveal.js 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
+
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // 学生版笔记查看器
+        class StudentNoteViewer {
+            constructor() {
+                this.currentUser = null;
+                this.currentSlideIndex = 0;
+                this.totalSlides = 0;
+                this.revealInitialized = false;
+                this.availableDocuments = [];
+                this.currentDocPath = null;
+                
+                this.init();
+            }
+
+            async init() {
+                this.setupAuthListener();
+                this.setupEventListeners();
+            }
+
+            setupAuthListener() {
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        this.currentUser = user;
+                        this.showApp();
+                        this.loadAvailableDocuments();
+                    } else {
+                        this.currentUser = null;
+                        this.showLogin();
+                    }
+                });
+            }
+
+            setupEventListeners() {
+                // 登录相关
+                document.getElementById('gmail-login-btn').addEventListener('click', () => {
+                    this.signInWithGoogle();
+                });
+
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    this.signOut();
+                });
+
+                // 文档选择
+                document.getElementById('doc-selector').addEventListener('change', (e) => {
+                    this.loadSelectedDocument(e.target.value);
+                });
+
+                // 导航控制
+                document.getElementById('prev-btn').addEventListener('click', () => {
+                    if (this.revealInitialized) {
+                        Reveal.prev();
+                    }
+                });
+
+                document.getElementById('next-btn').addEventListener('click', () => {
+                    if (this.revealInitialized) {
+                        Reveal.next();
+                    }
+                });
+
+                document.getElementById('fullscreen-btn').addEventListener('click', () => {
+                    this.toggleFullscreen();
+                });
+
+                // 键盘快捷键
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowLeft') {
+                        Reveal.prev();
+                    } else if (e.key === 'ArrowRight') {
+                        Reveal.next();
+                    }
+                });
+            }
+
+            async signInWithGoogle() {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('email');
+                
+                try {
+                    await auth.signInWithPopup(provider);
+                    this.showMessage('登录成功！', 'success');
+                } catch (error) {
+                    console.error('登录失败:', error);
+                    this.showMessage(`登录失败: ${error.message}`, 'error');
+                }
+            }
+
+            async signOut() {
+                try {
+                    await auth.signOut();
+                    this.showMessage('已退出登录', 'info');
+                } catch (error) {
+                    console.error('退出登录失败:', error);
+                }
+            }
+
+            showLogin() {
+                document.getElementById('login-container').style.display = 'flex';
+                document.getElementById('app-container').style.display = 'none';
+            }
+
+            showApp() {
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+                
+                // 更新用户信息
+                document.getElementById('user-name').textContent = this.currentUser.displayName || this.currentUser.email;
+                document.getElementById('user-avatar').textContent = 
+                    (this.currentUser.displayName || this.currentUser.email).charAt(0).toUpperCase();
+            }
+
+            async loadAvailableDocuments() {
+                try {
+                    const snapshot = await database.ref('grammar').once('value');
+                    const documents = snapshot.val();
+                    
+                    this.availableDocuments = [];
+                    const selector = document.getElementById('doc-selector');
+                    selector.innerHTML = '<option value="">选择学习文档...</option>';
+                    
+                    if (documents) {
+                        Object.entries(documents).forEach(([key, doc]) => {
+                            this.availableDocuments.push({
+                                path: key,
+                                title: doc.title || key,
+                                description: doc.description || ''
+                            });
+                            
+                            const option = document.createElement('option');
+                            option.value = key;
+                            option.textContent = doc.title || key;
+                            selector.appendChild(option);
+                        });
+                    }
+                    
+                } catch (error) {
+                    console.error('加载文档列表失败:', error);
+                    this.showMessage('加载文档列表失败', 'error');
+                }
+            }
+
+            async loadSelectedDocument(docPath) {
+                if (!docPath) return;
+                
+                this.currentDocPath = docPath;
+                this.showMessage('正在加载文档...', 'info');
+                
+                try {
+                    // 加载Markdown内容
+                    const snapshot = await database.ref(`grammar/${docPath}`).once('value');
+                    const markdownContent = snapshot.val();
+                    
+                    if (!markdownContent) {
+                        throw new Error('文档内容为空');
+                    }
+                    
+                    // 使用简化的转换逻辑
+                    const slideData = this.convertMarkdown(markdownContent);
+                    this.totalSlides = slideData.slides.length;
+                    
+                    this.updateCourseInfo(slideData);
+                    this.renderSlides(slideData.slides);
+                    this.setupRevealJS();
+                    this.updateProgress();
+                    
+                    this.showMessage('文档加载成功！', 'success');
+                    
+                } catch (error) {
+                    console.error('加载文档失败:', error);
+                    this.showMessage(`加载文档失败: ${error.message}`, 'error');
+                }
+            }
+
+            convertMarkdown(content) {
+                // 移除元数据和注释
+                let processed = content
+                    .replace(/:::meta[\s\S]*?:::/g, '')
+                    .replace(/<!--[\s\S]*?-->/g, '');
+                
+                // 处理自定义块
+                processed = this.processCustomBlocks(processed);
+                
+                // 分割幻灯片
+                const slides = processed.split('---').filter(slide => slide.trim());
+                
+                return {
+                    title: this.extractTitle(content),
+                    slides: slides.map((slideContent, index) => ({
+                        index,
+                        htmlContent: this.markdownToHtml(slideContent)
+                    }))
+                };
+            }
+
+            processCustomBlocks(content) {
+                return content
+                    .replace(/:::key-point\s*\n([\s\S]*?)\s*:::/g, 
+                        '<div class="key-point">$1</div>')
+                    .replace(/:::grammar\s*\n([\s\S]*?)\s*:::/g, 
+                        '<div class="grammar-block"><strong>核心公式：</strong><br><code>$1</code></div>')
+                    .replace(/:::examples\s*\n([\s\S]*?)\s*:::/g, (match, examplesContent) => {
+                        const examples = examplesContent.split('\n').filter(line => line.trim());
+                        let result = '<div class="example-block"><strong>例句展示：</strong><br><ul>';
+                        examples.forEach(example => {
+                            result += `<li>${example}</li>`;
+                        });
+                        return result + '</ul></div>';
+                    })
+                    .replace(/:::exercise\s*\n([\s\S]*?)\s*:::/g, (match, exerciseContent) => {
+                        const lines = exerciseContent.split('\n');
+                        let result = '<div class="exercise-block"><strong>练习：</strong><br>';
+                        
+                        lines.forEach(line => {
+                            if (line.startsWith('? ')) {
+                                result += `<div class="question">${line.substring(2)}</div>`;
+                            } else if (line.startsWith('! ')) {
+                                result += `<div class="answer">${line.substring(2)}</div>`;
+                            }
+                        });
+                        
+                        return result + '</div>';
+                    });
+            }
+
+            markdownToHtml(markdown) {
+                // 简单的Markdown到HTML转换
+                let html = markdown;
+                
+                // 处理标题
+                html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+                html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+                html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+                
+                // 处理粗体和斜体
+                html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                
+                // 处理代码
+                html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+                
+                // 处理列表
+                html = html.replace(/^- (.*)$/gim, '<li>$1</li>');
+                html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+                
+                // 处理段落
+                const lines = html.split('\n');
+                let result = '';
+                let currentParagraph = '';
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    if (!line) {
+                        if (currentParagraph) {
+                            result += `<p>${currentParagraph}</p>`;
+                            currentParagraph = '';
+                        }
+                        continue;
+                    }
+                    
+                    if (line.startsWith('<h') || line.startsWith('<div') || 
+                        line.startsWith('<ul') || line.startsWith('<li>') || 
+                        line.startsWith('</ul>')) {
+                        if (currentParagraph) {
+                            result += `<p>${currentParagraph}</p>`;
+                            currentParagraph = '';
+                        }
+                        result += line + '\n';
+                    } else if (line.startsWith('<')) {
+                        result += line + '\n';
+                    } else {
+                        if (currentParagraph) {
+                            currentParagraph += ' ' + line;
+                        } else {
+                            currentParagraph = line;
+                        }
+                    }
+                }
+                
+                if (currentParagraph) {
+                    result += `<p>${currentParagraph}</p>`;
+                }
+                
+                return result;
+            }
+
+            extractTitle(content) {
+                const titleMatch = content.match(/^# (.*)$/m);
+                return titleMatch ? titleMatch[1].trim() : '未命名文档';
+            }
+
+            updateCourseInfo(slideData) {
+                document.getElementById('course-title').textContent = slideData.title;
+                document.getElementById('course-meta').textContent = '从Firebase加载的文档';
+            }
+
+            renderSlides(slides) {
+                const slidesContainer = document.getElementById('slides-container');
+                slidesContainer.innerHTML = '';
+
+                slides.forEach((slide, index) => {
+                    const section = document.createElement('section');
+                    
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'slide-content';
+                    contentDiv.innerHTML = slide.htmlContent;
+                    
+                    section.appendChild(contentDiv);
+                    slidesContainer.appendChild(section);
+                });
+            }
+
+            setupRevealJS() {
+                if (this.revealInitialized) {
+                    Reveal.sync();
+                    Reveal.slide(0, 0, 0);
+                    return;
+                }
+
+                Reveal.initialize({
+                    hash: true,
+                    transition: 'slide',
+                    backgroundTransition: 'fade',
+                    controls: false,
+                    progress: false,
+                    center: false,
+                    width: '100%',
+                    height: '100%',
+                    margin: 0.04,
+                    minScale: 0.2,
+                    maxScale: 2.0
+                }).then(() => {
+                    this.revealInitialized = true;
+                    
+                    Reveal.addEventListener('slidechanged', (event) => {
+                        this.currentSlideIndex = event.indexh;
+                        this.updateProgress();
+                    });
+
+                    this.updateProgress();
+                });
+            }
+
+            updateProgress() {
+                if (this.totalSlides > 0) {
+                    const progress = ((this.currentSlideIndex + 1) / this.totalSlides) * 100;
+                    document.getElementById('progress-fill').style.width = `${progress}%`;
+                    document.getElementById('progress-text').textContent = 
+                        `${this.currentSlideIndex + 1}/${this.totalSlides}`;
+                }
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+
+            showMessage(message, type = 'info') {
+                const messageEl = document.createElement('div');
+                messageEl.className = `status ${type}`;
+                messageEl.textContent = message;
+                messageEl.style.position = 'fixed';
+                messageEl.style.top = '100px';
+                messageEl.style.left = '50%';
+                messageEl.style.transform = 'translateX(-50%)';
+                messageEl.style.zIndex = '10000';
+                messageEl.style.minWidth = '300px';
+                messageEl.style.textAlign = 'center';
+                
+                document.body.appendChild(messageEl);
+                
+                setTimeout(() => {
+                    if (messageEl.parentNode) {
+                        messageEl.parentNode.removeChild(messageEl);
+                    }
+                }, 3000);
+            }
+        }
+
+        // 页面加载完成后初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            window.noteViewer = new StudentNoteViewer();
+        });
+    </script>
+</body>
+</html>

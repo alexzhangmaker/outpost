@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能学习系统 - 多格式输出</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/white.css">
+    
+    <style>
+        /* 整体布局 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f7fa;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* 编辑器区域 */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-right: 1px solid #e1e5e9;
+        }
+        
+        .panel-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        textarea {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            margin-bottom: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        button.secondary {
+            background: #95a5a6;
+        }
+        
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        button.success {
+            background: #27ae60;
+        }
+        
+        button.success:hover {
+            background: #219653;
+        }
+        
+        button.warning {
+            background: #e67e22;
+        }
+        
+        button.warning:hover {
+            background: #d35400;
+        }
+        
+        /* 预览区域 */
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        .preview-container {
+            flex: 1;
+            overflow: auto;
+        }
+        
+        /* Firebase 认证界面 */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .auth-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .auth-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .auth-btn {
+            padding: 12px 24px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+            margin: 10px;
+        }
+        
+        .auth-btn:hover {
+            background: #2980b9;
+        }
+        
+        .auth-btn.google {
+            background: #db4437;
+        }
+        
+        .auth-btn.google:hover {
+            background: #c23321;
+        }
+        
+        /* Reveal.js 自定义样式 */
+        .reveal {
+            height: 100%;
+        }
+        
+        .reveal .slides {
+            text-align: left;
+            font-size: 28px;
+        }
+        
+        .reveal h1, .reveal h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        
+        .reveal h1 {
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+        }
+        
+        .reveal h2 {
+            color: #3498db;
+            margin-bottom: 30px;
+        }
+        
+        .reveal ul, .reveal ol {
+            margin-left: 40px;
+        }
+        
+        .reveal li {
+            margin-bottom: 15px;
+        }
+        
+        .reveal strong {
+            color: #e74c3c;
+        }
+        
+        .reveal code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #e83e8c;
+        }
+        
+        .reveal pre {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .reveal pre code {
+            background: none;
+            color: #ecf0f1;
+            padding: 0;
+        }
+        
+        /* 自定义语义块样式 */
+        .key-point {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .grammar-block {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .example-block {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .exercise-block {
+            background: #e2e3e5;
+            border-left: 4px solid #6c757d;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .question {
+            color: #2c3e50;
+            font-weight: bold;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .answer {
+            color: #27ae60;
+            font-weight: bold;
+            background: #f0fff4;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #2ecc71;
+        }
+        
+        .comparison-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        /* 状态指示器 */
+        .status {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        /* JSON预览模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            height: 80%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .modal-close {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            flex: 1;
+            overflow: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .editor-panel {
+                height: 50vh;
+            }
+            
+            .preview-panel {
+                height: 50vh;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Firebase 认证界面 -->
+    <div id="auth-container" class="auth-container" style="display: none;">
+        <div class="auth-box">
+            <h2 class="auth-title">登录智能学习系统</h2>
+            <p style="margin-bottom: 20px; color: #7f8c8d;">请使用Gmail账户登录</p>
+            <button id="google-login-btn" class="auth-btn google">使用 Google 登录</button>
+            <button id="logout-btn" class="auth-btn secondary" style="display: none;">退出登录</button>
+            <div id="auth-error" class="status error" style="display: none; margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 编辑器区域 -->
+        <div class="editor-panel">
+            <div class="panel-header">
+                <span>增强Markdown编辑器 - 多格式输出</span>
+                <div class="user-info" id="user-info" style="display: none;">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <span id="user-name">用户</span>
+                    <button id="user-logout-btn" class="auth-btn secondary" style="padding: 4px 8px; font-size: 12px;">退出</button>
+                </div>
+                <button id="login-display-btn" class="auth-btn" style="padding: 4px 8px; font-size: 12px;">登录</button>
+            </div>
+            <div class="editor-container">
+                <div class="controls">
+                    <button id="convert-btn">转换为幻灯片</button>
+                    <button id="json-btn" class="success">查看JSON数据</button>
+                    <button id="save-firebase-btn" class="warning">保存到Firebase</button>
+                    <button id="reset-btn" class="secondary">重置示例</button>
+                    <button id="fullscreen-btn" class="secondary">全屏预览</button>
+                    <button id="export-json-btn" class="success">导出JSON</button>
+                </div>
+                <textarea id="markdown-input" placeholder="在此输入增强Markdown内容..."></textarea>
+                <div id="status" class="status"></div>
+            </div>
+        </div>
+        
+        <!-- 预览区域 -->
+        <div class="preview-panel">
+            <div class="panel-header">
+                幻灯片预览 (隐藏元数据)
+            </div>
+            <div class="preview-container">
+                <div class="reveal">
+                    <div class="slides" id="slides-container">
+                        <!-- 动态生成的幻灯片将在这里显示 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON预览模态框 -->
+    <div id="json-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">JSON数据预览</div>
+                <button class="modal-close" id="close-modal">关闭</button>
+            </div>
+            <div class="modal-body" id="json-preview">
+                <!-- JSON内容将在这里显示 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Reveal.js 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
+    <!-- Marked.js 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        // Firebase配置 - 请替换为您的实际配置
+        // Firebase配置 - 请替换为您的实际配置
+         const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        
+
+        // 增强Markdown到Reveal.js转换器 (支持多格式输出)
+        class EnhancedMarkdownToReveal {
+            constructor() {
+                this.slideSeparator = '---';
+                this.configureMarked();
+            }
+
+            // 配置marked.js
+            configureMarked() {
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true,
+                    smartLists: true,
+                    smartypants: true
+                });
+            }
+
+            // 主转换方法 - 返回两个版本的内容
+            convertToMultipleFormats(enhancedMarkdown) {
+                try {
+                    const slides = enhancedMarkdown.split(this.slideSeparator);
+                    let revealContent = '';
+                    let jsonData = {
+                        title: '',
+                        slides: [],
+                        metadata: {},
+                        totalSlides: 0
+                    };
+                    
+                    slides.forEach((slideContent, index) => {
+                        if (slideContent.trim()) {
+                            const { revealSlide, jsonSlide, metadata } = this.convertSlide(slideContent, index);
+                            revealContent += revealSlide + '\n\n---\n\n';
+                            
+                            if (index === 0) {
+                                jsonData.title = this.extractTitle(slideContent);
+                            }
+                            jsonData.slides.push(jsonSlide);
+                            
+                            // 合并元数据
+                            Object.assign(jsonData.metadata, metadata);
+                        }
+                    });
+                    
+                    jsonData.totalSlides = jsonData.slides.length;
+                    
+                    return {
+                        revealContent,
+                        jsonData
+                    };
+                } catch (error) {
+                    throw new Error(`转换失败: ${error.message}`);
+                }
+            }
+
+            // 转换单个幻灯片 - 返回多个版本
+            convertSlide(slideContent, slideIndex) {
+                // 提取元数据（不显示在幻灯片中）
+                const metadata = this.extractMetadata(slideContent);
+                
+                // 为reveal.js准备的版本（隐藏元数据）
+                const revealVersion = this.processForReveal(slideContent);
+                
+                // 为JSON准备的版本（包含所有数据）
+                const jsonVersion = this.processForJSON(slideContent, slideIndex, metadata);
+                
+                return {
+                    revealSlide: revealVersion,
+                    jsonSlide: jsonVersion,
+                    metadata: metadata
+                };
+            }
+
+            // 为reveal.js处理内容（隐藏元数据）
+            processForReveal(content) {
+                let processed = content;
+                
+                // 移除元数据块
+                processed = processed.replace(/:::meta[\s\S]*?:::/g, '');
+                
+                // 移除隐藏注释
+                processed = processed.replace(/<!-- hide-start -->[\s\S]*?<!-- hide-end -->/g, '');
+                processed = processed.replace(/<!-- teacher-only -->[\s\S]*?<!-- \/teacher-only -->/g, '');
+                
+                // 处理自定义块
+                processed = this.processCustomBlocks(processed);
+                
+                return processed;
+            }
+
+            // 为JSON处理内容（保留所有数据）
+            processForJSON(content, slideIndex, metadata) {
+                const visibleContent = this.processForReveal(content);
+                
+                return {
+                    index: slideIndex,
+                    title: this.extractTitle(content),
+                    visibleContent: visibleContent,
+                    metadata: metadata,
+                    rawContent: content,
+                    wordCount: this.countWords(visibleContent),
+                    hasExercises: content.includes('? ') && content.includes('! '),
+                    hasExamples: content.includes(':::examples') || content.toLowerCase().includes('example')
+                };
+            }
+
+            // 提取元数据
+            extractMetadata(content) {
+                const metaMatch = content.match(/:::meta\s*\n([\s\S]*?)\s*:::/);
+                if (!metaMatch) return {};
+                
+                const metaContent = metaMatch[1];
+                const metadata = {};
+                
+                metaContent.split('\n').forEach(line => {
+                    const [key, ...valueParts] = line.split(':');
+                    if (key && valueParts.length > 0) {
+                        const value = valueParts.join(':').trim();
+                        // 尝试解析为适当的数据类型
+                        if (value === 'true' || value === 'false') {
+                            metadata[key.trim()] = value === 'true';
+                        } else if (!isNaN(value) && value !== '') {
+                            metadata[key.trim()] = parseFloat(value);
+                        } else if (value.startsWith('[') && value.endsWith(']')) {
+                            // 尝试解析数组
+                            try {
+                                metadata[key.trim()] = JSON.parse(value);
+                            } catch {
+                                metadata[key.trim()] = value;
+                            }
+                        } else {
+                            metadata[key.trim()] = value;
+                        }
+                    }
+                });
+                
+                return metadata;
+            }
+
+            // 提取标题
+            extractTitle(content) {
+                const titleMatch = content.match(/^# (.*)$/m) || content.match(/^## (.*)$/m);
+                return titleMatch ? titleMatch[1].trim() : `幻灯片 ${slideIndex + 1}`;
+            }
+
+            // 处理自定义块
+            processCustomBlocks(content) {
+                return content
+                    .replace(/:::key-point\s*\n([\s\S]*?)\s*:::/g, '<div class="key-point">\n**关键理解**：$1\n</div>')
+                    .replace(/:::grammar\s*\n([\s\S]*?)\s*:::/g, '<div class="grammar-block">\n**核心公式：**\n```grammar\n$1\n```\n</div>')
+                    .replace(/:::examples\s*\n([\s\S]*?)\s*:::/g, (match, examplesContent) => {
+                        const examples = examplesContent.split('\n').filter(line => line.trim());
+                        let result = '<div class="example-block">\n**例句展示：**\n\n';
+                        examples.forEach(example => {
+                            result += `- ${example}\n`;
+                        });
+                        return result + '</div>';
+                    })
+                    .replace(/:::exercise\s*\n([\s\S]*?)\s*:::/g, (match, exerciseContent) => {
+                        const lines = exerciseContent.split('\n');
+                        let result = '<div class="exercise-block">\n**练习：**\n\n';
+                        
+                        lines.forEach(line => {
+                            if (line.startsWith('? ')) {
+                                result += `<div class="question">? ${line.substring(2)}</div>\n`;
+                            } else if (line.startsWith('! ')) {
+                                result += `<div class="answer">! ${line.substring(2)}</div>\n`;
+                            } else if (line.trim()) {
+                                result += `${line}\n`;
+                            }
+                        });
+                        
+                        return result + '</div>';
+                    });
+            }
+
+            // 统计字数
+            countWords(text) {
+                return text.replace(/[#\*`\-]/g, '').split(/\s+/).filter(word => word.length > 0).length;
+            }
+        }
+
+        // Firebase 管理器
+        class FirebaseManager {
+            constructor() {
+                this.auth = null;
+                this.database = null;
+                this.user = null;
+                this.init();
+            }
+
+            init() {
+                // 初始化 Firebase
+                firebase.initializeApp(firebaseConfig);
+                this.auth = firebase.auth();
+                this.database = firebase.database();
+
+                // 监听认证状态变化
+                this.auth.onAuthStateChanged((user) => {
+                    this.handleAuthStateChange(user);
+                });
+            }
+
+            handleAuthStateChange(user) {
+                this.user = user;
+                if (user) {
+                    // 用户已登录
+                    document.getElementById('user-info').style.display = 'flex';
+                    document.getElementById('login-display-btn').style.display = 'none';
+                    document.getElementById('user-name').textContent = user.displayName || user.email;
+                    document.getElementById('user-avatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+                    document.getElementById('auth-container').style.display = 'none';
+                    
+                    // 检查是否为Gmail账户
+                    if (!user.email.endsWith('@gmail.com')) {
+                        this.showAuthError('请使用Gmail账户登录');
+                        this.signOut();
+                        return;
+                    }
+                    
+                    this.showStatus('✓ 已使用Gmail账户登录', 'success');
+                } else {
+                    // 用户未登录
+                    document.getElementById('user-info').style.display = 'none';
+                    document.getElementById('login-display-btn').style.display = 'block';
+                    document.getElementById('auth-container').style.display = 'flex';
+                }
+            }
+
+            // Google 登录
+            async signInWithGoogle() {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                try {
+                    await this.auth.signInWithPopup(provider);
+                } catch (error) {
+                    this.showAuthError(`登录失败: ${error.message}`);
+                }
+            }
+
+            // 退出登录
+            async signOut() {
+                try {
+                    await this.auth.signOut();
+                    this.showStatus('已退出登录', 'info');
+                } catch (error) {
+                    console.error('退出登录失败:', error);
+                }
+            }
+
+            // 保存Markdown到Firebase
+            async saveMarkdownToFirebase(markdownContent) {
+                if (!this.user) {
+                    throw new Error('请先登录');
+                }
+
+                if (!this.user.email.endsWith('@gmail.com')) {
+                    throw new Error('请使用Gmail账户');
+                }
+
+                try {
+                    // 生成唯一的key：YYYYMMDD_4digitsID
+                    const date = new Date();
+                    const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
+                    const randomId = Math.floor(1000 + Math.random() * 9000); // 4位随机数
+                    const key = `${dateStr}_${randomId}`;
+
+                    // 保存到grammar路径，确保保留所有换行符
+                    const grammarRef = this.database.ref('grammar/' + key);
+                    await grammarRef.set({
+                        content: markdownContent, // 直接保存原始内容，保留所有换行符
+                        author: this.user.email,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP,
+                        title: this.extractTitle(markdownContent)
+                    });
+
+                    return key;
+                } catch (error) {
+                    throw new Error(`保存失败: ${error.message}`);
+                }
+            }
+
+            // 从Markdown内容中提取标题
+            extractTitle(content) {
+                const titleMatch = content.match(/^# (.*)$/m);
+                return titleMatch ? titleMatch[1].trim() : '未命名文档';
+            }
+
+            showAuthError(message) {
+                const errorElement = document.getElementById('auth-error');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+
+            showStatus(message, type = 'info') {
+                const statusElement = document.getElementById('status');
+                statusElement.textContent = message;
+                statusElement.className = `status ${type}`;
+                
+                setTimeout(() => {
+                    if (statusElement.textContent === message) {
+                        statusElement.textContent = '';
+                        statusElement.className = 'status';
+                    }
+                }, 5000);
+            }
+        }
+
+        // 应用主类
+        class SlideApp {
+            constructor() {
+                this.converter = new EnhancedMarkdownToReveal();
+                this.firebaseManager = new FirebaseManager();
+                this.revealInitialized = false;
+                this.currentJsonData = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadExampleContent();
+            }
+
+            setupEventListeners() {
+                // 转换相关按钮
+                document.getElementById('convert-btn').addEventListener('click', () => {
+                    this.convertAndRender();
+                });
+
+                document.getElementById('json-btn').addEventListener('click', () => {
+                    this.showJsonData();
+                });
+
+                document.getElementById('export-json-btn').addEventListener('click', () => {
+                    this.exportJsonData();
+                });
+
+                document.getElementById('reset-btn').addEventListener('click', () => {
+                    this.loadExampleContent();
+                });
+
+                document.getElementById('fullscreen-btn').addEventListener('click', () => {
+                    this.toggleFullscreen();
+                });
+
+                // Firebase相关按钮
+                document.getElementById('save-firebase-btn').addEventListener('click', () => {
+                    this.saveToFirebase();
+                });
+
+                // 认证相关按钮
+                document.getElementById('google-login-btn').addEventListener('click', () => {
+                    this.firebaseManager.signInWithGoogle();
+                });
+
+                document.getElementById('login-display-btn').addEventListener('click', () => {
+                    document.getElementById('auth-container').style.display = 'flex';
+                });
+
+                document.getElementById('user-logout-btn').addEventListener('click', () => {
+                    this.firebaseManager.signOut();
+                });
+
+                // 模态框相关
+                document.getElementById('close-modal').addEventListener('click', () => {
+                    this.hideJsonModal();
+                });
+
+                // 点击模态框外部关闭
+                document.getElementById('json-modal').addEventListener('click', (e) => {
+                    if (e.target.id === 'json-modal') {
+                        this.hideJsonModal();
+                    }
+                });
+            }
+
+            loadExampleContent() {
+                const exampleContent = `# 英语过去完成时完全指南
+
+:::meta
+难度: 中级
+预计时长: 30分钟
+标签: [语法, 过去完成时, 英语]
+作者: 张老师
+创建时间: 2024-01-15
+重点: true
+:::
+
+<!-- teacher-only -->
+教学提示: 重点讲解"过去的过去"概念，通过时间轴图示帮助学生理解
+常见错误: 学生容易忘记had的使用，经常与一般过去时混淆
+扩展活动: 分组练习 - 用过去完成时描述个人经历
+<!-- /teacher-only -->
+
+---
+
+## 基本语法结构
+
+:::meta
+重点: 语法结构
+练习数量: 3
+记忆要点: 结构公式
+:::
+
+:::grammar
+主语 + had + 过去分词 (Past Participle)
+:::
+
+**组成部分：**
+- **had**：助动词，所有人称和数都不变化
+- **过去分词**：
+  - 规则动词：动词 + -ed (worked, played)
+  - 不规则动词：特殊形式 (gone, seen, eaten)
+
+:::examples
+She had finished her homework before dinner.
+They had already left when we arrived.
+:::
+
+<!-- hide-start -->
+教学建议: 通过对比一般过去时来讲解，强调had的固定性
+记忆技巧: "Had + 过去分词"就像数学公式一样固定
+常见问题: 学生问"为什么不能用has/have？"
+<!-- hide-end -->
+
+---
+
+## 核心概念与用法
+
+过去完成时表示在过去某个时间点或动作之前已经发生并完成的动作。
+
+:::key-point
+核心概念是"过去的过去"，强调两个过去动作之间的时间先后关系。
+:::
+
+**主要特征：**
+- 总是需要有一个明确的"过去参照点"
+- 中文常翻译为"已经...了"、"...过了"
+
+**常用时间状语：**
+- when, before, after, by the time
+- already, just, never, ever
+
+---
+
+## 练习与应用
+
+:::meta
+练习类型: 翻译练习
+难度: 基础
+:::
+
+:::exercise
+? 当我到车站时，火车已经开走了。
+! When I arrived at the station, the train had already left.
+
+? 他说他之前从未去过巴黎。
+! He said he had never been to Paris before.
+
+? 如果你昨天告诉我，我就会帮助你了。
+! If you had told me yesterday, I would have helped you.
+:::
+
+<!-- teacher-only -->
+练习解析: 
+1. 第一题考察时间状语从句中的过去完成时
+2. 第二题考察间接引语中的时态转换  
+3. 第三题考察虚拟语气中的过去完成时
+评分标准: 每道题3分，主要考察时态使用的准确性
+<!-- /teacher-only -->
+
+---
+
+## 总结回顾
+
+**必须掌握的重点：**
+1. **结构公式**：Had + Past Participle
+2. **核心概念**："过去的过去" 
+3. **时间标志**：before, after, when, by the time
+4. **主要用途**：时间先后、间接引语、虚拟语气
+
+:::key-point
+使用时机判断：是否有两个过去动作？是否需要强调先后顺序？是否有明确的时间参照点？
+:::
+
+:::meta
+复习建议: 每周复习一次，重点练习时间状语从句
+考核重点: 时态转换和虚拟语气
+:::`;
+
+
+                document.getElementById('markdown-input').value = exampleContent;
+                this.convertAndRender();
+            }
+
+            convertAndRender() {
+                const enhancedMarkdown = document.getElementById('markdown-input').value;
+                const statusElement = document.getElementById('status');
+                
+                try {
+                    // 转换为多个格式
+                    const { revealContent, jsonData } = this.converter.convertToMultipleFormats(enhancedMarkdown);
+                    
+                    // 显示幻灯片
+                    this.renderSlidesWithMarked(revealContent);
+                    
+                    // 保存JSON数据
+                    this.currentJsonData = jsonData;
+                    
+                    // 显示成功状态
+                    statusElement.textContent = `✓ 转换成功！共 ${jsonData.totalSlides} 张幻灯片。元数据已隐藏，可在JSON中查看。`;
+                    statusElement.className = 'status success';
+                    
+                } catch (error) {
+                    statusElement.textContent = `✗ ${error.message}`;
+                    statusElement.className = 'status error';
+                }
+            }
+
+            // 保存到Firebase
+            async saveToFirebase() {
+                const markdownContent = document.getElementById('markdown-input').value;
+                
+                if (!markdownContent.trim()) {
+                    this.firebaseManager.showStatus('请输入Markdown内容', 'error');
+                    return;
+                }
+
+                try {
+                    const key = await this.firebaseManager.saveMarkdownToFirebase(markdownContent);
+                    this.firebaseManager.showStatus(`✓ 文档已保存到Firebase，Key: ${key}`, 'success');
+                } catch (error) {
+                    this.firebaseManager.showStatus(`✗ ${error.message}`, 'error');
+                }
+            }
+
+            // 使用marked.js渲染幻灯片
+            renderSlidesWithMarked(markdownContent) {
+                const slidesContainer = document.getElementById('slides-container');
+                slidesContainer.innerHTML = '';
+                
+                const slides = markdownContent.split('---').filter(slide => slide.trim());
+                
+                slides.forEach((slideContent) => {
+                    const section = document.createElement('section');
+                    // 使用marked.js解析Markdown
+                    section.innerHTML = marked.parse(slideContent);
+                    slidesContainer.appendChild(section);
+                });
+
+                if (!this.revealInitialized) {
+                    Reveal.initialize({
+                        hash: true,
+                        transition: 'slide',
+                        backgroundTransition: 'fade',
+                        slideNumber: true
+                    });
+                    this.revealInitialized = true;
+                } else {
+                    Reveal.sync();
+                    Reveal.slide(0, 0, 0);
+                }
+            }
+
+            // 显示JSON数据
+            showJsonData() {
+                if (!this.currentJsonData) {
+                    alert('请先转换Markdown内容');
+                    return;
+                }
+                
+                const jsonPreview = document.getElementById('json-preview');
+                jsonPreview.textContent = JSON.stringify(this.currentJsonData, null, 2);
+                
+                const modal = document.getElementById('json-modal');
+                modal.style.display = 'block';
+            }
+
+            // 隐藏JSON模态框
+            hideJsonModal() {
+                const modal = document.getElementById('json-modal');
+                modal.style.display = 'none';
+            }
+
+            // 导出JSON数据
+            exportJsonData() {
+                if (!this.currentJsonData) {
+                    alert('请先转换Markdown内容');
+                    return;
+                }
+                
+                const dataStr = JSON.stringify(this.currentJsonData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = 'slide-data.json';
+                link.click();
+                
+                URL.revokeObjectURL(link.href);
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log(`全屏请求错误: ${err.message}`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            }
+        }
+
+        // 页面加载完成后初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            window.slideApp = new SlideApp();
+        });
+    </script>
+</body>
+</html>

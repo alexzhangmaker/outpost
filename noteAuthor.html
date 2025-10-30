@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能学习系统 - 增强Markdown转换器</title>
+    
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/white.css">
+    
+    <style>
+        /* 整体布局 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f7fa;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* 编辑器区域 */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-right: 1px solid #e1e5e9;
+        }
+        
+        .panel-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        textarea {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            margin-bottom: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        button.secondary {
+            background: #95a5a6;
+        }
+        
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        /* 预览区域 */
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        .preview-container {
+            flex: 1;
+            overflow: auto;
+        }
+        
+        /* Reveal.js 自定义样式 */
+        .reveal {
+            height: 100%;
+        }
+        
+        .reveal .slides {
+            text-align: left;
+            font-size: 28px;
+        }
+        
+        .reveal h1, .reveal h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        
+        .reveal h1 {
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+        }
+        
+        .reveal h2 {
+            color: #3498db;
+            margin-bottom: 30px;
+        }
+        
+        .reveal ul, .reveal ol {
+            margin-left: 40px;
+        }
+        
+        .reveal li {
+            margin-bottom: 15px;
+        }
+        
+        .reveal strong {
+            color: #e74c3c;
+        }
+        
+        .reveal code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #e83e8c;
+        }
+        
+        .reveal pre {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .reveal pre code {
+            background: none;
+            color: #ecf0f1;
+            padding: 0;
+        }
+        
+        /* 自定义语义块样式 */
+        .key-point {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .grammar-block {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .example-block {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .exercise-block {
+            background: #e2e3e5;
+            border-left: 4px solid #6c757d;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .question {
+            color: #2c3e50;
+            font-weight: bold;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .answer {
+            color: #27ae60;
+            font-weight: bold;
+            background: #f0fff4;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #2ecc71;
+        }
+        
+        .comparison-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        /* 状态指示器 */
+        .status {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .editor-panel {
+                height: 50vh;
+            }
+            
+            .preview-panel {
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 编辑器区域 -->
+        <div class="editor-panel">
+            <div class="panel-header">
+                增强Markdown编辑器
+            </div>
+            <div class="editor-container">
+                <div class="controls">
+                    <button id="convert-btn">转换为幻灯片</button>
+                    <button id="reset-btn" class="secondary">重置示例</button>
+                    <button id="fullscreen-btn" class="secondary">全屏预览</button>
+                </div>
+                <textarea id="markdown-input" placeholder="在此输入增强Markdown内容..."></textarea>
+                <div id="status" class="status"></div>
+            </div>
+        </div>
+        
+        <!-- 预览区域 -->
+        <div class="preview-panel">
+            <div class="panel-header">
+                幻灯片预览
+            </div>
+            <div class="preview-container">
+                <div class="reveal">
+                    <div class="slides" id="slides-container">
+                        <!-- 动态生成的幻灯片将在这里显示 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reveal.js 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/plugin/markdown/markdown.js"></script>
+
+    <script>
+        // 增强Markdown到Reveal.js转换器
+        class EnhancedMarkdownToReveal {
+            constructor() {
+                this.slideSeparator = '---';
+                this.customBlocks = {
+                    'meta': this.processMetaBlock.bind(this),
+                    'key-point': this.processKeyPoint.bind(this),
+                    'grammar': this.processGrammar.bind(this),
+                    'components': this.processComponents.bind(this),
+                    'examples': this.processExamples.bind(this),
+                    'exercise': this.processExercise.bind(this),
+                    'comparison': this.processComparison.bind(this)
+                };
+            }
+
+            // 主转换方法
+            convertToRevealFormat(enhancedMarkdown) {
+                try {
+                    const slides = enhancedMarkdown.split(this.slideSeparator);
+                    let revealContent = '';
+                    
+                    slides.forEach((slideContent, index) => {
+                        if (slideContent.trim()) {
+                            const convertedSlide = this.convertSlide(slideContent, index);
+                            revealContent += convertedSlide + '\n\n---\n\n';
+                        }
+                    });
+                    
+                    return revealContent;
+                } catch (error) {
+                    throw new Error(`转换失败: ${error.message}`);
+                }
+            }
+
+            // 转换单个幻灯片
+            convertSlide(slideContent, slideIndex) {
+                let converted = slideContent;
+                
+                // 1. 处理自定义块
+                converted = this.processCustomBlocks(converted);
+                
+                // 2. 确保标题格式正确
+                converted = this.ensureProperHeadings(converted, slideIndex);
+                
+                // 3. 处理特殊标记
+                converted = this.processSpecialMarkers(converted);
+                
+                return converted;
+            }
+
+            // 处理自定义块
+            processCustomBlocks(content) {
+                return content.replace(/:::(\w+)([\s\S]*?):::/g, (match, blockType, blockContent) => {
+                    const processor = this.customBlocks[blockType];
+                    if (processor) {
+                        return processor(blockContent.trim());
+                    }
+                    return blockContent; // 未知块类型，保留内容
+                });
+            }
+
+            // 处理元数据块（不显示在幻灯片中）
+            processMetaBlock(content) {
+                return ''; // 元数据不显示在幻灯片中
+            }
+
+            // 处理关键点
+            processKeyPoint(content) {
+                return `<div class="key-point">\n**关键理解**：${content}\n</div>\n\n`;
+            }
+
+            // 处理语法结构
+            processGrammar(content) {
+                return `<div class="grammar-block">\n**核心公式：**\n\`\`\`grammar\n${content}\n\`\`\`\n</div>\n\n`;
+            }
+
+            // 处理组成部分
+            processComponents(content) {
+                return `**组成部分：**\n${content}\n\n`;
+            }
+
+            // 处理例句
+            processExamples(content) {
+                const examples = content.split('\n').filter(line => line.trim());
+                let result = "<div class=\"example-block\">\n**例句展示：**\n\n";
+                examples.forEach(example => {
+                    result += `- ${example}\n`;
+                });
+                return result + '</div>\n\n';
+            }
+
+            // 处理练习
+            processExercise(content) {
+                const lines = content.split('\n');
+                let result = "<div class=\"exercise-block\">\n**练习：**\n\n";
+                
+                lines.forEach(line => {
+                    if (line.startsWith('? ')) {
+                        result += `<div class="question">? ${line.substring(2)}</div>\n`;
+                    } else if (line.startsWith('! ')) {
+                        result += `<div class="answer">! ${line.substring(2)}</div>\n`;
+                    } else if (line.trim()) {
+                        result += `${line}\n`;
+                    }
+                });
+                
+                return result + '</div>\n\n';
+            }
+
+            // 处理对比
+            processComparison(content) {
+                return `<div class="comparison-block">\n**对比分析：**\n\`\`\`comparison\n${content}\n\`\`\`\n</div>\n\n`;
+            }
+
+            // 确保标题格式正确
+            ensureProperHeadings(content, slideIndex) {
+                if (slideIndex === 0) {
+                    // 第一张幻灯片确保是一级标题
+                    if (!content.startsWith('# ')) {
+                        const firstLine = content.split('\n')[0];
+                        return `# ${firstLine}\n\n${content.substring(firstLine.length)}`;
+                    }
+                } else {
+                    // 其他幻灯片确保是二级标题
+                    const lines = content.split('\n');
+                    const firstRealLine = lines.find(line => line.trim());
+                    
+                    if (firstRealLine && !firstRealLine.startsWith('## ')) {
+                        // 如果没有二级标题，使用第一行非空内容作为标题
+                        const title = firstRealLine.replace(/^#+\s*/, ''); // 移除可能的#号
+                        lines[lines.indexOf(firstRealLine)] = `## ${title}`;
+                        return lines.join('\n');
+                    }
+                }
+                return content;
+            }
+
+            // 处理特殊标记
+            processSpecialMarkers(content) {
+                return content
+                    .replace(/\?\s*(.*)/g, '<div class="question">? $1</div>')
+                    .replace(/\!\s*(.*)/g, '<div class="answer">! $1</div>');
+            }
+        }
+
+        // 应用主类
+        class SlideApp {
+    constructor() {
+        this.converter = new EnhancedMarkdownToReveal();
+        this.revealInitialized = false;
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.loadExampleContent();
+    }
+
+    setupEventListeners() {
+        document.getElementById('convert-btn').addEventListener('click', () => {
+            this.convertAndRender();
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            this.loadExampleContent();
+        });
+
+        document.getElementById('fullscreen-btn').addEventListener('click', () => {
+            this.toggleFullscreen();
+        });
+    }
+
+    loadExampleContent() {
+        const exampleContent = `# 英语过去完成时完全指南
+
+::: meta
+难度: 中级
+预计时长: 30分钟
+:::
+
+---
+
+## 基本语法结构
+
+::: grammar
+主语 + had + 过去分词 (Past Participle)
+:::
+
+::: components
+- **had**：助动词，所有人称和数都不变化
+- **过去分词**：
+  - 规则动词：动词 + -ed (worked, played)
+  - 不规则动词：特殊形式 (gone, seen, eaten)
+:::
+
+::: examples
+She had finished her homework before dinner.
+They had already left when we arrived.
+:::
+
+---
+
+## 核心概念与用法
+
+过去完成时表示在过去某个时间点或动作之前已经发生并完成的动作。
+
+::: key-point
+核心概念是"过去的过去"，强调两个过去动作之间的时间先后关系。
+:::
+
+**主要特征：**
+- 总是需要有一个明确的"过去参照点"
+- 中文常翻译为"已经...了"、"...过了"
+
+---
+
+## 练习与应用
+
+::: exercise
+? 当我到车站时，火车已经开走了。
+! When I arrived at the station, the train had already left.
+
+? 他说他之前从未去过巴黎。
+! He said he had never been to Paris before.
+:::
+
+---
+
+## 总结回顾
+
+**必须掌握的重点：**
+1. **结构公式**：Had + Past Participle
+2. **核心概念**："过去的过去" 
+3. **时间标志**：before, after, when, by the time
+
+::: key-point
+使用时机判断：是否有两个过去动作？是否需要强调先后顺序？
+:::`;
+
+
+        document.getElementById('markdown-input').value = exampleContent;
+        this.convertAndRender();
+    }
+
+    convertAndRender() {
+        const enhancedMarkdown = document.getElementById('markdown-input').value;
+        const statusElement = document.getElementById('status');
+        
+        try {
+            // 转换为reveal.js格式
+            const revealMarkdown = this.converter.convertToRevealFormat(enhancedMarkdown);
+            
+            // 渲染幻灯片
+            this.renderSlidesDirect(revealMarkdown);
+            
+            // 显示成功状态
+            statusElement.textContent = '✓ 转换成功！使用方向键或空格键浏览幻灯片';
+            statusElement.className = 'status success';
+            
+        } catch (error) {
+            statusElement.textContent = `✗ ${error.message}`;
+            statusElement.className = 'status error';
+        }
+    }
+
+    // 直接渲染方法，避免Markdown插件的子幻灯片问题
+    renderSlidesDirect(markdownContent) {
+        const slidesContainer = document.getElementById('slides-container');
+        slidesContainer.innerHTML = '';
+        
+        const slides = markdownContent.split('---').filter(slide => slide.trim());
+        
+        slides.forEach((slideContent) => {
+            const section = document.createElement('section');
+            section.innerHTML = this.markdownToHTML(slideContent);
+            slidesContainer.appendChild(section);
+        });
+
+        if (!this.revealInitialized) {
+            Reveal.initialize({
+                hash: true,
+                transition: 'slide',
+                backgroundTransition: 'fade',
+                slideNumber: true
+                // 不加载Markdown插件
+            });
+            this.revealInitialized = true;
+        } else {
+            Reveal.sync();
+            Reveal.slide(0, 0, 0);
+        }
+    }
+
+    // 修复后的Markdown到HTML转换器
+markdownToHTML(markdown) {
+    let html = markdown;
+    
+    // 1. 首先处理代码块（避免代码块内的内容被误转换）
+    html = this.processCodeBlocks(html);
+    
+    // 2. 处理标题
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    
+    // 3. 处理粗体和斜体
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // 4. 处理列表 - 使用更精确的匹配
+    html = this.processLists(html);
+    
+    // 5. 处理内联代码
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // 6. 保留换行符
+    html = html.replace(/\n/g, '<br>');
+    
+    return html;
+}
+
+// 专门处理代码块
+processCodeBlocks(html) {
+    // 保存代码块
+    const codeBlocks = [];
+    let counter = 0;
+    
+    // 临时替换代码块
+    html = html.replace(/```(\w+)?\n([^`]+)```/g, (match, lang, code) => {
+        const id = `CODE_BLOCK_${counter++}`;
+        codeBlocks.push({ id, lang, code });
+        return id;
+    });
+    
+    // 处理其他内容...
+    
+    // 恢复代码块
+    codeBlocks.forEach(block => {
+        html = html.replace(block.id, 
+            `<pre><code class="${block.lang || ''}">${this.escapeHTML(block.code)}</code></pre>`
+        );
+    });
+    
+    return html;
+}
+
+// 专门处理列表
+processLists(html) {
+    const lines = html.split('\n');
+    let inList = false;
+    let listType = ''; // 'ul' or 'ol'
+    let listDepth = 0;
+    let result = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmedLine = line.trim();
+        
+        // 检查是否是无序列表项
+        if (trimmedLine.match(/^- (.+)/)) {
+            if (!inList || listType !== 'ul') {
+                if (inList) result.push('</' + listType + '>');
+                result.push('<ul>');
+                inList = true;
+                listType = 'ul';
+            }
+            const content = trimmedLine.substring(2);
+            result.push(`<li>${this.processInlineFormatting(content)}</li>`);
+        }
+        // 检查是否是有序列表项
+        else if (trimmedLine.match(/^\d+\. (.+)/)) {
+            if (!inList || listType !== 'ol') {
+                if (inList) result.push('</' + listType + '>');
+                result.push('<ol>');
+                inList = true;
+                listType = 'ol';
+            }
+            const content = trimmedLine.replace(/^\d+\. /, '');
+            result.push(`<li>${this.processInlineFormatting(content)}</li>`);
+        }
+        // 检查是否是子列表项（以2个空格或tab开头）
+        else if (trimmedLine.match(/^  (-|\d+\.) (.+)/)) {
+            const content = trimmedLine.replace(/^  (-|\d+\.) /, '');
+            result.push(`<ul><li>${this.processInlineFormatting(content)}</li></ul>`);
+        }
+        // 普通行
+        else {
+            if (inList) {
+                result.push('</' + listType + '>');
+                inList = false;
+                listType = '';
+            }
+            if (trimmedLine) {
+                result.push(this.processInlineFormatting(trimmedLine));
+            } else {
+                result.push('<br>');
+            }
+        }
+    }
+    
+    // 关闭最后一个列表
+    if (inList) {
+        result.push('</' + listType + '>');
+    }
+    
+    return result.join('\n');
+}
+
+// 处理行内格式（粗体、斜体、代码）
+processInlineFormatting(text) {
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+// HTML转义
+escapeHTML(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log(`全屏请求错误: ${err.message}`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+}
+
+        // 页面加载完成后初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            window.slideApp = new SlideApp();
+        });
+    </script>
+</body>
+</html>

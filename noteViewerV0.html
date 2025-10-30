@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习笔记查看器 - 学生版</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/white.css">
+    
+    <!-- Marked.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <style>
+        /* 整体布局 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        /* 顶部导航 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            font-size: 28px;
+        }
+        
+        .course-info {
+            text-align: right;
+        }
+        
+        .course-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .course-meta {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        /* 控制面板 */
+        .controls {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        
+        .control-btn {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .control-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.secondary {
+            background: #95a5a6;
+        }
+        
+        .control-btn.secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .control-btn.success {
+            background: #27ae60;
+        }
+        
+        .control-btn.success:hover {
+            background: #219955;
+        }
+        
+        .control-btn.warning {
+            background: #e67e22;
+        }
+        
+        .control-btn.warning:hover {
+            background: #d35400;
+        }
+        
+        .progress-container {
+            flex: 1;
+            margin: 0 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #ecf0f1;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        /* 主要内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            position: relative;
+        }
+        
+        /* 幻灯片区域 */
+        .slides-container {
+            flex: 1;
+            background: white;
+            position: relative;
+        }
+        
+        .reveal {
+            height: 100%;
+        }
+        
+        .reveal .slides {
+            text-align: left;
+            font-size: 24px;
+        }
+        
+        .reveal h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .reveal h2 {
+            color: #3498db;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .reveal h3 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        
+        .reveal ul, .reveal ol {
+            margin-left: 30px;
+        }
+        
+        .reveal li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        
+        .reveal strong {
+            color: #e74c3c;
+        }
+        
+        .reveal code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #e83e8c;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .reveal pre {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        
+        .reveal pre code {
+            background: none;
+            color: #ecf0f1;
+            padding: 0;
+        }
+        
+        /* 自定义语义块样式 */
+        .key-point {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(243, 156, 18, 0.1);
+        }
+        
+        .grammar-block {
+            background: linear-gradient(135deg, #d1ecf1, #a2d9f3);
+            border-left: 4px solid #17a2b8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(23, 162, 184, 0.1);
+        }
+        
+        .example-block {
+            background: linear-gradient(135deg, #d4edda, #a3e4b9);
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(40, 167, 69, 0.1);
+        }
+        
+        .exercise-block {
+            background: linear-gradient(135deg, #e2e3e5, #c8ced0);
+            border-left: 4px solid #6c757d;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.1);
+        }
+        
+        .question {
+            color: #2c3e50;
+            font-weight: bold;
+            background: rgba(52, 152, 219, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            margin: 12px 0;
+            border-left: 4px solid #3498db;
+            transition: all 0.3s;
+        }
+        
+        .question:hover {
+            background: rgba(52, 152, 219, 0.15);
+            transform: translateX(5px);
+        }
+        
+        .answer {
+            color: #27ae60;
+            font-weight: bold;
+            background: rgba(39, 174, 96, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            margin: 12px 0;
+            border-left: 4px solid #27ae60;
+            transition: all 0.3s;
+        }
+        
+        .answer:hover {
+            background: rgba(39, 174, 96, 0.15);
+            transform: translateX(5px);
+        }
+        
+        /* 状态指示器 */
+        .status {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Firebase 认证界面 */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .auth-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .auth-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .auth-input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        
+        .auth-btn {
+            padding: 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        .auth-btn:hover {
+            background: #2980b9;
+        }
+        
+        .auth-switch {
+            text-align: center;
+            margin-top: 15px;
+            color: #7f8c8d;
+            cursor: pointer;
+        }
+        
+        .auth-switch:hover {
+            color: #3498db;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #2c3e50;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        /* 笔记管理界面 */
+        .notes-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100%;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1500;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .notes-panel.open {
+            right: 0;
+        }
+        
+        .notes-header {
+            padding: 20px;
+            border-bottom: 1px solid #e1e5e9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .notes-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .note-item {
+            padding: 15px;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .note-item:hover {
+            border-color: #3498db;
+            transform: translateY(-2px);
+        }
+        
+        .note-item.active {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.05);
+        }
+        
+        .note-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .note-meta {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .notes-actions {
+            padding: 20px;
+            border-top: 1px solid #e1e5e9;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .sync-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Firebase 认证界面 -->
+    <div id="auth-container" class="auth-container" style="display: none;">
+        <div class="auth-box">
+            <h2 class="auth-title" id="auth-title">登录学习笔记</h2>
+            <div class="auth-form">
+                <input type="email" id="auth-email" class="auth-input" placeholder="邮箱地址">
+                <input type="password" id="auth-password" class="auth-input" placeholder="密码">
+                <button id="auth-submit" class="auth-btn">登录</button>
+                <div id="auth-switch" class="auth-switch">还没有账号？点击注册</div>
+                <div id="auth-error" class="status error" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 笔记管理面板 -->
+    <div id="notes-panel" class="notes-panel">
+        <div class="notes-header">
+            <h3>我的笔记</h3>
+            <button id="close-notes" class="control-btn secondary">关闭</button>
+        </div>
+        <div class="notes-content" id="notes-list">
+            <!-- 笔记列表将在这里动态生成 -->
+        </div>
+        <div class="notes-actions">
+            <button id="new-note" class="control-btn success">新建笔记</button>
+            <button id="save-note" class="control-btn">保存笔记</button>
+        </div>
+    </div>
+    
+    <!-- 同步状态指示器 -->
+    <div id="sync-status" class="sync-status"></div>
+
+    <!-- 主应用界面 -->
+    <div id="app-container" class="app-container">
+        <!-- 顶部导航 -->
+        <div class="header">
+            <div class="logo">
+                <span class="logo-icon">📚</span>
+                <span>学习笔记查看器 - 演示版</span>
+            </div>
+            
+            <div class="course-info">
+                <div class="course-title" id="course-title">英语过去完成时完全指南</div>
+                <div class="course-meta" id="course-meta">中级 | 30分钟 | 语法, 过去完成时, 英语</div>
+            </div>
+            
+            <div class="user-info" id="user-info" style="display: none;">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <span id="user-name">用户</span>
+                <button id="logout-btn" class="control-btn secondary" style="margin-left: 10px;">退出</button>
+                <button id="manage-notes" class="control-btn" style="margin-left: 10px;">我的笔记</button>
+            </div>
+            
+            <button id="login-btn" class="control-btn">登录/注册</button>
+        </div>
+        
+        <!-- 控制面板 -->
+        <div class="controls">
+            <button class="control-btn" id="prev-btn">← 上一页</button>
+            <button class="control-btn" id="next-btn">下一页 →</button>
+            <button class="control-btn secondary" id="fullscreen-btn">全屏模式</button>
+            
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progress-text">1/5</div>
+            </div>
+            
+            <button class="control-btn" id="print-btn">打印笔记</button>
+            <button class="control-btn success" id="save-progress" style="display: none;">保存进度</button>
+        </div>
+        
+        <!-- 主要内容区域 -->
+        <div class="main-content">
+            <!-- 幻灯片区域 -->
+            <div class="slides-container">
+                <div class="reveal">
+                    <div class="slides" id="slides-container">
+                        <!-- 幻灯片内容将由JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reveal.js 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
+
+    <script>
+        // Firebase配置 - 请替换为您的实际配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // Mockup数据 - 直接使用你提供的Markdown内容
+        const mockupContent = `# 英语过去完成时完全指南
+
+:::meta
+难度: 中级
+预计时长: 30分钟
+标签: [语法, 过去完成时, 英语]
+作者: 张老师
+创建时间: 2024-01-15
+重点: true
+:::
+
+---
+
+## 基本语法结构
+
+:::meta
+重点: 语法结构
+练习数量: 3
+记忆要点: 结构公式
+:::
+
+:::grammar
+主语 + had + 过去分词 (Past Participle)
+:::
+
+**组成部分：**
+
+- **had**：助动词，所有人称和数都不变化
+- **过去分词**：
+  - 规则动词：动词 + -ed (worked, played)
+  - 不规则动词：特殊形式 (gone, seen, eaten)
+
+:::examples
+She had finished her homework before dinner.
+They had already left when we arrived.
+:::
+
+---
+
+## 核心概念与用法
+
+过去完成时表示在过去某个时间点或动作之前已经发生并完成的动作。
+
+:::key-point
+核心概念是"过去的过去"，强调两个过去动作之间的时间先后关系。
+:::
+
+**主要特征：**
+
+- 总是需要有一个明确的"过去参照点"
+- 中文常翻译为"已经...了"、"...过了"
+
+**常用时间状语：**
+
+- when, before, after, by the time
+- already, just, never, ever
+
+---
+
+## 练习与应用
+
+:::meta
+练习类型: 翻译练习
+难度: 基础
+:::
+
+:::exercise
+? 当我到车站时，火车已经开走了。
+! When I arrived at the station, the train had already left.
+
+? 他说他之前从未去过巴黎。
+! He said he had never been to Paris before.
+
+? 如果你昨天告诉我，我就会帮助你了。
+! If you had told me yesterday, I would have helped you.
+:::
+
+---
+
+## 总结回顾
+
+**必须掌握的重点：**
+
+1. **结构公式**：Had + Past Participle
+2. **核心概念**："过去的过去"
+3. **时间标志**：before, after, when, by the time
+4. **主要用途**：时间先后、间接引语、虚拟语气
+
+:::key-point
+使用时机判断：是否有两个过去动作？是否需要强调先后顺序？是否有明确的时间参照点？
+:::
+
+:::meta
+复习建议: 每周复习一次，重点练习时间状语从句
+考核重点: 时态转换和虚拟语气
+:::
+`;
+
+        // 配置marked.js
+        marked.setOptions({
+            breaks: false, // 不将换行符转换为<br>
+            gfm: true,     // 启用GitHub风格的Markdown
+            smartLists: true,
+            smartypants: true
+        });
+
+        // 简化的笔记查看器
+        class SimpleNoteViewer {
+            constructor() {
+                this.currentSlideIndex = 0;
+                this.totalSlides = 0;
+                this.revealInstance = null;
+                this.slideData = null;
+                this.user = null;
+                this.isRegistering = false;
+                this.currentNoteId = null;
+                
+                this.init();
+            }
+
+            init() {
+                this.initFirebase();
+                this.processContent();
+                this.setupEventListeners();
+                this.setupRevealJS();
+            }
+
+            initFirebase() {
+                // 初始化 Firebase
+                firebase.initializeApp(firebaseConfig);
+                this.auth = firebase.auth();
+                this.db = firebase.database();
+                
+                // 监听认证状态变化
+                this.auth.onAuthStateChanged((user) => {
+                    this.handleAuthStateChange(user);
+                });
+            }
+
+            handleAuthStateChange(user) {
+                this.user = user;
+                if (user) {
+                    // 用户已登录
+                    document.getElementById('login-btn').style.display = 'none';
+                    document.getElementById('user-info').style.display = 'flex';
+                    document.getElementById('save-progress').style.display = 'block';
+                    document.getElementById('user-name').textContent = user.email;
+                    document.getElementById('user-avatar').textContent = user.email.charAt(0).toUpperCase();
+                    
+                    // 加载用户笔记
+                    this.loadUserNotes();
+                } else {
+                    // 用户未登录
+                    document.getElementById('login-btn').style.display = 'block';
+                    document.getElementById('user-info').style.display = 'none';
+                    document.getElementById('save-progress').style.display = 'none';
+                    document.getElementById('auth-container').style.display = 'none';
+                }
+            }
+
+            /*
+            async loadUserNotes() {
+                if (!this.user) return;
+                
+                try {
+                    const notesSnapshot = await this.db
+                        .collection('notes')
+                        .where('userId', '==', this.user.uid)
+                        .orderBy('updatedAt', 'desc')
+                        .get();
+                    
+                    const notesList = document.getElementById('notes-list');
+                    notesList.innerHTML = '';
+                    
+                    if (notesSnapshot.empty) {
+                        notesList.innerHTML = '<p>您还没有任何笔记，点击"新建笔记"开始创建。</p>';
+                        return;
+                    }
+                    
+                    notesSnapshot.forEach(doc => {
+                        const note = doc.data();
+                        const noteItem = document.createElement('div');
+                        noteItem.className = 'note-item';
+                        noteItem.dataset.id = doc.id;
+                        noteItem.innerHTML = `
+                            <div class="note-title">${note.title || '未命名笔记'}</div>
+                            <div class="note-meta">更新于: ${new Date(note.updatedAt?.toDate()).toLocaleString()}</div>
+                        `;
+                        noteItem.addEventListener('click', () => {
+                            this.loadNote(doc.id, note);
+                        });
+                        notesList.appendChild(noteItem);
+                    });
+                } catch (error) {
+                    console.error('加载笔记失败:', error);
+                    this.showSyncStatus('加载笔记失败', 'error');
+                }
+            }
+            */
+            async loadUserNotes() {
+                if (!this.user) return;
+                
+                try {
+                    // 从Realtime Database的grammar路径读取所有笔记
+                    const grammarRef = firebase.database().ref('grammar');
+                    const snapshot = await grammarRef.once('value');
+                    
+                    const notesList = document.getElementById('notes-list');
+                    notesList.innerHTML = '';
+                    
+                    if (!snapshot.exists()) {
+                        notesList.innerHTML = '<p>数据库中没有找到任何语法笔记。</p>';
+                        return;
+                    }
+                    
+                    const grammarData = snapshot.val();
+                    let noteCount = 0;
+                    
+                    // 遍历grammar路径下的所有key-value
+                    for (const [key, value] of Object.entries(grammarData)) {
+                        const noteItem = document.createElement('div');
+                        noteItem.className = 'note-item';
+                        noteItem.dataset.id = key;
+                        
+                        // 从markdown内容中提取标题（取第一行作为标题）
+                        let title = '未命名笔记';
+                        let noteContent = value;
+                        
+                        if (typeof value === 'string') {
+                            // 预处理内容格式
+                            noteContent = value
+                                .replace(/\s+:::/g, '\n:::')   // 确保块开始有换行
+                                .replace(/:::\s+/g, ':::\n')   // 确保块结束有换行
+                                .replace(/\s+---\s+/g, '\n---\n')  // 确保幻灯片分隔符
+                                .replace(/\s+##\s+/g, '\n## ')     // 确保标题格式
+                                .replace(/\s+-\s+/g, '\n- ')       // 确保列表格式
+                                .replace(/\s+\*\*/g, '\n**')       // 确保加粗格式
+                                .replace(/\s+\? /g, '\n? ')        // 确保问题格式
+                                .replace(/\s+! /g, '\n! ');        // 确保答案格式
+                            
+                            // 提取标题（移除meta块后再提取）
+                            const tempContent = noteContent.replace(/:::meta\s*[\s\S]*?:::/g, '');
+                            const firstLine = tempContent.split('\n')[0];
+                            title = firstLine.replace(/^#\s*/, '').trim() || '语法笔记';
+                        }
+                        
+                        noteItem.innerHTML = `
+                            <div class="note-title">${title}</div>
+                            <div class="note-meta">ID: ${key}</div>
+                        `;
+                        noteItem.addEventListener('click', () => {
+                            this.loadNote(key, noteContent);
+                        });
+                        notesList.appendChild(noteItem);
+                        noteCount++;
+                    }
+                    
+                    if (noteCount === 0) {
+                        notesList.innerHTML = '<p>grammar路径下没有找到任何笔记。</p>';
+                    }
+                    
+                } catch (error) {
+                    console.error('加载笔记失败:', error);
+                    this.showSyncStatus('加载笔记失败', 'error');
+                }
+            }
+
+            async loadNote(noteId, noteContent) {
+                this.currentNoteId = noteId;
+                
+                // 更新当前幻灯片内容
+                if (noteContent) {
+                    const converter = new MarkdownConverter();
+                    this.slideData = converter.convert(noteContent);
+                    this.totalSlides = this.slideData.slides.length;
+                    this.renderSlides();
+                    this.updateProgress();
+                    
+                    // 高亮当前笔记
+                    document.querySelectorAll('.note-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    document.querySelector(`.note-item[data-id="${noteId}"]`).classList.add('active');
+                    
+                    this.showSyncStatus('笔记加载成功', 'success');
+                }
+            }
+
+            async saveNote() {
+                if (!this.user) {
+                    this.showAuth();
+                    return;
+                }
+                
+                try {
+                    const noteData = {
+                        title: this.slideData.title,
+                        content: mockupContent, // 在实际应用中，这里应该是可编辑的内容
+                        userId: this.user.uid,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        currentSlide: this.currentSlideIndex,
+                        progress: ((this.currentSlideIndex + 1) / this.totalSlides) * 100
+                    };
+                    
+                    if (this.currentNoteId) {
+                        // 更新现有笔记
+                        await this.db.collection('notes').doc(this.currentNoteId).update(noteData);
+                        this.showSyncStatus('笔记已更新', 'success');
+                    } else {
+                        // 创建新笔记
+                        noteData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                        const docRef = await this.db.collection('notes').add(noteData);
+                        this.currentNoteId = docRef.id;
+                        this.showSyncStatus('笔记已保存', 'success');
+                    }
+                    
+                    // 刷新笔记列表
+                    this.loadUserNotes();
+                } catch (error) {
+                    console.error('保存笔记失败:', error);
+                    this.showSyncStatus('保存失败', 'error');
+                }
+            }
+
+            async saveProgress() {
+                return ;
+                if (!this.user) return;
+                
+                try {
+                    await this.db.collection('userProgress').doc(this.user.uid).set({
+                        currentSlide: this.currentSlideIndex,
+                        progress: ((this.currentSlideIndex + 1) / this.totalSlides) * 100,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        course: '英语过去完成时完全指南'
+                    }, { merge: true });
+                    
+                    this.showSyncStatus('进度已保存', 'success');
+                } catch (error) {
+                    console.error('保存进度失败:', error);
+                    this.showSyncStatus('保存进度失败', 'error');
+                }
+            }
+
+            async loadProgress() {
+                if (!this.user) return;
+                
+                try {
+                    const progressDoc = await this.db.collection('userProgress').doc(this.user.uid).get();
+                    if (progressDoc.exists) {
+                        const progress = progressDoc.data();
+                        if (progress.currentSlide !== undefined) {
+                            Reveal.slide(progress.currentSlide);
+                            this.showSyncStatus('进度已恢复', 'success');
+                        }
+                    }
+                } catch (error) {
+                    console.error('加载进度失败:', error);
+                }
+            }
+
+            showAuth() {
+                document.getElementById('auth-container').style.display = 'flex';
+            }
+
+            hideAuth() {
+                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('auth-error').style.display = 'none';
+            }
+
+            toggleAuthMode() {
+                this.isRegistering = !this.isRegistering;
+                const title = document.getElementById('auth-title');
+                const submitBtn = document.getElementById('auth-submit');
+                const switchText = document.getElementById('auth-switch');
+                
+                if (this.isRegistering) {
+                    title.textContent = '注册学习笔记';
+                    submitBtn.textContent = '注册';
+                    switchText.textContent = '已有账号？点击登录';
+                } else {
+                    title.textContent = '登录学习笔记';
+                    submitBtn.textContent = '登录';
+                    switchText.textContent = '还没有账号？点击注册';
+                }
+                
+                document.getElementById('auth-error').style.display = 'none';
+            }
+
+            async handleAuth() {
+                const email = document.getElementById('auth-email').value;
+                const password = document.getElementById('auth-password').value;
+                const errorDiv = document.getElementById('auth-error');
+                
+                if (!email || !password) {
+                    errorDiv.textContent = '请输入邮箱和密码';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+                
+                try {
+                    if (this.isRegistering) {
+                        await this.auth.createUserWithEmailAndPassword(email, password);
+                    } else {
+                        await this.auth.signInWithEmailAndPassword(email, password);
+                    }
+                    this.hideAuth();
+                } catch (error) {
+                    errorDiv.textContent = error.message;
+                    errorDiv.style.display = 'block';
+                }
+            }
+
+            async logout() {
+                try {
+                    await this.auth.signOut();
+                } catch (error) {
+                    console.error('退出登录失败:', error);
+                }
+            }
+
+            showSyncStatus(message, type = 'info') {
+                const statusEl = document.getElementById('sync-status');
+                statusEl.textContent = message;
+                statusEl.style.display = 'block';
+                statusEl.className = `sync-status status ${type}`;
+                
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
+            }
+
+            processContent() {
+                // 处理Markdown内容
+                const converter = new MarkdownConverter();
+                this.slideData = converter.convert(mockupContent);
+                this.totalSlides = this.slideData.slides.length;
+                
+                this.renderSlides();
+                this.updateProgress();
+            }
+
+            renderSlides() {
+                const slidesContainer = document.getElementById('slides-container');
+                slidesContainer.innerHTML = '';
+
+                this.slideData.slides.forEach((slide, index) => {
+                    const section = document.createElement('section');
+                    
+                    // 创建内容容器
+                    const contentDiv = document.createElement('div');
+                    contentDiv.style.textAlign = 'left';
+                    contentDiv.style.padding = '40px';
+                    contentDiv.style.maxWidth = '900px';
+                    contentDiv.style.margin = '0 auto';
+                    contentDiv.style.fontSize = '28px';
+                    contentDiv.style.lineHeight = '1.6';
+                    
+                    contentDiv.innerHTML = slide.htmlContent;
+                    section.appendChild(contentDiv);
+                    slidesContainer.appendChild(section);
+                });
+            }
+
+            setupRevealJS() {
+                // 初始化Reveal.js
+                this.revealInstance = Reveal;
+                
+                Reveal.initialize({
+                    hash: true,
+                    transition: 'slide',
+                    backgroundTransition: 'fade',
+                    controls: false,
+                    progress: false,
+                    center: false,
+                    width: '100%',
+                    height: '100%',
+                    margin: 0.04,
+                    minScale: 0.2,
+                    maxScale: 2.0
+                }).then(() => {
+                    // 添加幻灯片变化监听
+                    Reveal.addEventListener('slidechanged', (event) => {
+                        this.currentSlideIndex = event.indexh;
+                        this.updateProgress();
+                        
+                        // 自动保存进度（如果用户已登录）
+                        if (this.user) {
+                            this.saveProgress();
+                        }
+                    });
+
+                    // 初始进度更新
+                    this.updateProgress();
+                    
+                    // 加载用户进度（如果用户已登录）
+                    if (this.user) {
+                        this.loadProgress();
+                    }
+                });
+            }
+
+            setupEventListeners() {
+                // 幻灯片控制
+                document.getElementById('prev-btn').addEventListener('click', () => {
+                    Reveal.prev();
+                });
+
+                document.getElementById('next-btn').addEventListener('click', () => {
+                    Reveal.next();
+                });
+
+                document.getElementById('fullscreen-btn').addEventListener('click', () => {
+                    this.toggleFullscreen();
+                });
+
+                document.getElementById('print-btn').addEventListener('click', () => {
+                    window.print();
+                });
+
+                // 认证相关
+                document.getElementById('login-btn').addEventListener('click', () => {
+                    this.showAuth();
+                });
+
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    this.logout();
+                });
+
+                document.getElementById('auth-submit').addEventListener('click', () => {
+                    this.handleAuth();
+                });
+
+                document.getElementById('auth-switch').addEventListener('click', () => {
+                    this.toggleAuthMode();
+                });
+
+                // 笔记管理
+                document.getElementById('manage-notes').addEventListener('click', () => {
+                    document.getElementById('notes-panel').classList.add('open');
+                });
+
+                document.getElementById('close-notes').addEventListener('click', () => {
+                    document.getElementById('notes-panel').classList.remove('open');
+                });
+
+                document.getElementById('new-note').addEventListener('click', () => {
+                    this.currentNoteId = null;
+                    document.querySelectorAll('.note-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    this.showSyncStatus('已创建新笔记会话', 'info');
+                });
+
+                document.getElementById('save-note').addEventListener('click', () => {
+                    this.saveNote();
+                });
+
+                document.getElementById('save-progress').addEventListener('click', () => {
+                    this.saveProgress();
+                });
+
+                // 键盘快捷键
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowLeft') {
+                        Reveal.prev();
+                    } else if (e.key === 'ArrowRight') {
+                        Reveal.next();
+                    } else if (e.key === 'Escape') {
+                        document.getElementById('notes-panel').classList.remove('open');
+                        this.hideAuth();
+                    }
+                });
+            }
+
+            updateProgress() {
+                if (this.totalSlides > 0) {
+                    const progress = ((this.currentSlideIndex + 1) / this.totalSlides) * 100;
+                    document.getElementById('progress-fill').style.width = `${progress}%`;
+                    document.getElementById('progress-text').textContent = 
+                        `${this.currentSlideIndex + 1}/${this.totalSlides}`;
+                }
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // 使用marked.js的Markdown转换器
+        class MarkdownConverter {
+            convert(content) {
+    // 预处理：确保markdown格式正确
+    let processed = content
+        // 确保幻灯片分隔符格式正确
+        .replace(/\s*---\s*/g, '\n\n---\n\n')
+        // 确保标题格式正确
+        .replace(/\s*(#+)\s*/g, '\n$1 ')
+        // 确保自定义块格式正确
+        .replace(/\s*:::\s*(\w+)/g, '\n:::$1\n')
+        .replace(/\s*:::\s*/g, '\n:::\n');
+
+    // 处理我们想要的自定义块
+    processed = this.processCustomBlocks(processed);
+    
+    // 移除所有剩余的:::块（包括meta块）
+    processed = processed.replace(/:::\s*\w+\s*\n[\s\S]*?\n:::/g, '');
+    
+    // 移除注释
+    processed = processed.replace(/<!--[\s\S]*?-->/g, '');
+    
+    // 分割幻灯片
+    let slides = this.extractSlides(processed);
+    
+    return {
+        title: '英语过去完成时完全指南',
+        slides: slides
+    };
+}
+
+            removeUnprocessedBlocks(content) {
+                // 移除所有未被processCustomBlocks处理的自定义块
+                return content.replace(/:::\s*\w+\s*\n[\s\S]*?\n:::/g, '');
+            }
+
+            processCustomBlocks(content) {
+                // 只处理我们想要显示的自定义块
+                return content
+                    .replace(/:::key-point\s*\n([\s\S]*?)\s*:::/g, 
+                        (match, content) => `<div class="key-point">${marked.parse(content)}</div>`)
+                    .replace(/:::grammar\s*\n([\s\S]*?)\s*:::/g, 
+                        (match, content) => `<div class="grammar-block"><strong>核心公式：</strong><br><code>${content.trim()}</code></div>`)
+                    .replace(/:::examples\s*\n([\s\S]*?)\s*:::/g, (match, examplesContent) => {
+                        const examples = examplesContent.split('\n').filter(line => line.trim());
+                        let result = '<div class="example-block"><strong>例句展示：</strong><br><ul>';
+                        examples.forEach(example => {
+                            result += `<li>${example.trim()}</li>`;
+                        });
+                        result += '</ul></div>';
+                        return result;
+                    })
+                    .replace(/:::exercise\s*\n([\s\S]*?)\s*:::/g, (match, exerciseContent) => {
+                        const lines = exerciseContent.split('\n').filter(line => line.trim());
+                        let result = '<div class="exercise-block"><strong>练习题目：</strong>';
+                        
+                        lines.forEach(line => {
+                            if (line.startsWith('? ')) {
+                                result += `<div class="question">${line.substring(2)}</div>`;
+                            } else if (line.startsWith('! ')) {
+                                result += `<div class="answer">${line.substring(2)}</div>`;
+                            }
+                        });
+                        
+                        result += '</div>';
+                        return result;
+                    });
+            }
+
+            extractSlides(content) {
+                const slideSeparator = '---';
+                const slideContents = content.split(slideSeparator);
+                
+                return slideContents.map(slideContent => {
+                    const htmlContent = marked.parse(slideContent.trim());
+                    return {
+                        rawContent: slideContent.trim(),
+                        htmlContent: htmlContent
+                    };
+                });
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new SimpleNoteViewer();
+        });
+    </script>
+</body>
+</html>
