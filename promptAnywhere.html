@@ -8,8 +8,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <!-- 使用UMD版本的Ajv -->
-    <script src="https://cdn.jsdelivr.net/npm/ajv@8.12.0/dist/ajv.min.js"></script>
+    
+    
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/ajv/8.1.0/ajv7.bundle.js"></script>
+
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -397,21 +399,43 @@
                 <h1>AI Prompt 系统</h1>
             </div>
             <ul class="nav-menu">
-                <li class="nav-item active" data-template="product">
+                <li class="nav-item active" data-template="enWordQuiz">
                     <i class="fas fa-box"></i>
-                    <span>产品信息生成</span>
+                    <span>英语单词Quiz</span>
+                </li>
+                <li class="nav-item" data-template="enGrammarQuiz">
+                    <i class="fas fa-box"></i>
+                    <span>英语语法Quiz</span>
+                </li>
+
+                
+                <li class="nav-item" data-template="thaiWordsQuiz">
+                    <i class="fas fa-box"></i>
+                    <span>泰语词汇Quiz</span>
+                </li>
+                
+                <li class="nav-item" data-template="enReadingCauseSolution">
+                    <i class="fas fa-newspaper"></i>
+                    <span>英文阅读-Cause&Solution</span>
+                </li>
+                
+                <li class="nav-item" data-template="thReadingText">
+                    <i class="fas fa-newspaper"></i>
+                    <span>泰语阅读</span>
                 </li>
                 <li class="nav-item" data-template="article">
                     <i class="fas fa-newspaper"></i>
                     <span>文章摘要</span>
                 </li>
-                <li class="nav-item" data-template="code">
-                    <i class="fas fa-code"></i>
-                    <span>代码生成</span>
-                </li>
+                
                 <li class="nav-item" data-template="thaiVocabulary">
                     <i class="fas fa-code"></i>
                     <span>泰语单词</span>
+                </li>
+
+                <li class="nav-item" data-template="noteWriting">
+                    <i class="fas fa-code"></i>
+                    <span>泰语语法笔记</span>
                 </li>
                 <li class="nav-item" data-template="schema">
                     <i class="fas fa-cogs"></i>
@@ -497,6 +521,21 @@
         </div>
     </div>
     <script>
+        // 首先检查所有可能的Ajv全局变量
+        console.log('检查Ajv全局变量:');
+        console.log('- window.Ajv:', window.Ajv);
+        console.log('- window.ajv:', window.ajv);
+        console.log('- typeof Ajv:', typeof Ajv);
+        //console.log('- typeof ajv:', typeof ajv);
+        
+        // 检查是否在window对象上设置了其他属性
+        console.log('检查window对象上的Ajv相关属性:');
+        for (let key in window) {
+            if (key.toLowerCase().includes('ajv') || key.toLowerCase().includes('validator')) {
+                console.log(`- window.${key}:`, window[key]);
+            }
+        }
+
         const firebaseConfig = {
             apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
             authDomain: "outpost-8d74e.firebaseapp.com",
@@ -512,18 +551,51 @@
         const database = firebase.database();
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        /*
-        function signInWithGoogle() {
-            auth.signInWithPopup(provider).then((result) => {
-                // User signed in successfully.
-                const user = result.user;
-                console.log("User:", user);
-            }).catch((error) => {
-                // Handle Errors here.
-                console.error("Sign-in error:", error);
-            });
+        // 直接使用正确的Ajv变量
+        let ajv = null;
+        let ajvAvailable = false;
+        
+        function initializeAjv() {
+            try {
+                console.log('初始化Ajv...');
+                
+                // 直接使用 window.ajv7
+                if (typeof window.ajv7 === 'undefined') {
+                    console.error('window.ajv7 未定义');
+                    return false;
+                }
+                
+                // 创建Ajv实例
+                ajv = new window.ajv7({
+                    allErrors: true,
+                    verbose: true,
+                    strict: false,
+                    coerceTypes: true
+                });
+                
+                console.log('✅ Ajv实例创建成功');
+                
+                // 添加自定义格式验证
+                ajv.addFormat('option-id', {
+                    type: 'string',
+                    validate: (str) => /^[A-D]$/.test(str)
+                });
+                
+                console.log('✅ 自定义格式验证添加成功');
+                
+                ajvAvailable = true;
+                console.log('🎉 Ajv验证器已准备就绪！');
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Ajv初始化错误:', error);
+                ajvAvailable = false;
+                return false;
+            }
         }
-        */
+
+        // 立即初始化Ajv
+        ajvAvailable = initializeAjv();
 
         // 使用Google登录
         function signInWithGoogle() {
@@ -552,7 +624,6 @@
 
     </script>
     <script>
-        
         const PromptTemplate_thaiWord=`请为泰语单词 "{thaiWord}" 生成完整的词汇卡片信息。
             请严格按照以下JSON格式返回数据，包含所有字段：
             {
@@ -699,6 +770,522 @@
             "additionalProperties": false
         };
         
+        const Prompt_Template_Quiz_En_Words=`ACT as an expert in English language assessment, specializing in creating materials for IELTS preparation. Your task is to generate a set of multiple-choice questions based on a given list of English words.
+
+        **BACKGROUND:**
+        The target audience is Chinese students with an IELTS level of approximately 6.5. The questions should reflect the language style and topics found in the IELTS Reading section.
+
+        **TASK REQUIREMENTS:**
+
+        1.  **Word Coverage:** For each word in the provided list, you must create TWO distinct questions:
+            *   **Question Type 1: Meaning.** A question that tests the understanding of the word's definition.
+            *   **Question Type 2: Usage.** A question that tests the correct use of the word in a sentence context.
+
+        2.  **Question Content:**
+            *   **For Meaning Questions:** The correct answer should be a clear and accurate definition or synonym. The distractors (incorrect options) should be plausible but incorrect definitions, which could include words with similar sounds, opposite meanings, or concepts that are tangentially related.
+            *   **For Usage Questions:** Provide a sentence with a blank. The sentence should be coherent, of appropriate complexity for an IELTS 6.5 student, and related to common IELTS Reading topics (e.g., education, technology, environmental science, psychology, sociology, history). The correct answer must fit the sentence both grammatically and logically. The distractors should be words that might be mistakenly used in that context.
+
+        3.  **Output Format:**
+            *   You MUST output the results in a **valid JSON array**.
+            *   Each question should be a JSON object with the following exact structure:
+
+                {
+                "question": "The question text goes here?",
+                "options": [
+                    {"id": "A", "text": "Option A text"},
+                    {"id": "B", "text": "Option B text"},
+                    {"id": "C", "text": "Option C text"},
+                    {"id": "D", "text": "Option D text"}
+                ],
+                "correct_answer": "A" // (or B, C, D)
+                }
+
+            *   Please use English for all question and option texts.
+
+        **EXAMPLE FORMAT:**
+        Here is an example of the desired format for a single question (please note the language is English as required):
+
+        {
+        "question": "What is the meaning of 'sustainable'?",
+        "options": [
+            {"id": "A", "text": "Able to be maintained over the long term"},
+            {"id": "B", "text": "Extremely profitable"},
+            {"id": "C", "text": "Suddenly changing"},
+            {"id": "D", "text": "Technologically advanced"}
+        ],
+        "correct_answer": "A"
+        }
+
+        **WORD LIST:**
+            {EnWords}
+
+        **FINALLY:**
+        Generate the JSON array containing ALL questions. Ensure the questions are varied and of high quality.
+` ;
+
+        const Prompt_Template_EN_Grammar_Quiz= `
+        **Act as** an expert IELTS test material writer. Your task is to create a set of 20 reading comprehension questions to test the identification of **{grmmarContent}**.
+
+**Target Audience:** Chinese university freshmen with an IELTS level of approximately 6.0.
+
+**Core Requirement:** Every question must be formatted as a **valid JSON array of objects**. The structure of each object MUST strictly follow the example template provided below.
+
+**JSON Template Example:**
+[
+  {
+    "question": "คำว่า 'ตรงข้าม' หมายความว่าอย่างไร?",
+    "options": [
+      { "id": "A", "text": "optionA in English" },
+      { "id": "B", "text": "optionB in English" },
+      { "id": "C", "text": "optionC in English" },
+      { "id": "D", "text": "optionD in English" }
+    ],
+    "correct_answer": "A"
+  }
+]
+
+**Specific Instructions for the JSON Output:**
+
+1.  **"question" Field:** Write a short reading passage (2-4 sentences) related to common IELTS themes (e.g., environment, technology, psychology, education, health). Embed {grmmarContent} within the text. The question itself must directly ask about this relationship.
+2.  **"options" Field:**
+    *   Provide exactly 4 options, each with an "id" ("A", "B", "C", "D") and a "text".
+    *   The "text" for each option must be a complete, grammatically correct phrase or sentence in English.
+    *   Only ONE option must be correct. The incorrect options (distractors) should be plausible but clearly wrong based on the passage.
+3.  **"correct_answer" Field:** Provide the correct option's "id" as a single uppercase letter (e.g., "A", "B", "C", or "D").
+
+**Content Themes (for context):** Ensure the topics of the reading passages are typical of IELTS Academic Reading, such as Environmental Science, Psychology, Sociology, Technology, History, or Health.
+
+**Final Output Instruction:**
+Your entire response must be **ONLY** the JSON array containing the 20 question objects, and nothing else. Do not include any introductory text, explanations, or notes outside the JSON structure.
+`;
+
+        const Prompt_Template_Th_Words_Quiz=`
+        Generate a complete set of Thai vocabulary exercises in JSON format. For each given Thai word/phrase, create two multiple-choice questions:
+
+**1. Meaning Comprehension Question:**
+- Question format: "คำว่า '[Thai word]' หมายความว่าอย่างไร?"
+- Present 4 options in English
+- Target A2 level Thai learners (Chinese students) learning B1 content
+
+**2. Usage in Context Question:**
+- Question format: "ประโยคใดใช้คำว่า '[Thai word]' ถูกต้อง"
+- Present 4 complete Thai sentences as options
+- Sentences must be appropriate for A2 level learners
+- Only one sentence should correctly use the word
+
+**Requirements:**
+- Test level: A2 students learning B1 vocabulary
+- All Thai sentences should use simple grammar and vocabulary suitable for A2 level
+- Output format: Strict JSON Array following the exact structure below. Shuffle the sequence of the JSON array.
+- Create these exercises for the following Thai words: [{thWords}]
+
+**JSON Structure Example:**
+[
+        {
+	
+          "question": "คำว่า 'ตรงข้าม' หมายความว่าอย่างไร?",
+          "options": [
+            {"id": "A", "text": "opposite"},
+            {"id": "B", "text": "similar"},
+            {"id": "C", "text": "behind"},
+            {"id": "D", "text": "inside"}
+          ],
+          "correct_answer": "A"
+        },
+        {
+
+          "question": "ประโยคใดใช้คำว่า 'ตรงข้าม' ถูกต้อง",
+          "options": [
+            {"id": "A", "text": "บ้านฉันอยู่ตรงข้ามโรงเรียน"},
+            {"id": "B", "text": "ฉันตรงข้ามไปเที่ยวพัทยา"},
+            {"id": "C", "text": "ตรงข้ามกินข้าวแล้ว"},
+            {"id": "D", "text": "หนังสืออยู่ตรงข้ามบนโต๊ะ"}
+          ],
+          "correct_answer": "A"
+        }
+	//… questions for other words
+      ]
+
+
+Please maintain this exact JSON Array structure throughout the response.
+` ;
+        const schema_Quizzes_Choice1In4 = {
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "question": {
+        "type": "string",
+        "description": "The text of the question, which may include a blank or be a direct query about meaning or usage."
+      },
+      "options": {
+        "type": "array",
+        "description": "An array of possible answer choices for the question.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The unique identifier for the option (e.g., A, B, C, D).",
+              "pattern": "^[A-D]$"
+            },
+            "text": {
+              "type": "string",
+              "description": "The textual content of the answer option."
+            }
+          },
+          "required": ["id", "text"],
+          "additionalProperties": false
+        },
+        "minItems": 4,
+        "maxItems": 4
+      },
+      "correct_answer": {
+        "type": "string",
+        "description": "The ID of the correct option from the choices provided.",
+        "pattern": "^[A-D]$"
+      }
+    },
+    "required": ["question", "options", "correct_answer"],
+    "additionalProperties": false
+  },
+  "minItems": 1
+} ;
+
+        const Prompt_Template_Note=`
+        请你扮演一位专业的泰语老师，为中文母语者（泰语水平B1）制作一份泰语语法学习材料。
+
+        请严格按照以下要求生成内容：
+
+        **格式要求：**
+        1.  使用Markdown格式。
+        2.  整个文档只有一个一级标题 "#"，作为该语法点的名称。
+        3.  文档内容必须包含以下四个二级标题 "##"，顺序不可改变：
+            - "## 语法构成"
+            - "## 用途"
+            - "## 常用例句"
+            - '## 练习"
+
+        **内容要求：**
+        1.  **语言：** 所有解释说明性文字（标题、语法构成、用途说明）必须使用**中文**。
+        2.  **泰语应用：** 语法结构、例句、练习题目及答案中的泰语部分必须使用**泰文**。
+        3.  **读者水平：** 面向B1水平的中文学生，解释需清晰易懂，例句要贴近生活。
+        4.  **各部分细则：**
+            - **语法构成：** 清晰列出该语法点的结构公式，并简要说明各部分成分。
+            - **用途：** 解释该语法在什么情境下使用，表达什么含义。
+            - **常用例句：** 提供3-5个典型例句，每个例句需包含泰文和中文翻译。
+            - **练习：** 设计一个简单的练习，例如填空、造句或改错。练习后请附上答案。
+
+        **请生成的语法点是：{noteKeyPoint}**
+
+        现在，请开始生成关于【语法点】的Markdown内容。
+        `;
+
+        const Prompt_Template_Article=`
+        请为以下文章生成摘要：
+        文章标题: {articleTitle}
+        文章内容: {articleContent}
+        摘要长度: {summaryLength}
+
+        请以JSON格式返回以下结构的数据：
+        {
+            "articleTitle": "文章标题",
+            "summary": "文章摘要内容",
+            "keyPoints": ["要点1", "要点2", "要点3"],
+            "sentiment": "文章情感倾向",
+            "readTime": "预计阅读时间"
+        }
+        ` ;
+
+        const Prompt_Template_En_Reading_CauseSolution=`
+        **Objective:** Generate a complete IELTS-style reading practice exercise focused on a **Cause-Solution** text structure, tailored for a Chinese student currently at IELTS Band 6.0 but aiming for Band 6.5 in Reading and Writing.
+## 1. User Context & Tone
+*   The student is familiar with the IELTS format but needs to improve comprehension of complex argument structures and vocabulary.
+*   The text and questions should challenge a Band 6.0 learner without being demotivating; the goal is structured practice leading to Band 6.5.
+*   The topic should be about “{textTopic}” which is academic but accessible, similar to those found in real IELTS exams .
+## 2. Reading Text Specifications
+*   **Length:** Approximately {textWords} words.
+*   **Structure:** The text must have a clear **Cause-Solution** structure.
+    *   **Paragraph 1:** Introduction to the problem.
+    *   **Paragraph 2:** Detailed explanation of the **causes** or origins of the problem.
+    *   **Paragraph 3:** Presentation and evaluation of proposed **solutions** or remedies.
+    *   **Paragraph 4:** Conclusion (possibly discussing future implications or challenges).
+*   **Language:**
+    *   Use formal, academic English.
+    *   Integrate a range of vocabulary suitable for Band 6.5 (e.g., precise nouns, strong verbs, topic-specific terminology).
+    *   Include a mix of complex sentence structures (e.g., conditional clauses, passive voice, nominalization) but ensure overall coherence.
+    *   **Explicitly use cause-effect and solution-signaling language** (e.g., "This is primarily due to...", "As a consequence,...", "One proposed remedy is...", "To mitigate this, governments could...").
+## 3. Comprehension Questions Specifications
+### Part A: 5W1H Questions (Focus on Gist & Detail)
+Generate 5 questions based on the text to test basic comprehension. Each question should be a **Wh-** question (What, Why, Who, Where, When) or a **How** question. These should target main ideas and specific details.
+*   Example formats: "What is the primary cause of X?", "How does Y contribute to the problem?", "Who is most affected by this issue?", "When did the problem become widespread?"
+### Part B: Cause-Solution Analysis Questions (Focus on Analytical Reading)
+Generate 3-4 questions that require the student to analyze the text's structure and argument. These should prepare them for the analytical thinking needed for Writing Task 2.
+*   **Question 1 (Identifying Causes):** "According to the text, what are the **two** main causes of [the problem]?"
+*   **Question 2 (Evaluating Solutions):** "What are the **potential limitations** of the solution proposed in paragraph 3?"
+*   **Question 3 (Paraphrasing/Viewpoint):** "How does the author suggest that [a specific group] could address this challenge? Use your own words."
+*   **(Optional) Question 4 (Vocabulary in Context):** Provide a sentence from the text with a challenging word or phrase bolded. Ask for a synonym or definition based on context.
+## 4. Output Format Requirement
+The output must be a single, valid JSON object. Use the following structure precisely:
+
+{
+  "topic": "Generated Topic Title",
+  "reading_text": "Full word text here. Use \\n for line breaks between paragraphs.",
+  "comprehension_questions": {
+    "part_a": [
+      "Question 1 text?",
+      "Question 2 text?",
+      "Question 3 text?",
+      "Question 4 text?",
+      "Question 5 text?"
+    ],
+    "part_b": [
+      "Question 1 text?",
+      "Question 2 text?",
+      "Question 3 text?"
+    ]
+  },
+  "answer_key": {
+    "part_a": [
+      "Answer to Question 1",
+      "Answer to Question 2",
+      "Answer to Question 3",
+      "Answer to Question 4",
+      "Answer to Question 5"
+    ],
+    "part_b": [
+      "Answer to Question 1",
+      "Answer to Question 2",
+      "Answer to Question 3"
+    ]
+  }
+}
+` ;
+const schema_En_Reading={
+  "type": "object",
+  "properties": {
+    "topic": {
+      "type": "string",
+      "description": "The title or topic of the reading comprehension exercise"
+    },
+    "reading_text": {
+      "type": "string",
+      "description": "The full reading text content with \\n for line breaks between paragraphs"
+    },
+    "comprehension_questions": {
+      "type": "object",
+      "description": "Container for comprehension questions divided into parts",
+      "properties": {
+        "part_a": {
+          "type": "array",
+          "description": "Array of questions for part A",
+          "items": {
+            "type": "string",
+            "description": "Individual question text"
+          },
+          "minItems": 1
+        },
+        "part_b": {
+          "type": "array",
+          "description": "Array of questions for part B",
+          "items": {
+            "type": "string",
+            "description": "Individual question text"
+          },
+          "minItems": 1
+        }
+      },
+      "required": ["part_a", "part_b"],
+      "additionalProperties": false
+    },
+    "answer_key": {
+      "type": "object",
+      "description": "Container for answers corresponding to the questions",
+      "properties": {
+        "part_a": {
+          "type": "array",
+          "description": "Array of answers for part A questions",
+          "items": {
+            "type": "string",
+            "description": "Individual answer text"
+          },
+          "minItems": 1
+        },
+        "part_b": {
+          "type": "array",
+          "description": "Array of answers for part B questions",
+          "items": {
+            "type": "string",
+            "description": "Individual answer text"
+          },
+          "minItems": 1
+        }
+      },
+      "required": ["part_a", "part_b"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["topic", "reading_text", "comprehension_questions", "answer_key"],
+  "additionalProperties": false
+} ;
+
+
+const Prompt_Th_Reading = `
+**Role:** You are an expert in Teaching Thai as a Foreign Language (TFL). You specialize in creating pedagogical materials for Chinese native speakers.
+**Task:** Create a comprehensive Thai reading exercise about “{textTopic}” , tailored to a specific student profile.
+**Student Profile:**
+- **Native Language:** Chinese
+- **Thai Proficiency:** {readerThaiLevel}.
+- **Learning Focus:** Reading comprehension and vocabulary acquisition.
+**Core Requirements:**
+1.  **Text Content:**
+    - **Topic:** {textTopic}.
+    - **Level:** The main body of the text must use primarily B1-level grammar and sentence structures.
+    - **Vocabulary:** Seamlessly integrate 10-12 key **B1-level vocabulary words** related to the topic . These words should be bolded (**) in the dialogue.
+2.  **Comprehension Questions:**
+    - Generate 6 reading comprehension questions based on the text.
+    - Each question must be a **5W1H question** (Who, What, Where, When, Why, How).
+    - Write the questions in Thai, appropriate for an A2-B1 level learner.
+3.  **Vocabulary List:**
+    - Provide a curated vocabulary list from the dialogue.
+    - **Inclusion Criteria:** All B1-level words (the ones you bolded) + 5-7 other relevant A2-level words that are crucial for understanding the text.
+    - **Format for each word:** Present in a table-like format. For each word, include:
+        - **Thai Word:** The target vocabulary.
+        - **Part of Speech:** (n.), (v.), (adj.), etc.
+        - **English Meaning:** A simple, clear definition.
+        - **Chinese Meaning:** The Mandarin translation (拼音 - pinyin and 汉字 - characters). *[This is crucial for the student's native language support]*.
+**Output Format Instructions:**
+You MUST output a single, valid JSON object. Do not include any other text or explanations before or after the JSON object. 
+The JSON structure must be exactly as follows:
+  {
+    "article_title": "A short, engaging title for the reading exercise in Thai",
+    "article_thai_content": "The full Thai dialogue text. B1 words must be wrapped in **double asterisks** for emphasis.",
+    "article_english_translation": "A natural English translation of the Thai dialogue.",
+    "comprehension_questions": [
+      {
+        "type": "What",
+        "question_thai": "First question in Thai",
+        "question_english": "English translation of the first question"
+      },
+      {
+        "type": "Where",
+        "question_thai": "Second question in Thai",
+        "question_english": "English translation of the second question"
+      }// ... include 5 questions total for each 5W1H type.
+    ],
+    "vocabulary_list": [
+      {
+        "thai_word": "การแข่งขัน",
+        "part_of_speech": "n.",
+        "english_meaning": "competition, match",
+        "chinese_meaning_pinyin": "jìngsài",
+        "chinese_meaning_characters": "竞赛"
+      },// ... include all vocabulary words here.
+    ]
+  }
+
+` ;
+const schema_Thai_Reading = {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Thai Reading Comprehension Exercise",
+  "description": "Schema for Thai reading comprehension exercises with bilingual content and vocabulary",
+  "type": "object",
+  "properties": {
+    "article_title": {
+      "type": "string",
+      "description": "A short, engaging title for the reading exercise in Thai",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "article_thai_content": {
+      "type": "string",
+      "description": "The full Thai dialogue text with B1 words wrapped in **double asterisks** for emphasis",
+      "minLength": 50
+    },
+    "article_english_translation": {
+      "type": "string",
+      "description": "A natural English translation of the Thai dialogue",
+      "minLength": 50
+    },
+    "comprehension_questions": {
+      "type": "array",
+      "description": "Array of comprehension questions covering 5W1H types",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Question type (What, Where, When, Why, Who, How)",
+            "enum": ["What", "Where", "When", "Why", "Who", "How"]
+          },
+          "question_thai": {
+            "type": "string",
+            "description": "Question text in Thai",
+            "minLength": 5
+          },
+          "question_english": {
+            "type": "string",
+            "description": "English translation of the question",
+            "minLength": 5
+          }
+        },
+        "required": ["type", "question_thai", "question_english"],
+        "additionalProperties": false
+      },
+      "minItems": 6,
+      "maxItems": 12
+    },
+    "vocabulary_list": {
+      "type": "array",
+      "description": "List of vocabulary words from the article",
+      "items": {
+        "type": "object",
+        "properties": {
+          "thai_word": {
+            "type": "string",
+            "description": "Thai vocabulary word",
+            "minLength": 1
+          },
+          "part_of_speech": {
+            "type": "string",
+            "description": "Part of speech abbreviation",
+            "pattern": "^[a-zA-Z]+\\.?$"
+          },
+          "english_meaning": {
+            "type": "string",
+            "description": "English meaning of the word",
+            "minLength": 1
+          },
+          "chinese_meaning_pinyin": {
+            "type": "string",
+            "description": "Chinese meaning in pinyin",
+            "pattern": "^[a-zA-Z\\s]+$"
+          },
+          "chinese_meaning_characters": {
+            "type": "string",
+            "description": "Chinese meaning in characters",
+            "pattern": "^[\\u4e00-\\u9fff]+$"
+          }
+        },
+        "required": ["thai_word", "part_of_speech", "english_meaning"],
+        "additionalProperties": false
+      },
+      "minItems": 3
+    }
+  },
+  "required": [
+    "article_title",
+    "article_thai_content",
+    "article_english_translation",
+    "comprehension_questions",
+    "vocabulary_list"
+  ],
+  "additionalProperties": false
+};
+    </script>
+    <script>
+        
+        
         // 应用状态
         const appState = {
             currentUser: null,
@@ -712,42 +1299,55 @@
                     promptTemplate: PromptTemplate_thaiWord,
                     schema: schema_thaiWord
                 },
-                product: {
-                    name: '产品信息生成',
+                enWordQuiz: {
+                    name: '英语词汇Quiz',
                     fields: [
-                        { id: 'productName', label: '产品名称', type: 'text', required: true },
-                        { id: 'productCategory', label: '产品类别', type: 'text', required: true },
-                        { id: 'targetAudience', label: '目标用户', type: 'text', required: true },
-                        { id: 'keyFeatures', label: '主要功能', type: 'textarea', required: true }
+                        { id: 'EnWords', label: '单词列表', type: 'text', required: true }
                     ],
-                    promptTemplate: `请为以下产品生成详细描述：
-产品名称: {productName}
-产品类别: {productCategory}
-目标用户: {targetAudience}
-主要功能: {keyFeatures}
-
-请以JSON格式返回以下结构的数据：
-{
-    "productName": "产品名称",
-    "productCategory": "产品类别",
-    "targetAudience": "目标用户描述",
-    "keyFeatures": ["功能1", "功能2", "功能3"],
-    "description": "详细的产品描述",
-    "uniqueSellingPoints": ["卖点1", "卖点2"]
-}`,
-                    schema: {
-                        type: "object",
-                        properties: {
-                            productName: { type: "string" },
-                            productCategory: { type: "string" },
-                            targetAudience: { type: "string" },
-                            keyFeatures: { type: "array", items: { type: "string" } },
-                            description: { type: "string" },
-                            uniqueSellingPoints: { type: "array", items: { type: "string" } }
-                        },
-                        required: ["productName", "productCategory", "targetAudience", "keyFeatures", "description", "uniqueSellingPoints"]
-                    }
+                    promptTemplate: Prompt_Template_Quiz_En_Words,
+                    schema: schema_Quizzes_Choice1In4
                 },
+                enGrammarQuiz:{
+                    name: '英语语法Quiz',
+                    fields: [
+                        { id: 'grmmarContent', label: '语法要点', type: 'text', required: true },
+                        { id: 'grmmarContent', label: '语法要点', type: 'text', required: true }
+
+                    ],
+                    promptTemplate: Prompt_Template_EN_Grammar_Quiz,
+                    schema: schema_Quizzes_Choice1In4
+                },//
+                 thaiWordsQuiz:{
+                    name: '泰语单词Quiz',
+                    fields: [
+                        { id: 'thWords', label: '泰语单词清单', type: 'text', required: true }
+
+                    ],
+                    promptTemplate: Prompt_Template_Th_Words_Quiz,
+                    schema: schema_Quizzes_Choice1In4
+                },
+                
+                enReadingCauseSolution:{
+                    name: '英文阅读-Cause&Solution',
+                    fields: [
+                        { id: 'textTopic', label: '文章标题', type: 'text', required: true },
+                        { id: 'textWords', label: '文章字数', type: 'text', required: true }
+                    ],
+                    promptTemplate: Prompt_Template_En_Reading_CauseSolution,
+                    schema: schema_En_Reading
+                },//
+                
+
+                thReadingText:{
+                    name: '泰文阅读',
+                    fields: [
+                        { id: 'textTopic', label: '文章标题', type: 'text', required: true },
+                        { id: 'readerThaiLevel', label: '文章字数', type: 'text', required: true },
+                        { id: 'textTopic', label: '文章标题', type: 'text', required: true },
+                    ],
+                    promptTemplate: Prompt_Th_Reading,
+                    schema: schema_Thai_Reading
+                },//Prompt_Th_Reading
                 article: {
                     name: '文章摘要',
                     fields: [
@@ -755,19 +1355,7 @@
                         { id: 'articleContent', label: '文章内容', type: 'textarea', required: true },
                         { id: 'summaryLength', label: '摘要长度', type: 'select', options: ['短', '中', '长'], required: true }
                     ],
-                    promptTemplate: `请为以下文章生成摘要：
-文章标题: {articleTitle}
-文章内容: {articleContent}
-摘要长度: {summaryLength}
-
-请以JSON格式返回以下结构的数据：
-{
-    "articleTitle": "文章标题",
-    "summary": "文章摘要内容",
-    "keyPoints": ["要点1", "要点2", "要点3"],
-    "sentiment": "文章情感倾向",
-    "readTime": "预计阅读时间"
-}`,
+                    promptTemplate: Prompt_Template_Article,
                     schema: {
                         type: "object",
                         properties: {
@@ -780,37 +1368,13 @@
                         required: ["articleTitle", "summary", "keyPoints", "sentiment", "readTime"]
                     }
                 },
-                code: {
-                    name: '代码生成',
+                noteWriting:{
+                    name: '泰语语法笔记',
                     fields: [
-                        { id: 'functionality', label: '功能描述', type: 'textarea', required: true },
-                        { id: 'programmingLanguage', label: '编程语言', type: 'text', required: true },
-                        { id: 'codeComplexity', label: '代码复杂度', type: 'select', options: ['简单', '中等', '复杂'], required: true }
+                        { id: 'noteKeyPoint', label: 'note要点', type: 'text', required: true },
+                       
                     ],
-                    promptTemplate: `请根据以下要求生成代码：
-功能描述: {functionality}
-编程语言: {programmingLanguage}
-代码复杂度: {codeComplexity}
-
-请以JSON格式返回以下结构的数据：
-{
-    "functionality": "功能描述",
-    "programmingLanguage": "编程语言",
-    "code": "生成的代码",
-    "explanation": "代码解释",
-    "complexity": "代码复杂度评估"
-}`,
-                    schema: {
-                        type: "object",
-                        properties: {
-                            functionality: { type: "string" },
-                            programmingLanguage: { type: "string" },
-                            code: { type: "string" },
-                            explanation: { type: "string" },
-                            complexity: { type: "string" }
-                        },
-                        required: ["functionality", "programmingLanguage", "code", "explanation", "complexity"]
-                    }
+                    promptTemplate: Prompt_Template_Note
                 }
             }
         };
@@ -833,14 +1397,64 @@
         const clearBtn = document.getElementById('clearBtn');
         const consoleTitle = document.getElementById('consoleTitle');
 
-        // 简单的JSON Schema验证函数
+        
+       // 基于Ajv的验证函数
         function validateJsonSchema(data, schema) {
+            if (!ajvAvailable || !ajv) {
+                console.log('使用备用验证器');
+                return fallbackValidateJsonSchema(data, schema);
+            }
+            
+            try {
+                console.log('使用Ajv进行完整验证...');
+                const validate = ajv.compile(schema);
+                const valid = validate(data);
+                
+                if (valid) {
+                    return {
+                        valid: true,
+                        errors: [],
+                        validator: 'ajv'
+                    };
+                } else {
+                    const formattedErrors = validate.errors.map(error => {
+                        const path = error.instancePath ? `字段 ${error.instancePath}` : '根级别';
+                        let message = `${path} ${error.message}`;
+                        
+                        if (error.params) {
+                            if (error.params.allowedValues) {
+                                message += `，允许的值: ${JSON.stringify(error.params.allowedValues)}`;
+                            }
+                            if (error.params.additionalProperty) {
+                                message += `，不允许的属性: "${error.params.additionalProperty}"`;
+                            }
+                            if (error.params.missingProperty) {
+                                message += `，缺少属性: "${error.params.missingProperty}"`;
+                            }
+                        }
+                        return message;
+                    });
+                    
+                    return {
+                        valid: false,
+                        errors: formattedErrors,
+                        validator: 'ajv'
+                    };
+                }
+            } catch (error) {
+                console.error('Ajv验证过程出错:', error);
+                return fallbackValidateJsonSchema(data, schema);
+            }
+        }
+
+        // 备用验证函数
+        function fallbackValidateJsonSchema(data, schema) {
             const errors = [];
             
             // 检查必需字段
             if (schema.required) {
                 for (const field of schema.required) {
-                    if (data[field] === undefined || data[field] === null || data[field] === '') {
+                    if (data[field] === undefined || data[field] === null) {
                         errors.push(`缺少必需字段: ${field}`);
                     }
                 }
@@ -858,26 +1472,13 @@
                                     errors.push(`字段 ${field} 应该是字符串类型`);
                                 }
                                 break;
-                            case 'number':
-                                if (typeof value !== 'number') {
-                                    errors.push(`字段 ${field} 应该是数字类型`);
-                                }
-                                break;
-                            case 'boolean':
-                                if (typeof value !== 'boolean') {
-                                    errors.push(`字段 ${field} 应该是布尔类型`);
-                                }
-                                break;
                             case 'array':
                                 if (!Array.isArray(value)) {
                                     errors.push(`字段 ${field} 应该是数组类型`);
-                                } else if (definition.items) {
-                                    // 检查数组元素类型
-                                    for (let i = 0; i < value.length; i++) {
-                                        if (definition.items.type === 'string' && typeof value[i] !== 'string') {
-                                            errors.push(`字段 ${field}[${i}] 应该是字符串类型`);
-                                        }
-                                    }
+                                } else if (definition.minItems && value.length < definition.minItems) {
+                                    errors.push(`字段 ${field} 至少需要 ${definition.minItems} 个元素`);
+                                } else if (definition.maxItems && value.length > definition.maxItems) {
+                                    errors.push(`字段 ${field} 最多只能有 ${definition.maxItems} 个元素`);
                                 }
                                 break;
                             case 'object':
@@ -892,9 +1493,56 @@
             
             return {
                 valid: errors.length === 0,
-                errors: errors
+                errors: errors,
+                validator: 'fallback'
             };
         }
+
+        // 验证JSON数据
+        function validateJsonWithDetails() {
+            const jsonText = aiOutput.value.trim();
+            
+            if (!jsonText) {
+                showValidationResult('错误：请输入JSON数据。', false);
+                return null;
+            }
+            
+            try {
+                const jsonData = JSON.parse(jsonText);
+                const template = appState.templates[appState.currentTemplate];
+                
+                if (!template.schema) {
+                    showValidationResult('警告：当前模板没有定义Schema，跳过验证。', true);
+                    return jsonData;
+                }
+                
+                const validationResult = validateJsonSchema(jsonData, template.schema);
+                
+                let message;
+                if (validationResult.valid) {
+                    if (validationResult.validator === 'ajv') {
+                        message = '✅ 验证成功（使用Ajv验证器）：JSON数据完全符合Schema要求。';
+                    } else {
+                        message = '⚠️ 验证成功（使用备用验证器）：JSON数据基本符合Schema要求。';
+                    }
+                    showValidationResult(message, true);
+                    saveBtn.disabled = false;
+                    return jsonData;
+                } else {
+                    const validatorName = validationResult.validator === 'ajv' ? 'Ajv验证器' : '备用验证器';
+                    const errorDetails = validationResult.errors.join('\n• ');
+                    message = `❌ 验证失败（使用${validatorName}）：\n• ${errorDetails}`;
+                    showValidationResult(message, false);
+                    saveBtn.disabled = true;
+                    return null;
+                }
+            } catch (error) {
+                showValidationResult(`❌ JSON解析错误：${error.message}`, false);
+                saveBtn.disabled = true;
+                return null;
+            }
+        }
+        
 
         // 初始化应用
         function initApp() {
@@ -940,7 +1588,14 @@
             inputFields.addEventListener('input', updatePrompt);
             
             // 初始化默认模板
-            switchTemplate('product');
+            //switchTemplate('product');
+
+            // 显示Ajv状态
+            if (ajvAvailable) {
+                console.log('✅ Ajv验证器已就绪，可以进行完整验证');
+            } else {
+                console.log('⚠️ 使用备用验证器');
+            }
         }
 
         
@@ -1066,33 +1721,11 @@
                 });
         }
 
-        // 验证JSON
+        
+       
+         // 修改原有的validateJson函数来使用新的验证逻辑
         function validateJson() {
-            const jsonText = aiOutput.value.trim();
-            
-            if (!jsonText) {
-                showValidationResult('错误：请输入JSON数据。', false);
-                return;
-            }
-            
-            try {
-                const jsonData = JSON.parse(jsonText);
-                const template = appState.templates[appState.currentTemplate];
-                
-                // 使用自定义验证函数
-                const validationResult = validateJsonSchema(jsonData, template.schema);
-                
-                if (validationResult.valid) {
-                    showValidationResult('验证成功：JSON数据符合Schema要求。', true);
-                    saveBtn.disabled = false;
-                } else {
-                    showValidationResult(`验证失败：\n${validationResult.errors.join('\n')}`, false);
-                    saveBtn.disabled = true;
-                }
-            } catch (error) {
-                showValidationResult(`JSON解析错误：${error.message}`, false);
-                saveBtn.disabled = true;
-            }
+            validateJsonWithDetails();
         }
 
         // 显示验证结果
@@ -1108,6 +1741,8 @@
             saveBtn.disabled = true;
         }
 
+
+        /*
         // 保存到数据库
         function saveToDatabase() {
             const jsonText = aiOutput.value.trim();
@@ -1129,6 +1764,47 @@
                     return;
                 }
                 
+                // 生成唯一ID
+                const dataId = Date.now().toString();
+                
+                // 准备保存的数据
+                const saveData = {
+                    ...jsonData,
+                    _metadata: {
+                        template: appState.currentTemplate,
+                        createdAt: new Date().toISOString(),
+                        createdBy: appState.currentUser.uid,
+                        createdByName: appState.currentUser.displayName || appState.currentUser.email
+                    }
+                };
+                
+                // 保存到Firebase
+                database.ref(`ai-data/${appState.currentUser.uid}/${appState.currentTemplate}/${dataId}`)
+                    .set(saveData)
+                    .then(() => {
+                        alert('数据保存成功！');
+                        clearForm();
+                    })
+                    .catch(error => {
+                        console.error('保存失败:', error);
+                        alert('保存失败: ' + error.message);
+                    });
+                    
+            } catch (error) {
+                alert('保存失败: ' + error.message);
+            }
+        }
+        */
+       // 修改保存到数据库函数，使用增强的验证
+        function saveToDatabase() {
+            const jsonData = validateJsonWithDetails();
+            
+            if (!jsonData) {
+                alert('错误：数据验证失败，无法保存。');
+                return;
+            }
+            
+            try {
                 // 生成唯一ID
                 const dataId = Date.now().toString();
                 

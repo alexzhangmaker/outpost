@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语单词集管理器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --text-color: #cccccc;
+            --accent-color: #007acc;
+            --border-color: #3c3c3c;
+            --hover-color: #2a2d2e;
+            --console-green: #4EC9B0;
+            --console-yellow: #FFD700;
+            --console-red: #F44747;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* 顶部导航栏 */
+        .top-nav {
+            background-color: #2d2d30;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .nav-icons {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-icon {
+            color: var(--text-color);
+            font-size: 18px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .nav-icon:hover {
+            color: var(--accent-color);
+        }
+
+        .app-title {
+            color: var(--console-green);
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        /* 主要内容区域 */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            height: calc(100vh - 50px);
+        }
+
+        /* 左侧导航 */
+        .sidebar {
+            width: 300px;
+            background-color: #252526;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            color: var(--console-yellow);
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #005a9e;
+        }
+
+        .btn-danger {
+            background-color: var(--console-red);
+        }
+
+        .btn-danger:hover {
+            background-color: #d13438;
+        }
+
+        .wordlist-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .wordlist-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+            position: relative;
+        }
+
+        .wordlist-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .wordlist-item.active {
+            background-color: #094771;
+        }
+
+        .wordlist-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .wordlist-meta {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .wordlist-actions {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+        }
+
+        /* 右侧内容区域 */
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-height: 0;
+        }
+
+        .section {
+            background-color: #252526;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 15px;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            color: var(--console-yellow);
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #cccccc;
+        }
+
+        .form-input {
+            width: 100%;
+            background-color: #3c3c3c;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 10px;
+            border-radius: 3px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .word-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 5px;
+            background-color: #2d2d30;
+            border-radius: 3px;
+        }
+
+        .word-text {
+            flex: 1;
+            padding: 5px;
+        }
+
+        .word-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 3px 5px;
+            border-radius: 3px;
+        }
+
+        .action-btn:hover {
+            background-color: var(--hover-color);
+        }
+
+        .action-btn.delete {
+            color: var(--console-red);
+        }
+
+        .action-btn.add {
+            color: var(--console-green);
+        }
+
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 20px;
+        }
+
+        .login-box {
+            background-color: #252526;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 30px;
+            width: 400px;
+            text-align: center;
+        }
+
+        .login-title {
+            color: var(--console-green);
+            margin-bottom: 20px;
+        }
+
+        .login-btn {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .login-btn:hover {
+            background-color: #3367d6;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .notification.success {
+            background-color: #4CAF50;
+        }
+
+        .notification.error {
+            background-color: var(--console-red);
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        /* 修复单词内容区域的滚动问题 */
+        .words-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        #words-container {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 400px;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 10px;
+            background-color: #2d2d30;
+        }
+
+        .empty-state {
+            padding: 20px;
+            text-align: center;
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+    <style>
+        .main-app{
+            width:100vw ;
+            display: flex;
+            flex-direction: row;
+        }
+
+        .wordsMeta{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+        .noShow{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航栏 -->
+        <div class="top-nav">
+            <div class="app-title">泰语单词集管理器</div>
+            <div class="nav-icons">
+                <div class="nav-icon" id="home-btn" title="首页">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="nav-icon" id="settings-btn" title="设置">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <div class="nav-icon" id="signin-btn" title="登录">
+                    <i class="fas fa-sign-in-alt"></i>
+                </div>
+                <div class="user-info hidden" id="user-info">
+                    <div class="user-avatar" id="user-avatar"></div>
+                    <span id="user-name"></span>
+                    <div class="nav-icon" id="signout-btn" title="登出">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="main-content">
+            <!-- 登录界面 -->
+            <div class="login-container" id="login-container">
+                <div class="login-box">
+                    <h2 class="login-title">泰语单词集管理器</h2>
+                    <p>请使用Gmail账户登录以访问您的单词集</p>
+                    <button class="login-btn" id="google-login-btn">
+                        <i class="fab fa-google"></i>
+                        使用 Google 登录
+                    </button>
+                </div>
+            </div>
+
+            <!-- 应用主界面 -->
+            <div class="main-app hidden" id="main-app">
+                <!-- 左侧导航 -->
+                <div class="sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-title">单词列表</div>
+                        <button class="btn" id="add-list-btn">新增列表</button>
+                    </div>
+                    <div class="wordlist-container" id="wordlist-container">
+                        <!-- 单词列表将在这里动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 右侧内容区域 -->
+                <div class="content-area">
+                    <div class="section-title">
+                            单词列表信息
+                            <button class="btn" id="save-metadata-btn">保存元数据</button>
+                        </div>
+                    <div class="section wordsMeta">
+                        
+                        <div class="form-group noShow">
+                            <label class="form-label">列表名称</label>
+                            <input type="text" class="form-input" id="list-name" placeholder="输入列表名称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">分类</label>
+                            <input type="text" class="form-input" id="category" placeholder="输入分类">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">大类</label>
+                            <input type="text" class="form-input" id="main-category" placeholder="输入大类">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">级别</label>
+                            <input type="text" class="form-input" id="level" placeholder="输入级别">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">清单科目</label>
+                            <input type="text" class="form-input" id="subject" placeholder="输入清单科目">
+                        </div>
+                    </div>
+
+                    <div class="section words-section">
+                        <div class="section-title">
+                            单词内容
+                            <div>
+                                <button class="action-btn add" id="add-word-btn" title="添加单词">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="btn" id="save-words-btn">保存单词</button>
+                                <button class="btn" id="publish-btn">发布到数据库</button>
+                            </div>
+                        </div>
+                        <div id="words-container">
+                            <!-- 单词内容将在这里动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知 -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // DOM元素
+        const loginContainer = document.getElementById('login-container');
+        const mainApp = document.getElementById('main-app');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        const signinBtn = document.getElementById('signin-btn');
+        const signoutBtn = document.getElementById('signout-btn');
+        const userInfo = document.getElementById('user-info');
+        const userName = document.getElementById('user-name');
+        const userAvatar = document.getElementById('user-avatar');
+        const wordlistContainer = document.getElementById('wordlist-container');
+        const addListBtn = document.getElementById('add-list-btn');
+        const listNameInput = document.getElementById('list-name');
+        const categoryInput = document.getElementById('category');
+        const mainCategoryInput = document.getElementById('main-category');
+        const levelInput = document.getElementById('level');
+        const subjectInput = document.getElementById('subject');
+        const saveMetadataBtn = document.getElementById('save-metadata-btn');
+        const wordsContainer = document.getElementById('words-container');
+        const addWordBtn = document.getElementById('add-word-btn');
+        const saveWordsBtn = document.getElementById('save-words-btn');
+        const publishBtn = document.getElementById('publish-btn');
+        const notification = document.getElementById('notification');
+
+        // 当前选中的单词列表
+        let currentListId = null;
+        let wordLists = {};
+
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 认证状态监听
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // 用户已登录
+                loginContainer.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+                userInfo.classList.remove('hidden');
+                signinBtn.classList.add('hidden');
+                
+                // 显示用户信息
+                userName.textContent = user.displayName || user.email;
+                userAvatar.textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+                
+                // 加载单词列表
+                loadWordLists();
+            } else {
+                // 用户未登录
+                loginContainer.classList.remove('hidden');
+                mainApp.classList.add('hidden');
+                userInfo.classList.add('hidden');
+                signinBtn.classList.remove('hidden');
+            }
+        });
+
+        // Google登录
+        googleLoginBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    showNotification('登录成功！');
+                })
+                .catch((error) => {
+                    showNotification('登录失败: ' + error.message, 'error');
+                });
+        });
+
+        // 登出
+        signoutBtn.addEventListener('click', () => {
+            auth.signOut()
+                .then(() => {
+                    showNotification('已成功登出');
+                })
+                .catch((error) => {
+                    showNotification('登出失败: ' + error.message, 'error');
+                });
+        });
+
+        // 加载单词列表
+        function loadWordLists() {
+            console.log('正在加载单词列表...');
+            database.ref('thaiWordList').once('value')
+                .then((snapshot) => {
+                    const data = snapshot.val();
+                    console.log('从数据库获取的数据:', data);
+                    wordLists = data || {};
+                    renderWordLists();
+                    
+                    // 如果没有选中任何列表，选中第一个
+                    if (!currentListId && Object.keys(wordLists).length > 0) {
+                        selectWordList(Object.keys(wordLists)[0]);
+                    }
+                })
+                .catch((error) => {
+                    console.error('加载单词列表失败:', error);
+                    showNotification('加载单词列表失败: ' + error.message, 'error');
+                });
+        }
+
+        // 渲染单词列表
+        function renderWordLists() {
+            wordlistContainer.innerHTML = '';
+            
+            if (Object.keys(wordLists).length === 0) {
+                wordlistContainer.innerHTML = '<div class="empty-state">暂无单词列表</div>';
+                return;
+            }
+            
+            Object.keys(wordLists).forEach(listId => {
+                const list = wordLists[listId];
+                const listItem = document.createElement('div');
+                listItem.className = 'wordlist-item';
+                if (listId === currentListId) {
+                    listItem.classList.add('active');
+                }
+                listItem.dataset.id = listId;
+                
+                listItem.innerHTML = `
+                    <div class="wordlist-name">${listId}</div>
+                    <div class="wordlist-meta">${list.分类title || '无分类'} | ${list.级别 || '无级别'}</div>
+                    <div class="wordlist-actions">
+                        <button class="action-btn delete delete-list-btn" title="删除列表">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                listItem.addEventListener('click', (e) => {
+                    if (!e.target.closest('.delete-list-btn')) {
+                        selectWordList(listId);
+                    }
+                });
+                
+                const deleteBtn = listItem.querySelector('.delete-list-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteWordList(listId);
+                });
+                
+                wordlistContainer.appendChild(listItem);
+            });
+        }
+
+        // 选择单词列表
+        function selectWordList(listId) {
+            console.log('选择单词列表:', listId);
+            currentListId = listId;
+            
+            // 更新UI
+            document.querySelectorAll('.wordlist-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const selectedItem = document.querySelector(`.wordlist-item[data-id="${listId}"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('active');
+            }
+            
+            // 加载列表数据
+            const list = wordLists[listId];
+            if (list) {
+                listNameInput.value = listId;
+                categoryInput.value = list.分类title || '';
+                mainCategoryInput.value = list.大类title || '';
+                levelInput.value = list.级别 || '';
+                subjectInput.value = list.清单科目 || '';
+                
+                // 渲染单词
+                renderWords(list.words || []);
+            } else {
+                console.error('未找到列表数据:', listId);
+            }
+        }
+
+        // 渲染单词
+        function renderWords(words) {
+            wordsContainer.innerHTML = '';
+            
+            if (words.length === 0) {
+                wordsContainer.innerHTML = '<div class="empty-state">暂无单词</div>';
+                return;
+            }
+            
+            console.log('渲染单词:', words);
+            for(let index = 0; index < words.length; index++) {
+                let word = words[index];
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item';
+                
+                wordItem.innerHTML = `
+                    <div class="word-text">${word}</div>
+                    <div class="word-actions">
+                        <button class="action-btn delete delete-word-btn" title="删除单词">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                const deleteBtn = wordItem.querySelector('.delete-word-btn');
+                deleteBtn.addEventListener('click', () => {
+                    deleteWord(index);
+                });
+                
+                wordsContainer.appendChild(wordItem);
+            }
+        }
+
+        // 添加新单词列表
+        addListBtn.addEventListener('click', () => {
+            const newListId = prompt('请输入新列表的ID:');
+            if (newListId && newListId.trim()) {
+                const trimmedId = newListId.trim();
+                if (wordLists[trimmedId]) {
+                    showNotification('列表ID已存在', 'error');
+                    return;
+                }
+                
+                wordLists[trimmedId] = {
+                    words: [],
+                    分类title: '',
+                    大类title: '',
+                    级别: '',
+                    清单科目: ''
+                };
+                
+                renderWordLists();
+                selectWordList(trimmedId);
+                showNotification('新列表已创建');
+            }
+        });
+
+        // 删除单词列表
+        function deleteWordList(listId) {
+            if (confirm(`确定要删除列表 "${listId}" 吗？`)) {
+                delete wordLists[listId];
+                
+                if (currentListId === listId) {
+                    currentListId = null;
+                    clearForm();
+                }
+                
+                renderWordLists();
+                showNotification('列表已删除');
+            }
+        }
+
+        // 清空表单
+        function clearForm() {
+            listNameInput.value = '';
+            categoryInput.value = '';
+            mainCategoryInput.value = '';
+            levelInput.value = '';
+            subjectInput.value = '';
+            wordsContainer.innerHTML = '<div class="empty-state">请选择一个单词列表</div>';
+        }
+
+        // 保存元数据
+        saveMetadataBtn.addEventListener('click', () => {
+            if (!currentListId) {
+                showNotification('请先选择一个列表', 'error');
+                return;
+            }
+            
+            const newListId = listNameInput.value.trim();
+            if (!newListId) {
+                showNotification('列表名称不能为空', 'error');
+                return;
+            }
+            
+            // 如果列表ID改变了，需要更新
+            if (newListId !== currentListId) {
+                if (wordLists[newListId]) {
+                    showNotification('列表ID已存在', 'error');
+                    return;
+                }
+                
+                wordLists[newListId] = wordLists[currentListId];
+                delete wordLists[currentListId];
+                currentListId = newListId;
+            }
+            
+            // 更新元数据
+            wordLists[currentListId].分类title = categoryInput.value;
+            wordLists[currentListId].大类title = mainCategoryInput.value;
+            wordLists[currentListId].级别 = levelInput.value;
+            wordLists[currentListId].清单科目 = subjectInput.value;
+            
+            renderWordLists();
+            showNotification('元数据已保存');
+        });
+
+        // 添加单词
+        addWordBtn.addEventListener('click', () => {
+            if (!currentListId) {
+                showNotification('请先选择一个列表', 'error');
+                return;
+            }
+            
+            const newWord = prompt('请输入新单词:');
+            if (newWord && newWord.trim()) {
+                if (!wordLists[currentListId].words) {
+                    wordLists[currentListId].words = [];
+                }
+                
+                wordLists[currentListId].words.push(newWord.trim());
+                renderWords(wordLists[currentListId].words);
+                showNotification('单词已添加');
+            }
+        });
+
+        // 删除单词
+        function deleteWord(index) {
+            if (!currentListId) return;
+            
+            wordLists[currentListId].words.splice(index, 1);
+            renderWords(wordLists[currentListId].words);
+            showNotification('单词已删除');
+        }
+
+        // 保存单词
+        saveWordsBtn.addEventListener('click', () => {
+            if (!currentListId) {
+                showNotification('请先选择一个列表', 'error');
+                return;
+            }
+            
+            showNotification('单词已保存');
+        });
+
+        // 发布到数据库
+        publishBtn.addEventListener('click', () => {
+            if (!currentListId) {
+                showNotification('请先选择一个列表', 'error');
+                return;
+            }
+            
+            database.ref('thaiWordList').set(wordLists)
+                .then(() => {
+                    showNotification('数据已成功发布到数据库');
+                })
+                .catch((error) => {
+                    showNotification('发布失败: ' + error.message, 'error');
+                });
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('应用初始化完成');
+            // 初始显示空状态
+            wordsContainer.innerHTML = '<div class="empty-state">请选择一个单词列表</div>';
+        });
+    </script>
+</body>
+</html>

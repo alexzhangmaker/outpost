@@ -1,0 +1,9 @@
+2025-11-14T10:45:14: Thai Anki Review Scheduler started. Will run daily at 7:00 AM.
+2025-11-14T10:52:55: Received SIGINT. Shutting down gracefully...
+2025-11-14T10:52:55: Thai Anki Review Scheduler started. Will run daily at 7:00 AM.
+2025-11-14T10:52:56: Missed 7AM execution time. Current time is 11/14/2025, 10:52:55 AM, executing now...
+2025-11-14T10:52:56: Starting daily review task...
+2025-11-14T10:52:56: Processing review for date: 20251114
+2025-11-14T10:52:56: Found 348 overdue words for review.
+2025-11-14T10:52:56: Successfully created daily review for 20251114 with 348 words.
+2025-11-14T10:52:56: Daily review task completed successfully.
