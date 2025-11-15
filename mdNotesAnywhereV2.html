@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoteFlow - 智能笔记管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- TUI Editor 依赖 -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 登录界面样式 */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .auth-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .auth-logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #4285f4;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .auth-logo i {
+            margin-right: 10px;
+        }
+        
+        .auth-subtitle {
+            color: #5f6368;
+            margin-bottom: 30px;
+        }
+        
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background-color 0.2s;
+        }
+        
+        .auth-btn:hover {
+            background-color: #2b6cdb;
+        }
+        
+        .auth-btn:disabled {
+            background-color: #9aa0a6;
+            cursor: not-allowed;
+        }
+        
+        .auth-loading {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .auth-error {
+            color: #ea4335;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        /* 主应用容器 */
+        .app-container {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        /* 顶部导航栏 */
+        .navbar {
+            background-color: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+        
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+        
+        .navbar-brand i {
+            margin-right: 10px;
+            color: #4285f4;
+        }
+        
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #4285f4;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .navbar-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            color: #5f6368;
+        }
+        
+        .btn:hover {
+            background-color: #f1f3f4;
+        }
+        
+        .btn-primary {
+            background-color: #4285f4;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2b6cdb;
+        }
+        
+        /* 主内容区域 */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            width: 320px;
+            background-color: #fff;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: #f8f9fa;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #4285f4;
+            background-color: white;
+        }
+        
+        .tag-filter {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .tag {
+            background-color: #e8f0fe;
+            color: #4285f4;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tag:hover {
+            background-color: #d2e3fc;
+        }
+        
+        .tag.active {
+            background-color: #4285f4;
+            color: white;
+        }
+        
+        .folders-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+        
+        /* 文件夹样式 */
+        .folder {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .folder-header {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+        
+        .folder-header:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .folder-icon {
+            margin-right: 10px;
+            color: #5f6368;
+            transition: transform 0.3s;
+        }
+        
+        .folder.active .folder-icon {
+            transform: rotate(90deg);
+            color: #4285f4;
+        }
+        
+        .folder-name {
+            flex: 1;
+            font-weight: 500;
+            color: #3c4043;
+        }
+        
+        .folder-count {
+            background-color: #f1f3f4;
+            color: #5f6368;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+        
+        .folder.active .folder-count {
+            background-color: #e8f0fe;
+            color: #4285f4;
+        }
+        
+        /* 笔记列表样式 */
+        .notes-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background-color: #f8f9fa;
+        }
+        
+        .folder.active .notes-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .note-item {
+            padding: 12px 20px 12px 40px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .note-item:hover {
+            background-color: #f1f3f4;
+        }
+        
+        .note-item.active {
+            background-color: #e8f0fe;
+            border-left: 3px solid #4285f4;
+        }
+        
+        .note-icon {
+            margin-right: 10px;
+            color: #5f6368;
+            font-size: 14px;
+        }
+        
+        .note-item.active .note-icon {
+            color: #4285f4;
+        }
+        
+        .note-info {
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .note-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #3c4043;
+        }
+        
+        .note-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        
+        .note-tag {
+            background-color: #f1f3f4;
+            color: #5f6368;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+        }
+        
+        .note-date {
+            font-size: 12px;
+            color: #9aa0a6;
+        }
+        
+        /* 编辑器区域 */
+        .editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: #fff;
+        }
+        
+        .editor-tabs {
+            display: flex;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            overflow-x: auto;
+        }
+        
+        .editor-tab {
+            padding: 12px 20px;
+            border-right: 1px solid #e0e0e0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            min-width: 180px;
+            max-width: 250px;
+            transition: background-color 0.2s;
+        }
+        
+        .editor-tab:hover {
+            background-color: #f1f3f4;
+        }
+        
+        .editor-tab.active {
+            background-color: white;
+            border-bottom: 2px solid #4285f4;
+        }
+        
+        .tab-title {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+        
+        .tab-close {
+            margin-left: 8px;
+            color: #9aa0a6;
+            padding: 2px;
+            border-radius: 3px;
+        }
+        
+        .tab-close:hover {
+            background-color: #e0e0e0;
+            color: #5f6368;
+        }
+        
+        .editor-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-header {
+            padding: 15px 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .editor-header-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+        
+        .editor-title-container {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            margin-right: 20px;
+        }
+        
+        .editor-title {
+            font-size: 18px;
+            font-weight: 500;
+            border: none;
+            width: 100%;
+            padding: 5px 0;
+            outline: none;
+            color: #3c4043;
+            background: transparent;
+        }
+        
+        .editor-title::placeholder {
+            color: #9aa0a6;
+        }
+        
+        .editor-metadata {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        /* 文件夹选择器样式 */
+        .folder-selector {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            min-width: 200px;
+        }
+        
+        .folder-selector label {
+            margin-right: 8px;
+            font-size: 14px;
+            color: #5f6368;
+            white-space: nowrap;
+        }
+        
+        .folder-select {
+            flex: 1;
+            padding: 6px 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+            color: #3c4043;
+            cursor: pointer;
+        }
+        
+        .folder-select:focus {
+            outline: none;
+            border-color: #4285f4;
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+        
+        .editor-body {
+            flex: 1;
+            overflow: hidden;
+            padding: 20px 30px;
+        }
+        
+        /* TUI Editor 容器 */
+        .tui-editor-container {
+            height: 100%;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #9aa0a6;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #dadce0;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        /* 加载状态 */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #9aa0a6;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4285f4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 保存状态指示器 */
+        .save-status {
+            font-size: 12px;
+            color: #9aa0a6;
+            margin-left: 10px;
+        }
+        
+        .save-status.saving {
+            color: #fbbc04;
+        }
+        
+        .save-status.saved {
+            color: #34a853;
+        }
+        
+        .save-status.error {
+            color: #ea4335;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: absolute;
+                z-index: 10;
+                height: 100%;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .editor {
+                width: 100%;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .editor-header-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .editor-metadata {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .folder-selector {
+                min-width: auto;
+                flex: 1;
+                margin-right: 10px;
+            }
+        }
+        
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px 10px;
+            color: #5f6368;
+        }
+        
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 5;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-box">
+            <div class="auth-logo">
+                <i class="fas fa-book-open"></i>
+                NoteFlow
+            </div>
+            <p class="auth-subtitle">请使用您的Google账户登录</p>
+            <button class="auth-btn" id="googleSignInBtn">
+                <i class="fab fa-google"></i>
+                使用 Google 登录
+            </button>
+            <div class="auth-loading" id="authLoading">
+                <div class="spinner"></div>
+                <p>正在验证身份...</p>
+            </div>
+            <div class="auth-error" id="authError">
+                登录失败，请重试
+            </div>
+        </div>
+    </div>
+
+    <!-- 主应用界面 -->
+    <div class="app-container" id="appContainer">
+        <!-- 顶部导航栏 -->
+        <nav class="navbar">
+            <div class="navbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-brand">
+                    <i class="fas fa-book-open"></i>
+                    NoteFlow
+                </div>
+            </div>
+            <div class="navbar-user">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <span id="userName">用户</span>
+            </div>
+            <div class="navbar-actions">
+                <button class="btn" id="searchBtn">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="btn" id="tagsBtn">
+                    <i class="fas fa-tags"></i>
+                </button>
+                <button class="btn" id="settingsBtn">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button class="btn btn-primary" id="newNoteBtn">
+                    <i class="fas fa-plus"></i> 新建笔记
+                </button>
+                <button class="btn" id="signOutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- 主内容区域 -->
+        <div class="main-container">
+            <!-- 侧边栏 -->
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <input type="text" class="search-box" placeholder="搜索笔记..." id="searchInput">
+                    <div class="tag-filter" id="tagFilter">
+                        <!-- 标签将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+                <div class="folders-container" id="foldersContainer">
+                    <div class="loading-state" id="foldersLoading">
+                        <div class="spinner"></div>
+                        <p>正在加载文件夹...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 编辑器区域 -->
+            <div class="editor">
+                <div class="editor-tabs" id="editorTabs">
+                    <!-- 标签页将通过JavaScript动态生成 -->
+                </div>
+                <div class="editor-content" id="editorContent">
+                    <div class="empty-state" id="emptyState">
+                        <i class="fas fa-file-alt"></i>
+                        <h3>选择或创建笔记开始编辑</h3>
+                        <p>从左侧选择一个笔记或创建新笔记</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 移动端遮罩层 -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- TUI Editor 依赖 -->
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+    
+    <script>
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-otes-86b07.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        const storage = firebase.storage();
+
+        // DOM元素
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.getElementById('appContainer');
+        const googleSignInBtn = document.getElementById('googleSignInBtn');
+        const authLoading = document.getElementById('authLoading');
+        const authError = document.getElementById('authError');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const searchBtn = document.getElementById('searchBtn');
+        const tagsBtn = document.getElementById('tagsBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const newNoteBtn = document.getElementById('newNoteBtn');
+        
+        const foldersContainer = document.getElementById('foldersContainer');
+        const foldersLoading = document.getElementById('foldersLoading');
+        const tagFilter = document.getElementById('tagFilter');
+        const searchInput = document.getElementById('searchInput');
+        const editorTabs = document.getElementById('editorTabs');
+        const editorContent = document.getElementById('editorContent');
+        const emptyState = document.getElementById('emptyState');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        // 应用状态
+        let folders = [];
+        let notes = [];
+        let activeFolderId = null;
+        let activeNoteId = null;
+        let activeTabId = null;
+        let selectedTags = [];
+        let searchQuery = '';
+        let tabs = [];
+        let editors = {};
+        let saveTimeouts = {};
+
+        // 监听认证状态变化
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // 用户已登录
+                showAppUI(user);
+                loadDataFromFirebase();
+            } else {
+                // 用户未登录
+                showAuthUI();
+            }
+        });
+
+        // Google 登录
+        googleSignInBtn.addEventListener('click', () => {
+            authLoading.style.display = 'block';
+            authError.style.display = 'none';
+            
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('email');
+            
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    // 登录成功
+                    console.log('登录成功:', result.user);
+                })
+                .catch((error) => {
+                    // 登录失败
+                    console.error('登录失败:', error);
+                    authError.style.display = 'block';
+                    authError.textContent = `登录失败: ${error.message}`;
+                    authLoading.style.display = 'none';
+                });
+        });
+
+        // 退出登录
+        signOutBtn.addEventListener('click', () => {
+            if (confirm('确定要退出登录吗？')) {
+                auth.signOut();
+            }
+        });
+
+        // 显示登录界面
+        function showAuthUI() {
+            authContainer.style.display = 'flex';
+            appContainer.style.display = 'none';
+            authLoading.style.display = 'none';
+            authError.style.display = 'none';
+        }
+
+        // 显示应用界面
+        function showAppUI(user) {
+            authContainer.style.display = 'none';
+            appContainer.style.display = 'flex';
+            
+            // 更新用户信息
+            userName.textContent = user.displayName || user.email;
+            userAvatar.textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+        }
+
+        // 从 Firebase 加载数据
+        function loadDataFromFirebase() {
+            // 加载文件夹
+            database.ref('noteFolders').once('value')
+                .then((snapshot) => {
+                    folders = [];
+                    if (snapshot.exists()) {
+                        snapshot.forEach((childSnapshot) => {
+                            const folder = childSnapshot.val();
+                            folder.id = childSnapshot.key;
+                            folders.push(folder);
+                        });
+                    } else {
+                        console.log('没有找到文件夹数据，使用默认数据');
+                        // 如果没有文件夹数据，创建一些默认文件夹
+                        folders = [
+                            { id: '001221', course: '高等数学', courseCode: '001221' },
+                            { id: '001222', course: '线性代数', courseCode: '001222' },
+                            { id: '001223', course: '概率论与数理统计', courseCode: '001223' },
+                            { id: '001224', course: '计算机科学导论', courseCode: '001224' }
+                        ];
+                    }
+                    
+                    // 加载笔记
+                    return database.ref('mdNotes').once('value');
+                })
+                .then((snapshot) => {
+                    notes = [];
+                    if (snapshot.exists()) {
+                        snapshot.forEach((childSnapshot) => {
+                            const note = childSnapshot.val();
+                            note.id = childSnapshot.key;
+                            notes.push(note);
+                        });
+                    } else {
+                        console.log('没有找到笔记数据');
+                    }
+                    
+                    // 渲染UI
+                    foldersLoading.style.display = 'none';
+                    renderTagFilter();
+                    renderFolders();
+                })
+                .catch((error) => {
+                    console.error('加载数据失败:', error);
+                    foldersLoading.innerHTML = '<p>加载数据失败，请刷新页面重试</p>';
+                });
+        }
+
+        // 从 Firebase Storage 加载 Markdown 内容
+        async function loadMarkdownContent(note) {
+            if (!note.mdNote) {
+                return '# ' + note.title + '\n\n开始编写您的笔记内容...\n\n## 功能特点\n\n- 实时保存\n- Markdown 支持\n- 多标签页编辑\n- 文件夹管理\n\n## 开始使用\n\n在这里写下您的笔记内容...';
+            }
+            
+            try {
+                console.log('正在加载Markdown内容:', note.mdNote);
+                const response = await fetch(note.mdNote, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit',
+                    headers: {
+                        'Accept': 'text/markdown, text/plain, */*'
+                    }
+                });
+                
+                if (response.ok) {
+                    const content = await response.text();
+                    console.log('成功加载Markdown内容');
+                    return content;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                console.error('加载Markdown内容失败:', error);
+                // 尝试使用 Firebase Storage SDK
+                try {
+                    console.log('尝试使用Firebase Storage SDK加载...');
+                    const storageRef = storage.refFromURL(note.mdNote);
+                    const downloadURL = await storageRef.getDownloadURL();
+                    const response = await fetch(downloadURL);
+                    if (response.ok) {
+                        return await response.text();
+                    }
+                } catch (sdkError) {
+                    console.error('Firebase Storage SDK也失败:', sdkError);
+                }
+                return `# ${note.title}\n\n无法加载笔记内容。错误: ${error.message}\n\n您可以在此重新开始编辑。`;
+            }
+        }
+
+        // 保存 Markdown 内容到 Firebase Storage
+        async function saveMarkdownContent(noteId, content) {
+            try {
+                const user = auth.currentUser;
+                if (!user) throw new Error('用户未登录');
+                
+                // 创建存储引用
+                const storageRef = storage.ref();
+                const filePath = `markdown/${user.uid}/${noteId}.md`;
+                const fileRef = storageRef.child(filePath);
+                
+                console.log('正在保存到:', filePath);
+                
+                // 上传文件
+                const snapshot = await fileRef.putString(content, 'raw', {
+                    contentType: 'text/markdown'
+                });
+                
+                // 获取下载URL
+                const downloadURL = await snapshot.ref.getDownloadURL();
+                console.log('文件保存成功，URL:', downloadURL);
+                
+                // 更新数据库中的 mdNote 字段
+                await database.ref(`mdNotes/${noteId}/mdNote`).set(downloadURL);
+                
+                return downloadURL;
+            } catch (error) {
+                console.error('保存Markdown内容失败:', error);
+                throw error;
+            }
+        }
+
+        // 更新笔记元数据
+        async function updateNoteMetadata(noteId, updates) {
+            try {
+                await database.ref(`mdNotes/${noteId}`).update(updates);
+                console.log('笔记元数据更新成功:', noteId, updates);
+                
+                // 更新本地数据
+                const noteIndex = notes.findIndex(n => n.id === noteId);
+                if (noteIndex !== -1) {
+                    notes[noteIndex] = { ...notes[noteIndex], ...updates };
+                }
+                
+                // 重新渲染文件夹列表以反映变更
+                renderFolders();
+                renderTagFilter();
+                
+            } catch (error) {
+                console.error('更新笔记元数据失败:', error);
+                throw error;
+            }
+        }
+
+        // 渲染文件夹选择器
+        function renderFolderSelector(container, currentFolderCode) {
+            const selectorContainer = document.createElement('div');
+            selectorContainer.className = 'folder-selector';
+            
+            selectorContainer.innerHTML = `
+                <label for="folderSelect">文件夹:</label>
+                <select class="folder-select" id="folderSelect">
+                    ${folders.map(folder => `
+                        <option value="${folder.courseCode}" ${folder.courseCode === currentFolderCode ? 'selected' : ''}>
+                            ${folder.course}
+                        </option>
+                    `).join('')}
+                    <option value="000000" ${!currentFolderCode || currentFolderCode === '000000' ? 'selected' : ''}>未分类</option>
+                </select>
+            `;
+            
+            container.appendChild(selectorContainer);
+            
+            // 添加变更事件监听
+            const selectElement = selectorContainer.querySelector('.folder-select');
+            selectElement.addEventListener('change', function() {
+                scheduleSave(activeTabId);
+            });
+            
+            return selectorContainer;
+        }
+
+        // 初始化文件夹列表
+        function renderFolders() {
+            foldersContainer.innerHTML = '';
+            
+            if (folders.length === 0) {
+                foldersContainer.innerHTML = '<div class="empty-state"><p>暂无文件夹</p></div>';
+                return;
+            }
+            
+            // 添加"未分类"文件夹
+            const allFolders = [
+                ...folders,
+                { id: '000000', course: '未分类', courseCode: '000000' }
+            ];
+            
+            allFolders.forEach(folder => {
+                // 过滤笔记
+                const folderNotes = notes.filter(note => 
+                    note.subject && note.subject.courseCode === folder.courseCode &&
+                    (selectedTags.length === 0 || selectedTags.some(tag => note.tags && note.tags.includes(tag))) &&
+                    (searchQuery === '' || note.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                );
+                
+                if (folderNotes.length === 0 && searchQuery !== '') return;
+                
+                const folderElement = document.createElement('div');
+                folderElement.className = `folder ${folder.courseCode === activeFolderId ? 'active' : ''}`;
+                folderElement.dataset.id = folder.courseCode;
+                
+                folderElement.innerHTML = `
+                    <div class="folder-header">
+                        <i class="fas fa-chevron-right folder-icon"></i>
+                        <div class="folder-name">${folder.course}</div>
+                        <div class="folder-count">${folderNotes.length}</div>
+                    </div>
+                    <div class="notes-list">
+                        ${folderNotes.map(note => `
+                            <div class="note-item ${note.id === activeNoteId ? 'active' : ''}" data-id="${note.id}">
+                                <i class="far fa-file-alt note-icon"></i>
+                                <div class="note-info">
+                                    <div class="note-title">${note.title}</div>
+                                    <div class="note-tags">
+                                        ${note.tags ? note.tags.map(tag => `<span class="note-tag">${tag}</span>`).join('') : ''}
+                                    </div>
+                                    <div class="note-date">${note.createdAt}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                // 文件夹点击事件
+                const folderHeader = folderElement.querySelector('.folder-header');
+                folderHeader.addEventListener('click', () => {
+                    toggleFolder(folder.courseCode);
+                });
+                
+                // 笔记点击事件
+                const noteItems = folderElement.querySelectorAll('.note-item');
+                noteItems.forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const noteId = item.dataset.id;
+                        openNoteInTab(noteId);
+                        if (window.innerWidth <= 768) {
+                            sidebar.classList.remove('open');
+                            overlay.classList.remove('active');
+                        }
+                    });
+                });
+                
+                foldersContainer.appendChild(folderElement);
+            });
+        }
+
+        // 渲染标签过滤器
+        function renderTagFilter() {
+            // 收集所有标签
+            const allTags = [...new Set(notes.flatMap(note => note.tags || []))];
+            
+            tagFilter.innerHTML = '';
+            
+            if (allTags.length === 0) {
+                return;
+            }
+            
+            allTags.forEach(tag => {
+                const tagElement = document.createElement('div');
+                tagElement.className = `tag ${selectedTags.includes(tag) ? 'active' : ''}`;
+                tagElement.textContent = tag;
+                tagElement.addEventListener('click', () => {
+                    toggleTag(tag);
+                });
+                tagFilter.appendChild(tagElement);
+            });
+        }
+
+        // 切换标签选择
+        function toggleTag(tag) {
+            if (selectedTags.includes(tag)) {
+                selectedTags = selectedTags.filter(t => t !== tag);
+            } else {
+                selectedTags.push(tag);
+            }
+            renderTagFilter();
+            renderFolders();
+        }
+
+        // 切换文件夹展开/收起状态
+        function toggleFolder(folderId) {
+            if (activeFolderId === folderId) {
+                activeFolderId = null;
+            } else {
+                activeFolderId = folderId;
+            }
+            renderFolders();
+        }
+
+        // 在标签页中打开笔记
+        async function openNoteInTab(noteId) {
+            const note = notes.find(n => n.id === noteId);
+            if (!note) return;
+            
+            const existingTab = tabs.find(tab => tab.noteId === noteId);
+            if (existingTab) {
+                setActiveTab(existingTab.id);
+                return;
+            }
+            
+            const tabId = `tab-${Date.now()}`;
+            const tab = {
+                id: tabId,
+                noteId: noteId,
+                title: note.title
+            };
+            
+            tabs.push(tab);
+            renderTabs();
+            setActiveTab(tabId);
+            
+            await createEditor(tabId, note);
+        }
+
+        // 创建TUI Editor
+        async function createEditor(tabId, note) {
+            emptyState.style.display = 'none';
+            
+            const editorContainer = document.createElement('div');
+            editorContainer.className = 'editor-body';
+            editorContainer.id = `editor-${tabId}`;
+            editorContainer.style.display = 'none';
+            
+            // 创建编辑器头部控件
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'editor-header-controls';
+            
+            // 标题容器
+            const titleContainer = document.createElement('div');
+            titleContainer.className = 'editor-title-container';
+            
+            const titleInput = document.createElement('input');
+            titleInput.type = 'text';
+            titleInput.className = 'editor-title';
+            titleInput.value = note.title;
+            titleInput.placeholder = '笔记标题';
+            
+            titleContainer.appendChild(titleInput);
+            headerDiv.appendChild(titleContainer);
+            
+            // 元数据容器（文件夹选择器和保存状态）
+            const metadataContainer = document.createElement('div');
+            metadataContainer.className = 'editor-metadata';
+            
+            // 添加文件夹选择器
+            const currentFolderCode = note.subject ? note.subject.courseCode : '000000';
+            renderFolderSelector(metadataContainer, currentFolderCode);
+            
+            // 保存状态
+            const saveStatus = document.createElement('span');
+            saveStatus.className = 'save-status';
+            saveStatus.textContent = '已保存';
+            saveStatus.id = `saveStatus-${tabId}`;
+            
+            metadataContainer.appendChild(saveStatus);
+            headerDiv.appendChild(metadataContainer);
+            
+            // 创建编辑器
+            const editorElement = document.createElement('div');
+            editorElement.className = 'tui-editor-container';
+            
+            editorContainer.appendChild(headerDiv);
+            editorContainer.appendChild(editorElement);
+            editorContent.appendChild(editorContainer);
+            
+            // 显示加载状态
+            saveStatus.textContent = '加载中...';
+            saveStatus.className = 'save-status saving';
+            
+            try {
+                const markdownContent = await loadMarkdownContent(note);
+                
+                const editor = new toastui.Editor({
+                    el: editorElement,
+                    height: '100%',
+                    initialEditType: 'markdown',
+                    previewStyle: 'vertical',
+                    initialValue: markdownContent
+                });
+                
+                editors[tabId] = {
+                    editor: editor,
+                    titleInput: titleInput,
+                    saveStatus: saveStatus,
+                    noteId: note.id,
+                    folderSelect: metadataContainer.querySelector('.folder-select')
+                };
+                
+                saveStatus.textContent = '已加载';
+                saveStatus.className = 'save-status saved';
+                
+                titleInput.addEventListener('input', () => {
+                    updateTabTitle(tabId, titleInput.value);
+                    scheduleSave(tabId);
+                });
+                
+                editor.on('change', () => {
+                    scheduleSave(tabId);
+                });
+                
+            } catch (error) {
+                console.error('创建编辑器失败:', error);
+                saveStatus.textContent = '加载失败';
+                saveStatus.className = 'save-status error';
+                
+                const editor = new toastui.Editor({
+                    el: editorElement,
+                    height: '100%',
+                    initialEditType: 'markdown',
+                    previewStyle: 'vertical',
+                    initialValue: `# ${note.title}\n\n无法加载原始内容。错误: ${error.message}\n\n您可以在此重新开始编辑。`
+                });
+                
+                editors[tabId] = {
+                    editor: editor,
+                    titleInput: titleInput,
+                    saveStatus: saveStatus,
+                    noteId: note.id,
+                    folderSelect: metadataContainer.querySelector('.folder-select')
+                };
+            }
+        }
+
+        // 安排保存（防抖）
+        function scheduleSave(tabId) {
+            const editorData = editors[tabId];
+            if (!editorData) return;
+            
+            editorData.saveStatus.textContent = '保存中...';
+            editorData.saveStatus.className = 'save-status saving';
+            
+            if (saveTimeouts[tabId]) {
+                clearTimeout(saveTimeouts[tabId]);
+            }
+            
+            saveTimeouts[tabId] = setTimeout(async () => {
+                try {
+                    await performSave(tabId);
+                    editorData.saveStatus.textContent = '已保存';
+                    editorData.saveStatus.className = 'save-status saved';
+                } catch (error) {
+                    editorData.saveStatus.textContent = '保存失败';
+                    editorData.saveStatus.className = 'save-status error';
+                    console.error('保存失败:', error);
+                }
+            }, 1000);
+        }
+
+        // 执行保存操作
+        async function performSave(tabId) {
+            const editorData = editors[tabId];
+            if (!editorData) return;
+            
+            const noteId = editorData.noteId;
+            const title = editorData.titleInput.value;
+            const content = editorData.editor.getMarkdown();
+            const selectedFolderCode = editorData.folderSelect ? editorData.folderSelect.value : '000000';
+            const selectedFolder = folders.find(f => f.courseCode === selectedFolderCode) || {
+                course: '未分类',
+                courseCode: '000000'
+            };
+            
+            // 准备更新数据
+            const updates = {
+                title: title,
+                subject: {
+                    course: selectedFolder.course,
+                    courseCode: selectedFolder.courseCode
+                },
+                updatedAt: new Date().toISOString()
+            };
+            
+            // 更新笔记元数据
+            await updateNoteMetadata(noteId, updates);
+            
+            // 保存Markdown内容
+            await saveMarkdownContent(noteId, content);
+        }
+
+        // 渲染标签页
+        function renderTabs() {
+            editorTabs.innerHTML = '';
+            
+            tabs.forEach(tab => {
+                const tabElement = document.createElement('div');
+                tabElement.className = `editor-tab ${tab.id === activeTabId ? 'active' : ''}`;
+                tabElement.dataset.id = tab.id;
+                
+                tabElement.innerHTML = `
+                    <div class="tab-title">${tab.title}</div>
+                    <div class="tab-close">
+                        <i class="fas fa-times"></i>
+                    </div>
+                `;
+                
+                tabElement.addEventListener('click', (e) => {
+                    if (!e.target.closest('.tab-close')) {
+                        setActiveTab(tab.id);
+                    }
+                });
+                
+                const closeBtn = tabElement.querySelector('.tab-close');
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeTab(tab.id);
+                });
+                
+                editorTabs.appendChild(tabElement);
+            });
+        }
+
+        // 设置活动标签页
+        function setActiveTab(tabId) {
+            activeTabId = tabId;
+            
+            renderTabs();
+            
+            document.querySelectorAll('.editor-body').forEach(editor => {
+                editor.style.display = 'none';
+            });
+            
+            const activeEditor = document.getElementById(`editor-${tabId}`);
+            if (activeEditor) {
+                activeEditor.style.display = 'flex';
+                activeEditor.style.flexDirection = 'column';
+            } else {
+                emptyState.style.display = 'flex';
+            }
+        }
+
+        // 更新标签页标题
+        function updateTabTitle(tabId, title) {
+            const tab = tabs.find(t => t.id === tabId);
+            if (tab) {
+                tab.title = title;
+                renderTabs();
+            }
+        }
+
+        // 关闭标签页
+        function closeTab(tabId) {
+            if (saveTimeouts[tabId]) {
+                clearTimeout(saveTimeouts[tabId]);
+            }
+            
+            const editorContainer = document.getElementById(`editor-${tabId}`);
+            if (editorContainer) {
+                editorContainer.remove();
+            }
+            
+            delete editors[tabId];
+            delete saveTimeouts[tabId];
+            
+            tabs = tabs.filter(tab => tab.id !== tabId);
+            
+            renderTabs();
+            
+            if (tabs.length === 0) {
+                emptyState.style.display = 'flex';
+                activeTabId = null;
+            } else {
+                setActiveTab(tabs[tabs.length - 1].id);
+            }
+        }
+
+        // 新建笔记
+        async function createNewNote() {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('请先登录');
+                return;
+            }
+            
+            const newNoteId = `note-${Date.now()}`;
+            const newNote = {
+                id: newNoteId,
+                createdAt: new Date().toISOString().split('T')[0],
+                mdNote: "",
+                subject: {
+                    course: "未分类",
+                    courseCode: "000000"
+                },
+                tags: ["新笔记"],
+                title: "新笔记"
+            };
+            
+            try {
+                await database.ref(`mdNotes/${newNoteId}`).set(newNote);
+                notes.push(newNote);
+                openNoteInTab(newNoteId);
+            } catch (error) {
+                console.error('创建新笔记失败:', error);
+                alert('创建新笔记失败，请重试');
+            }
+        }
+
+        // 事件监听
+        newNoteBtn.addEventListener('click', createNewNote);
+        
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderFolders();
+        });
+        
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.add('open');
+            overlay.classList.add('active');
+        });
+        
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        });
+
+        // 初始化认证状态
+        if (auth.currentUser) {
+            showAppUI(auth.currentUser);
+            loadDataFromFirebase();
+        } else {
+            showAuthUI();
+        }
+    </script>
+</body>
+</html>
