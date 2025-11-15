@@ -851,12 +851,12 @@
             
             for(let i=0;i<jsonWordSet.words.length;i++){
                 let word = jsonWordSet.words[i] ;
-                console.log(word) ;
+                //console.log(word) ;
                 if(hasInvalidFirebaseChars(word))continue ;
 
                 let snapshot = await database.ref(`thaiDictionary/${word}`).once('value');
                 let jsonWord = snapshot.val();
-                console.log(jsonWord) ;
+                //console.log(jsonWord) ;
                 if(jsonWord==null){
                     console.log(`${word} not in DB,something wrong`) ;
                     continue ;
@@ -979,6 +979,14 @@
             let tagBTNPlayer = document.getElementById('idBTNPlayer') ;
             tagBTNPlayer.click() ;
         } ;
+
+        const hotKeyCall_SPACE = (event)=>{
+            console.log("hotKeyCall_A called:"+event.key) ;
+            //let tagBTNPlayer = document.getElementById('idBTNPlayer') ;
+            // 添加事件监听器
+            document.getElementById('flashcard').click(event) ;
+        } ;
+
         const hotKeyCall_Num1 = (event)=>{
             console.log("hotKeyCall_Num1 called:"+event.key) ;
             let tagBTNRating = document.querySelector(".rating-1") ;
@@ -1012,7 +1020,8 @@
             '2':hotKeyCall_Num2,
             '3':hotKeyCall_Num3,
             '4':hotKeyCall_Num4,
-            '5':hotKeyCall_Num5
+            '5':hotKeyCall_Num5,
+            ' ':hotKeyCall_SPACE
         };
 
         document.addEventListener('keydown', (event) =>{
