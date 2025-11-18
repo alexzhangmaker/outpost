@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz数据管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .login-container {
+            min-height: 100vh;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: none;
+            width: 100%;
+            max-width: 420px;
+            padding: 2rem;
+        }
+        
+        .app-container {
+            background: white;
+            min-height: 100vh;
+            display: none;
+        }
+        
+        .app-header {
+            background: var(--secondary-color);
+            color: white;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .sidebar {
+            background: var(--light-bg);
+            border-right: 1px solid #dee2e6;
+            height: calc(100vh - 76px);
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            background: white;
+            height: calc(100vh - 76px);
+            overflow-y: auto;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background: white;
+            border-bottom: 2px solid var(--light-bg);
+            font-weight: 600;
+            padding: 15px 20px;
+        }
+        
+        .course-item {
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .course-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .quiz-item {
+            border-left: 3px solid var(--primary-color);
+            margin-bottom: 6px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .quiz-item:hover {
+            background: #e3f2fd;
+            transform: translateX(5px);
+        }
+        
+        .quiz-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .search-box {
+            border-radius: 25px;
+            border: 2px solid #e9ecef;
+            padding: 10px 20px;
+        }
+        
+        .search-box:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .tag-filter {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            padding: 5px 15px;
+            margin: 2px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .tag-filter:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .tag-filter.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .editor-section {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 10px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .json-editor {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 400px;
+            resize: vertical;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        
+        .btn-danger {
+            background: var(--accent-color);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        
+        .btn-warning {
+            background: #f39c12;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+        
+        .stats-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="login-container" class="login-container">
+        <div class="login-card">
+            <div class="text-center mb-4">
+                <i class="fas fa-graduation-cap text-primary mb-3" style="font-size: 3rem;"></i>
+                <h1 class="h3 fw-bold text-dark">Quiz数据管理系统</h1>
+                <p class="text-muted">请使用Gmail账户登录</p>
+            </div>
+            <button id="signin-btn" class="btn btn-primary w-100 py-3 d-flex align-items-center justify-content-center">
+                <i class="fab fa-google me-3 fs-5"></i>
+                使用Gmail登录
+            </button>
+            <div id="login-status" class="mt-3 text-center"></div>
+        </div>
+    </div>
+
+    <!-- 主应用界面 -->
+    <div id="app-container" class="app-container">
+        <!-- 顶部工具栏 -->
+        <header class="app-header">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center py-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-graduation-cap me-3 fs-4"></i>
+                        <h1 class="h4 mb-0 fw-bold">Quiz数据管理系统</h1>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span id="user-email" class="text-light"></span>
+                        <button id="signout-btn" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sign-out-alt me-1"></i>退出登录
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="container-fluid h-100">
+            <div class="row h-100">
+                <!-- 左侧导航区 -->
+                <div class="col-md-4 col-lg-3 sidebar p-0">
+                    <div class="p-3">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>科目文件夹</span>
+                                <i class="fas fa-folder text-primary"></i>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="course-folders">
+                                    <!-- 科目文件夹将在这里动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>搜索与筛选</span>
+                                <i class="fas fa-filter text-primary"></i>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <input type="text" id="search-input" class="form-control search-box" placeholder="搜索测试集标题...">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">按标签筛选</label>
+                                    <div id="tag-filters" class="d-flex flex-wrap">
+                                        <!-- 标签筛选器将在这里动态生成 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>统计信息</span>
+                                <i class="fas fa-chart-bar text-primary"></i>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-6 mb-3">
+                                        <div class="stats-card">
+                                            <h3 id="total-quizzes" class="stats-number">0</h3>
+                                            <p class="stats-label">总测试集</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="stats-card">
+                                            <h3 id="total-questions" class="stats-number">0</h3>
+                                            <p class="stats-label">总题目数</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧编辑区 -->
+                <div class="col-md-8 col-lg-9 main-content p-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h2 class="h5 mb-0 fw-bold">Quiz编辑器</h2>
+                                <small class="text-muted" id="editor-subtitle">选择一个测试集进行编辑</small>
+                            </div>
+                            <div id="current-quiz-info" class="hidden">
+                                <span class="badge bg-primary" id="current-course-badge"></span>
+                                <span class="badge bg-secondary ms-1" id="current-quiz-id"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <div id="quiz-set-editor" class="hidden">
+                                <div class="editor-section">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <label class="form-label">测试集标题</label>
+                                            <input type="text" id="quiz-set-title" class="form-control" placeholder="输入测试集标题">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">创建日期</label>
+                                            <input type="date" id="quiz-set-date" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="editor-section">
+                                    <label class="form-label">标签</label>
+                                    <input type="text" id="quiz-set-tags" class="form-control" placeholder="输入标签，用逗号分隔">
+                                    <small class="text-muted">例如: vocabulary, unit1, grammar</small>
+                                </div>
+                                
+                                <div class="editor-section">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label">Quiz数据 (JSON格式)</label>
+                                        <button id="validate-json" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-check me-1"></i>验证JSON
+                                        </button>
+                                    </div>
+                                    <textarea id="quiz-set-data" class="form-control json-editor" placeholder="在此输入Quiz数据的JSON格式..."></textarea>
+                                    <small class="text-muted">确保JSON格式正确，包含question, options, correct_answer等字段</small>
+                                </div>
+                                
+                                <div class="editor-section">
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button id="save-quiz-set" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>保存测试集
+                                        </button>
+                                        <button id="publish-quiz" class="btn btn-success">
+                                            <i class="fas fa-share me-2"></i>发布Quiz
+                                        </button>
+                                        <button id="new-quiz-set" class="btn btn-warning">
+                                            <i class="fas fa-plus me-2"></i>新建测试集
+                                        </button>
+                                        <button id="delete-quiz-set-btn" class="btn btn-danger">
+                                            <i class="fas fa-trash me-2"></i>删除测试集
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="no-selection">
+                                <div class="text-center py-5">
+                                    <i class="fas fa-edit text-muted mb-4" style="font-size: 4rem;"></i>
+                                    <h3 class="h4 text-dark mb-3">欢迎使用Quiz编辑器</h3>
+                                    <p class="text-muted mb-4">从左侧选择一个测试集开始编辑，或创建一个新的测试集。</p>
+                                    <button id="create-first-quiz" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-plus me-2"></i>创建第一个测试集
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-uiz-d289c.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // 初始化Firebase
+        console.log('正在初始化Firebase...');
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // DOM元素
+        const loginContainer = document.getElementById('login-container');
+        const appContainer = document.getElementById('app-container');
+        const signinBtn = document.getElementById('signin-btn');
+        const signoutBtn = document.getElementById('signout-btn');
+        const userEmail = document.getElementById('user-email');
+        const loginStatus = document.getElementById('login-status');
+        const courseFolders = document.getElementById('course-folders');
+        const searchInput = document.getElementById('search-input');
+        const tagFilters = document.getElementById('tag-filters');
+        const totalQuizzes = document.getElementById('total-quizzes');
+        const totalQuestions = document.getElementById('total-questions');
+        const quizSetEditor = document.getElementById('quiz-set-editor');
+        const noSelection = document.getElementById('no-selection');
+        const editorSubtitle = document.getElementById('editor-subtitle');
+        const currentQuizInfo = document.getElementById('current-quiz-info');
+        const currentCourseBadge = document.getElementById('current-course-badge');
+        const currentQuizId = document.getElementById('current-quiz-id');
+        const quizSetTitle = document.getElementById('quiz-set-title');
+        const quizSetTags = document.getElementById('quiz-set-tags');
+        const quizSetDate = document.getElementById('quiz-set-date');
+        const quizSetData = document.getElementById('quiz-set-data');
+        const saveQuizSet = document.getElementById('save-quiz-set');
+        const deleteQuizSetBtn = document.getElementById('delete-quiz-set-btn');
+        const newQuizSetBtn = document.getElementById('new-quiz-set');
+        const publishQuizBtn = document.getElementById('publish-quiz');
+        const validateJsonBtn = document.getElementById('validate-json');
+        const createFirstQuizBtn = document.getElementById('create-first-quiz');
+
+        // 全局变量
+        let currentCourseCode = null;
+        let currentQuizSetId = null;
+        let allQuizSets = [];
+        let selectedTag = null;
+        let searchTerm = '';
+
+        // 认证状态监听 - 修复版本
+        auth.onAuthStateChanged((user) => {
+            console.log('认证状态变化:', user);
+            if (user) {
+                // 用户已登录
+                console.log('用户已登录:', user.email);
+                loginContainer.style.display = 'none';
+                appContainer.style.display = 'block';
+                userEmail.textContent = user.email;
+                loginStatus.innerHTML = '<div class="alert alert-success">登录成功！正在加载数据...</div>';
+                loadCourseFolders();
+            } else {
+                // 用户未登录
+                console.log('用户未登录');
+                loginContainer.style.display = 'flex';
+                appContainer.style.display = 'none';
+                loginStatus.innerHTML = '<div class="alert alert-info">请使用Gmail登录</div>';
+            }
+        });
+
+        // Gmail登录
+        signinBtn.addEventListener('click', () => {
+            console.log('开始登录...');
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('email');
+            provider.addScope('profile');
+            
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    console.log('登录成功:', result.user.email);
+                    loginStatus.innerHTML = '<div class="alert alert-success">登录成功！</div>';
+                })
+                .catch(error => {
+                    console.error('登录错误:', error);
+                    let errorMessage = '登录失败: ';
+                    if (error.code === 'auth/popup-blocked') {
+                        errorMessage += '弹窗被阻止，请允许弹窗或使用重定向登录';
+                    } else if (error.code === 'auth/popup-closed-by-user') {
+                        errorMessage += '登录窗口被关闭';
+                    } else {
+                        errorMessage += error.message;
+                    }
+                    loginStatus.innerHTML = `<div class="alert alert-danger">${errorMessage}</div>`;
+                });
+        });
+
+        // 退出登录
+        signoutBtn.addEventListener('click', () => {
+            auth.signOut()
+                .then(() => {
+                    console.log('退出登录成功');
+                })
+                .catch(error => {
+                    console.error('退出登录错误:', error);
+                });
+        });
+
+        // 加载科目文件夹（只读）
+        function loadCourseFolders() {
+            console.log('正在加载科目文件夹...');
+            database.ref('courseFolders').on('value', snapshot => {
+                courseFolders.innerHTML = '';
+                const courses = snapshot.val();
+                
+                if (!courses) {
+                    courseFolders.innerHTML = '<div class="p-3 text-center text-muted">暂无科目数据</div>';
+                    return;
+                }
+                
+                Object.keys(courses).forEach(courseCode => {
+                    const course = courses[courseCode];
+                    const courseItem = document.createElement('div');
+                    courseItem.className = 'course-item card';
+                    courseItem.innerHTML = `
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title mb-1">${course.course}</h6>
+                                    <small class="text-muted">${course.courseCode}</small>
+                                </div>
+                                <i class="fas fa-chevron-right text-muted"></i>
+                            </div>
+                            <div class="quiz-list mt-2" id="quiz-list-${courseCode}">
+                                <!-- 测试集将在这里动态生成 -->
+                            </div>
+                        </div>
+                    `;
+                    
+                    courseFolders.appendChild(courseItem);
+                    loadQuizSets(course.courseCode, courseItem.querySelector(`#quiz-list-${courseCode}`));
+                });
+            }, error => {
+                console.error('加载科目文件夹错误:', error);
+                courseFolders.innerHTML = '<div class="p-3 text-center text-danger">加载科目数据失败</div>';
+            });
+        }
+
+        // 加载测试集
+        function loadQuizSets(courseCode, container) {
+            database.ref(`courseQuiz/${courseCode}`).on('value', snapshot => {
+                container.innerHTML = '';
+                const quizSets = snapshot.val();
+                
+                if (!quizSets) {
+                    container.innerHTML = '<div class="text-muted small text-center py-2">暂无测试集</div>';
+                    updateStats();
+                    return;
+                }
+                
+                // 更新全局测试集数据
+                allQuizSets = [];
+                Object.keys(quizSets).forEach(quizSetId => {
+                    const quizSet = quizSets[quizSetId];
+                    quizSet.id = quizSetId;
+                    quizSet.courseCode = courseCode;
+                    allQuizSets.push(quizSet);
+                });
+                
+                // 应用筛选和搜索
+                const filteredQuizSets = allQuizSets.filter(quizSet => {
+                    const matchesTag = !selectedTag || (quizSet.tags && quizSet.tags.includes(selectedTag));
+                    const matchesSearch = !searchTerm || 
+                        (quizSet.title && quizSet.title.toLowerCase().includes(searchTerm.toLowerCase()));
+                    return matchesTag && matchesSearch;
+                });
+                
+                // 显示筛选后的测试集
+                filteredQuizSets.forEach(quizSet => {
+                    const quizItem = document.createElement('div');
+                    quizItem.className = 'quiz-item';
+                    quizItem.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 small">${quizSet.title || '未命名测试集'}</h6>
+                                <div class="tags">
+                                    ${(quizSet.tags || []).map(tag => 
+                                        `<span class="badge bg-light text-dark me-1">${tag}</span>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                            <small class="text-muted">${quizSet.createdAt || ''}</small>
+                        </div>
+                    `;
+                    
+                    container.appendChild(quizItem);
+                    
+                    quizItem.addEventListener('click', () => {
+                        // 移除其他活跃状态
+                        document.querySelectorAll('.quiz-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        // 设置当前活跃状态
+                        quizItem.classList.add('active');
+                        editQuizSet(courseCode, quizSet.id, quizSet);
+                    });
+                });
+                
+                updateStats();
+                updateTagFilters();
+            }, error => {
+                console.error('加载测试集错误:', error);
+                container.innerHTML = '<div class="text-danger small text-center py-2">加载测试集失败</div>';
+            });
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            const total = allQuizSets.length;
+            const totalQues = allQuizSets.reduce((sum, quizSet) => 
+                sum + (quizSet.quizzes ? quizSet.quizzes.length : 0), 0);
+            
+            totalQuizzes.textContent = total;
+            totalQuestions.textContent = totalQues;
+        }
+
+        // 更新标签筛选器
+        function updateTagFilters() {
+            const allTags = new Set();
+            allQuizSets.forEach(quizSet => {
+                if (quizSet.tags) {
+                    quizSet.tags.forEach(tag => allTags.add(tag));
+                }
+            });
+            
+            tagFilters.innerHTML = '';
+            
+            // 添加"全部"选项
+            const allTag = document.createElement('span');
+            allTag.className = `tag-filter ${!selectedTag ? 'active' : ''}`;
+            allTag.textContent = '全部';
+            allTag.addEventListener('click', () => {
+                selectedTag = null;
+                document.querySelectorAll('.tag-filter').forEach(tag => tag.classList.remove('active'));
+                allTag.classList.add('active');
+                loadCourseFolders();
+            });
+            tagFilters.appendChild(allTag);
+            
+            // 添加其他标签
+            Array.from(allTags).sort().forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = `tag-filter ${selectedTag === tag ? 'active' : ''}`;
+                tagElement.textContent = tag;
+                tagElement.addEventListener('click', () => {
+                    selectedTag = tag;
+                    document.querySelectorAll('.tag-filter').forEach(tag => tag.classList.remove('active'));
+                    tagElement.classList.add('active');
+                    loadCourseFolders();
+                });
+                tagFilters.appendChild(tagElement);
+            });
+        }
+
+        // 搜索功能
+        searchInput.addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            loadCourseFolders();
+        });
+
+        // 创建新测试集
+        function createNewQuizSet(courseCode = '001201') {
+            currentCourseCode = courseCode;
+            currentQuizSetId = null;
+            
+            quizSetEditor.classList.remove('hidden');
+            noSelection.classList.add('hidden');
+            currentQuizInfo.classList.add('hidden');
+            
+            editorSubtitle.textContent = '创建新的测试集';
+            
+            quizSetTitle.value = '新测试集';
+            quizSetTags.value = '';
+            quizSetDate.value = new Date().toISOString().split('T')[0];
+            quizSetData.value = JSON.stringify([
+                {
+                    "question": "问题示例",
+                    "options": [
+                        { "id": "A", "text": "选项A" },
+                        { "id": "B", "text": "选项B" },
+                        { "id": "C", "text": "选项C" },
+                        { "id": "D", "text": "选项D" }
+                    ],
+                    "correct_answer": "A"
+                }
+            ], null, 2);
+        }
+
+        // 编辑测试集
+        function editQuizSet(courseCode, quizSetId, quizSet) {
+            currentCourseCode = courseCode;
+            currentQuizSetId = quizSetId;
+            
+            quizSetEditor.classList.remove('hidden');
+            noSelection.classList.add('hidden');
+            currentQuizInfo.classList.remove('hidden');
+            
+            editorSubtitle.textContent = '编辑测试集';
+            currentCourseBadge.textContent = courseCode;
+            currentQuizId.textContent = quizSetId.substring(0, 8) + '...';
+            
+            quizSetTitle.value = quizSet.title || '';
+            quizSetTags.value = (quizSet.tags || []).join(', ');
+            quizSetDate.value = quizSet.createdAt || new Date().toISOString().split('T')[0];
+            quizSetData.value = JSON.stringify(quizSet.quizzes || [], null, 2);
+        }
+
+        // 保存测试集
+        saveQuizSet.addEventListener('click', () => {
+            if (!currentCourseCode) {
+                alert('请先选择一个科目');
+                return;
+            }
+            
+            const title = quizSetTitle.value.trim();
+            const tags = quizSetTags.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+            const createdAt = quizSetDate.value;
+            let quizzes;
+            
+            try {
+                quizzes = JSON.parse(quizSetData.value);
+            } catch (e) {
+                alert('Quiz数据格式错误，请检查JSON格式');
+                return;
+            }
+            
+            if (!title) {
+                alert('请输入测试集标题');
+                return;
+            }
+            
+            const quizSetDataObj = {
+                title,
+                tags,
+                createdAt,
+                quizzes
+            };
+            
+            const quizSetRef = currentQuizSetId 
+                ? database.ref(`courseQuiz/${currentCourseCode}/${currentQuizSetId}`)
+                : database.ref(`courseQuiz/${currentCourseCode}`).push();
+                
+            quizSetRef.set(quizSetDataObj)
+                .then(() => {
+                    alert('测试集保存成功');
+                    if (!currentQuizSetId) {
+                        currentQuizSetId = quizSetRef.key;
+                    }
+                    loadCourseFolders();
+                })
+                .catch(error => {
+                    console.error('保存测试集错误:', error);
+                    alert('保存测试集失败: ' + error.message);
+                });
+        });
+
+        // 发布Quiz
+        publishQuizBtn.addEventListener('click', () => {
+            if (!currentCourseCode || !currentQuizSetId) {
+                alert('请先选择一个测试集');
+                return;
+            }
+            
+            const publishUrl = `https://alexzhangmaker.github.io/outpost/quizAnywhereV3.html?quiz=courseQuiz/${currentCourseCode}/${currentQuizSetId}/quizzes`;
+            window.open(publishUrl, '_blank');
+        });
+
+        // 验证JSON
+        validateJsonBtn.addEventListener('click', () => {
+            try {
+                JSON.parse(quizSetData.value);
+                alert('JSON格式正确！');
+            } catch (e) {
+                alert('JSON格式错误: ' + e.message);
+            }
+        });
+
+        // 删除测试集
+        deleteQuizSetBtn.addEventListener('click', () => {
+            if (!currentCourseCode || !currentQuizSetId) {
+                alert('请先选择一个测试集');
+                return;
+            }
+            
+            if (confirm('确定要删除这个测试集吗？此操作不可撤销。')) {
+                database.ref(`courseQuiz/${currentCourseCode}/${currentQuizSetId}`).remove()
+                    .then(() => {
+                        alert('测试集删除成功');
+                        resetEditor();
+                        loadCourseFolders();
+                    })
+                    .catch(error => {
+                        console.error('删除测试集错误:', error);
+                        alert('删除测试集失败: ' + error.message);
+                    });
+            }
+        });
+
+        // 新建测试集按钮
+        newQuizSetBtn.addEventListener('click', () => {
+            createNewQuizSet();
+        });
+
+        // 创建第一个测试集按钮
+        createFirstQuizBtn.addEventListener('click', () => {
+            createNewQuizSet();
+        });
+
+        // 重置编辑器
+        function resetEditor() {
+            currentCourseCode = null;
+            currentQuizSetId = null;
+            quizSetEditor.classList.add('hidden');
+            noSelection.classList.remove('hidden');
+            currentQuizInfo.classList.add('hidden');
+            editorSubtitle.textContent = '选择一个测试集进行编辑';
+        }
+
+        // 页面加载时检查认证状态
+        console.log('页面加载完成，检查认证状态...');
+    </script>
+</body>
+</html>

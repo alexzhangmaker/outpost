@@ -307,18 +307,6 @@
             background: #2980b9;
         }
         
-        .gmail-btn {
-            background: #dd4b39;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        .gmail-btn:hover {
-            background: #c23321;
-        }
-        
         .auth-switch {
             text-align: center;
             margin-top: 15px;
@@ -363,59 +351,23 @@
             overflow-y: auto;
         }
         
-        /* 手风琴样式 */
-        .folder-accordion {
-            margin-bottom: 10px;
-        }
-        
-        .folder-header {
-            padding: 12px 15px;
-            background: #f8f9fa;
+        .note-item {
+            padding: 15px;
             border: 1px solid #e1e5e9;
             border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s;
-        }
-        
-        .folder-header:hover {
-            background: #e9ecef;
-        }
-        
-        .folder-header.active {
-            background: #3498db;
-            color: white;
-        }
-        
-        .folder-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-            background: #f8f9fa;
-            border-left: 1px solid #e1e5e9;
-            border-right: 1px solid #e1e5e9;
-        }
-        
-        .folder-content.open {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        
-        .note-item {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e1e5e9;
+            margin-bottom: 10px;
             cursor: pointer;
             transition: all 0.3s;
         }
         
         .note-item:hover {
-            background: #e9ecef;
+            border-color: #3498db;
+            transform: translateY(-2px);
         }
         
-        .note-item:last-child {
-            border-bottom: none;
+        .note-item.active {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.05);
         }
         
         .note-title {
@@ -472,31 +424,6 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
-        
-        .auth-divider {
-            text-align: center;
-            margin: 15px 0;
-            position: relative;
-            color: #7f8c8d;
-        }
-        
-        .auth-divider::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #e1e5e9;
-            z-index: 1;
-        }
-        
-        .auth-divider span {
-            background: white;
-            padding: 0 10px;
-            position: relative;
-            z-index: 2;
-        }
     </style>
 </head>
 <body>
@@ -505,18 +432,6 @@
         <div class="auth-box">
             <h2 class="auth-title" id="auth-title">登录学习笔记</h2>
             <div class="auth-form">
-                <button id="gmail-login" class="auth-btn gmail-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24">
-                        <path fill="white" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="white" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="white" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="white" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    使用 Gmail 登录
-                </button>
-                
-                <div class="auth-divider"><span>或</span></div>
-                
                 <input type="email" id="auth-email" class="auth-input" placeholder="邮箱地址">
                 <input type="password" id="auth-password" class="auth-input" placeholder="密码">
                 <button id="auth-submit" class="auth-btn">登录</button>
@@ -536,7 +451,8 @@
             <!-- 笔记列表将在这里动态生成 -->
         </div>
         <div class="notes-actions">
-            <button id="close-notes-bottom" class="control-btn">关闭</button>
+            <button id="new-note" class="control-btn success">新建笔记</button>
+            <button id="save-note" class="control-btn">保存笔记</button>
         </div>
     </div>
     
@@ -579,6 +495,9 @@
                 </div>
                 <div class="progress-text" id="progress-text">0/0</div>
             </div>
+            
+            <button class="control-btn" id="print-btn">打印笔记</button>
+            <button class="control-btn success" id="save-progress" style="display: none;">保存进度</button>
         </div>
         
         <!-- 主要内容区域 -->
@@ -598,17 +517,18 @@
     <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
 
     <script>
-        // Firebase配置
-        const firebaseConfig = {
+        // Firebase配置 - 请替换为您的实际配置
+         const firebaseConfig = {
             apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
             authDomain: "outpost-8d74e.firebaseapp.com",
-            databaseURL: "https://outpost-otes-86b07.asia-southeast1.firebasedatabase.app/",
+            databaseURL: "https://outpost-8d74e-458b9.asia-southeast1.firebasedatabase.app/",
             projectId: "outpost-8d74e",
             storageBucket: "outpost-8d74e.firebasestorage.app",
             messagingSenderId: "724993324937",
             appId: "1:724993324937:web:ce6c7e6b06489331c79358",
             measurementId: "G-QPHWRTH6BH"
         };
+
 
         // 配置marked.js
         marked.setOptions({
@@ -682,9 +602,11 @@
             }
 
             convert(content) {
+                console.log('=================>>>>>>>>>>>>>>')
+                console.log(content) ;
                 // 提取演讲者备注（可选功能）
                 const speakerNotes = this.notesExtractor.extract(content);
-                
+                console.log(speakerNotes) ;
                 // 处理标准Markdown内容
                 const processedContent = this.markdownProcessor.process(content);
                 
@@ -758,8 +680,6 @@
                 this.isRegistering = false;
                 this.currentNoteId = null;
                 this.speakerNotes = null;
-                this.folders = [];
-                this.notes = [];
                 
                 this.init();
             }
@@ -778,12 +698,6 @@
                 this.db = firebase.firestore();
                 this.rtdb = firebase.database();
                 
-                // 设置Google认证提供者
-                this.googleProvider = new firebase.auth.GoogleAuthProvider();
-                // 添加Gmail范围
-                this.googleProvider.addScope('email');
-                this.googleProvider.addScope('profile');
-                
                 // 监听认证状态变化
                 this.auth.onAuthStateChanged((user) => {
                     this.handleAuthStateChange(user);
@@ -796,8 +710,9 @@
                     // 用户已登录
                     document.getElementById('login-btn').style.display = 'none';
                     document.getElementById('user-info').style.display = 'flex';
-                    document.getElementById('user-name').textContent = user.displayName || user.email;
-                    document.getElementById('user-avatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+                    document.getElementById('save-progress').style.display = 'block';
+                    document.getElementById('user-name').textContent = user.email;
+                    document.getElementById('user-avatar').textContent = user.email.charAt(0).toUpperCase();
                     
                     // 加载用户笔记
                     this.loadUserNotes();
@@ -805,6 +720,7 @@
                     // 用户未登录
                     document.getElementById('login-btn').style.display = 'block';
                     document.getElementById('user-info').style.display = 'none';
+                    document.getElementById('save-progress').style.display = 'none';
                     document.getElementById('auth-container').style.display = 'none';
                 }
             }
@@ -813,51 +729,54 @@
                 if (!this.user) return;
                 
                 try {
-                    // 从noteFolders路径获取文件夹数据
-                    const foldersRef = this.rtdb.ref('noteFolders');
-                    const foldersSnapshot = await foldersRef.once('value');
+                    // 从Realtime Database的grammar路径读取所有笔记
+                    const grammarRef = this.rtdb.ref('grammar');
+                    const snapshot = await grammarRef.once('value');
                     
-                    // 从mdNotes路径获取笔记元数据
-                    const notesRef = this.rtdb.ref('mdNotes');
-                    const notesSnapshot = await notesRef.once('value');
+                    const notesList = document.getElementById('notes-list');
+                    notesList.innerHTML = '';
                     
-                    if (!foldersSnapshot.exists() && !notesSnapshot.exists()) {
-                        this.showNotesList('<p>数据库中没有找到任何笔记数据。</p>');
+                    if (!snapshot.exists()) {
+                        notesList.innerHTML = '<p>数据库中没有找到任何语法笔记。</p>';
                         return;
                     }
                     
-                    // 处理文件夹数据
-                    this.folders = [];
-                    if (foldersSnapshot.exists()) {
-                        const foldersData = foldersSnapshot.val();
-                        for (const [key, value] of Object.entries(foldersData)) {
-                            this.folders.push({
-                                id: key,
-                                course: value.course,
-                                courseCode: value.courseCode
-                            });
+                    const grammarData = snapshot.val();
+                    let noteCount = 0;
+                    
+                    // 遍历grammar路径下的所有key-value
+                    for (const [key, value] of Object.entries(grammarData)) {
+                        const noteItem = document.createElement('div');
+                        noteItem.className = 'note-item';
+                        noteItem.dataset.id = key;
+                        
+                        // 从markdown内容中提取标题
+                        let title = value.title;
+                        let noteContent = value.content;
+                        
+                        if (typeof noteContent === 'string') {
+                            // 修复换行符问题 - 预处理内容
+                            //noteContent = this.fixLineBreaks(noteContent);
+                            
+                            const converter = new MarkdownConverter();
+                            const result = converter.convert(noteContent);
+                            title = result.title;
                         }
+                        
+                        noteItem.innerHTML = `
+                            <div class="note-title">${title}</div>
+                            <div class="note-meta">ID: ${key}</div>
+                        `;
+                        noteItem.addEventListener('click', () => {
+                            this.loadNote(key, title,noteContent);
+                        });
+                        notesList.appendChild(noteItem);
+                        noteCount++;
                     }
                     
-                    // 处理笔记数据
-                    this.notes = [];
-                    if (notesSnapshot.exists()) {
-                        const notesData = notesSnapshot.val();
-                        for (const [key, value] of Object.entries(notesData)) {
-                            this.notes.push({
-                                id: key,
-                                title: value.title,
-                                mdNote: value.mdNote,
-                                subject: value.subject,
-                                tags: value.tags || [],
-                                createdAt: value.createdAt,
-                                updatedAt: value.updatedAt
-                            });
-                        }
+                    if (noteCount === 0) {
+                        notesList.innerHTML = '<p>grammar路径下没有找到任何笔记。</p>';
                     }
-                    
-                    // 渲染笔记列表
-                    this.renderNotesList();
                     
                 } catch (error) {
                     console.error('加载笔记失败:', error);
@@ -865,126 +784,48 @@
                 }
             }
 
-            renderNotesList() {
-                const notesList = document.getElementById('notes-list');
-                notesList.innerHTML = '';
+            // 修复Firebase数据中的换行符问题
+            fixLineBreaks(content) {
+                if (typeof content !== 'string') return content;
                 
-                if (this.folders.length === 0 && this.notes.length === 0) {
-                    notesList.innerHTML = '<p>没有找到任何笔记数据。</p>';
-                    return;
-                }
+                // 处理常见的换行符丢失情况
+                let fixedContent = content
+                    // 处理自定义块
+                    .replace(/:::\s*(\w+)\s*/g, ':::$1\n')
+                    .replace(/\s*:::\s*/g, '\n:::\n')
+                    // 处理标题
+                    .replace(/#+\s+/g, '\n$&\n')
+                    // 处理列表
+                    .replace(/\s*[-*+]\s+/g, '\n$&\n')
+                    // 处理代码块
+                    .replace(/```/g, '\n```\n')
+                    // 处理引用
+                    .replace(/>\s+/g, '\n$&\n')
+                    // 处理分割线
+                    .replace(/\s*---\s*/g, '\n\n---\n\n')
+                    // 处理多个连续空格
+                    .replace(/\s{2,}/g, '\n\n')
+                    // 处理自定义块内的内容
+                    .replace(/(:::[\w-]+)\s+/g, '$1\n')
+                    .replace(/\s+(:::)/g, '\n$1');
+
+                // 移除多余的空行（连续3个以上换行符）
+                fixedContent = fixedContent.replace(/\n{3,}/g, '\n\n');
                 
-                // 按文件夹组织笔记
-                const notesByFolder = {};
-                
-                // 初始化文件夹
-                this.folders.forEach(folder => {
-                    notesByFolder[folder.courseCode] = {
-                        folder: folder,
-                        notes: []
-                    };
-                });
-                
-                // 将笔记分配到对应文件夹
-                this.notes.forEach(note => {
-                    const courseCode = note.subject?.courseCode;
-                    if (courseCode && notesByFolder[courseCode]) {
-                        notesByFolder[courseCode].notes.push(note);
-                    } else {
-                        // 如果没有匹配的文件夹，创建一个"未分类"文件夹
-                        if (!notesByFolder['uncategorized']) {
-                            notesByFolder['uncategorized'] = {
-                                folder: {
-                                    id: 'uncategorized',
-                                    course: '未分类',
-                                    courseCode: 'uncategorized'
-                                },
-                                notes: []
-                            };
-                        }
-                        notesByFolder['uncategorized'].notes.push(note);
-                    }
-                });
-                
-                // 渲染文件夹和笔记
-                for (const [courseCode, folderData] of Object.entries(notesByFolder)) {
-                    const folderElement = document.createElement('div');
-                    folderElement.className = 'folder-accordion';
-                    
-                    const folderHeader = document.createElement('div');
-                    folderHeader.className = 'folder-header';
-                    folderHeader.innerHTML = `
-                        <span>${folderData.folder.course} (${folderData.notes.length})</span>
-                        <span>▼</span>
-                    `;
-                    
-                    const folderContent = document.createElement('div');
-                    folderContent.className = 'folder-content';
-                    
-                    if (folderData.notes.length === 0) {
-                        folderContent.innerHTML = '<p style="padding: 15px; text-align: center; color: #7f8c8d;">此文件夹中没有笔记</p>';
-                    } else {
-                        folderData.notes.forEach(note => {
-                            const noteItem = document.createElement('div');
-                            noteItem.className = 'note-item';
-                            noteItem.dataset.id = note.id;
-                            
-                            noteItem.innerHTML = `
-                                <div class="note-title">${note.title}</div>
-                                <div class="note-meta">创建时间: ${note.createdAt}</div>
-                            `;
-                            
-                            noteItem.addEventListener('click', () => {
-                                this.loadNote(note);
-                            });
-                            
-                            folderContent.appendChild(noteItem);
-                        });
-                    }
-                    
-                    folderHeader.addEventListener('click', () => {
-                        const isOpen = folderContent.classList.contains('open');
-                        
-                        // 关闭所有其他文件夹
-                        document.querySelectorAll('.folder-content').forEach(content => {
-                            content.classList.remove('open');
-                        });
-                        document.querySelectorAll('.folder-header').forEach(header => {
-                            header.classList.remove('active');
-                        });
-                        
-                        // 切换当前文件夹
-                        if (!isOpen) {
-                            folderContent.classList.add('open');
-                            folderHeader.classList.add('active');
-                        }
-                    });
-                    
-                    folderElement.appendChild(folderHeader);
-                    folderElement.appendChild(folderContent);
-                    notesList.appendChild(folderElement);
-                }
+                return fixedContent.trim();
             }
 
-            showNotesList(content) {
-                const notesList = document.getElementById('notes-list');
-                notesList.innerHTML = content;
-            }
-
-            async loadNote(note) {
-                this.currentNoteId = note.id;
+            async loadNote(noteId, title,noteContent) {
+                this.currentNoteId = noteId;
                 
-                try {
-                    // 从mdNote URL获取Markdown内容
-                    const response = await fetch(note.mdNote);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
-                    const markdownContent = await response.text();
+                // 更新当前幻灯片内容
+                if (noteContent) {
+                    // 确保内容格式正确
+                    console.log(noteContent) ;
+                    //const processedContent = this.fixLineBreaks(noteContent);
                     
                     const converter = new MarkdownConverter();
-                    const result = converter.convert(markdownContent);
+                    const result = converter.convert(noteContent);
                     
                     this.slideData = {
                         title: result.title,
@@ -997,16 +838,19 @@
                     this.updateProgress();
                     
                     // 更新课程信息
-                    document.getElementById('course-title').textContent = note.title;
+                    document.getElementById('course-title').textContent = title;//this.slideData.title;
                     document.getElementById('course-meta').textContent = `${this.totalSlides - 1}个章节`;
                     
-                    // 关闭笔记面板
-                    document.getElementById('notes-panel').classList.remove('open');
+                    // 高亮当前笔记
+                    document.querySelectorAll('.note-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    const currentNoteItem = document.querySelector(`.note-item[data-id="${noteId}"]`);
+                    if (currentNoteItem) {
+                        currentNoteItem.classList.add('active');
+                    }
                     
                     this.showSyncStatus('笔记加载成功', 'success');
-                } catch (error) {
-                    console.error('加载笔记内容失败:', error);
-                    this.showSyncStatus('加载笔记内容失败', 'error');
                 }
             }
 
@@ -1023,6 +867,7 @@
 1. **选择笔记**：点击"我的笔记"按钮打开笔记列表
 2. **导航**：使用左右箭头键或按钮切换页面
 3. **全屏**：点击全屏按钮获得更好的阅读体验
+4. **保存进度**：登录后可以自动保存学习进度
 
 ---
 
@@ -1030,10 +875,11 @@
 
 - 📚 **标准Markdown支持** - 完全兼容标准Markdown语法
 - 🎯 **清晰的文档结构** - 一级标题作为文档标题，二级标题作为章节
+- 💾 **云端同步** - 登录后自动保存学习进度
 - 📱 **响应式设计** - 在各种设备上都能良好显示
 
 **开始您的学习之旅吧！**`;
-
+let c=`# 欢迎使用学习笔记查看器  请从左侧笔记列表中选择一个笔记开始学习。  ---  ## 如何使用  1. **选择笔记**：点击"我的笔记"按钮打开笔记列表 2. **导航**：使用左右箭头键或按钮切换页面 3. **全屏**：点击全屏按钮获得更好的阅读体验 4. **保存进度**：登录后可以自动保存学习进度  ---  ## 功能特点  - 📚 **标准Markdown支持** - 完全兼容标准Markdown语法 - 🎯 **清晰的文档结构** - 一级标题作为文档标题，二级标题作为章节 - 💾 **云端同步** - 登录后自动保存学习进度 - 📱 **响应式设计** - 在各种设备上都能良好显示  **开始您的学习之旅吧！**`;
                 const converter = new MarkdownConverter();
                 const result = converter.convert(defaultContent);
                 
@@ -1106,11 +952,52 @@
                     Reveal.addEventListener('slidechanged', (event) => {
                         this.currentSlideIndex = event.indexh;
                         this.updateProgress();
+                        
+                        // 自动保存进度（如果用户已登录）
+                        if (this.user) {
+                            this.saveProgress();
+                        }
                     });
 
                     // 初始进度更新
                     this.updateProgress();
+                    
+                    // 加载用户进度（如果用户已登录）
+                    if (this.user) {
+                        this.loadProgress();
+                    }
                 });
+            }
+
+            async saveProgress() {
+                if (!this.user || !this.currentNoteId) return;
+                
+                try {
+                    await this.db.collection('userProgress').doc(this.user.uid).set({
+                        currentNoteId: this.currentNoteId,
+                        currentSlide: this.currentSlideIndex,
+                        progress: ((this.currentSlideIndex + 1) / this.totalSlides) * 100,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                } catch (error) {
+                    console.error('保存进度失败:', error);
+                }
+            }
+
+            async loadProgress() {
+                if (!this.user) return;
+                
+                try {
+                    const progressDoc = await this.db.collection('userProgress').doc(this.user.uid).get();
+                    if (progressDoc.exists) {
+                        const progress = progressDoc.data();
+                        if (progress.currentSlide !== undefined) {
+                            Reveal.slide(progress.currentSlide);
+                        }
+                    }
+                } catch (error) {
+                    console.error('加载进度失败:', error);
+                }
             }
 
             showAuth() {
@@ -1165,19 +1052,6 @@
                 }
             }
 
-            async handleGmailLogin() {
-                try {
-                    const result = await this.auth.signInWithPopup(this.googleProvider);
-                    // 登录成功，认证状态监听器会自动处理
-                    this.hideAuth();
-                } catch (error) {
-                    console.error('Gmail登录失败:', error);
-                    const errorDiv = document.getElementById('auth-error');
-                    errorDiv.textContent = `Gmail登录失败: ${error.message}`;
-                    errorDiv.style.display = 'block';
-                }
-            }
-
             async logout() {
                 try {
                     await this.auth.signOut();
@@ -1211,6 +1085,10 @@
                     this.toggleFullscreen();
                 });
 
+                document.getElementById('print-btn').addEventListener('click', () => {
+                    window.print();
+                });
+
                 // 认证相关
                 document.getElementById('login-btn').addEventListener('click', () => {
                     this.showAuth();
@@ -1222,10 +1100,6 @@
 
                 document.getElementById('auth-submit').addEventListener('click', () => {
                     this.handleAuth();
-                });
-
-                document.getElementById('gmail-login').addEventListener('click', () => {
-                    this.handleGmailLogin();
                 });
 
                 document.getElementById('auth-switch').addEventListener('click', () => {
@@ -1241,8 +1115,22 @@
                     document.getElementById('notes-panel').classList.remove('open');
                 });
 
-                document.getElementById('close-notes-bottom').addEventListener('click', () => {
-                    document.getElementById('notes-panel').classList.remove('open');
+                document.getElementById('new-note').addEventListener('click', () => {
+                    this.currentNoteId = null;
+                    document.querySelectorAll('.note-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    this.loadDefaultContent();
+                    this.showSyncStatus('已创建新笔记会话', 'info');
+                });
+
+                document.getElementById('save-note').addEventListener('click', () => {
+                    this.showSyncStatus('笔记功能开发中...', 'info');
+                });
+
+                document.getElementById('save-progress').addEventListener('click', () => {
+                    this.saveProgress();
+                    this.showSyncStatus('进度已保存', 'success');
                 });
 
                 // 键盘快捷键
