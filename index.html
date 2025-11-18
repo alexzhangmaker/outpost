@@ -267,6 +267,7 @@ async function _onDOMContentLoad(event){
     _InitSupabase() ;
     initSharedWorkerUser(gCallbackResponse) ;
 
+    document.querySelector('#idBTNToDo').click(event) ;
     editor = new toastui.Editor({
         el: document.querySelector('#editor'),
         previewStyle: 'vertical',
@@ -275,25 +276,6 @@ async function _onDOMContentLoad(event){
         initialEditType: 'wysiwyg'
       });
 
-    document.querySelector('#idBTNSaveNote').addEventListener('click',async (event)=>{
-        let title = document.querySelector('#docTitle').value;
-        let now = new Date() ;
-        if(title=='')title = now.toLocaleDateString() ;
-        const content = editor.getMarkdown();
-        //await API_PlusMDMemo_Supabase(title, content);
-        let tagEditor = document.querySelector('#editor') ;
-        let activeMemoID = tagEditor.dataset.memoID ;
-        if(activeMemoID==undefined || activeMemoID==''){
-            activeMemoID = await _InsertDocumentSupabase(title, content) ;
-            tagEditor.dataset.memoID = activeMemoID ;
-            let idFolderDefault = '680a31ab-cda1-4973-8ecb-788a7398ac4c' ;
-            await addNote2Folder(activeMemoID,idFolderDefault) ;
-        }else{
-            await _UpdateDocumentSupabase(activeMemoID,title,content) ;
-
-        }
-
-    }) ;
 }
 
 </script>
@@ -343,7 +325,25 @@ async function _onDOMContentLoad(event){
         });
     }
 
+    async function _onClickSaveNote(event){
+        let title = document.querySelector('#docTitle').value;
+        let now = new Date() ;
+        if(title=='')title = now.toLocaleDateString() ;
+        const content = editor.getMarkdown();
+        //await API_PlusMDMemo_Supabase(title, content);
+        let tagEditor = document.querySelector('#editor') ;
+        let activeMemoID = tagEditor.dataset.memoID ;
+        if(activeMemoID==undefined || activeMemoID==''){
+            activeMemoID = await _InsertDocumentSupabase(title, content) ;
+            tagEditor.dataset.memoID = activeMemoID ;
+            let idFolderDefault = '680a31ab-cda1-4973-8ecb-788a7398ac4c' ;
+            await addNote2Folder(activeMemoID,idFolderDefault) ;
+        }else{
+            await _UpdateDocumentSupabase(activeMemoID,title,content) ;
 
+        }
+
+    }
 
 
 </script>
@@ -359,7 +359,7 @@ document.querySelector('#idBTNDictAnywhere').addEventListener('click',_onClick_D
 document.querySelector('#idBTNDictationTh').addEventListener('click',_onClick_Dictation) ;
 document.querySelector('#idBTNCloudSafe').addEventListener('click',_onClick_CloudSafe) ;
 document.querySelector('#idBTNSetting').addEventListener('click',(event)=>{alert('tdb')}) ;
-
+document.querySelector('#idBTNSaveNote').addEventListener('click',_onClickSaveNote) ;
 
 
 </script>
