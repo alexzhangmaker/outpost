@@ -243,7 +243,7 @@ function _parseTodoString(input) {
     let cDate = new Date(year,month-1,day,0, 0, 0, 0) ;//year, month, day, hours, minutes, seconds, milliseconds
     return {
         date: cDate.toLocaleString(),
-        about: topic || "all",
+        about: topic || "随手记",
         memo: details.trim() ,
         ttm:today.getTime()
     };
