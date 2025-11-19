@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语学习音频应用</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=enable" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=install_desktop" />
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_back" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_right_alt" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 左侧导航区 */
+        .sidebar {
+            width: 320px;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+        
+        .app-title {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+        }
+        
+        .app-title::before {
+            content: "🎵";
+            margin-right: 10px;
+        }
+        
+        .nav-section {
+            margin-bottom: 25px;
+        }
+        
+        .nav-header {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #ecf0f1;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-header::before {
+            content: "•";
+            margin-right: 8px;
+            color: #3498db;
+        }
+        
+        .lesson-list {
+            list-style: none;
+        }
+        
+        .lesson-item {
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            background-color: #34495e;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            font-size: 16px;
+        }
+        
+        .lesson-item:hover {
+            background-color: #3d566e;
+            transform: translateX(5px);
+        }
+        
+        .lesson-item.active {
+            background-color: #3498db;
+            font-weight: 500;
+        }
+        
+        /* 右侧内容区 */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 播放器区域 */
+        .player-section {
+            padding: 25px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        #waveform {
+            width: 100%;
+            height: 180px;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .player-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* 时间戳区域 */
+        .timestamps-section {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+        }
+        
+        .table-container {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 500;
+            color: #7f8c8d;
+        }
+        
+        tr {
+            transition: background-color 0.2s;
+        }
+        
+        tr:hover {
+            background-color: #f5f7fa;
+        }
+        
+        tr.active {
+            background-color: #e1f0fa;
+        }
+        
+        .time-input {
+            width: 70px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .thai-text {
+            /*font-family: 'Noto Sans Thai', sans-serif;*/
+            font-size: 22px;
+            width:50%;
+        }
+        
+        .translation {
+            color: #7f8c8d;
+            font-style: italic;
+            font-size:14px;
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+            font-size: 18px;
+            margin: 0 5px;
+        }
+        
+        .action-btn:hover {
+            color: #2980b9;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+            }
+            
+            .content-area {
+                height: 60vh;
+            }
+        }
+    </style>
+    <style>
+        .noShow{
+            display: none;
+        }
+
+        .btnOutpost{
+            font-size: 18px;
+        }
+
+        .btnOutpost:hover{
+            cursor: pointer;
+        }
+    </style>
+
+</head>
+<body>
+    <!-- 左侧导航区 -->
+    <div class="sidebar">
+        <div class="app-title">
+            
+            <span style="font-size:24px;">泰语学习音频应用</span>
+
+        </div>
+        
+        
+        <div class="nav-section">
+            <div class="nav-header">音频课件</div>
+            <ul class="lesson-list" id="lessonList">
+                <li class="lesson-item">加载中...</li>
+            </ul>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-header">学习进度</div>
+            <div style="padding: 10px; background: #34495e; border-radius: 6px;">
+                <div style="margin-bottom: 8px;">已完成: <span id="completedLessons">0</span>/<span id="totalLessons">0</span></div>
+                <div style="height: 8px; background: #2c3e50; border-radius: 4px; overflow: hidden;">
+                    <div style="height: 100%; width: 30%; background: #3498db;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-header">设置</div>
+            <div style="padding: 10px;">
+                <label>
+                    <input type="checkbox" id="autoPlayNext"> 自动播放下一句
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 右侧内容区 -->
+    <div class="content-area">
+        <!-- 播放器区域 -->
+        <div class="player-section">
+            <div class="section-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="btnOutpost" id="idBTNSignIn" viewBox="0 0 16 16" fill="#000000"><g fill="#000000"><path d="M12.5 16a3.5 3.5 0 1 0 0-7a3.5 3.5 0 0 0 0 7Zm1.679-4.493l-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.708l.547.548l1.17-1.951a.5.5 0 1 1 .858.514ZM11 5a3 3 0 1 1-6 0a3 3 0 0 1 6 0ZM8 7a2 2 0 1 0 0-4a2 2 0 0 0 0 4Z"/><path d="M8.256 14a4.474 4.474 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10c.26 0 .507.009.74.025c.226-.341.496-.65.804-.918C9.077 9.038 8.564 9 8 9c-5 0-6 3-6 4s1 1 1 1h5.256Z"/></g></svg>
+
+                <a id="idBTNToggleNavBar" class="btnOutpost">
+                    <svg xmlns="http://www.w3.org/2000/svg"  width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5h18M3 12h18M3 19h18"/></svg>            
+                </a>
+                <span id="currentLessonTitle">选择左侧音频课件开始学习</span>
+            </div> 
+            <div id="waveform"></div>
+            <div class="player-controls">
+                <a id="playPauseBtn" class="btnOutpost"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M22 17.5L18.5 20v-5l3.5 2.5ZM2 5h18M2 11h18M2 17h12"/></svg></a>
+                <div class="nav-buttons">
+                    <a id="prevRegionBtn" class="btnOutpost"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12H3m0 0l8.5-8.5M3 12l8.5 8.5"/></svg>上一句</a>
+                    <a id="nextRegionBtn" class="btnOutpost" disabled><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12h18m0 0l-8.5-8.5M21 12l-8.5 8.5"/></svg>下一句</a>
+                </div>
+                <a id="idSaveChange" class="btnOutpost"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#000000"><g fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="m14 19l3 3l5-5M4 6v6s0 3 7 3s7-3 7-3V6"/><path d="M11 3c7 0 7 3 7 3s0 3-7 3s-7-3-7-3s0-3 7-3Zm0 18c-7 0-7-3-7-3v-6"/></g></svg>保存</a>
+            </div>
+        </div>
+        
+        <!-- 时间戳区域 -->
+        <div class="timestamps-section">
+            <div class="section-title">时间戳句子</div>
+            <div class="table-container">
+                <table id="timestampsTable">
+                    <thead>
+                        <tr>
+                            <th width="100" style="font-size: 18px;">开始</th>
+                            <th width="100" style="font-size: 18px;">结束</th>
+                            <th width="35%" style="font-size: 18px;">泰语句子</th>
+                            <th style="font-size: 18px;">英文翻译</th>
+                            <th width="100" style="font-size: 18px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timestampsBody">
+                        <tr>
+                            <td colspan="5" class="loading">选择音频课件后时间戳将显示在这里</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase配置 - 需要替换为实际配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-audible-8d74e-6ba9c.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        
+        // 初始化Firebase
+        // Correct v8 code
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
+        
+
+        // Wavesurfer实例
+        let wavesurfer = null;
+        let currentRegions = [];
+        let currentLesson = null;
+        let currentRegionIndex = -1;
+        let regionsPlugin = WaveSurfer.Regions.create() ;
+        //let regions = RegionsPlugin.create() ;
+
+        
+        let activeRegion = null ;
+
+        let activeLesson  ;
+        
+
+        // DOM元素
+        const lessonList = document.getElementById('lessonList');
+        const currentLessonTitle = document.getElementById('currentLessonTitle');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const prevRegionBtn = document.getElementById('prevRegionBtn');
+        const nextRegionBtn = document.getElementById('nextRegionBtn');
+        const timestampsBody = document.getElementById('timestampsBody');
+        const autoPlayNext = document.getElementById('autoPlayNext');
+        const btnToggleNav = document.getElementById('idBTNToggleNavBar') ;
+        const btnSaveChange = document.querySelector("#idSaveChange") ;
+
+        // 从Firebase获取课件列表
+        function loadLessons() {
+            const lessonsRef = database.ref('audibles');
+            
+            lessonsRef.on('value', (snapshot) => {
+                const lessons = snapshot.val();
+                console.log(lessons) ;
+                lessonList.innerHTML = '';
+                
+                if (lessons) {
+
+                    /*
+                    Object.keys(lessons).forEach(key => {
+                        const lesson = lessons[key];
+                        const li = document.createElement('li');
+                        li.className = 'lesson-item';
+                        li.textContent = lesson.title;
+                        li.dataset.key = key;
+                        li.addEventListener('click', () => {
+                            loadLesson(lesson) ;
+                            activeLesson = lesson ;
+                            activeLesson.key = key ;
+                        });
+                        lessonList.appendChild(li);
+                    });
+                    */
+                    let keys = Object.keys(lessons) ;
+                    let jsonLessons=[] ;
+                    for(let i=0;i<keys.length;i++){
+                        let jsonLesson = lessons[keys[i]] ;
+                        jsonLesson.key = keys[i] ;
+                        jsonLessons.push(jsonLesson) ;
+                    }
+                    function sortByTitle(arr) {
+                        return arr.slice().sort((a, b) => {
+                            const titleA = a.title.toLowerCase();
+                            const titleB = b.title.toLowerCase();
+                            return titleA.localeCompare(titleB);
+                        });
+                    }
+                    const orderedLessons = sortByTitle(jsonLessons) ;
+                    orderedLessons.forEach(lesson=>{
+                        const li = document.createElement('li');
+                        li.className = 'lesson-item';
+                        li.textContent = lesson.title;
+                        li.dataset.key = lesson.key;
+                        li.addEventListener('click', () => {
+                            loadLesson(lesson) ;
+                            activeLesson = lesson ;
+                            activeLesson.key = key ;
+                        });
+                        lessonList.appendChild(li);
+                    }) ;
+                    
+                    document.getElementById('totalLessons').textContent = Object.keys(lessons).length;
+                } else {
+                    const li = document.createElement('li');
+                    li.className = 'lesson-item';
+                    li.textContent = '没有找到音频课件';
+                    lessonList.appendChild(li);
+                }
+            }, (error) => {
+                console.error('加载课件列表失败:', error);
+                lessonList.innerHTML = '<li class="lesson-item">加载失败，请刷新重试</li>';
+            });
+        }
+        
+
+
+        // Give regions a random color when they are created
+        const random = (min, max) => Math.random() * (max - min) + min
+        const randomColor = () => `rgba(${random(0, 255)}, ${random(0, 255)}, ${random(0, 255)}, 0.5)`
+
+        // 加载选定的课件
+        function loadLesson(lesson) {
+            currentLesson = lesson;
+            currentRegionIndex = -1;
+            
+            // 更新UI
+            document.querySelectorAll('.lesson-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.key === lesson.key) {
+                    item.classList.add('active');
+                }
+            });
+            
+            currentLessonTitle.textContent = lesson.title;
+            
+            // 初始化或重置wavesurfer
+            if (wavesurfer) {
+                wavesurfer.destroy();
+                regionsPlugin.clearRegions();
+            }
+            
+            wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: '#3498db',
+                progressColor: '#2980b9',
+                cursorColor: '#2c3e50',
+                barWidth: 3,
+                barRadius: 3,
+                barGap: 2,
+                height: 180,
+                normalize: true,
+                plugins: [regionsPlugin/*,TimelinePlugin.create()*/]
+            });
+            
+            // 加载音频
+            wavesurfer.load(lesson.audioURL);
+            
+            // 设置事件监听
+            wavesurfer.on('ready', () => {
+                playPauseBtn.disabled = false;
+                prevRegionBtn.disabled = false;
+                nextRegionBtn.disabled = false;
+                
+                // 清除现有区域
+                currentRegions.forEach(region => region.remove());
+                currentRegions = [];
+                
+                // 创建区域
+                if (lesson.timeStamps && lesson.timeStamps.length > 0) {
+                    lesson.timeStamps.forEach((stamp, index) => {
+                        const region = regionsPlugin.addRegion({
+                            start: stamp.start,
+                            end: stamp.end,
+                            color: `rgba(52, 152, 219, 0.3)`,
+                            drag: true,
+                            resize: true
+                        });
+                        
+                        region.id = index;
+                        currentRegions.push(region);
+                        
+                        // 区域点击事件
+                        region.on('click', () => {
+                            playRegion(index);
+                        });
+                        
+                        // 区域更新事件
+                        region.on('update-end', () => {
+                            updateTimestampTable(index, region.start, region.end);
+                        });
+                    });
+                }
+                
+                // 生成时间戳表格
+                generateTimestampsTable(lesson.timeStamps);
+            });
+            
+            wavesurfer.on('play', () => {
+                playPauseBtn.textContent = '暂停';
+            });
+            
+            wavesurfer.on('pause', () => {
+                playPauseBtn.textContent = '播放';
+            });
+            
+            wavesurfer.on('finish', () => {
+                playPauseBtn.textContent = '播放';
+            });
+
+            regionsPlugin.on('region-in', (region) => {
+                console.log('region-in', region)
+                activeRegion = region
+            })
+            regionsPlugin.on('region-out', (region) => {
+                console.log('region-out', region)
+                if (activeRegion === region) {
+                    if (autoPlayNext.checked) {
+                        region.play()
+                    } else {
+                        activeRegion = null
+                    }
+                }
+            })
+            regionsPlugin.on('region-clicked', (region, e) => {
+                e.stopPropagation() // prevent triggering a click on the waveform
+                activeRegion = region
+                region.play(true)
+                region.setOptions({ color: randomColor() })
+            })
+            // Reset the active region when the user clicks anywhere in the waveform
+            wavesurfer.on('interaction', () => {
+                activeRegion = null
+            }) ;
+            
+            // 播放/暂停按钮事件
+            playPauseBtn.addEventListener('click', () => {
+                if (wavesurfer.isPlaying()) {
+                    wavesurfer.pause();
+                } else {
+                    wavesurfer.play();
+                }
+            });
+            
+            // 上一句/下一句按钮事件
+            prevRegionBtn.addEventListener('click', playPrevRegion);
+            nextRegionBtn.addEventListener('click', playNextRegion);
+        }
+        
+        // 生成时间戳表格
+        function generateTimestampsTable(timeStamps) {
+            timestampsBody.innerHTML = '';
+            
+            if (!timeStamps || timeStamps.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="5" class="loading">此课件没有时间戳数据</td>';
+                timestampsBody.appendChild(row);
+                return;
+            }
+            
+            timeStamps.forEach((stamp, index) => {
+                const row = document.createElement('tr');
+                row.dataset.index = index;
+                
+                row.innerHTML = `
+                    <td>
+                        <input type="number" class="time-input start-time" value="${stamp.start.toFixed(2)}" step="0.1">
+                    </td>
+                    <td>
+                        <input type="number" class="time-input end-time" value="${stamp.end.toFixed(2)}" step="0.1">
+                    </td>
+                    <td class="thai-text">${stamp.thai_text}</td>
+                    <td class="translation">${stamp.english_translation}</td>
+                    <td>
+                        <button class="action-btn play-row">▶️</button>
+                        <button class="action-btn delete-row">❌</button>
+                    </td>
+                `;
+                
+                timestampsBody.appendChild(row);
+                
+                // 播放按钮事件
+                row.querySelector('.play-row').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    playRegion(index);
+                });
+                
+                // 删除按钮事件
+                row.querySelector('.delete-row').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteRegion(index);
+                });
+                
+                // 开始时间输入事件
+                row.querySelector('.start-time').addEventListener('change', (e) => {
+                    const newStart = parseFloat(e.target.value);
+                    if (!isNaN(newStart) && newStart < currentRegions[index].end) {
+                        currentRegions[index].setOptions({ start: newStart });
+                        //currentRegions[index].start = newStart ;
+                        updateTimestampTable(index, newStart, currentRegions[index].end);
+                    } else {
+                        e.target.value = currentRegions[index].start.toFixed(2);
+                    }
+                });
+                
+                // 结束时间输入事件
+                row.querySelector('.end-time').addEventListener('change', (e) => {
+                    const newEnd = parseFloat(e.target.value);
+                    if (!isNaN(newEnd) && newEnd > currentRegions[index].start) {
+                        currentRegions[index].setOptions({ end: newEnd });
+                        updateTimestampTable(index, currentRegions[index].start, newEnd);
+                    } else {
+                        e.target.value = currentRegions[index].end.toFixed(2);
+                    }
+                });
+            });
+        }
+        
+        // 播放指定区域
+        function playRegion(index) {
+            if (index < 0 || index >= currentRegions.length) return;
+            
+            const region = currentRegions[index];
+            wavesurfer.pause();
+            //wavesurfer.setCurrentTime(region.start);
+            region.play() ;
+            //wavesurfer.play();
+            
+            //region.play();
+            
+            // 高亮当前行
+            document.querySelectorAll('#timestampsBody tr').forEach(row => {
+                row.classList.remove('active');
+            });
+            document.querySelector(`#timestampsBody tr[data-index="${index}"]`).classList.add('active');
+            
+            currentRegionIndex = index;
+            
+            // 区域播放结束事件
+            region.once('out', () => {
+                if (autoPlayNext.checked) {
+                    playNextRegion();
+                }
+            });
+        }
+        
+        // 播放上一个区域
+        function playPrevRegion() {
+            if (currentRegions.length === 0) return;
+            
+            let newIndex = currentRegionIndex - 1;
+            if (newIndex < 0) newIndex = currentRegions.length - 1;
+            
+            playRegion(newIndex);
+        }
+        
+        // 播放下一个区域
+        function playNextRegion() {
+            if (currentRegions.length === 0) return;
+            
+            let newIndex = currentRegionIndex + 1;
+            if (newIndex >= currentRegions.length) newIndex = 0;
+            
+            playRegion(newIndex);
+        }
+        
+        // 更新时间戳表格
+        function updateTimestampTable(index, start, end) {
+            const row = document.querySelector(`#timestampsBody tr[data-index="${index}"]`);
+            if (row) {
+                row.querySelector('.start-time').value = start.toFixed(2);
+                row.querySelector('.end-time').value = end.toFixed(2);
+            }
+        }
+        
+        // 删除区域
+        function deleteRegion(index) {
+            if (index < 0 || index >= currentRegions.length) return;
+            
+            currentRegions[index].remove();
+            currentRegions.splice(index, 1);
+            
+            // 重新生成表格
+            generateTimestampsTable(currentLesson.timeStamps);
+        }
+        
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLessons();
+        });
+    </script>
+    <script>
+
+        btnSaveChange.addEventListener('click',async (event)=>{
+            //alert("todo save")
+            console.log(activeLesson);
+
+            for(let i=0;i<currentRegions.length;i++){
+                console.log(currentRegions[i]);
+                activeLesson.timeStamps[i].start = currentRegions[i].start ;
+                activeLesson.timeStamps[i].end = currentRegions[i].end ;
+                console.log(activeLesson.timeStamps[i]) ;                
+            }
+
+            let key = activeLesson.key ;
+            delete activeLesson.key ;
+            database.ref(`audibles/${key}`).set(activeLesson)
+                .then(() => {
+                    console.log("Data written successfully!");
+                    alert("Data written to Firebase!");
+                })
+                .catch((error) => {
+                    console.error("Error writing data: ", error);
+                    alert("Error writing data: " + error.message);
+            });
+
+        }) ;
+
+        btnToggleNav.addEventListener('click',(event)=>{
+            document.querySelector('.sidebar').classList.toggle('noShow') ;
+
+        }) ;
+    </script>
+    <script>
+        const btnUserLogin = document.querySelector('#idBTNSignIn') ;
+        btnUserLogin.addEventListener('click',(event)=>{
+            signInWithGoogle() ;
+        }) ;
+        // 登录函数
+        // The correct way to call the function in V8
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
+    </script>
+</body>
+</html>

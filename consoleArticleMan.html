@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Reading Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        /* Custom scrollbar for better look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        /* JSON Editor Area */
+        #json-editor {
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen overflow-hidden flex flex-col">
+
+    <div id="login-screen" class="fixed inset-0 bg-slate-800 z-50 flex flex-col items-center justify-center text-white">
+        <div class="text-center mb-8">
+            <i class="fa-solid fa-book-open text-6xl mb-4 text-blue-400"></i>
+            <h1 class="text-3xl font-bold">Outpost Content Manager</h1>
+            <p class="text-slate-400 mt-2">双语阅读练习数据管理系统</p>
+        </div>
+        <button id="btn-login" class="bg-white text-slate-800 px-6 py-3 rounded-lg shadow-lg hover:bg-blue-50 transition flex items-center gap-2 font-semibold">
+            <i class="fa-brands fa-google text-red-500"></i> Sign in with Google
+        </button>
+        <p id="login-status" class="mt-4 text-sm text-slate-400 hidden">正在认证...</p>
+    </div>
+
+    <div id="app-ui" class="hidden h-full flex flex-col">
+        
+        <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 shadow-sm flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2 rounded">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-700">Content Manager</h2>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div id="user-info" class="text-sm text-gray-600 flex items-center gap-2">
+                    </div>
+                <button id="btn-logout" class="text-red-500 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1 rounded hover:bg-red-50">
+                    <i class="fa-solid fa-right-from-bracket"></i> 退出
+                </button>
+            </div>
+        </header>
+
+        <div class="flex flex-1 overflow-hidden">
+            
+            <aside class="w-80 bg-white border-r border-gray-200 flex flex-col shadow-inner z-10">
+                <div class="p-4 border-b border-gray-100 bg-gray-50">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Courses & Readings</h3>
+                </div>
+                
+                <div id="course-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+                    <div class="text-center text-gray-400 mt-10"><i class="fa-solid fa-spinner fa-spin"></i> 加载科目...</div>
+                </div>
+            </aside>
+
+            <main class="flex-1 bg-gray-50 flex flex-col h-full relative">
+                <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                    <i class="fa-regular fa-file-code text-6xl mb-4"></i>
+                    <p>请在左侧选择一篇阅读材料进行编辑，或点击“新建”</p>
+                </div>
+
+                <div id="editor-container" class="hidden flex flex-col h-full p-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 id="editor-title" class="text-lg font-bold text-gray-800">Loading...</h3>
+                            <span id="editor-subtitle" class="text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded">UUID</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="btn-format" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm">
+                                <i class="fa-solid fa-code"></i> 格式化 JSON
+                            </button>
+                            <button id="btn-delete" class="bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1.5 rounded text-sm">
+                                <i class="fa-solid fa-trash"></i> 删除
+                            </button>
+                            <button id="btn-save" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm shadow">
+                                <i class="fa-solid fa-floppy-disk"></i> 保存更改
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 relative border border-gray-300 rounded-lg shadow-sm bg-white overflow-hidden">
+                         <textarea id="json-editor" class="w-full h-full p-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-700" spellcheck="false"></textarea>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500 flex justify-between">
+                        <span>* 请确保 JSON 格式正确，保存前建议点击格式化。</span>
+                        <span id="save-status"></span>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- 1. Import Firebase SDKs ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getDatabase, ref, onValue, set, remove, get, child } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // --- 2. Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-articles-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // --- 3. App State Management ---
+        const state = {
+            user: null,
+            folders: {}, // Stores metadata from /courseFolders
+            readings: {}, // Cache for readings to reduce flicker
+            currentCourseCode: null,
+            currentArticleId: null
+        };
+
+        // --- 4. Templates (Based on your requirement) ---
+        const TEMPLATE_ENGLISH = {
+            "topic": "New Topic Title",
+            "reading_text": "Enter reading text here...",
+            "comprehension_questions": {
+                "part_a": ["Question 1?", "Question 2?"],
+                "part_b": ["Question 1?", "Question 2?"]
+            },
+            "answer_key": {
+                "part_a": ["Answer 1", "Answer 2"],
+                "part_b": ["Answer 1", "Answer 2"]
+            }
+        };
+
+        const TEMPLATE_THAI = {
+            "article_title": "New Thai Article",
+            "article_thai_content": "เนื้อหาภาษาไทย...",
+            "article_english_translation": "English translation...",
+            "vocabulary_list": [
+                {
+                    "thai_word": "คำศัพท์",
+                    "part_of_speech": "n.",
+                    "english_meaning": "meaning",
+                    "chinese_meaning_characters": "意思",
+                    "chinese_meaning_pinyin": "yìsi"
+                }
+            ],
+            "comprehension_questions": [
+                {
+                    "question_thai": "คำถาม?",
+                    "question_english": "Question?",
+                    "type": "What"
+                }
+            ]
+        };
+
+        // --- 5. DOM Elements ---
+        const els = {
+            loginScreen: document.getElementById('login-screen'),
+            btnLogin: document.getElementById('btn-login'),
+            appUi: document.getElementById('app-ui'),
+            userInfo: document.getElementById('user-info'),
+            btnLogout: document.getElementById('btn-logout'),
+            courseList: document.getElementById('course-list'),
+            editorContainer: document.getElementById('editor-container'),
+            emptyState: document.getElementById('empty-state'),
+            editorTitle: document.getElementById('editor-title'),
+            editorSubtitle: document.getElementById('editor-subtitle'),
+            jsonEditor: document.getElementById('json-editor'),
+            btnSave: document.getElementById('btn-save'),
+            btnFormat: document.getElementById('btn-format'),
+            btnDelete: document.getElementById('btn-delete'),
+            saveStatus: document.getElementById('save-status')
+        };
+
+        // --- 6. Authentication Logic ---
+        const provider = new GoogleAuthProvider();
+
+        els.btnLogin.addEventListener('click', () => {
+            document.getElementById('login-status').classList.remove('hidden');
+            signInWithPopup(auth, provider)
+                .catch((error) => {
+                    alert("Login Failed: " + error.message);
+                    document.getElementById('login-status').classList.add('hidden');
+                });
+        });
+
+        els.btnLogout.addEventListener('click', () => signOut(auth));
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                state.user = user;
+                els.loginScreen.classList.add('hidden');
+                els.appUi.classList.remove('hidden');
+                els.userInfo.innerHTML = `
+                    <img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-gray-300">
+                    <span class="font-medium">${user.displayName}</span>
+                `;
+                initAppData();
+            } else {
+                state.user = null;
+                els.loginScreen.classList.remove('hidden');
+                els.appUi.classList.add('hidden');
+            }
+        });
+
+        // --- 7. Main Data Logic ---
+
+        function initAppData() {
+            // Listen to Course Folders Metadata
+            const foldersRef = ref(db, 'courseFolders');
+            onValue(foldersRef, (snapshot) => {
+                state.folders = snapshot.val() || {};
+                renderSidebar();
+            });
+        }
+
+        // --- 8. Render Functions ---
+
+        function renderSidebar() {
+            els.courseList.innerHTML = '';
+
+            if (Object.keys(state.folders).length === 0) {
+                els.courseList.innerHTML = '<div class="text-center text-sm text-gray-400 p-4">暂无课程文件夹</div>';
+                return;
+            }
+
+            Object.keys(state.folders).forEach(key => {
+                const folder = state.folders[key];
+                // Accordion Item
+                const details = document.createElement('details');
+                details.className = "group mb-2 bg-white rounded border border-gray-200 overflow-hidden";
+                if(state.currentCourseCode === folder.courseCode) details.open = true; // Keep open on refresh
+
+                // Summary (Header)
+                const summary = document.createElement('summary');
+                summary.className = "flex items-center justify-between p-3 cursor-pointer bg-gray-50 hover:bg-gray-100 select-none list-none";
+                
+                // Icon selection based on type
+                const iconClass = folder.courseType === 'Thai' ? 'fa-om text-orange-500' : 'fa-language text-blue-500';
+                
+                summary.innerHTML = `
+                    <div class="flex items-center gap-2 font-medium text-gray-700 text-sm">
+                        <i class="fa-solid ${iconClass} w-5 text-center"></i>
+                        <span>${folder.courseCode} - ${folder.course}</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-xs text-gray-400 transition-transform group-open:rotate-180"></i>
+                `;
+
+                // Content (Article List)
+                const contentDiv = document.createElement('div');
+                contentDiv.className = "p-2 border-t border-gray-100 bg-white";
+                contentDiv.id = `list-${folder.courseCode}`;
+                contentDiv.innerHTML = '<div class="text-xs text-gray-400 p-2"><i class="fa-solid fa-spinner fa-spin"></i> 加载文章...</div>';
+
+                // Add New Button inside folder
+                const addBtn = document.createElement('button');
+                addBtn.className = "w-full mt-1 text-xs flex items-center justify-center gap-1 py-1.5 border border-dashed border-gray-300 rounded text-gray-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition";
+                addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> 新建文章';
+                addBtn.onclick = (e) => {
+                    e.preventDefault();
+                    createNewArticle(folder);
+                };
+
+                details.appendChild(summary);
+                details.appendChild(contentDiv);
+                details.appendChild(document.createElement('div').appendChild(addBtn).parentNode); // wrap btn in div for spacing
+                
+                // Fetch articles when opened (or immediately if we attach listener)
+                // We use persistent listeners for realtime updates
+                setupReadingListener(folder.courseCode, contentDiv);
+
+                els.courseList.appendChild(details);
+            });
+        }
+
+        function setupReadingListener(courseCode, container) {
+            const readingsRef = ref(db, `courseReading/${courseCode}`);
+            
+            onValue(readingsRef, (snapshot) => {
+                const readings = snapshot.val() || {};
+                state.readings[courseCode] = readings; // Update local cache
+                
+                container.innerHTML = ''; // Clear loader
+                
+                if (Object.keys(readings).length === 0) {
+                    container.innerHTML = '<div class="text-xs text-gray-400 p-2 text-center">暂无文章</div>';
+                    return;
+                }
+
+                Object.keys(readings).forEach(articleId => {
+                    const article = readings[articleId];
+                    const btn = document.createElement('div');
+                    
+                    // Styling for active state
+                    const isActive = state.currentArticleId === articleId;
+                    const activeClass = isActive ? "bg-blue-100 text-blue-700 border-l-4 border-blue-600" : "hover:bg-gray-50 text-gray-600 border-l-4 border-transparent";
+                    
+                    btn.className = `cursor-pointer p-2 text-xs mb-1 rounded-r transition truncate ${activeClass}`;
+                    
+                    // Determine display title based on structure
+                    let displayTitle = "Untitled";
+                    if (article.topic) displayTitle = article.topic; // English
+                    else if (article.article_title) displayTitle = article.article_title; // Thai
+
+                    btn.innerText = displayTitle;
+                    btn.onclick = () => loadEditor(courseCode, articleId, article);
+                    
+                    container.appendChild(btn);
+                });
+            });
+        }
+
+        // --- 9. Editor Logic ---
+
+        function loadEditor(courseCode, articleId, data) {
+            state.currentCourseCode = courseCode;
+            state.currentArticleId = articleId;
+            
+            // Update UI visibility
+            els.emptyState.classList.add('hidden');
+            els.editorContainer.classList.remove('hidden');
+            
+            // Refresh Sidebar highlights
+            renderSidebar(); 
+
+            // Set Headers
+            els.editorSubtitle.innerText = articleId;
+            if (data.topic) els.editorTitle.innerText = data.topic;
+            else if (data.article_title) els.editorTitle.innerText = data.article_title;
+            else els.editorTitle.innerText = "Editing Article";
+
+            // Set Content
+            els.jsonEditor.value = JSON.stringify(data, null, 4);
+            els.saveStatus.innerText = "";
+        }
+
+        function createNewArticle(folderMeta) {
+            const newId = crypto.randomUUID(); // Generate new UUID
+            const isThai = folderMeta.courseType === 'Thai';
+            const template = isThai ? TEMPLATE_THAI : TEMPLATE_ENGLISH;
+            
+            // Pre-fill editor but don't save yet until user clicks save? 
+            // Or save immediately as draft? Better to open editor with template.
+            // Note: To "Select" it, we usually need it in DB or mock it. 
+            // Let's mock it in editor, Save will create it.
+            
+            if(confirm(`确定在 ${folderMeta.course} 下创建一篇新文章吗?`)) {
+                state.currentCourseCode = folderMeta.courseCode;
+                state.currentArticleId = newId;
+                
+                els.emptyState.classList.add('hidden');
+                els.editorContainer.classList.remove('hidden');
+                
+                els.editorTitle.innerText = "New Article (Unsaved)";
+                els.editorSubtitle.innerText = newId;
+                els.jsonEditor.value = JSON.stringify(template, null, 4);
+                els.saveStatus.innerText = "⚠️ 未保存的新建文章";
+                
+                // Deselect others visually implies re-render, but we haven't saved yet.
+            }
+        }
+
+        // --- 10. Button Actions ---
+
+        // Format JSON
+        els.btnFormat.addEventListener('click', () => {
+            try {
+                const currentVal = els.jsonEditor.value;
+                const obj = JSON.parse(currentVal);
+                els.jsonEditor.value = JSON.stringify(obj, null, 4);
+                els.saveStatus.innerText = "格式化成功";
+                setTimeout(() => els.saveStatus.innerText = "", 2000);
+            } catch (e) {
+                alert("JSON 格式错误: " + e.message);
+            }
+        });
+
+        // Save JSON
+        els.btnSave.addEventListener('click', async () => {
+            if (!state.currentCourseCode || !state.currentArticleId) return;
+
+            try {
+                const dataStr = els.jsonEditor.value;
+                const dataObj = JSON.parse(dataStr); // Validate JSON
+
+                els.btnSave.disabled = true;
+                els.saveStatus.innerText = "正在保存...";
+
+                // Path: courseReading / courseCode / articleUUID
+                const articleRef = ref(db, `courseReading/${state.currentCourseCode}/${state.currentArticleId}`);
+                await set(articleRef, dataObj);
+
+                els.saveStatus.innerText = "✅ 保存成功 " + new Date().toLocaleTimeString();
+                els.saveStatus.className = "text-green-600 text-xs";
+                
+                // Update title in header dynamically
+                if (dataObj.topic) els.editorTitle.innerText = dataObj.topic;
+                else if (dataObj.article_title) els.editorTitle.innerText = dataObj.article_title;
+
+            } catch (e) {
+                alert("保存失败:\n1. 检查JSON格式是否正确\n2. 检查网络权限\n\n错误信息: " + e.message);
+                els.saveStatus.innerText = "❌ 保存失败";
+                els.saveStatus.className = "text-red-600 text-xs";
+            } finally {
+                els.btnSave.disabled = false;
+            }
+        });
+
+        // Delete Article
+        els.btnDelete.addEventListener('click', async () => {
+            if (!state.currentCourseCode || !state.currentArticleId) return;
+
+            if (confirm("确定要永久删除这篇文章及其所有练习题数据吗？此操作无法撤销。")) {
+                try {
+                    const articleRef = ref(db, `courseReading/${state.currentCourseCode}/${state.currentArticleId}`);
+                    await remove(articleRef);
+                    
+                    // Reset Editor
+                    els.editorContainer.classList.add('hidden');
+                    els.emptyState.classList.remove('hidden');
+                    state.currentArticleId = null;
+                    alert("删除成功");
+                } catch (e) {
+                    alert("删除失败: " + e.message);
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
