@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Schedule Manager</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Lexend%3Awght%40400%3B500%3B700%3B900&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900"
+    />
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style>
+      /* Custom scrollbar for table container if needed */
+      .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+      }
+      .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+      }
+      .course-tab.active {
+          border-bottom-color: #2b8dee;
+          color: #0d141b;
+      }
+      .course-tab.inactive {
+          border-bottom-color: transparent;
+          color: #4c739a;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="relative flex h-auto min-h-screen w-full flex-col bg-slate-50 group/design-root overflow-x-hidden" style='font-family: Lexend, "Noto Sans", sans-serif;'>
+      <div class="layout-container flex h-full grow flex-col">
+        <div class="gap-1 px-6 flex flex-1 justify-center py-5">
+          <!-- Sidebar -->
+          <div class="layout-content-container flex flex-col w-80 hidden lg:flex">
+            <div class="flex h-full min-h-[700px] flex-col justify-between bg-slate-50 p-4">
+              <div class="flex flex-col gap-4">
+                <div class="flex gap-3">
+                  <div
+                    class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDUKt0Hk0q7v0bJo1b8yMbTI_2g6Z1oF_J3CD4dwtbanGWgKklvbdcfTVAwAYm6DLVgywS-ZbuATe_dVKWIZftPmqm7jKPsF0w5aR3X1zMFI58XvlwmITnl2_KQ_ImZsdp3DmMOzTq6WjoIKItydZfjIViyBjBuivZpOMVg5_Yn0bZif7NyZTqvaNvIXNaqDKSiwPPzEtzHGq1n0Tkm1sXStxegD68gK3vVgDSdPzkzuyytaG3M2fXcBPFpBYz_289FWZh3jJ8H1jxG");'
+                  ></div>
+                  <div class="flex flex-col">
+                    <h1 class="text-[#0d141b] text-base font-medium leading-normal">Student</h1>
+                    <p class="text-[#4c739a] text-sm font-normal leading-normal">Dashboard</p>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                  <div class="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#e7edf3] cursor-pointer">
+                    <div class="text-[#0d141b]" data-icon="Calendar" data-size="24px" data-weight="regular">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-96-88v64a8,8,0,0,1-16,0V132.94l-4.42,2.22a8,8,0,0,1-7.16-14.32l16-8A8,8,0,0,1,112,120Zm59.16,30.45L152,176h16a8,8,0,0,1,0,16H136a8,8,0,0,1-6.4-12.8l28.78-38.37A8,8,0,1,0,145.07,132a8,8,0,1,1-13.85-8A24,24,0,0,1,176,136,23.76,23.76,0,0,1,171.16,150.45Z"></path>
+                      </svg>
+                    </div>
+                    <p class="text-[#0d141b] text-sm font-medium leading-normal">Schedule</p>
+                  </div>
+                  <!-- Other sidebar items (static) -->
+                  <div class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-slate-100 rounded-lg">
+                    <div class="text-[#0d141b]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256"><path d="M93.66,106.34a8,8,0,0,1,0,11.32l-32,32a8,8,0,0,1-11.32,0l-16-16a8,8,0,0,1,11.32-11.32L56,132.69l26.34-26.35A8,8,0,0,1,93.66,106.34Zm-11.32-64L56,68.69,45.66,58.34A8,8,0,0,0,34.34,69.66l16,16a8,8,0,0,0,11.32,0l32-32A8,8,0,0,0,82.34,42.34Zm0,128L56,196.69,45.66,186.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32,0l32-32a8,8,0,0,0-11.32-11.32ZM216,48H128a8,8,0,0,0-8,8V72a8,8,0,0,0,8,8h88a8,8,0,0,0,8-8V56A8,8,0,0,0,216,48Zm0,128H128a8,8,0,0,0-8,8v16a8,8,0,0,0,8,8h88a8,8,0,0,0,8-8V184A8,8,0,0,0,216,176Zm0-64H128a8,8,0,0,0-8,8v16a8,8,0,0,0,8,8h88a8,8,0,0,0,8-8V120A8,8,0,0,0,216,112Z"></path></svg>
+                    </div>
+                    <p class="text-[#0d141b] text-sm font-medium leading-normal">Courses</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Content -->
+          <div class="layout-content-container flex flex-col max-w-[960px] flex-1 w-full">
+            <!-- Header -->
+            <div class="flex flex-wrap justify-between gap-3 p-4">
+              <div class="flex flex-col">
+                <p class="text-[#0d141b] tracking-light text-[32px] font-bold leading-tight min-w-72">My Schedule</p>
+                <p id="connection-status" class="text-sm text-orange-500">Connecting to database...</p>
+              </div>
+              <button onclick="alert('Functionality to add courses would go here!')" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#e7edf3] text-[#0d141b] text-sm font-medium leading-normal hover:bg-[#d0dbe7] transition-colors">
+                <span class="truncate">New Course</span>
+              </button>
+            </div>
+
+            <!-- Course Tabs -->
+            <div class="pb-3 overflow-x-auto">
+              <div id="course-tabs-container" class="flex border-b border-[#cfdbe7] px-4 gap-8 min-w-max">
+                <!-- Tabs will be injected here by JS -->
+                <div class="animate-pulse flex gap-8">
+                    <div class="h-8 w-20 bg-slate-200 rounded"></div>
+                    <div class="h-8 w-20 bg-slate-200 rounded"></div>
+                    <div class="h-8 w-20 bg-slate-200 rounded"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Schedule Table -->
+            <div class="px-4 py-3 @container">
+              <div class="flex overflow-hidden rounded-lg border border-[#cfdbe7] bg-slate-50 overflow-x-auto">
+                <table class="flex-1 min-w-[800px]">
+                  <thead>
+                    <tr class="bg-slate-50">
+                      <th class="px-4 py-3 text-left text-[#0d141b] w-[80px] text-sm font-medium leading-normal">Week</th>
+                      <th class="px-4 py-3 text-left text-[#0d141b] w-[120px] text-sm font-medium leading-normal">Day</th>
+                      <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-medium leading-normal">Time</th>
+                      <th class="px-4 py-3 text-left text-[#0d141b] w-[180px] text-sm font-medium leading-normal">Course</th>
+                      <th class="px-4 py-3 text-left text-[#0d141b] w-[200px] text-sm font-medium leading-normal">Content</th>
+                      <th class="px-4 py-3 text-left text-[#0d141b] w-[120px] text-sm font-medium leading-normal">Location</th>
+                      <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-medium leading-normal">Memo</th>
+                    </tr>
+                  </thead>
+                  <tbody id="schedule-table-body">
+                    <!-- Loading State -->
+                    <tr class="border-t border-t-[#cfdbe7]">
+                        <td colspan="7" class="h-[200px] text-center text-[#4c739a] text-sm font-normal">
+                            Loading schedule data...
+                        </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <!-- Footer / Debug info -->
+            <div class="flex justify-between gap-2 px-4 py-3">
+                <p class="text-xs text-gray-400">Powered by Firebase Realtime Database</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+      import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+      // 1. Configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+        authDomain: "outpost-8d74e.firebaseapp.com",
+        databaseURL: "https://outpost-8d74e-985fa-schedule.asia-southeast1.firebasedatabase.app/",
+        projectId: "outpost-8d74e",
+        storageBucket: "outpost-8d74e.firebasestorage.app",
+        messagingSenderId: "724993324937",
+        appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+        measurementId: "G-QPHWRTH6BH"
+      };
+
+      // 2. Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+      const auth = getAuth(app);
+      const statusEl = document.getElementById('connection-status');
+
+      // State management
+      let currentFilter = 'All'; // 'All' or specific course name/code
+      let allSchedules = [];
+      let allCourses = [];
+
+      // 3. Authentication (Anonymous)
+      signInAnonymously(auth)
+        .then(() => {
+            console.log("Signed in anonymously");
+            statusEl.textContent = "Connected";
+            statusEl.className = "text-sm text-green-600";
+        })
+        .catch((error) => {
+            console.error("Auth Error", error);
+            statusEl.textContent = "Connection Error: " + error.message;
+            statusEl.className = "text-sm text-red-600";
+        });
+
+      // 4. Data Fetching: Courses
+      const coursesRef = ref(db, 'courses');
+      onValue(coursesRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            // Convert object to array
+            allCourses = Object.keys(data).map(key => ({
+                id: key,
+                ...data[key]
+            }));
+            renderCourseTabs();
+        } else {
+            allCourses = [];
+            renderCourseTabs();
+        }
+      }, (error) => {
+        console.error("Error reading courses:", error);
+      });
+
+      // 5. Data Fetching: Schedules
+      const schedulesRef = ref(db, 'schedules');
+      onValue(schedulesRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            // Convert object to array and sort
+            allSchedules = Object.keys(data).map(key => ({
+                id: key,
+                ...data[key]
+            }));
+            
+            // Optional: Sort by WeekNO then Day then Time
+            allSchedules.sort((a, b) => {
+                if ((a.WeekNO || 0) !== (b.WeekNO || 0)) return (a.WeekNO || 0) - (b.WeekNO || 0);
+                // Simple string comparison for day/time for now, can be enhanced
+                return 0;
+            });
+
+            renderScheduleTable();
+        } else {
+            allSchedules = [];
+            renderScheduleTable();
+        }
+      }, (error) => {
+        console.error("Error reading schedules:", error);
+      });
+
+      // 6. UI Rendering Logic
+
+      function renderCourseTabs() {
+        const container = document.getElementById('course-tabs-container');
+        if (!container) return;
+
+        let html = '';
+        
+        // "All" Tab
+        const allActiveClass = currentFilter === 'All' 
+            ? 'border-b-[#2b8dee] text-[#0d141b]' 
+            : 'border-b-transparent text-[#4c739a] hover:text-[#2b8dee]';
+            
+        html += `
+            <a href="#" onclick="window.filterCourse('All')" class="flex flex-col items-center justify-center border-b-[3px] ${allActiveClass} pb-[13px] pt-4 transition-colors">
+                <p class="text-sm font-bold leading-normal tracking-[0.015em]">All Schedule</p>
+            </a>
+        `;
+
+        // Dynamic Tabs from DB
+        allCourses.forEach(course => {
+            const isActive = currentFilter === course.course || currentFilter === course.courseCode;
+            const activeClass = isActive
+                ? 'border-b-[#2b8dee] text-[#0d141b]'
+                : 'border-b-transparent text-[#4c739a] hover:text-[#2b8dee]';
+            
+            // Use course name as display, ID or Name for filtering
+            const displayName = course.course || course.courseCode || "Unnamed";
+            
+            html += `
+                <a href="#" onclick="window.filterCourse('${displayName}')" class="flex flex-col items-center justify-center border-b-[3px] ${activeClass} pb-[13px] pt-4 transition-colors">
+                    <p class="text-sm font-bold leading-normal tracking-[0.015em] whitespace-nowrap">${displayName}</p>
+                </a>
+            `;
+        });
+
+        container.innerHTML = html;
+      }
+
+      function renderScheduleTable() {
+        const tbody = document.getElementById('schedule-table-body');
+        if (!tbody) return;
+
+        // Filter Logic
+        const filteredData = currentFilter === 'All' 
+            ? allSchedules 
+            : allSchedules.filter(item => item.course === currentFilter || item.courseCode === currentFilter);
+
+        if (filteredData.length === 0) {
+            tbody.innerHTML = `
+                <tr class="border-t border-t-[#cfdbe7]">
+                    <td colspan="7" class="h-[150px] text-center text-[#4c739a] text-sm">
+                        No schedules found for "${currentFilter}"
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        let html = '';
+        filteredData.forEach(item => {
+            html += `
+                <tr class="border-t border-t-[#cfdbe7] hover:bg-slate-100 transition-colors">
+                    <td class="h-[72px] px-4 py-2 text-[#4c739a] text-sm font-normal leading-normal">${item.WeekNO || '-'}</td>
+                    <td class="h-[72px] px-4 py-2 text-[#4c739a] text-sm font-normal leading-normal">${item.Day || ''}</td>
+                    <td class="h-[72px] px-4 py-2 text-[#4c739a] text-sm font-normal leading-normal">${item.Time || ''}</td>
+                    <td class="h-[72px] px-4 py-2 text-[#0d141b] text-sm font-medium leading-normal">${item.course || item.courseCode || 'Personal'}</td>
+                    <td class="h-[72px] px-4 py-2 text-[#4c739a] text-sm font-normal leading-normal">${item.Content || ''}</td>
+                    <td class="h-[72px] px-4 py-2 text-[#4c739a] text-sm font-normal leading-normal">${item.Location || ''}</td>
+                    <td class="h-[72px] px-4 py-2 text-[#4c739a] text-sm font-normal leading-normal truncate max-w-[150px]" title="${item.Memo || ''}">${item.Memo || ''}</td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+      }
+
+      // Global Helper for Click Events
+      window.filterCourse = (courseIdentifier) => {
+        currentFilter = courseIdentifier;
+        renderCourseTabs(); // Re-render tabs to update active state
+        renderScheduleTable(); // Re-render table
+      };
+
+    </script>
+  </body>
+</html>

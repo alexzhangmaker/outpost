@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Schedule Manager (Editable)</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&family=Lexend%3Awght%40400%3B500%3B700%3B900&family=Noto+Sans%3Awght%40400%3B500%3B700%3B900"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style>
+        /* === 视图切换与基础样式 === */
+        .view-section { transition: opacity 0.2s ease-in-out; }
+        .hidden-view { display: none !important; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* === 导航与Tab样式 === */
+        .nav-item-active { background-color: #f0f2f4; color: #111418; font-weight: 600; }
+        .nav-item-inactive { background-color: transparent; color: #617589; font-weight: 500; }
+        .nav-item-inactive:hover { background-color: #f8fafc; color: #111418; }
+        .tab-active { border-bottom-color: #111418; color: #111418; }
+        .tab-inactive { border-bottom-color: transparent; color: #617589; }
+        .tab-inactive:hover { color: #111418; cursor: pointer; }
+
+        /* === 编辑与拖拽样式 (New) === */
+        /* 可编辑单元格获得焦点时的样式 */
+        [contenteditable="true"]:focus {
+            outline: 2px solid #2b8dee;
+            background-color: #ffffff;
+            border-radius: 4px;
+            padding: 4px;
+            z-index: 10;
+            position: relative;
+        }
+        
+        /* 拖拽中的行样式 */
+        .dragging {
+            opacity: 0.5;
+            background-color: #e2e8f0;
+            border: 2px dashed #94a3b8;
+        }
+
+        /* 拖拽光标 */
+        .cursor-grab { cursor: grab; }
+        .cursor-grabbing { cursor: grabbing; }
+
+        /* 表格行的过渡动画 */
+        tr { transition: background-color 0.15s; }
+    </style>
+  </head>
+  <body>
+    <div class="relative flex h-auto min-h-screen w-full flex-col bg-white group/design-root overflow-x-hidden" style='font-family: Lexend, "Noto Sans", sans-serif;'>
+      <div class="layout-container flex h-full grow flex-col">
+        <div class="gap-1 px-6 flex flex-1 justify-center py-5">
+          
+          <!-- === 侧边栏导航 (Sidebar) === -->
+          <div class="layout-content-container flex flex-col w-80 hidden lg:flex">
+            <div class="flex h-full min-h-[700px] flex-col justify-between bg-white p-4">
+              <div class="flex flex-col gap-4">
+                <div class="flex gap-3">
+                  <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDUKt0Hk0q7v0bJo1b8yMbTI_2g6Z1oF_J3CD4dwtbanGWgKklvbdcfTVAwAYm6DLVgywS-ZbuATe_dVKWIZftPmqm7jKPsF0w5aR3X1zMFI58XvlwmITnl2_KQ_ImZsdp3DmMOzTq6WjoIKItydZfjIViyBjBuivZpOMVg5_Yn0bZif7NyZTqvaNvIXNaqDKSiwPPzEtzHGq1n0Tkm1sXStxegD68gK3vVgDSdPzkzuyytaG3M2fXcBPFpBYz_289FWZh3jJ8H1jxG");'></div>
+                  <div class="flex flex-col">
+                    <h1 class="text-[#111418] text-base font-medium leading-normal">Student</h1>
+                    <p class="text-[#617589] text-sm font-normal leading-normal">Dashboard</p>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                  <div id="nav-schedule" onclick="window.switchView('schedule')" class="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer nav-item-active transition-colors">
+                    <div data-icon="Calendar"><svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM112,184a8,8,0,0,1-16,0V132.94l-4.42,2.22a8,8,0,0,1-7.16-14.32l16-8A8,8,0,0,1,112,120Zm56-8a8,8,0,0,1,0,16H136a8,8,0,0,1-6.4-12.8l28.78-38.37A8,8,0,1,0,145.07,132a8,8,0,1,1-13.85-8A24,24,0,0,1,176,136a23.76,23.76,0,0,1-4.84,14.45L152,176ZM48,80V48H72v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80Z"></path></svg></div>
+                    <p class="text-sm leading-normal">Schedule</p>
+                  </div>
+                  <div id="nav-courses" onclick="window.switchView('courses')" class="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer nav-item-inactive transition-colors">
+                    <div data-icon="ListChecks"><svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H128a8,8,0,0,1,0-16h88A8,8,0,0,1,224,128ZM128,72h88a8,8,0,0,0,0-16H128a8,8,0,0,0,0,16Zm88,112H128a8,8,0,0,0,0,16h88a8,8,0,0,0,0-16ZM82.34,42.34,56,68.69,45.66,58.34A8,8,0,0,0,34.34,69.66l16,16a8,8,0,0,0,11.32,0l32-32A8,8,0,0,0,82.34,42.34Zm0,64L56,132.69,45.66,122.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32,0l32-32a8,8,0,0,0-11.32-11.32Zm0,64L56,196.69,45.66,186.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32,0l32-32a8,8,0,0,0-11.32-11.32Z"></path></svg></div>
+                    <p class="text-sm leading-normal">Courses</p>
+                  </div>
+                  <div class="mt-auto pt-4">
+                      <p id="connection-status" class="text-xs text-orange-500 font-medium px-3 animate-pulse">Connecting...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- === 主内容区 === -->
+          <div class="layout-content-container flex flex-col max-w-[960px] flex-1 w-full">
+            
+            <!-- 🟢 视图 1: SCHEDULE (只读视图) -->
+            <div id="view-schedule" class="view-section flex flex-col h-full">
+                <div class="flex flex-wrap justify-between gap-3 p-4">
+                  <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight min-w-72">Calendar View</p>
+                </div>
+                <!-- 日历组件 -->
+                <div class="flex flex-wrap items-center justify-center gap-6 p-4 hidden sm:flex">
+                    <div class="w-full bg-slate-50 rounded-xl p-4 text-center text-gray-400 text-sm border border-slate-100">
+                        <div class="flex justify-between items-center mb-4 px-4">
+                            <span class="font-bold text-[#111418]">Current Month</span>
+                            <div class="flex gap-2"><div class="w-2 h-2 rounded-full bg-[#111418]"></div><div class="w-2 h-2 rounded-full bg-gray-300"></div></div>
+                        </div>
+                        <div class="grid grid-cols-7 gap-2">
+                            <div class="p-2 font-bold">S</div><div class="p-2 font-bold">M</div><div class="p-2 font-bold">T</div><div class="p-2 font-bold">W</div><div class="p-2 font-bold">T</div><div class="p-2 font-bold">F</div><div class="p-2 font-bold">S</div>
+                            <div class="p-2 text-gray-300">..</div><div class="p-2 text-gray-300">..</div><div class="p-2 text-gray-300">..</div><div class="p-2">1</div><div class="p-2">2</div><div class="p-2">3</div><div class="p-2">4</div>
+                            <div class="p-2">5</div><div class="p-2">6</div><div class="p-2">7</div><div class="p-2">8</div><div class="p-2">9</div><div class="p-2 bg-[#111418] text-white rounded-full shadow-md">10</div><div class="p-2">11</div>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="text-[#111418] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">All Events</h3>
+                <div class="px-4 py-3 @container">
+                  <div class="flex overflow-hidden rounded-lg border border-[#dbe0e6] bg-white overflow-x-auto">
+                    <table class="flex-1 min-w-[700px]">
+                      <thead>
+                        <tr class="bg-white">
+                          <th class="px-4 py-3 text-left text-[#111418] w-[30%] text-sm font-medium leading-normal">Event / Course</th>
+                          <th class="px-4 py-3 text-left text-[#111418] w-[25%] text-sm font-medium leading-normal">Time</th>
+                          <th class="px-4 py-3 text-left text-[#111418] w-[25%] text-sm font-medium leading-normal">Info</th>
+                          <th class="px-4 py-3 text-left text-[#111418] w-[20%] text-[#617589] text-sm font-medium leading-normal">Memo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="schedule-table-body">
+                        <tr class="border-t border-t-[#dbe0e6]"><td colspan="4" class="h-[150px] text-center text-gray-400 text-sm">Loading schedule...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+            </div>
+
+            <!-- 🔵 视图 2: COURSES (可编辑视图) -->
+            <div id="view-courses" class="view-section hidden-view flex flex-col h-full">
+                <div class="flex flex-wrap justify-between gap-3 p-4 items-center">
+                  <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight">Course Editor</p>
+                  
+                  <!-- 功能工具栏 -->
+                  <div class="flex gap-3">
+                    <button onclick="window.addNewItem()" class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
+                        Add Item
+                    </button>
+                    <button onclick="window.saveChanges()" id="btn-save" class="flex items-center gap-2 px-4 py-2 bg-[#111418] text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,53.66l-32-32A8,8,0,0,0,192,20H64A16,16,0,0,0,48,36V220a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V80a8,8,0,0,0-2.34-5.66ZM192,220H64V36h9.37L192,154.63V220Zm-32-32a8,8,0,0,1-16,0V160H112v28a8,8,0,0,1-16,0V152a8,8,0,0,1,8-8h64a8,8,0,0,1,8,8Z"></path></svg>
+                        Save Changes
+                    </button>
+                  </div>
+                </div>
+
+                <div class="pb-3 overflow-x-auto">
+                  <div id="course-filter-tabs" class="flex border-b border-[#cfdbe7] px-4 gap-8 min-w-max">
+                     <div class="animate-pulse flex gap-8 pt-4"><div class="h-6 w-24 bg-slate-200 rounded"></div></div>
+                  </div>
+                </div>
+
+                <div class="px-4 py-3 @container">
+                  <p class="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M132,128a4,4,0,0,1-4,4H68a4,4,0,0,1,0-8h60A4,4,0,0,1,132,128Zm60,0a4,4,0,0,1-4,4H168a4,4,0,0,1,0-8h20A4,4,0,0,1,192,128Z"></path></svg>
+                    Tip: Drag rows to reorder. Click cells to edit.
+                  </p>
+                  <div class="flex overflow-hidden rounded-lg border border-[#cfdbe7] bg-slate-50 overflow-x-auto relative">
+                    <!-- 覆盖层：保存时显示 -->
+                    <div id="saving-overlay" class="hidden absolute inset-0 bg-white/80 z-50 flex items-center justify-center">
+                        <span class="text-blue-600 font-bold animate-pulse">Saving updates to Firebase...</span>
+                    </div>
+
+                    <table class="flex-1 min-w-[900px]" id="courses-table">
+                      <thead>
+                        <tr class="bg-slate-100 border-b border-slate-200">
+                          <th class="w-[40px]"></th> <!-- 拖拽手柄列 -->
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[60px] text-sm font-bold">Wk</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[100px] text-sm font-bold">Day</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[140px] text-sm font-bold">Time</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[200px] text-sm font-bold">Content</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[160px] text-sm font-bold">Course</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[100px] text-sm font-bold">Loc</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[140px] text-sm font-bold">Memo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="courses-view-table-body">
+                        <tr class="border-t border-t-[#cfdbe7]"><td colspan="8" class="h-[150px] text-center text-[#4c739a] text-sm">Loading data...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between gap-2 px-4 py-3 mt-auto">
+                <p class="text-xs text-gray-400">Powered by Firebase Realtime Database</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- === 业务逻辑 === -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getDatabase, ref, onValue, update, push, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+      import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+      // 1. Firebase 配置
+      const firebaseConfig = {
+        apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+        authDomain: "outpost-8d74e.firebaseapp.com",
+        databaseURL: "https://outpost-8d74e-985fa-schedule.asia-southeast1.firebasedatabase.app/",
+        projectId: "outpost-8d74e",
+        storageBucket: "outpost-8d74e.firebasestorage.app",
+        messagingSenderId: "724993324937",
+        appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+        measurementId: "G-QPHWRTH6BH"
+      };
+
+      // 2. 初始化
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+      const auth = getAuth(app);
+      const statusEl = document.getElementById('connection-status');
+
+      // 3. 状态变量
+      let allCourses = [];
+      let allSchedules = [];
+      let courseFilter = 'All';
+      let dragSrcEl = null; // 拖拽源元素
+
+      // 4. Auth
+      signInAnonymously(auth).then(() => {
+          statusEl.textContent = "Connected";
+          statusEl.classList.replace("text-orange-500", "text-green-600");
+          statusEl.classList.remove("animate-pulse");
+      });
+
+      // 5. 数据监听
+      onValue(ref(db, 'courses'), (snapshot) => {
+          const data = snapshot.val();
+          allCourses = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
+          renderCourseFilterTabs();
+      });
+
+      onValue(ref(db, 'schedules'), (snapshot) => {
+          const data = snapshot.val();
+          allSchedules = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
+          // 仅在不是正在保存时刷新表格，防止编辑冲突
+          const overlay = document.getElementById('saving-overlay');
+          if(overlay.classList.contains('hidden')) {
+              renderScheduleViewTable();
+              renderCoursesViewTable();
+          }
+      });
+
+      // 6. 核心功能函数
+
+      // 切换视图
+      window.switchView = (viewName) => {
+          const scheduleView = document.getElementById('view-schedule');
+          const coursesView = document.getElementById('view-courses');
+          const navSchedule = document.getElementById('nav-schedule');
+          const navCourses = document.getElementById('nav-courses');
+
+          if (viewName === 'schedule') {
+              scheduleView.classList.remove('hidden-view');
+              coursesView.classList.add('hidden-view');
+              navSchedule.classList.add('nav-item-active'); navSchedule.classList.remove('nav-item-inactive');
+              navCourses.classList.remove('nav-item-active'); navCourses.classList.add('nav-item-inactive');
+          } else {
+              scheduleView.classList.add('hidden-view');
+              coursesView.classList.remove('hidden-view');
+              navSchedule.classList.remove('nav-item-active'); navSchedule.classList.add('nav-item-inactive');
+              navCourses.classList.add('nav-item-active'); navCourses.classList.remove('nav-item-inactive');
+          }
+      };
+
+      // 课程筛选
+      window.setCourseFilter = (val) => {
+          courseFilter = val;
+          renderCourseFilterTabs();
+          renderCoursesViewTable();
+      };
+
+      // [功能1] 添加新行
+      window.addNewItem = () => {
+          const tbody = document.getElementById('courses-view-table-body');
+          // 清除 "No courses" 提示
+          if(tbody.querySelector('td[colspan="7"]') || tbody.querySelector('td[colspan="8"]')) {
+              tbody.innerHTML = '';
+          }
+
+          const newRow = document.createElement('tr');
+          newRow.className = "border-t border-t-[#cfdbe7] hover:bg-blue-50 transition-colors bg-blue-50/30";
+          newRow.setAttribute('draggable', 'true');
+          // 给一个临时 ID 标记这是新增行
+          const tempId = 'new_' + Date.now();
+          newRow.dataset.id = tempId;
+          newRow.dataset.isNew = "true";
+
+          // 默认课程名
+          const defaultCourse = courseFilter !== 'All' ? courseFilter : '';
+
+          newRow.innerHTML = `
+            <td class="px-2 py-2 text-center cursor-grab text-gray-400 hover:text-gray-600" title="Drag to reorder">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M100,64a12,12,0,1,1-12-12A12,12,0,0,1,100,64Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,100,128Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,100,192Zm68-128a12,12,0,1,1-12-12A12,12,0,0,1,168,64Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,168,128Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,168,192Z"></path></svg>
+            </td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="WeekNO">1</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Day">Monday</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Time">09:00-10:00</td>
+            <td class="px-4 py-2 text-[#0d141b] text-sm font-medium" contenteditable="true" data-field="Content">New Content</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="course">${defaultCourse}</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Location">Room</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Memo"></td>
+          `;
+
+          // 绑定拖拽事件
+          addDragEvents(newRow);
+          
+          // 插入到第一行
+          tbody.prepend(newRow);
+          
+          // 聚焦第一个输入框
+          setTimeout(() => newRow.querySelector('[data-field="WeekNO"]').focus(), 100);
+      };
+
+      // [功能5] 保存修改
+      window.saveChanges = async () => {
+          const overlay = document.getElementById('saving-overlay');
+          overlay.classList.remove('hidden');
+          
+          const tbody = document.getElementById('courses-view-table-body');
+          const rows = tbody.querySelectorAll('tr');
+          
+          const updates = {};
+          
+          rows.forEach(row => {
+              // 跳过 Loading 或 Empty 提示行
+              if(!row.dataset.id && !row.dataset.isNew) return;
+
+              // 获取各个单元格的值
+              const getVal = (field) => row.querySelector(`[data-field="${field}"]`)?.innerText.trim() || "";
+              
+              const record = {
+                  WeekNO: getVal('WeekNO'),
+                  Day: getVal('Day'),
+                  Time: getVal('Time'),
+                  Content: getVal('Content'),
+                  course: getVal('course'), // 注意大小写匹配数据库
+                  courseCode: getVal('course'), // 简单处理：Code和Name一致，或者保持原样
+                  Location: getVal('Location'),
+                  Memo: getVal('Memo'),
+                  activityClass: "Course Schedule" // 默认类型
+              };
+
+              if (row.dataset.isNew === "true") {
+                  // 如果是新行，生成新的 Key
+                  const newKey = push(child(ref(db), 'schedules')).key;
+                  updates['/schedules/' + newKey] = record;
+              } else {
+                  // 如果是已有行，更新现有 Key
+                  const key = row.dataset.id;
+                  updates['/schedules/' + key] = record;
+              }
+          });
+
+          try {
+              await update(ref(db), updates);
+              // 保存成功后，短暂延迟移除遮罩
+              setTimeout(() => {
+                  overlay.classList.add('hidden');
+                  // alert("Saved successfully!"); 
+              }, 500);
+          } catch (error) {
+              console.error("Save failed", error);
+              alert("Error saving data: " + error.message);
+              overlay.classList.add('hidden');
+          }
+      };
+
+      // 辅助：渲染 Tabs
+      function renderCourseFilterTabs() {
+          const container = document.getElementById('course-filter-tabs');
+          if(!container) return;
+          let html = '';
+          const allActive = courseFilter === 'All' ? 'tab-active border-b-[#111418]' : 'tab-inactive border-b-transparent';
+          html += `<div onclick="window.setCourseFilter('All')" class="px-4 py-3 border-b-[3px] ${allActive} text-sm font-bold whitespace-nowrap transition-colors select-none">All Courses</div>`;
+          allCourses.forEach(c => {
+              const name = c.course || c.courseCode || "Unnamed";
+              const isActive = courseFilter === name || courseFilter === c.courseCode;
+              const style = isActive ? 'tab-active border-b-[#111418]' : 'tab-inactive border-b-transparent';
+              html += `<div onclick="window.setCourseFilter('${name}')" class="px-4 py-3 border-b-[3px] ${style} text-sm font-bold whitespace-nowrap transition-colors select-none">${name}</div>`;
+          });
+          container.innerHTML = html;
+      }
+
+      // 辅助：渲染可编辑表格
+      function renderCoursesViewTable() {
+          const tbody = document.getElementById('courses-view-table-body');
+          if (!tbody) return;
+
+          let filtered = [...allSchedules]; // 复制一份
+          if (courseFilter !== 'All') {
+              filtered = filtered.filter(s => s.course === courseFilter || s.courseCode === courseFilter);
+          }
+          
+          // 注意：这里不进行 WeekNO 排序，因为我们允许用户拖拽排序。
+          // 如果用户想保留拖拽后的顺序，我们需要一个 'order' 字段。
+          // 简化起见，这里初次加载按默认排序，之后完全依赖 DOM 顺序。
+          if (courseFilter === 'All' && allSchedules.length > 0 && !document.querySelector('.dragging')) {
+               filtered.sort((a, b) => {
+                  if ((a.WeekNO || 0) !== (b.WeekNO || 0)) return (a.WeekNO || 0) - (b.WeekNO || 0);
+                  return (a.Day || '').localeCompare(b.Day || '');
+              });
+          }
+
+          if (filtered.length === 0) {
+              tbody.innerHTML = `<tr><td colspan="8" class="h-24 text-center text-[#4c739a] text-sm">No courses found. Click "Add Item" to create one.</td></tr>`;
+              return;
+          }
+
+          tbody.innerHTML = ''; // 清空
+          
+          filtered.forEach(item => {
+              const tr = document.createElement('tr');
+              tr.className = "border-t border-t-[#cfdbe7] hover:bg-white transition-colors bg-white";
+              tr.dataset.id = item.id;
+              tr.setAttribute('draggable', 'true');
+
+              tr.innerHTML = `
+                <td class="px-2 py-2 text-center cursor-grab text-gray-300 hover:text-gray-500">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M100,64a12,12,0,1,1-12-12A12,12,0,0,1,100,64Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,100,128Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,100,192Zm68-128a12,12,0,1,1-12-12A12,12,0,0,1,168,64Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,168,128Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,168,192Z"></path></svg>
+                </td>
+                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="WeekNO">${item.WeekNO || ''}</td>
+                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Day">${item.Day || ''}</td>
+                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Time">${item.Time || ''}</td>
+                <td class="px-4 py-2 text-[#0d141b] text-sm font-medium" contenteditable="true" data-field="Content">${item.Content || ''}</td>
+                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="course">${item.course || item.courseCode || ''}</td>
+                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Location">${item.Location || ''}</td>
+                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Memo">${item.Memo || ''}</td>
+              `;
+              
+              addDragEvents(tr);
+              tbody.appendChild(tr);
+          });
+      }
+
+      // 辅助：只读表格渲染 (Schedule View)
+      function renderScheduleViewTable() {
+        const tbody = document.getElementById('schedule-table-body');
+        if (!tbody) return;
+        if (allSchedules.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="h-24 text-center text-gray-400 text-sm">No events.</td></tr>`;
+            return;
+        }
+        let html = '';
+        // 这里需要排序，因为是只读展示
+        const sorted = [...allSchedules].sort((a,b) => (a.WeekNO||0)-(b.WeekNO||0));
+        sorted.forEach(item => {
+            const title = item.course || item.Content || "Personal Event";
+            const timeStr = `W${item.WeekNO||'-'} • ${item.Day?item.Day.slice(0,3):''} ${item.Time||''}`;
+            const info = item.Lecturer || item.Location || '-';
+            html += `<tr class="border-t border-t-[#dbe0e6] hover:bg-slate-50 transition-colors">
+                <td class="px-4 py-3 text-[#111418] text-sm font-medium">${title}</td>
+                <td class="px-4 py-3 text-[#617589] text-sm">${timeStr}</td>
+                <td class="px-4 py-3 text-[#617589] text-sm">${info}</td>
+                <td class="px-4 py-3 text-[#617589] text-sm truncate max-w-[150px]">${item.Memo || ''}</td></tr>`;
+        });
+        tbody.innerHTML = html;
+      }
+
+      // [功能4] 拖拽事件绑定逻辑
+      function addDragEvents(row) {
+          row.addEventListener('dragstart', handleDragStart);
+          row.addEventListener('dragenter', handleDragEnter);
+          row.addEventListener('dragover', handleDragOver);
+          row.addEventListener('dragleave', handleDragLeave);
+          row.addEventListener('drop', handleDrop);
+          row.addEventListener('dragend', handleDragEnd);
+      }
+
+      function handleDragStart(e) {
+          this.style.opacity = '0.4';
+          dragSrcEl = this;
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/html', this.innerHTML);
+      }
+
+      function handleDragOver(e) {
+          if (e.preventDefault) e.preventDefault();
+          return false;
+      }
+
+      function handleDragEnter(e) {
+          this.classList.add('bg-blue-100'); // 高亮目标行
+      }
+
+      function handleDragLeave(e) {
+          this.classList.remove('bg-blue-100');
+      }
+
+      function handleDrop(e) {
+          if (e.stopPropagation) e.stopPropagation();
+          if (dragSrcEl !== this) {
+              // 交换 DOM 元素位置
+              // 简单的做法：将 dragSrcEl 插入到 this 之前或之后
+              // 这里使用 insertBefore 插入到当前元素之前
+              const tbody = this.parentNode;
+              // 判断是向上拖还是向下拖
+              const allRows = [...tbody.querySelectorAll('tr')];
+              const srcIndex = allRows.indexOf(dragSrcEl);
+              const targetIndex = allRows.indexOf(this);
+
+              if (srcIndex < targetIndex) {
+                  tbody.insertBefore(dragSrcEl, this.nextSibling);
+              } else {
+                  tbody.insertBefore(dragSrcEl, this);
+              }
+          }
+          return false;
+      }
+
+      function handleDragEnd(e) {
+          this.style.opacity = '1';
+          const rows = document.querySelectorAll('#courses-view-table-body tr');
+          rows.forEach(row => row.classList.remove('bg-blue-100'));
+      }
+
+    </script>
+  </body>
+</html>
