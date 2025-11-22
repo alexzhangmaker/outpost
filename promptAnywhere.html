@@ -437,6 +437,12 @@
                     <i class="fas fa-code"></i>
                     <span>泰语语法笔记</span>
                 </li>
+
+                <li class="nav-item" data-template="noteWritingEn">
+                    <i class="fas fa-code"></i>
+                    <span>英语语法笔记</span>
+                </li>
+
                 <li class="nav-item" data-template="schema">
                     <i class="fas fa-cogs"></i>
                     <span>Schema 管理</span>
@@ -983,6 +989,34 @@ Please maintain this exact JSON Array structure throughout the response.
         现在，请开始生成关于【语法点】的Markdown内容。
         `;
 
+        const Prompt_Template_Note_En=`
+        请你扮演一位专业的大学英语老师，为中文母语者（雅思水平6.0）制作一份英语学习材料。请严格按照以下要求生成内容：
+
+        **格式要求：**
+        1.  使用Markdown格式。
+        2.  整个文档只有一个一级标题 "#"，作为该英语知识点的名称。
+        3.  文档内容必须包含以下四个二级标题 "##"，顺序不可改变：
+            - "## 知识点的关键构成"
+            - "## 用途"
+            - "## 常见用途示例"
+            - '## 练习"
+        4.  在每个二级标题 "##" 部分的最后，必须增加一个 --- 分割线，将该部分与下一部分内容清晰分隔开。
+
+
+        **内容要求：**
+        1.  **语言：** 所有解释说明性文字（标题、语法构成、用途说明）必须使用**中文**。
+        2.  **英语应用：** 语法结构、例句、练习题目及答案中的泰语部分必须使用**英语**。
+        3.  **读者水平：** 面向雅思6.0水平的中文学生，解释需清晰易懂，例句要贴近生活。
+        4.  **各部分细则：**
+            - **知识点构成：** 清晰列出该知识点的结构公式，并简要说明各部分成分。
+            - **用途：** 解释该知识点在什么情境下使用，表达什么含义。
+            - **常用例句：** 提供3-5个典型实例，每个实例需包含英语和中文翻译。
+            - **练习：** 设计多个练习，例如填空、造句或改错。练习后请附上答案。
+
+        **请生成的语法点是：{noteKeyPoint}**
+
+        现在，请开始生成关于【语法点】的Markdown内容。
+        ` ;
         const Prompt_Template_Article=`
         请为以下文章生成摘要：
         文章标题: {articleTitle}
@@ -1377,7 +1411,18 @@ const schema_Thai_Reading = {
                        
                     ],
                     promptTemplate: Prompt_Template_Note
+                },
+                noteWritingEn:{
+                    name: '英语语法笔记',
+                    fields: [
+                        { id: 'noteKeyPoint', label: 'note要点', type: 'text', required: true },
+                       
+                    ],
+                    promptTemplate: Prompt_Template_Note_En
                 }
+
+
+                
             }
         };
 

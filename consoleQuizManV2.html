@@ -74,20 +74,20 @@
             border: none;
             border-radius: 12px;
             box-shadow: var(--card-shadow);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
         .card-header {
             background: white;
             border-bottom: 2px solid var(--light-bg);
             font-weight: 600;
-            padding: 15px 20px;
+            padding: 12px 16px;
         }
         
         .course-item {
             border: none;
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             transition: all 0.3s ease;
         }
         
@@ -96,10 +96,39 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
+        .course-header {
+            cursor: pointer;
+            padding: 12px 16px;
+            border-bottom: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .course-header:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .course-header.collapsed .collapse-icon {
+            transform: rotate(0deg);
+        }
+        
+        .course-header:not(.collapsed) .collapse-icon {
+            transform: rotate(90deg);
+        }
+        
+        .collapse-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .quiz-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 0 10px 10px 10px;
+        }
+        
         .quiz-item {
             border-left: 3px solid var(--primary-color);
             margin-bottom: 6px;
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-radius: 6px;
             transition: all 0.2s ease;
             cursor: pointer;
@@ -118,7 +147,7 @@
         .search-box {
             border-radius: 25px;
             border: 2px solid #e9ecef;
-            padding: 10px 20px;
+            padding: 8px 16px;
         }
         
         .search-box:focus {
@@ -130,7 +159,7 @@
             background: white;
             border: 1px solid #dee2e6;
             border-radius: 20px;
-            padding: 5px 15px;
+            padding: 4px 12px;
             margin: 2px;
             font-size: 0.85rem;
             cursor: pointer;
@@ -148,20 +177,22 @@
         }
         
         .editor-section {
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
         
         .form-label {
             font-weight: 600;
             color: var(--secondary-color);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
         }
         
         .form-control, .form-select {
             border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 10px 15px;
+            border-radius: 6px;
+            padding: 8px 12px;
             transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
         
         .form-control:focus, .form-select:focus {
@@ -173,17 +204,18 @@
             font-family: 'Consolas', 'Monaco', monospace;
             font-size: 14px;
             line-height: 1.5;
-            min-height: 400px;
+            min-height: 500px;
             resize: vertical;
         }
         
         .btn-primary {
             background: var(--primary-color);
             border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
+            border-radius: 6px;
+            padding: 8px 16px;
             font-weight: 600;
             transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
         
         .btn-primary:hover {
@@ -195,48 +227,61 @@
         .btn-success {
             background: #27ae60;
             border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
+            border-radius: 6px;
+            padding: 8px 16px;
             font-weight: 600;
+            font-size: 0.9rem;
         }
         
         .btn-danger {
             background: var(--accent-color);
             border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
+            border-radius: 6px;
+            padding: 8px 16px;
             font-weight: 600;
+            font-size: 0.9rem;
         }
         
         .btn-warning {
             background: #f39c12;
             border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
+            border-radius: 6px;
+            padding: 8px 16px;
             font-weight: 600;
+            font-size: 0.9rem;
         }
         
         .stats-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 10px;
+            padding: 15px;
             text-align: center;
         }
         
         .stats-number {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             margin-bottom: 0;
         }
         
         .stats-label {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             opacity: 0.9;
         }
         
         .hidden {
             display: none !important;
+        }
+        
+        .editor-header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .course-selector {
+            min-width: 180px;
         }
     </style>
 </head>
@@ -288,7 +333,7 @@
                                 <i class="fas fa-folder text-primary"></i>
                             </div>
                             <div class="card-body p-0">
-                                <div id="course-folders">
+                                <div id="course-folders" class="accordion">
                                     <!-- 科目文件夹将在这里动态生成 -->
                                 </div>
                             </div>
@@ -345,9 +390,14 @@
                                 <h2 class="h5 mb-0 fw-bold">Quiz编辑器</h2>
                                 <small class="text-muted" id="editor-subtitle">选择一个测试集进行编辑</small>
                             </div>
-                            <div id="current-quiz-info" class="hidden">
-                                <span class="badge bg-primary" id="current-course-badge"></span>
-                                <span class="badge bg-secondary ms-1" id="current-quiz-id"></span>
+                            <div class="editor-header-controls">
+                                <div id="current-quiz-info" class="hidden d-flex align-items-center">
+                                    <span class="badge bg-primary me-2" id="current-course-badge"></span>
+                                    <span class="badge bg-secondary me-2" id="current-quiz-id"></span>
+                                    <select id="course-selector" class="form-select form-select-sm course-selector">
+                                        <option value="">选择科目文件夹</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         
@@ -465,6 +515,7 @@
         const publishQuizBtn = document.getElementById('publish-quiz');
         const validateJsonBtn = document.getElementById('validate-json');
         const createFirstQuizBtn = document.getElementById('create-first-quiz');
+        const courseSelector = document.getElementById('course-selector');
 
         // 全局变量
         let currentCourseCode = null;
@@ -472,6 +523,8 @@
         let allQuizSets = [];
         let selectedTag = null;
         let searchTerm = '';
+        let courseFoldersData = {};
+        let currentlyOpenCourse = null;
 
         // 认证状态监听 - 修复版本
         auth.onAuthStateChanged((user) => {
@@ -536,6 +589,7 @@
             database.ref('courseFolders').on('value', snapshot => {
                 courseFolders.innerHTML = '';
                 const courses = snapshot.val();
+                courseFoldersData = courses;
                 
                 if (!courses) {
                     courseFolders.innerHTML = '<div class="p-3 text-center text-muted">暂无科目数据</div>';
@@ -547,27 +601,142 @@
                     const courseItem = document.createElement('div');
                     courseItem.className = 'course-item card';
                     courseItem.innerHTML = `
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="card-title mb-1">${course.course}</h6>
-                                    <small class="text-muted">${course.courseCode}</small>
-                                </div>
-                                <i class="fas fa-chevron-right text-muted"></i>
+                        <div class="course-header accordion-header d-flex justify-content-between align-items-center" 
+                             id="course-header-${courseCode}" 
+                             data-bs-toggle="collapse" 
+                             data-bs-target="#course-collapse-${courseCode}"
+                             aria-expanded="false"
+                             aria-controls="course-collapse-${courseCode}">
+                            <div>
+                                <h6 class="card-title mb-1">${course.course}</h6>
+                                <small class="text-muted">${course.courseCode}</small>
                             </div>
-                            <div class="quiz-list mt-2" id="quiz-list-${courseCode}">
+                            <i class="fas fa-chevron-right text-muted collapse-icon"></i>
+                        </div>
+                        <div id="course-collapse-${courseCode}" class="accordion-collapse collapse" 
+                             aria-labelledby="course-header-${courseCode}">
+                            <div class="quiz-list" id="quiz-list-${courseCode}">
                                 <!-- 测试集将在这里动态生成 -->
                             </div>
                         </div>
                     `;
                     
                     courseFolders.appendChild(courseItem);
-                    loadQuizSets(course.courseCode, courseItem.querySelector(`#quiz-list-${courseCode}`));
+                    
+                    // 添加折叠事件监听器
+                    const courseHeader = courseItem.querySelector(`#course-header-${courseCode}`);
+                    const courseCollapse = courseItem.querySelector(`#course-collapse-${courseCode}`);
+                    
+                    courseCollapse.addEventListener('show.bs.collapse', function () {
+                        // 关闭其他打开的课程
+                        if (currentlyOpenCourse && currentlyOpenCourse !== courseCode) {
+                            const otherCollapse = document.getElementById(`course-collapse-${currentlyOpenCourse}`);
+                            if (otherCollapse) {
+                                const bsCollapse = new bootstrap.Collapse(otherCollapse, {toggle: false});
+                                bsCollapse.hide();
+                            }
+                        }
+                        currentlyOpenCourse = courseCode;
+                        loadQuizSets(courseCode, courseItem.querySelector(`#quiz-list-${courseCode}`));
+                    });
+                    
+                    courseCollapse.addEventListener('shown.bs.collapse', function () {
+                        courseHeader.classList.remove('collapsed');
+                    });
+                    
+                    courseCollapse.addEventListener('hide.bs.collapse', function () {
+                        courseHeader.classList.add('collapsed');
+                        if (currentlyOpenCourse === courseCode) {
+                            currentlyOpenCourse = null;
+                        }
+                    });
                 });
+                
+                // 更新课程选择器
+                updateCourseSelector();
             }, error => {
                 console.error('加载科目文件夹错误:', error);
                 courseFolders.innerHTML = '<div class="p-3 text-center text-danger">加载科目数据失败</div>';
             });
+        }
+
+        // 更新课程选择器
+        function updateCourseSelector() {
+            courseSelector.innerHTML = '<option value="">选择科目文件夹</option>';
+            
+            if (!courseFoldersData) return;
+            
+            Object.keys(courseFoldersData).forEach(courseCode => {
+                const course = courseFoldersData[courseCode];
+                const option = document.createElement('option');
+                option.value = courseCode;
+                option.textContent = `${course.course} (${courseCode})`;
+                courseSelector.appendChild(option);
+            });
+            
+            // 设置当前选中的课程
+            if (currentCourseCode) {
+                courseSelector.value = currentCourseCode;
+            }
+        }
+
+        // 课程选择器变更事件
+        courseSelector.addEventListener('change', (e) => {
+            if (!currentQuizSetId) return;
+            
+            const newCourseCode = e.target.value;
+            if (!newCourseCode || newCourseCode === currentCourseCode) return;
+            
+            if (confirm(`确定要将此测试集移动到 ${courseFoldersData[newCourseCode].course} 文件夹吗？`)) {
+                moveQuizSetToCourse(newCourseCode);
+            } else {
+                // 恢复原来的选择
+                courseSelector.value = currentCourseCode;
+            }
+        });
+
+        // 移动测试集到其他课程
+        function moveQuizSetToCourse(newCourseCode) {
+            if (!currentCourseCode || !currentQuizSetId || !newCourseCode) return;
+            
+            // 获取当前测试集数据
+            database.ref(`courseQuiz/${currentCourseCode}/${currentQuizSetId}`).once('value')
+                .then(snapshot => {
+                    const quizSetData = snapshot.val();
+                    
+                    if (!quizSetData) {
+                        alert('无法获取测试集数据');
+                        return;
+                    }
+                    
+                    // 在新课程下创建测试集
+                    const newQuizSetRef = database.ref(`courseQuiz/${newCourseCode}`).push();
+                    
+                    // 复制数据到新位置
+                    return newQuizSetRef.set(quizSetData)
+                        .then(() => {
+                            // 删除原位置的测试集
+                            return database.ref(`courseQuiz/${currentCourseCode}/${currentQuizSetId}`).remove();
+                        })
+                        .then(() => {
+                            // 更新当前状态
+                            currentCourseCode = newCourseCode;
+                            currentQuizSetId = newQuizSetRef.key;
+                            
+                            // 更新界面
+                            currentCourseBadge.textContent = newCourseCode;
+                            currentQuizId.textContent = currentQuizSetId.substring(0, 8) + '...';
+                            
+                            // 重新加载数据
+                            loadCourseFolders();
+                            
+                            alert('测试集移动成功！');
+                        });
+                })
+                .catch(error => {
+                    console.error('移动测试集错误:', error);
+                    alert('移动测试集失败: ' + error.message);
+                });
         }
 
         // 加载测试集
@@ -733,6 +902,9 @@
             currentCourseBadge.textContent = courseCode;
             currentQuizId.textContent = quizSetId.substring(0, 8) + '...';
             
+            // 更新课程选择器
+            courseSelector.value = courseCode;
+            
             quizSetTitle.value = quizSet.title || '';
             quizSetTags.value = (quizSet.tags || []).join(', ');
             quizSetDate.value = quizSet.createdAt || new Date().toISOString().split('T')[0];
@@ -853,5 +1025,7 @@
         // 页面加载时检查认证状态
         console.log('页面加载完成，检查认证状态...');
     </script>
+    <!-- 引入Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

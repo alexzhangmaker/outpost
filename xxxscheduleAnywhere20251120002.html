@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Schedule Manager (Complete)</title>
+    <title>Student Schedule & Events Manager (Interactive)</title>
     <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
     <link
       rel="stylesheet"
@@ -22,6 +22,11 @@
         .nav-item-active { background-color: #f0f2f4; color: #111418; font-weight: 600; }
         .nav-item-inactive { background-color: transparent; color: #617589; font-weight: 500; }
         .nav-item-inactive:hover { background-color: #f8fafc; color: #111418; cursor: pointer; }
+
+        /* === Tab 样式 === */
+        .tab-active { border-bottom-color: #111418; color: #111418; }
+        .tab-inactive { border-bottom-color: transparent; color: #617589; }
+        .tab-inactive:hover { color: #111418; cursor: pointer; }
 
         /* === 编辑器样式 === */
         [contenteditable="true"]:focus {
@@ -67,10 +72,6 @@
             border-radius: 9999px;
             font-size: 0.875rem;
             margin: 0 auto;
-            cursor: pointer;
-        }
-        .calendar-day:hover {
-            background-color: #f1f5f9;
         }
         .calendar-day.today {
             background-color: #111418;
@@ -118,20 +119,22 @@
                   </div>
                 </div>
                 <div class="flex flex-col gap-2">
-                  <!-- Nav Items -->
+                  <!-- Nav: Schedule -->
                   <div id="nav-schedule" onclick="window.switchView('schedule')" class="flex items-center gap-3 px-3 py-2 rounded-lg nav-item-active transition-colors">
                     <div data-icon="Calendar"><svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM112,184a8,8,0,0,1-16,0V132.94l-4.42,2.22a8,8,0,0,1-7.16-14.32l16-8A8,8,0,0,1,112,120Zm56-8a8,8,0,0,1,0,16H136a8,8,0,0,1-6.4-12.8l28.78-38.37A8,8,0,1,0,145.07,132a8,8,0,1,1-13.85-8A24,24,0,0,1,176,136a23.76,23.76,0,0,1-4.84,14.45L152,176ZM48,80V48H72v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80Z"></path></svg></div>
                     <p class="text-sm leading-normal">Schedule</p>
                   </div>
+                  <!-- Nav: Courses -->
                   <div id="nav-courses" onclick="window.switchView('courses')" class="flex items-center gap-3 px-3 py-2 rounded-lg nav-item-inactive transition-colors">
                     <div data-icon="ListChecks"><svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H128a8,8,0,0,1,0-16h88A8,8,0,0,1,224,128ZM128,72h88a8,8,0,0,0,0-16H128a8,8,0,0,0,0,16Zm88,112H128a8,8,0,0,0,0,16h88a8,8,0,0,0,0-16ZM82.34,42.34,56,68.69,45.66,58.34A8,8,0,0,0,34.34,69.66l16,16a8,8,0,0,0,11.32,0l32-32A8,8,0,0,0,82.34,42.34Zm0,64L56,132.69,45.66,122.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32,0l32-32a8,8,0,0,0-11.32-11.32Zm0,64L56,196.69,45.66,186.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32,0l32-32a8,8,0,0,0-11.32-11.32Z"></path></svg></div>
                     <p class="text-sm leading-normal">Courses</p>
                   </div>
+                  <!-- Nav: Events (New) -->
                   <div id="nav-events" onclick="window.switchView('events')" class="flex items-center gap-3 px-3 py-2 rounded-lg nav-item-inactive transition-colors">
                     <div data-icon="Airplane"><svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H128a8,8,0,0,1,0-16h88A8,8,0,0,1,224,128ZM104,64H40a8,8,0,0,0-8,8V184a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V72A8,8,0,0,0,104,64Zm-8,112H48V80h48Zm64-64H128a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm56,56H128a8,8,0,0,0,0,16h88a8,8,0,0,0,0-16Zm-24-40h-8a8,8,0,0,0,0,16h8a8,8,0,0,0,0-16Z"></path></svg></div>
                     <p class="text-sm leading-normal">Events</p>
                   </div>
-                  
+
                   <div class="mt-auto pt-4">
                       <p id="connection-status" class="text-xs text-orange-500 font-medium px-3 animate-pulse">Connecting...</p>
                   </div>
@@ -140,13 +143,13 @@
             </div>
           </div>
 
-          <!-- === MAIN CONTENT === -->
+          <!-- === MAIN CONTENT AREA === -->
           <div class="layout-content-container flex flex-col max-w-[960px] flex-1 w-full">
             
-            <!-- 🟢 VIEW 1: SCHEDULE (Interactive Calendar + Filtered Timeline) -->
+            <!-- 🟢 VIEW 1: SCHEDULE (Interactive Calendar + Filtered List) -->
             <div id="view-schedule" class="view-section flex flex-col h-full">
                 <div class="flex flex-wrap justify-between gap-3 p-4">
-                  <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight min-w-72">Calendar & Timeline</p>
+                  <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight min-w-72">Schedule</p>
                   <button onclick="window.switchView('events'); setTimeout(window.addNewEventItem, 100);" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f2f4] text-[#111418] text-sm font-medium leading-normal hover:bg-[#e0e4e8] transition-colors">
                     <span class="truncate">Quick Event</span>
                   </button>
@@ -165,11 +168,14 @@
                                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M90.34,202.34a8,8,0,0,0,11.32,11.32l80-80a8,8,0,0,0,0-11.32l-80-80a8,8,0,0,0-11.32,11.32L164.69,128Z"></path></svg>
                             </button>
                         </div>
-                        <!-- Grid -->
+                        <!-- Calendar Days Header -->
                         <div class="grid grid-cols-7 gap-2 mb-2">
                             <div class="font-bold text-[#617589]">S</div><div class="font-bold text-[#617589]">M</div><div class="font-bold text-[#617589]">T</div><div class="font-bold text-[#617589]">W</div><div class="font-bold text-[#617589]">T</div><div class="font-bold text-[#617589]">F</div><div class="font-bold text-[#617589]">S</div>
                         </div>
-                        <div class="grid grid-cols-7 gap-2" id="calendar-grid"></div>
+                        <!-- Calendar Grid (Dynamic) -->
+                        <div class="grid grid-cols-7 gap-2" id="calendar-grid">
+                            <!-- Days will be injected here -->
+                        </div>
                     </div>
                 </div>
 
@@ -195,7 +201,7 @@
                 </div>
             </div>
 
-            <!-- 🔵 VIEW 2: COURSES (Restored Tabs + Editable) -->
+            <!-- 🔵 VIEW 2: COURSES (Editable) -->
             <div id="view-courses" class="view-section hidden-view flex flex-col h-full">
                 <div class="flex flex-wrap justify-between gap-3 p-4 items-center">
                   <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight">Course Editor</p>
@@ -210,15 +216,9 @@
                     </button>
                   </div>
                 </div>
-                
-                <!-- 🔵 Restored Course Filter Tabs -->
                 <div class="pb-3 overflow-x-auto">
-                  <div id="course-filter-tabs" class="flex border-b border-[#cfdbe7] px-4 gap-8 min-w-max">
-                     <!-- Tabs will be injected here by JS -->
-                     <div class="animate-pulse flex gap-8 pt-4"><div class="h-6 w-20 bg-slate-200 rounded"></div><div class="h-6 w-20 bg-slate-200 rounded"></div></div>
-                  </div>
+                  <div id="course-filter-tabs" class="flex border-b border-[#cfdbe7] px-4 gap-8 min-w-max"></div>
                 </div>
-
                 <div class="px-4 py-3 @container">
                   <div class="flex overflow-hidden rounded-lg border border-[#cfdbe7] bg-slate-50 overflow-x-auto relative">
                     <table class="flex-1 min-w-[1200px]" id="courses-table">
@@ -241,13 +241,13 @@
                 </div>
             </div>
 
-            <!-- 🟣 VIEW 3: EVENTS -->
+            <!-- 🟣 VIEW 3: EVENTS (Editable) -->
             <div id="view-events" class="view-section hidden-view flex flex-col h-full">
                 <div class="flex flex-wrap justify-between gap-3 p-4 items-center">
                   <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight">Personal Events</p>
                   <div class="flex gap-3">
                     <button onclick="window.addNewEventItem()" class="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors font-medium text-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H128a8,8,0,0,1,0-16h88A8,8,0,0,1,224,128ZM104,64H40a8,8,0,0,0-8,8V184a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V72A8,8,0,0,0,104,64Zm-8,112H48V80h48Zm64-64H128a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm56,56H128a8,8,0,0,0,0,16h88a8,8,0,0,0,0-16Zm-24-40h-8a8,8,0,0,0,0,16h8a8,8,0,0,0,0-16Z"></path></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
                         Add Event
                     </button>
                     <button onclick="window.saveEventChanges()" class="flex items-center gap-2 px-4 py-2 bg-[#111418] text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm shadow-md">
@@ -271,12 +271,15 @@
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold">Memo</th>
                         </tr>
                       </thead>
-                      <tbody id="events-view-table-body"></tbody>
+                      <tbody id="events-view-table-body">
+                        <tr class="border-t border-t-[#cfdbe7]"><td colspan="7" class="h-[150px] text-center text-[#4c739a] text-sm">Loading events...</td></tr>
+                      </tbody>
                     </table>
                   </div>
                 </div>
             </div>
 
+            <!-- Overlay for Saving -->
             <div id="saving-overlay" class="hidden fixed inset-0 bg-white/80 z-50 flex items-center justify-center">
                 <div class="bg-white p-6 rounded-lg shadow-xl border border-gray-200 flex flex-col items-center">
                     <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
@@ -319,19 +322,22 @@
       let allSchedules = [];
       let courseFilter = 'All';
       let dragSrcEl = null; 
+      
+      // Calendar State
       let currentCalendarDate = new Date();
 
       signInAnonymously(auth).then(() => {
           statusEl.textContent = "Connected";
           statusEl.classList.replace("text-orange-500", "text-green-600");
           statusEl.classList.remove("animate-pulse");
-          initCalendar();
+          initCalendar(); // Init calendar on load
       });
 
+      // === Listeners ===
       onValue(ref(db, 'courses'), (snapshot) => {
           const data = snapshot.val();
           allCourses = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
-          renderCourseFilterTabs(); // Render Tabs when data loads
+          renderCourseFilterTabs();
           if(!document.getElementById('view-courses').classList.contains('hidden-view')) {
              renderCoursesViewTable(); 
           }
@@ -340,6 +346,7 @@
       onValue(ref(db, 'schedules'), (snapshot) => {
           const data = snapshot.val();
           allSchedules = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
+          
           allSchedules.sort((a, b) => {
               const dateA = a.Date || '9999-12-31';
               const dateB = b.Date || '9999-12-31';
@@ -349,42 +356,67 @@
 
           const overlay = document.getElementById('saving-overlay');
           if(overlay.classList.contains('hidden')) {
-              renderScheduleViewTable();
-              renderCoursesViewTable();
-              renderEventsViewTable();
-              renderCalendar();
+              renderScheduleViewTable(); // Mixed View
+              renderCoursesViewTable();  // Course Only
+              renderEventsViewTable();   // Events Only
+              renderCalendar(); // Re-render calendar to show event dots
           }
       });
 
-      // === Calendar ===
-      function initCalendar() { renderCalendar(); }
+      // === Calendar Logic ===
+      function initCalendar() {
+          renderCalendar();
+      }
+
       window.changeMonth = (offset) => {
           currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset);
           renderCalendar();
       }
+
       function renderCalendar() {
           const year = currentCalendarDate.getFullYear();
           const month = currentCalendarDate.getMonth();
+          
+          // Update Header
           const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
           document.getElementById('calendar-title').innerText = `${monthNames[month]} ${year}`;
-          const firstDay = new Date(year, month, 1).getDay();
+
+          const firstDay = new Date(year, month, 1).getDay(); // 0 = Sunday
           const daysInMonth = new Date(year, month + 1, 0).getDate();
           const grid = document.getElementById('calendar-grid');
           grid.innerHTML = '';
+
           const today = new Date();
           const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
 
-          for (let i = 0; i < firstDay; i++) { grid.appendChild(document.createElement('div')); }
+          // Empty slots
+          for (let i = 0; i < firstDay; i++) {
+              const empty = document.createElement('div');
+              grid.appendChild(empty);
+          }
+
+          // Days
           for (let i = 1; i <= daysInMonth; i++) {
               const dayEl = document.createElement('div');
               dayEl.className = 'calendar-day';
               dayEl.innerText = i;
-              if (isCurrentMonth && i === today.getDate()) dayEl.classList.add('today');
+              
+              // Highlight Today
+              if (isCurrentMonth && i === today.getDate()) {
+                  dayEl.classList.add('today');
+              }
+
+              // Check for events
               const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-              if(allSchedules.some(s => s.Date === dateStr)) dayEl.classList.add('has-event');
+              const hasEvent = allSchedules.some(s => s.Date === dateStr);
+              if(hasEvent) {
+                  dayEl.classList.add('has-event');
+              }
+
               grid.appendChild(dayEl);
           }
       }
+
 
       // === Helpers ===
       function getWeekday(dateString) {
@@ -393,11 +425,15 @@
           if (isNaN(date)) return '';
           return date.toLocaleDateString('en-US', { weekday: 'long' });
       }
+
       window.updateRowDay = (dateInput) => {
          const row = dateInput.closest('tr');
          const dayCell = row.querySelector('[data-field="Day"]');
-         if (dayCell) dayCell.textContent = getWeekday(dateInput.value);
+         if (dayCell) {
+             dayCell.textContent = getWeekday(dateInput.value);
+         }
       };
+
       function getCourseDropdownHTML(currentCourseCode, currentCourseName) {
           let options = `<option value="">-- Select Course --</option>`;
           if (!currentCourseCode && currentCourseName) {
@@ -413,172 +449,315 @@
           return `<select class="table-input" data-field="courseCodeSelector">${options}</select>`;
       }
 
-      // === RESTORED: Course Filter Tabs Logic ===
-      function renderCourseFilterTabs() {
-          const container = document.getElementById('course-filter-tabs');
-          if (!container) return;
-
-          let html = '';
-          
-          // Using original styling logic: border-b-[#2b8dee] for active
-          const getTabClass = (isActive) => {
-              return isActive
-                  ? 'border-b-[#2b8dee] text-[#0d141b]'
-                  : 'border-b-transparent text-[#4c739a] hover:text-[#2b8dee]';
-          };
-
-          // "All Courses" Tab
-          const allActive = courseFilter === 'All';
-          html += `
-            <a onclick="window.setCourseFilter('All')" class="flex flex-col items-center justify-center border-b-[3px] ${getTabClass(allActive)} pb-[13px] pt-4 cursor-pointer transition-colors min-w-[80px]">
-                <p class="text-sm font-bold leading-normal tracking-[0.015em]">All Courses</p>
-            </a>
-          `;
-
-          // Dynamic Tabs
-          allCourses.forEach(c => {
-              const name = c.course || c.courseCode || "Unnamed";
-              const isActive = courseFilter === name || courseFilter === c.courseCode;
-              html += `
-                <a onclick="window.setCourseFilter('${name}')" class="flex flex-col items-center justify-center border-b-[3px] ${getTabClass(isActive)} pb-[13px] pt-4 cursor-pointer transition-colors min-w-[80px]">
-                    <p class="text-sm font-bold leading-normal tracking-[0.015em] whitespace-nowrap">${name}</p>
-                </a>
-              `;
-          });
-          container.innerHTML = html;
-      }
-
-      // === Render Views ===
+      // ==============================
+      // VIEW 1: SCHEDULE (Filtered by Date)
+      // ==============================
       function renderScheduleViewTable() {
         const tbody = document.getElementById('schedule-table-body');
         if (!tbody) return;
-        const today = new Date(); today.setHours(0,0,0,0);
-        const tMinus3 = new Date(today); tMinus3.setDate(today.getDate() - 3);
-        const tPlus7 = new Date(today); tPlus7.setDate(today.getDate() + 7);
-        
+
+        // Date Logic
+        const today = new Date();
+        today.setHours(0,0,0,0); // Normalize today
+
+        const threeDaysAgo = new Date(today);
+        threeDaysAgo.setDate(today.getDate() - 3);
+
+        const sevenDaysLater = new Date(today);
+        sevenDaysLater.setDate(today.getDate() + 7);
+
+        // Filter
         const filtered = allSchedules.filter(item => {
-            if(!item.Date) return false;
-            const d = new Date(item.Date); d.setHours(0,0,0,0);
-            return d >= tMinus3 && d <= tPlus7;
+            if (!item.Date) return false;
+            const itemDate = new Date(item.Date);
+            itemDate.setHours(0,0,0,0); // Normalize item date
+            return itemDate >= threeDaysAgo && itemDate <= sevenDaysLater;
         });
 
-        if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="h-24 text-center text-gray-400 text-sm">No upcoming events.</td></tr>`; return; }
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="h-24 text-center text-gray-400 text-sm">No upcoming events (T-3 to T+7).</td></tr>`;
+            return;
+        }
+
         let html = '';
         filtered.forEach(item => {
-            const itemDate = new Date(item.Date); itemDate.setHours(0,0,0,0);
+            const itemDate = new Date(item.Date);
+            itemDate.setHours(0,0,0,0);
+            
             const isPast = itemDate < today;
+            
             const title = item.course || item.Content || "Event";
-            const dateTime = `${item.Date || ''} ${item.Time || ''}`;
+            const dateStr = item.Date || '';
+            const timeStr = item.Time || '';
+            const dateTime = `${dateStr} ${timeStr}`;
             const info = item.Lecturer || item.Location || '-';
+            
+            // Styling
             const isPersonal = item.activityClass === 'PersonalEvent';
-            let rowClass = isPast ? "schedule-past" : (isPersonal ? "bg-purple-50/30 hover:bg-purple-50" : "hover:bg-slate-50");
+            let rowClass = "border-t border-t-[#dbe0e6] transition-colors ";
+            
+            if (isPast) {
+                rowClass += "schedule-past"; // Grayed out
+            } else {
+                rowClass += isPersonal ? "bg-purple-50/30 hover:bg-purple-50" : "hover:bg-slate-50";
+            }
+
             const typeBadge = isPersonal ? `<span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded ml-2">Event</span>` : '';
-            html += `<tr class="border-t border-t-[#dbe0e6] transition-colors ${rowClass}"><td class="px-4 py-3 text-sm font-medium flex items-center">${title} ${typeBadge}</td><td class="px-4 py-3 text-sm">${dateTime}</td><td class="px-4 py-3 text-sm">${info}</td><td class="px-4 py-3 text-sm truncate max-w-[150px]">${item.Memo || ''}</td></tr>`;
+
+            html += `<tr class="${rowClass}">
+                <td class="px-4 py-3 text-sm font-medium flex items-center ${isPast ? 'text-gray-400' : 'text-[#111418]'}">${title} ${typeBadge}</td>
+                <td class="px-4 py-3 text-sm ${isPast ? 'text-gray-400' : 'text-[#617589]'}">${dateTime}</td>
+                <td class="px-4 py-3 text-sm ${isPast ? 'text-gray-400' : 'text-[#617589]'}">${info}</td>
+                <td class="px-4 py-3 text-sm truncate max-w-[150px] ${isPast ? 'text-gray-400' : 'text-[#617589]'}">${item.Memo || ''}</td></tr>`;
         });
         tbody.innerHTML = html;
       }
 
+      // ==============================
+      // VIEW 2: COURSES (Filtered)
+      // ==============================
       function renderCoursesViewTable() {
           const tbody = document.getElementById('courses-view-table-body');
           if (!tbody) return;
+
+          // Filter out PersonalEvents for this view
           let filtered = allSchedules.filter(item => item.activityClass !== 'PersonalEvent');
-          if (courseFilter !== 'All') filtered = filtered.filter(s => s.course === courseFilter || s.courseCode === courseFilter);
-          if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="9" class="h-24 text-center text-[#4c739a] text-sm">No items.</td></tr>`; return; }
+          
+          if (courseFilter !== 'All') {
+              filtered = filtered.filter(s => s.course === courseFilter || s.courseCode === courseFilter);
+          }
+
+          if (filtered.length === 0) {
+              tbody.innerHTML = `<tr><td colspan="9" class="h-24 text-center text-[#4c739a] text-sm">No course schedules found.</td></tr>`;
+              return;
+          }
+
           tbody.innerHTML = ''; 
           filtered.forEach(item => {
               const tr = document.createElement('tr');
               tr.className = "border-t border-t-[#cfdbe7] hover:bg-white transition-colors bg-white";
-              tr.dataset.id = item.id; tr.setAttribute('draggable', 'true');
+              tr.dataset.id = item.id;
+              tr.setAttribute('draggable', 'true');
+
+              const currentCourseCode = item.courseCode || "";
+              const currentCourseName = item.course || "";
+
               tr.innerHTML = `
-                <td class="px-2 py-2 text-center cursor-grab text-gray-300">::</td>
+                <td class="px-2 py-2 text-center cursor-grab text-gray-300 hover:text-gray-500">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M100,64a12,12,0,1,1-12-12A12,12,0,0,1,100,64Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,100,128Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,100,192Zm68-128a12,12,0,1,1-12-12A12,12,0,0,1,168,64Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,168,128Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,168,192Z"></path></svg>
+                </td>
                 <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="WeekNO">${item.WeekNO || ''}</td>
                 <td class="px-4 py-2"><input type="date" class="table-input text-blue-700 font-medium" data-field="DateInput" value="${item.Date || ''}" onchange="window.updateRowDay(this)"></td>
                 <td class="px-4 py-2 text-gray-500 text-sm bg-gray-50" data-field="Day">${item.Day || getWeekday(item.Date)}</td>
                 <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Time">${item.Time || ''}</td>
                 <td class="px-4 py-2 text-[#0d141b] text-sm font-medium" contenteditable="true" data-field="Content">${item.Content || ''}</td>
-                <td class="px-4 py-2">${getCourseDropdownHTML(item.courseCode, item.course)}</td>
+                <td class="px-4 py-2">${getCourseDropdownHTML(currentCourseCode, currentCourseName)}</td>
                 <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Location">${item.Location || ''}</td>
-                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Memo">${item.Memo || ''}</td>`;
-              addDragEvents(tr); tbody.appendChild(tr);
+                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Memo">${item.Memo || ''}</td>
+              `;
+              addDragEvents(tr);
+              tbody.appendChild(tr);
           });
       }
 
+      // ==============================
+      // VIEW 3: EVENTS (Personal Only)
+      // ==============================
       function renderEventsViewTable() {
           const tbody = document.getElementById('events-view-table-body');
           if (!tbody) return;
+
+          // Only show PersonalEvents
           let filtered = allSchedules.filter(item => item.activityClass === 'PersonalEvent');
-          if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="h-24 text-center text-[#4c739a] text-sm">No events.</td></tr>`; return; }
+
+          if (filtered.length === 0) {
+              tbody.innerHTML = `<tr><td colspan="7" class="h-24 text-center text-[#4c739a] text-sm">No personal events found.</td></tr>`;
+              return;
+          }
+
           tbody.innerHTML = ''; 
           filtered.forEach(item => {
               const tr = document.createElement('tr');
               tr.className = "border-t border-t-[#cfdbe7] hover:bg-purple-50/50 transition-colors bg-white";
-              tr.dataset.id = item.id; tr.setAttribute('draggable', 'true');
+              tr.dataset.id = item.id;
+              tr.setAttribute('draggable', 'true');
+
               tr.innerHTML = `
-                <td class="px-2 py-2 text-center cursor-grab text-gray-300">::</td>
+                <td class="px-2 py-2 text-center cursor-grab text-gray-300 hover:text-gray-500">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M100,64a12,12,0,1,1-12-12A12,12,0,0,1,100,64Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,100,128Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,100,192Zm68-128a12,12,0,1,1-12-12A12,12,0,0,1,168,64Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,168,128Zm0,64a12,12,0,1,1-12-12A12,12,0,0,1,168,192Z"></path></svg>
+                </td>
                 <td class="px-4 py-2"><input type="date" class="table-input text-purple-700 font-medium" data-field="DateInput" value="${item.Date || ''}" onchange="window.updateRowDay(this)"></td>
                 <td class="px-4 py-2 text-gray-500 text-sm bg-gray-50" data-field="Day">${item.Day || getWeekday(item.Date)}</td>
                 <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Time">${item.Time || ''}</td>
                 <td class="px-4 py-2 text-[#0d141b] text-sm font-medium" contenteditable="true" data-field="Content">${item.Content || ''}</td>
                 <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Location">${item.Location || ''}</td>
-                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Memo">${item.Memo || ''}</td>`;
-              addDragEvents(tr); tbody.appendChild(tr);
+                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Memo">${item.Memo || ''}</td>
+              `;
+              addDragEvents(tr);
+              tbody.appendChild(tr);
           });
       }
 
-      // === Add & Save ===
+      // === Add & Save (Courses) ===
       window.addNewCourseItem = () => {
           const tbody = document.getElementById('courses-view-table-body');
-          if(tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
+          if(tbody.querySelector('td[colspan]')) { tbody.innerHTML = ''; }
           const newRow = document.createElement('tr');
           newRow.className = "border-t border-t-[#cfdbe7] bg-blue-50/30 hover:bg-blue-50 transition-colors";
-          newRow.dataset.id = 'new_' + Date.now(); newRow.dataset.isNew = "true"; newRow.setAttribute('draggable', 'true');
+          newRow.setAttribute('draggable', 'true');
+          newRow.dataset.id = 'new_' + Date.now();
+          newRow.dataset.isNew = "true";
           const today = new Date().toISOString().split('T')[0];
-          let dCode = "", dName = "";
-          if (courseFilter !== 'All') { const c = allCourses.find(x => x.course === courseFilter || x.courseCode === courseFilter); if(c){ dCode = c.courseCode; dName = c.course; } }
-          newRow.innerHTML = `<td class="px-2 py-2 text-center cursor-grab">::</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="WeekNO">1</td><td class="px-4 py-2"><input type="date" class="table-input text-blue-700" data-field="DateInput" value="${today}" onchange="window.updateRowDay(this)"></td><td class="px-4 py-2 text-gray-500 text-sm" data-field="Day">${getWeekday(today)}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Time">09:00</td><td class="px-4 py-2 text-sm font-medium" contenteditable="true" data-field="Content">Class</td><td class="px-4 py-2">${getCourseDropdownHTML(dCode, dName)}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Location">Room</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Memo"></td>`;
-          addDragEvents(newRow); tbody.prepend(newRow);
+          let defaultCode = "", defaultName = "";
+          if (courseFilter !== 'All') {
+              const c = allCourses.find(x => x.course === courseFilter || x.courseCode === courseFilter);
+              if (c) { defaultCode = c.courseCode; defaultName = c.course; }
+          }
+
+          newRow.innerHTML = `
+            <td class="px-2 py-2 text-center cursor-grab text-gray-400">::</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="WeekNO">1</td>
+            <td class="px-4 py-2"><input type="date" class="table-input text-blue-700 font-medium" data-field="DateInput" value="${today}" onchange="window.updateRowDay(this)"></td>
+            <td class="px-4 py-2 text-gray-500 text-sm bg-gray-50" data-field="Day">${getWeekday(today)}</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Time">09:00</td>
+            <td class="px-4 py-2 text-[#0d141b] text-sm font-medium" contenteditable="true" data-field="Content">Class Content</td>
+            <td class="px-4 py-2">${getCourseDropdownHTML(defaultCode, defaultName)}</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Location">Room</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Memo"></td>
+          `;
+          addDragEvents(newRow);
+          tbody.prepend(newRow);
       };
+
       window.saveCourseChanges = async () => {
+          const overlay = document.getElementById('saving-overlay');
+          overlay.classList.remove('hidden');
           const rows = document.querySelectorAll('#courses-view-table-body tr');
           const updates = {};
           rows.forEach(row => {
               if(!row.dataset.id && !row.dataset.isNew) return;
-              const getText = (f) => row.querySelector(`[data-field="${f}"]`)?.innerText.trim() || "";
-              const getVal = (s) => row.querySelector(s)?.value || "";
-              const cCode = getVal('select[data-field="courseCodeSelector"]');
-              let cName = ""; const found = allCourses.find(c => c.courseCode == cCode);
-              if(found) cName = found.course; else if (cCode==="") cName=""; else cName=cCode; 
-              const record = { WeekNO: getText('WeekNO'), Date: getVal('input[data-field="DateInput"]'), Day: getText('Day'), Time: getText('Time'), Content: getText('Content'), courseCode: cCode, course: cName, Location: getText('Location'), Memo: getText('Memo'), activityClass: "Course Schedule" };
-              updates['/schedules/' + (row.dataset.isNew === "true" ? push(child(ref(db), 'schedules')).key : row.dataset.id)] = record;
+              const getText = (field) => row.querySelector(`[data-field="${field}"]`)?.innerText.trim() || "";
+              const getVal = (selector) => row.querySelector(selector)?.value || "";
+              const courseCode = getVal('select[data-field="courseCodeSelector"]');
+              let courseName = "";
+              const foundCourse = allCourses.find(c => c.courseCode == courseCode);
+              if (foundCourse) courseName = foundCourse.course;
+
+              const record = {
+                  WeekNO: getText('WeekNO'),
+                  Date: getVal('input[data-field="DateInput"]'),
+                  Day: getText('Day'),
+                  Time: getText('Time'),
+                  Content: getText('Content'),
+                  courseCode: courseCode,
+                  course: courseName,
+                  Location: getText('Location'),
+                  Memo: getText('Memo'),
+                  activityClass: "Course Schedule"
+              };
+              const key = row.dataset.isNew === "true" ? push(child(ref(db), 'schedules')).key : row.dataset.id;
+              updates['/schedules/' + key] = record;
           });
-          try { document.getElementById('saving-overlay').classList.remove('hidden'); await update(ref(db), updates); setTimeout(() => document.getElementById('saving-overlay').classList.add('hidden'), 500); } catch (e) { alert(e); }
+          try { await update(ref(db), updates); setTimeout(() => overlay.classList.add('hidden'), 500); } catch (e) { alert(e); overlay.classList.add('hidden'); }
       };
+
+      // === Add & Save (Events) ===
       window.addNewEventItem = () => {
-           const tbody = document.getElementById('events-view-table-body');
-           if(tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
-           const newRow = document.createElement('tr'); newRow.className = "border-t border-t-[#cfdbe7] bg-purple-50/30 hover:bg-purple-50 transition-colors";
-           newRow.dataset.id = 'new_evt_' + Date.now(); newRow.dataset.isNew = "true"; newRow.setAttribute('draggable', 'true');
-           const today = new Date().toISOString().split('T')[0];
-           newRow.innerHTML = `<td class="px-2 py-2 text-center cursor-grab">::</td><td class="px-4 py-2"><input type="date" class="table-input text-purple-700" data-field="DateInput" value="${today}" onchange="window.updateRowDay(this)"></td><td class="px-4 py-2 text-gray-500 text-sm" data-field="Day">${getWeekday(today)}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Time">10:00</td><td class="px-4 py-2 text-sm font-medium" contenteditable="true" data-field="Content">Event</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Location">Loc</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Memo"></td>`;
-           addDragEvents(newRow); tbody.prepend(newRow);
+          const tbody = document.getElementById('events-view-table-body');
+          if(tbody.querySelector('td[colspan]')) { tbody.innerHTML = ''; }
+          const newRow = document.createElement('tr');
+          newRow.className = "border-t border-t-[#cfdbe7] bg-purple-50/30 hover:bg-purple-50 transition-colors";
+          newRow.setAttribute('draggable', 'true');
+          newRow.dataset.id = 'new_evt_' + Date.now();
+          newRow.dataset.isNew = "true";
+          const today = new Date().toISOString().split('T')[0];
+
+          newRow.innerHTML = `
+            <td class="px-2 py-2 text-center cursor-grab text-gray-400">::</td>
+            <td class="px-4 py-2"><input type="date" class="table-input text-purple-700 font-medium" data-field="DateInput" value="${today}" onchange="window.updateRowDay(this)"></td>
+            <td class="px-4 py-2 text-gray-500 text-sm bg-gray-50" data-field="Day">${getWeekday(today)}</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Time">10:00</td>
+            <td class="px-4 py-2 text-[#0d141b] text-sm font-medium" contenteditable="true" data-field="Content">New Event</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Location">Location</td>
+            <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Memo">Memo</td>
+          `;
+          addDragEvents(newRow);
+          tbody.prepend(newRow);
       };
+
       window.saveEventChanges = async () => {
+          const overlay = document.getElementById('saving-overlay');
+          overlay.classList.remove('hidden');
           const rows = document.querySelectorAll('#events-view-table-body tr');
           const updates = {};
           rows.forEach(row => {
               if(!row.dataset.id && !row.dataset.isNew) return;
-              const getText = (f) => row.querySelector(`[data-field="${f}"]`)?.innerText.trim() || "";
-              const getVal = (s) => row.querySelector(s)?.value || "";
-              const record = { Date: getVal('input[data-field="DateInput"]'), Day: getText('Day'), Time: getText('Time'), Content: getText('Content'), Location: getText('Location'), Memo: getText('Memo'), activityClass: "PersonalEvent", owner: "alexszhang@gmail.com" };
-              updates['/schedules/' + (row.dataset.isNew === "true" ? push(child(ref(db), 'schedules')).key : row.dataset.id)] = record;
+              const getText = (field) => row.querySelector(`[data-field="${field}"]`)?.innerText.trim() || "";
+              const getVal = (selector) => row.querySelector(selector)?.value || "";
+
+              const record = {
+                  Date: getVal('input[data-field="DateInput"]'),
+                  Day: getText('Day'),
+                  Time: getText('Time'),
+                  Content: getText('Content'),
+                  Location: getText('Location'),
+                  Memo: getText('Memo'),
+                  activityClass: "PersonalEvent",
+                  owner: "alexszhang@gmail.com" // Default owner
+              };
+              const key = row.dataset.isNew === "true" ? push(child(ref(db), 'schedules')).key : row.dataset.id;
+              updates['/schedules/' + key] = record;
           });
-          try { document.getElementById('saving-overlay').classList.remove('hidden'); await update(ref(db), updates); setTimeout(() => document.getElementById('saving-overlay').classList.add('hidden'), 500); } catch (e) { alert(e); }
+          try { await update(ref(db), updates); setTimeout(() => overlay.classList.add('hidden'), 500); } catch (e) { alert(e); overlay.classList.add('hidden'); }
       };
 
-      // === Drag & Drop, Nav, Filter ===
-      function addDragEvents(row) { row.addEventListener('dragstart', e=>{e.dataTransfer.effectAllowed='move'; dragSrcEl=row; row.style.opacity='0.4';}); row.addEventListener('dragover', e=>{e.preventDefault();return false;}); row.addEventListener('drop', function(e){e.stopPropagation(); if(dragSrcEl!==this){const p=this.parentNode,s=[...p.children].indexOf(dragSrcEl),t=[...p.children].indexOf(this); s<t?p.insertBefore(dragSrcEl,this.nextSibling):p.insertBefore(dragSrcEl,this);} return false;}); row.addEventListener('dragend', ()=>row.style.opacity='1'); }
-      window.switchView = (v) => { ['schedule', 'courses', 'events'].forEach(x => { document.getElementById(`view-${x}`).classList.toggle('hidden-view', x!==v); document.getElementById(`nav-${x}`).classList.toggle('nav-item-active', x===v); document.getElementById(`nav-${x}`).classList.toggle('nav-item-inactive', x!==v); }); if(v==='courses') renderCoursesViewTable(); };
-      window.setCourseFilter = (v) => { courseFilter = v; renderCourseFilterTabs(); renderCoursesViewTable(); };
+      // === Drag & Drop ===
+      function addDragEvents(row) {
+          row.addEventListener('dragstart', handleDragStart); row.addEventListener('dragenter', handleDragEnter);
+          row.addEventListener('dragover', handleDragOver); row.addEventListener('dragleave', handleDragLeave);
+          row.addEventListener('drop', handleDrop); row.addEventListener('dragend', handleDragEnd);
+      }
+      function handleDragStart(e) { this.style.opacity = '0.4'; dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', this.innerHTML); }
+      function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); return false; }
+      function handleDragEnter(e) { this.classList.add('bg-gray-100'); }
+      function handleDragLeave(e) { this.classList.remove('bg-gray-100'); }
+      function handleDrop(e) {
+          if (e.stopPropagation) e.stopPropagation();
+          if (dragSrcEl !== this) {
+              const tbody = this.parentNode;
+              const srcIndex = [...tbody.children].indexOf(dragSrcEl);
+              const targetIndex = [...tbody.children].indexOf(this);
+              if (srcIndex < targetIndex) tbody.insertBefore(dragSrcEl, this.nextSibling);
+              else tbody.insertBefore(dragSrcEl, this);
+          }
+          return false;
+      }
+      function handleDragEnd(e) { this.style.opacity = '1'; document.querySelectorAll('tr').forEach(row => row.classList.remove('bg-gray-100')); }
+
+      // === Navigation ===
+      window.switchView = (viewName) => {
+          ['schedule', 'courses', 'events'].forEach(v => {
+              const el = document.getElementById(`view-${v}`);
+              const nav = document.getElementById(`nav-${v}`);
+              if (v === viewName) {
+                  el.classList.remove('hidden-view');
+                  nav.classList.add('nav-item-active');
+                  nav.classList.remove('nav-item-inactive');
+              } else {
+                  el.classList.add('hidden-view');
+                  nav.classList.remove('nav-item-active');
+                  nav.classList.add('nav-item-inactive');
+              }
+          });
+          // If switching to courses, refresh dropdowns
+          if(viewName === 'courses') renderCoursesViewTable();
+      };
+
+      window.setCourseFilter = (val) => {
+          courseFilter = val;
+          renderCourseFilterTabs();
+          renderCoursesViewTable();
+      };
     </script>
   </body>
 </html>
