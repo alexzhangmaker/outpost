@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语听力练习</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        .course-item:hover {
+            background-color: #f3f4f6;
+        }
+        .timestamp-item:hover {
+            background-color: #f9fafb;
+        }
+        .active-timestamp {
+            background-color: #e0f2fe;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 登录遮罩层 -->
+    <div id="signinSplash" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+        <div class="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+            <h1 class="text-2xl font-bold text-center mb-6">泰语听力练习</h1>
+            <p class="text-gray-600 text-center mb-8">请使用Gmail账户登录以继续</p>
+            <button id="signInButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center">
+                <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                使用 Gmail 登录
+            </button>
+        </div>
+    </div>
+
+    <!-- 主应用界面 -->
+    <div id="app" class="hidden h-screen flex flex-col">
+        <!-- 顶部工具栏 -->
+        <header class="bg-white shadow-sm border-b border-gray-200">
+            <div class="flex items-center justify-between px-4 py-3">
+                <div class="flex items-center">
+                    <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                    </svg>
+                    <h1 class="ml-2 text-xl font-semibold text-gray-800">泰语听力练习</h1>
+                </div>
+                <div class="flex items-center">
+                    <div id="userInfo" class="flex items-center mr-4">
+                        <span id="userName" class="text-gray-700 mr-2"></span>
+                        <img id="userAvatar" class="w-8 h-8 rounded-full" src="" alt="用户头像">
+                    </div>
+                    <button id="signOutButton" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主要内容区 -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- 左侧导航栏 -->
+            <div class="w-80 bg-white border-r border-gray-200 overflow-y-auto">
+                <div class="p-4">
+                    <!-- 搜索框 -->
+                    <div class="mb-4">
+                        <input type="text" id="searchInput" placeholder="搜索课件标题..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <!-- 标签筛选 -->
+                    <div class="mb-4">
+                        <select id="tagFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">所有标签</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 课件列表 -->
+                    <div id="courseList" class="space-y-2">
+                        <!-- 课件列表将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧内容区 -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div id="contentArea" class="max-w-4xl mx-auto">
+                    <!-- 初始状态提示 -->
+                    <div id="emptyState" class="flex flex-col items-center justify-center h-full text-center py-12">
+                        <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                        </svg>
+                        <h2 class="text-xl font-medium text-gray-700 mb-2">选择课件开始学习</h2>
+                        <p class="text-gray-500">从左侧导航栏选择一个听力课件开始练习</p>
+                    </div>
+                    
+                    <!-- 课件内容 -->
+                    <div id="courseContent" class="hidden">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                            <!-- 音频播放器 -->
+                            <div class="p-6 border-b border-gray-200">
+                                <h2 id="courseTitle" class="text-xl font-semibold text-gray-800 mb-4"></h2>
+                                <div class="flex items-center">
+                                    <audio id="audioPlayer" controls class="w-full">
+                                        您的浏览器不支持音频播放
+                                    </audio>
+                                </div>
+                                <div class="mt-4 flex items-center justify-between">
+                                    <div class="flex space-x-2">
+                                        <button id="playPauseBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center">
+                                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            播放
+                                        </button>
+                                        <button id="restartBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md flex items-center">
+                                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            重播
+                                        </button>
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        速度: 
+                                        <select id="playbackRate" class="ml-1 border border-gray-300 rounded px-2 py-1">
+                                            <option value="0.5">0.5x</option>
+                                            <option value="0.75">0.75x</option>
+                                            <option value="1" selected>正常</option>
+                                            <option value="1.25">1.25x</option>
+                                            <option value="1.5">1.5x</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 时间戳内容 -->
+                            <div id="timestampsContainer" class="p-6">
+                                <h3 class="text-lg font-medium text-gray-700 mb-4">内容分段</h3>
+                                <div id="timestampsList" class="space-y-4">
+                                    <!-- 时间戳内容将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-audible-8d74e-6ba9c.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // DOM元素
+        const signinSplash = document.getElementById('signinSplash');
+        const app = document.getElementById('app');
+        const signInButton = document.getElementById('signInButton');
+        const signOutButton = document.getElementById('signOutButton');
+        const userInfo = document.getElementById('userInfo');
+        const userName = document.getElementById('userName');
+        const userAvatar = document.getElementById('userAvatar');
+        const courseList = document.getElementById('courseList');
+        const searchInput = document.getElementById('searchInput');
+        const tagFilter = document.getElementById('tagFilter');
+        const emptyState = document.getElementById('emptyState');
+        const courseContent = document.getElementById('courseContent');
+        const courseTitle = document.getElementById('courseTitle');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const playbackRate = document.getElementById('playbackRate');
+        const timestampsList = document.getElementById('timestampsList');
+
+        // 应用状态
+        let courses = [];
+        let audibles = [];
+        let filteredAudibles = [];
+        let currentCourse = null;
+        let currentAudio = null;
+
+        // 初始化应用
+        function initApp() {
+            // 监听认证状态变化
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // 用户已登录
+                    showApp();
+                    loadUserData(user);
+                    loadCourses();
+                    loadAudibles();
+                } else {
+                    // 用户未登录
+                    showSignIn();
+                }
+            });
+
+            // 登录按钮事件
+            signInButton.addEventListener('click', signIn);
+
+            // 退出按钮事件
+            signOutButton.addEventListener('click', signOut);
+
+            // 搜索输入事件
+            searchInput.addEventListener('input', filterAudibles);
+
+            // 标签筛选事件
+            tagFilter.addEventListener('change', filterAudibles);
+
+            // 播放/暂停按钮事件
+            playPauseBtn.addEventListener('click', togglePlayPause);
+
+            // 重播按钮事件
+            restartBtn.addEventListener('click', restartAudio);
+
+            // 播放速度变化事件
+            playbackRate.addEventListener('change', changePlaybackRate);
+
+            // 音频播放时间更新事件
+            audioPlayer.addEventListener('timeupdate', updateActiveTimestamp);
+        }
+
+        // 显示应用界面
+        function showApp() {
+            signinSplash.classList.add('hidden');
+            app.classList.remove('hidden');
+        }
+
+        // 显示登录界面
+        function showSignIn() {
+            signinSplash.classList.remove('hidden');
+            app.classList.add('hidden');
+        }
+
+        // 加载用户数据
+        function loadUserData(user) {
+            userName.textContent = user.displayName || user.email;
+            userAvatar.src = user.photoURL || 'https://via.placeholder.com/32';
+        }
+
+        // 登录
+        function signIn() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then(result => {
+                    // 登录成功
+                    console.log('用户已登录:', result.user);
+                })
+                .catch(error => {
+                    console.error('登录错误:', error);
+                    alert('登录失败，请重试');
+                });
+        }
+
+        // 退出
+        function signOut() {
+            auth.signOut()
+                .then(() => {
+                    console.log('用户已退出');
+                })
+                .catch(error => {
+                    console.error('退出错误:', error);
+                });
+        }
+
+        // 加载课程数据
+        function loadCourses() {
+            database.ref('audibleCourses').once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    courses = Object.values(data);
+                    renderCourseList();
+                })
+                .catch(error => {
+                    console.error('加载课程数据错误:', error);
+                });
+        }
+
+        // 加载听力课件数据
+        function loadAudibles() {
+            database.ref('audibles').once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    audibles = Object.values(data);
+                    filteredAudibles = [...audibles];
+                    
+                    // 提取所有标签
+                    const allTags = new Set();
+                    audibles.forEach(audible => {
+                        if (audible.tags) {
+                            audible.tags.forEach(tag => allTags.add(tag));
+                        }
+                    });
+                    
+                    // 更新标签筛选器
+                    updateTagFilter(Array.from(allTags));
+                    
+                    renderAudibleList();
+                })
+                .catch(error => {
+                    console.error('加载听力课件数据错误:', error);
+                });
+        }
+
+        // 更新标签筛选器
+        function updateTagFilter(tags) {
+            // 清空现有选项
+            tagFilter.innerHTML = '<option value="">所有标签</option>';
+            
+            // 添加标签选项
+            tags.sort().forEach(tag => {
+                const option = document.createElement('option');
+                option.value = tag;
+                option.textContent = tag;
+                tagFilter.appendChild(option);
+            });
+        }
+
+        // 渲染课程列表
+        function renderCourseList() {
+            courseList.innerHTML = '';
+            
+            courses.forEach(course => {
+                const courseItem = document.createElement('div');
+                courseItem.className = 'border border-gray-200 rounded-md overflow-hidden';
+                
+                const courseHeader = document.createElement('div');
+                courseHeader.className = 'bg-gray-50 px-4 py-3 flex justify-between items-center cursor-pointer';
+                courseHeader.innerHTML = `
+                    <span class="font-medium text-gray-700">${course.course}</span>
+                    <svg class="w-5 h-5 text-gray-500 transform transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                `;
+                
+                const courseContent = document.createElement('div');
+                courseContent.className = 'hidden bg-white';
+                
+                // 筛选属于该课程的听力课件
+                const courseAudibles = filteredAudibles.filter(audible => audible.courseCode === course.courseCode);
+                
+                if (courseAudibles.length === 0) {
+                    courseContent.innerHTML = '<div class="px-4 py-2 text-gray-500 text-sm">暂无课件</div>';
+                } else {
+                    courseAudibles.forEach(audible => {
+                        const audibleItem = document.createElement('div');
+                        audibleItem.className = 'px-4 py-2 border-b border-gray-100 last:border-b-0 course-item cursor-pointer';
+                        audibleItem.textContent = audible.title;
+                        audibleItem.addEventListener('click', () => loadAudibleContent(audible));
+                        courseContent.appendChild(audibleItem);
+                    });
+                }
+                
+                courseHeader.addEventListener('click', () => {
+                    const isExpanded = courseContent.classList.contains('hidden');
+                    
+                    // 切换所有课程内容显示状态
+                    document.querySelectorAll('#courseList > div > div:last-child').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    
+                    // 切换所有箭头方向
+                    document.querySelectorAll('#courseList > div > div:first-child svg').forEach(arrow => {
+                        arrow.classList.remove('rotate-180');
+                    });
+                    
+                    if (isExpanded) {
+                        courseContent.classList.remove('hidden');
+                        courseHeader.querySelector('svg').classList.add('rotate-180');
+                    }
+                });
+                
+                courseItem.appendChild(courseHeader);
+                courseItem.appendChild(courseContent);
+                courseList.appendChild(courseItem);
+            });
+        }
+
+        // 渲染听力课件列表
+        function renderAudibleList() {
+            renderCourseList();
+        }
+
+        // 筛选听力课件
+        function filterAudibles() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedTag = tagFilter.value;
+            
+            filteredAudibles = audibles.filter(audible => {
+                // 标题匹配
+                const titleMatch = audible.title.toLowerCase().includes(searchTerm);
+                
+                // 标签匹配
+                let tagMatch = true;
+                if (selectedTag) {
+                    tagMatch = audible.tags && audible.tags.includes(selectedTag);
+                }
+                
+                return titleMatch && tagMatch;
+            });
+            
+            renderAudibleList();
+        }
+
+        // 完全重写loadAudibleContent函数
+async function loadAudibleContent(audible) {
+    console.log('加载课件:', audible.title);
+    
+    currentAudio = audible;
+    
+    // 隐藏初始状态，显示课件内容
+    emptyState.classList.add('hidden');
+    courseContent.classList.remove('hidden');
+    
+    // 设置课件标题
+    courseTitle.textContent = audible.title;
+    
+    // 重置音频播放器 - 重要：先完全重置
+    audioPlayer.pause();
+    audioPlayer.src = '';
+    audioPlayer.load();
+    
+    // 渲染时间戳内容
+    renderTimestamps(audible.timeStamps);
+    
+    // 先更新UI状态
+    updatePlayButtonState();
+    playPauseBtn.disabled = true;
+    
+    try {
+        // 直接设置音频源（其他文件都工作，说明认证没问题）
+        console.log('设置音频源:', audible.audioURL);
+        audioPlayer.src = audible.audioURL;
+        
+        // 使用更可靠的方式等待音频就绪
+        await waitForAudioReady();
+        console.log('音频就绪，可以播放');
+        
+        playPauseBtn.disabled = false;
+        
+    } catch (error) {
+        console.error('音频加载失败:', error);
+        alert('音频加载失败: ' + error.message);
+        playPauseBtn.disabled = true;
+    }
+}
+
+// 等待音频就绪的辅助函数
+function waitForAudioReady() {
+    return new Promise((resolve, reject) => {
+        // 如果已经可以播放，立即解析
+        if (audioPlayer.readyState >= 2) {
+            resolve();
+            return;
+        }
+        
+        const onCanPlay = () => {
+            cleanup();
+            resolve();
+        };
+        
+        const onError = (e) => {
+            cleanup();
+            reject(new Error('音频加载错误'));
+        };
+        
+        const onStalled = () => {
+            console.log('音频加载停滞');
+        };
+        
+        const cleanup = () => {
+            audioPlayer.removeEventListener('canplay', onCanPlay);
+            audioPlayer.removeEventListener('error', onError);
+            audioPlayer.removeEventListener('stalled', onStalled);
+            clearTimeout(timeoutId);
+        };
+        
+        audioPlayer.addEventListener('canplay', onCanPlay);
+        audioPlayer.addEventListener('error', onError);
+        audioPlayer.addEventListener('stalled', onStalled);
+        
+        const timeoutId = setTimeout(() => {
+            cleanup();
+            reject(new Error('音频加载超时'));
+        }, 10000);
+    });
+}
+
+// 更新播放按钮状态
+function updatePlayButtonState() {
+    if (audioPlayer.paused || !audioPlayer.src) {
+        playPauseBtn.innerHTML = `
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+            </svg>
+            播放
+        `;
+    } else {
+        playPauseBtn.innerHTML = `
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            暂停
+        `;
+    }
+}
+
+        // 渲染时间戳内容
+        function renderTimestamps(timeStamps) {
+            timestampsList.innerHTML = '';
+            
+            if (!timeStamps || timeStamps.length === 0) {
+                timestampsList.innerHTML = '<div class="text-gray-500 text-center py-4">暂无时间戳内容</div>';
+                return;
+            }
+            
+            timeStamps.forEach((timestamp, index) => {
+                const timestampItem = document.createElement('div');
+                timestampItem.className = 'border border-gray-200 rounded-md p-4 timestamp-item';
+                timestampItem.dataset.start = timestamp.start;
+                timestampItem.dataset.end = timestamp.end;
+                
+                timestampItem.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-sm font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded">${timestamp.timestamp}</span>
+                        <button class="text-blue-500 hover:text-blue-700 text-sm font-medium play-segment" data-start="${timestamp.start}">播放此段</button>
+                    </div>
+                    <div class="mb-2">
+                        <p class="text-gray-700">${timestamp.thai_text}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">${timestamp.english_translation}</p>
+                    </div>
+                `;
+                
+                // 添加播放此段事件
+                const playSegmentBtn = timestampItem.querySelector('.play-segment');
+                playSegmentBtn.addEventListener('click', () => {
+                    playSegment(timestamp.start);
+                });
+                
+                // 点击整个时间戳项也可以播放
+                timestampItem.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('play-segment')) {
+                        playSegment(timestamp.start);
+                    }
+                });
+                
+                timestampsList.appendChild(timestampItem);
+            });
+        }
+
+        // 播放指定时间段
+        function playSegment(startTime) {
+            audioPlayer.currentTime = startTime;
+            audioPlayer.play();
+            
+            // 更新播放按钮状态
+            playPauseBtn.innerHTML = `
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                暂停
+            `;
+        }
+
+        // 修改togglePlayPause函数
+function togglePlayPause() {
+    console.log('togglePlayPause called, readyState:', audioPlayer.readyState, 'src:', audioPlayer.src);
+    
+    // 检查音频源
+    if (!audioPlayer.src) {
+        console.error('没有音频源');
+        alert('请先选择课件');
+        return;
+    }
+    
+    // 检查音频是否就绪
+    if (audioPlayer.readyState < 2) {
+        console.error('音频尚未就绪，readyState:', audioPlayer.readyState);
+        alert('音频正在加载，请稍候...');
+        return;
+    }
+    
+    if (audioPlayer.paused) {
+        console.log('开始播放');
+        audioPlayer.play().then(() => {
+            console.log('播放成功');
+            updatePlayButtonState();
+        }).catch(error => {
+            console.error('播放失败:', error);
+            alert('播放失败: ' + error.message);
+        });
+    } else {
+        console.log('暂停播放');
+        audioPlayer.pause();
+        updatePlayButtonState();
+    }
+}
+        // 重播音频
+        function restartAudio() {
+            audioPlayer.currentTime = 0;
+            audioPlayer.play();
+            
+            playPauseBtn.innerHTML = `
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                暂停
+            `;
+        }
+
+        // 改变播放速度
+        function changePlaybackRate() {
+            audioPlayer.playbackRate = parseFloat(playbackRate.value);
+        }
+
+        // 更新活动时间戳
+        function updateActiveTimestamp() {
+            const currentTime = audioPlayer.currentTime;
+            
+            // 移除所有活动状态
+            document.querySelectorAll('.timestamp-item').forEach(item => {
+                item.classList.remove('active-timestamp');
+            });
+            
+            // 找到当前播放的时间段
+            if (currentAudio && currentAudio.timeStamps) {
+                const activeTimestamp = currentAudio.timeStamps.find(timestamp => 
+                    currentTime >= timestamp.start && currentTime <= timestamp.end
+                );
+                
+                if (activeTimestamp) {
+                    const timestampIndex = currentAudio.timeStamps.indexOf(activeTimestamp);
+                    const timestampItems = document.querySelectorAll('.timestamp-item');
+                    
+                    if (timestampItems[timestampIndex]) {
+                        timestampItems[timestampIndex].classList.add('active-timestamp');
+                        
+                        // 滚动到活动时间戳
+                        timestampItems[timestampIndex].scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                }
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
