@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Schedule Manager (Complete)</title>
+    <title>Student Schedule & Task Automation</title>
     <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
     <link
       rel="stylesheet"
@@ -69,36 +69,15 @@
             margin: 0 auto;
             cursor: pointer;
         }
-        .calendar-day:hover {
-            background-color: #f1f5f9;
-        }
-        .calendar-day.today {
-            background-color: #111418;
-            color: white;
-            font-weight: bold;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .calendar-day.has-event {
-            position: relative;
-        }
-        .calendar-day.has-event::after {
-            content: '';
-            position: absolute;
-            bottom: 2px;
-            width: 4px;
-            height: 4px;
-            background-color: #2b8dee;
-            border-radius: 50%;
-        }
-        
-        /* 过期日程样式 */
-        .schedule-past {
-            background-color: #f8fafc;
-            color: #94a3b8 !important;
-        }
-        .schedule-past td {
-            color: #94a3b8 !important;
-        }
+        .calendar-day:hover { background-color: #f1f5f9; }
+        .calendar-day.today { background-color: #111418; color: white; font-weight: bold; }
+        .calendar-day.has-event::after { content: ''; position: absolute; bottom: 2px; width: 4px; height: 4px; background-color: #2b8dee; border-radius: 50%; }
+        .schedule-past { background-color: #f8fafc; color: #94a3b8 !important; }
+        .schedule-past td { color: #94a3b8 !important; }
+
+        /* === Task 状态样式 === */
+        .status-todo { color: #d97706; font-weight: 600; }
+        .status-done { color: #10b981; font-weight: 600; text-decoration: line-through; }
     </style>
   </head>
   <body>
@@ -131,6 +110,11 @@
                     <div data-icon="Airplane"><svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H128a8,8,0,0,1,0-16h88A8,8,0,0,1,224,128ZM104,64H40a8,8,0,0,0-8,8V184a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V72A8,8,0,0,0,104,64Zm-8,112H48V80h48Zm64-64H128a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm56,56H128a8,8,0,0,0,0,16h88a8,8,0,0,0,0-16Zm-24-40h-8a8,8,0,0,0,0,16h8a8,8,0,0,0,0-16Z"></path></svg></div>
                     <p class="text-sm leading-normal">Events</p>
                   </div>
+                  <!-- Nav: Tasks -->
+                  <div id="nav-tasks" onclick="window.switchView('tasks')" class="flex items-center gap-3 px-3 py-2 rounded-lg nav-item-inactive transition-colors">
+                    <div data-icon="CheckSquare"><svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,160H40V56H216V200ZM176.56,93.66l-64,64a8,8,0,0,1-11.32,0l-32-32a8,8,0,0,1,11.32-11.32L106.9,140.69l58.34-58.35a8,8,0,0,1,11.32,11.32Z"></path></svg></div>
+                    <p class="text-sm leading-normal">Tasks</p>
+                  </div>
                   
                   <div class="mt-auto pt-4">
                       <p id="connection-status" class="text-xs text-orange-500 font-medium px-3 animate-pulse">Connecting...</p>
@@ -140,32 +124,22 @@
             </div>
           </div>
 
-          <!-- === MAIN CONTENT === -->
+          <!-- === MAIN CONTENT AREA === -->
           <div class="layout-content-container flex flex-col max-w-[960px] flex-1 w-full">
             
-            <!-- 🟢 VIEW 1: SCHEDULE (Interactive Calendar + Filtered Timeline) -->
+            <!-- VIEW 1: SCHEDULE -->
             <div id="view-schedule" class="view-section flex flex-col h-full">
                 <div class="flex flex-wrap justify-between gap-3 p-4">
-                  <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight min-w-72">Calendar & Timeline</p>
-                  <button onclick="window.switchView('events'); setTimeout(window.addNewEventItem, 100);" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f2f4] text-[#111418] text-sm font-medium leading-normal hover:bg-[#e0e4e8] transition-colors">
-                    <span class="truncate">Quick Event</span>
-                  </button>
+                  <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight min-w-72">Calendar View</p>
                 </div>
                 
-                <!-- Interactive Calendar Widget -->
                 <div class="flex flex-wrap items-center justify-center gap-6 p-4 hidden sm:flex">
                     <div class="w-full bg-slate-50 rounded-xl p-4 text-center text-gray-400 text-sm border border-slate-100">
-                        <!-- Calendar Header -->
                         <div class="flex justify-between items-center mb-4 px-4">
-                            <button onclick="window.changeMonth(-1)" class="p-1 hover:bg-gray-200 rounded-full transition-colors">
-                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path></svg>
-                            </button>
+                            <button onclick="window.changeMonth(-1)" class="p-1 hover:bg-gray-200 rounded-full transition-colors"><svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path></svg></button>
                             <span class="font-bold text-[#111418] text-lg select-none" id="calendar-title">Loading...</span>
-                            <button onclick="window.changeMonth(1)" class="p-1 hover:bg-gray-200 rounded-full transition-colors">
-                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M90.34,202.34a8,8,0,0,0,11.32,11.32l80-80a8,8,0,0,0,0-11.32l-80-80a8,8,0,0,0-11.32,11.32L164.69,128Z"></path></svg>
-                            </button>
+                            <button onclick="window.changeMonth(1)" class="p-1 hover:bg-gray-200 rounded-full transition-colors"><svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M90.34,202.34a8,8,0,0,0,11.32,11.32l80-80a8,8,0,0,0,0-11.32l-80-80a8,8,0,0,0-11.32,11.32L164.69,128Z"></path></svg></button>
                         </div>
-                        <!-- Grid -->
                         <div class="grid grid-cols-7 gap-2 mb-2">
                             <div class="font-bold text-[#617589]">S</div><div class="font-bold text-[#617589]">M</div><div class="font-bold text-[#617589]">T</div><div class="font-bold text-[#617589]">W</div><div class="font-bold text-[#617589]">T</div><div class="font-bold text-[#617589]">F</div><div class="font-bold text-[#617589]">S</div>
                         </div>
@@ -173,52 +147,27 @@
                     </div>
                 </div>
 
-                <h3 class="text-[#111418] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4 flex items-center gap-2">
-                    Timeline <span class="text-xs font-normal text-gray-400">(Past 3 Days & Next 7 Days)</span>
-                </h3>
+                <h3 class="text-[#111418] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4 flex items-center gap-2">Timeline <span class="text-xs font-normal text-gray-400">(Past 3 & Next 7 Days)</span></h3>
                 <div class="px-4 py-3 @container">
                   <div class="flex overflow-hidden rounded-lg border border-[#dbe0e6] bg-white overflow-x-auto">
                     <table class="flex-1 min-w-[700px]">
-                      <thead>
-                        <tr class="bg-white">
-                          <th class="px-4 py-3 text-left text-[#111418] w-[30%] text-sm font-medium">Event / Course</th>
-                          <th class="px-4 py-3 text-left text-[#111418] w-[25%] text-sm font-medium">Date & Time</th>
-                          <th class="px-4 py-3 text-left text-[#111418] w-[25%] text-sm font-medium">Info</th>
-                          <th class="px-4 py-3 text-left text-[#111418] w-[20%] text-[#617589] text-sm font-medium">Memo</th>
-                        </tr>
-                      </thead>
-                      <tbody id="schedule-table-body">
-                        <tr class="border-t border-t-[#dbe0e6]"><td colspan="4" class="h-[150px] text-center text-gray-400 text-sm">Loading data...</td></tr>
-                      </tbody>
+                      <thead><tr class="bg-white"><th class="px-4 py-3 text-left text-[#111418] w-[30%] text-sm font-medium">Event / Course</th><th class="px-4 py-3 text-left text-[#111418] w-[25%] text-sm font-medium">Date & Time</th><th class="px-4 py-3 text-left text-[#111418] w-[25%] text-sm font-medium">Info</th><th class="px-4 py-3 text-left text-[#111418] w-[20%] text-[#617589] text-sm font-medium">Memo</th></tr></thead>
+                      <tbody id="schedule-table-body"><tr class="border-t border-t-[#dbe0e6]"><td colspan="4" class="h-[150px] text-center text-gray-400 text-sm">Loading data...</td></tr></tbody>
                     </table>
                   </div>
                 </div>
             </div>
 
-            <!-- 🔵 VIEW 2: COURSES (Restored Tabs + Editable) -->
+            <!-- VIEW 2: COURSES (Added Task Generator) -->
             <div id="view-courses" class="view-section hidden-view flex flex-col h-full">
                 <div class="flex flex-wrap justify-between gap-3 p-4 items-center">
                   <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight">Course Editor</p>
                   <div class="flex gap-3">
-                    <button onclick="window.addNewCourseItem()" class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium text-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
-                        Add Course
-                    </button>
-                    <button onclick="window.saveCourseChanges()" class="flex items-center gap-2 px-4 py-2 bg-[#111418] text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,53.66l-32-32A8,8,0,0,0,192,20H64A16,16,0,0,0,48,36V220a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V80a8,8,0,0,0-2.34-5.66ZM192,220H64V36h9.37L192,154.63V220Zm-32-32a8,8,0,0,1-16,0V160H112v28a8,8,0,0,1-16,0V152a8,8,0,0,1,8-8h64a8,8,0,0,1,8,8Z"></path></svg>
-                        Save Changes
-                    </button>
+                    <button onclick="window.addNewCourseItem()" class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium text-sm"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg> Add Course</button>
+                    <button onclick="window.saveCourseChanges()" class="flex items-center gap-2 px-4 py-2 bg-[#111418] text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm shadow-md"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,53.66l-32-32A8,8,0,0,0,192,20H64A16,16,0,0,0,48,36V220a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V80a8,8,0,0,0-2.34-5.66ZM192,220H64V36h9.37L192,154.63V220Zm-32-32a8,8,0,0,1-16,0V160H112v28a8,8,0,0,1-16,0V152a8,8,0,0,1,8-8h64a8,8,0,0,1,8,8Z"></path></svg> Save</button>
                   </div>
                 </div>
-                
-                <!-- 🔵 Restored Course Filter Tabs -->
-                <div class="pb-3 overflow-x-auto">
-                  <div id="course-filter-tabs" class="flex border-b border-[#cfdbe7] px-4 gap-8 min-w-max">
-                     <!-- Tabs will be injected here by JS -->
-                     <div class="animate-pulse flex gap-8 pt-4"><div class="h-6 w-20 bg-slate-200 rounded"></div><div class="h-6 w-20 bg-slate-200 rounded"></div></div>
-                  </div>
-                </div>
-
+                <div class="pb-3 overflow-x-auto"><div id="course-filter-tabs" class="flex border-b border-[#cfdbe7] px-4 gap-8 min-w-max"></div></div>
                 <div class="px-4 py-3 @container">
                   <div class="flex overflow-hidden rounded-lg border border-[#cfdbe7] bg-slate-50 overflow-x-auto relative">
                     <table class="flex-1 min-w-[1200px]" id="courses-table">
@@ -226,13 +175,15 @@
                         <tr class="bg-slate-100 border-b border-slate-200">
                           <th class="w-[40px] px-2 py-3 text-center">#</th>
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[60px] text-sm font-bold">Wk</th>
-                          <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold text-blue-700">Date</th> 
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold text-blue-700">Date</th>
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[100px] text-sm font-bold text-gray-500">Day</th>
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[140px] text-sm font-bold">Time</th>
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[200px] text-sm font-bold">Content</th>
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[180px] text-sm font-bold text-blue-700">Course</th>
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[100px] text-sm font-bold">Loc</th>
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[140px] text-sm font-bold">Memo</th>
+                          <!-- New Actions Column -->
+                          <th class="px-4 py-3 text-center w-[80px] text-sm font-bold text-[#0d141b]">Actions</th>
                         </tr>
                       </thead>
                       <tbody id="courses-view-table-body"></tbody>
@@ -246,32 +197,43 @@
                 <div class="flex flex-wrap justify-between gap-3 p-4 items-center">
                   <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight">Personal Events</p>
                   <div class="flex gap-3">
-                    <button onclick="window.addNewEventItem()" class="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors font-medium text-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H128a8,8,0,0,1,0-16h88A8,8,0,0,1,224,128ZM104,64H40a8,8,0,0,0-8,8V184a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V72A8,8,0,0,0,104,64Zm-8,112H48V80h48Zm64-64H128a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm56,56H128a8,8,0,0,0,0,16h88a8,8,0,0,0,0-16Zm-24-40h-8a8,8,0,0,0,0,16h8a8,8,0,0,0,0-16Z"></path></svg>
-                        Add Event
-                    </button>
-                    <button onclick="window.saveEventChanges()" class="flex items-center gap-2 px-4 py-2 bg-[#111418] text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,53.66l-32-32A8,8,0,0,0,192,20H64A16,16,0,0,0,48,36V220a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V80a8,8,0,0,0-2.34-5.66ZM192,220H64V36h9.37L192,154.63V220Zm-32-32a8,8,0,0,1-16,0V160H112v28a8,8,0,0,1-16,0V152a8,8,0,0,1,8-8h64a8,8,0,0,1,8,8Z"></path></svg>
-                        Save Changes
-                    </button>
+                    <button onclick="window.addNewEventItem()" class="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors font-medium text-sm"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H128a8,8,0,0,1,0-16h88A8,8,0,0,1,224,128ZM104,64H40a8,8,0,0,0-8,8V184a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V72A8,8,0,0,0,104,64Zm-8,112H48V80h48Zm64-64H128a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm56,56H128a8,8,0,0,0,0,16h88a8,8,0,0,0,0-16Zm-24-40h-8a8,8,0,0,0,0,16h8a8,8,0,0,0,0-16Z"></path></svg> Add Event</button>
+                    <button onclick="window.saveEventChanges()" class="flex items-center gap-2 px-4 py-2 bg-[#111418] text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm shadow-md"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,53.66l-32-32A8,8,0,0,0,192,20H64A16,16,0,0,0,48,36V220a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V80a8,8,0,0,0-2.34-5.66ZM192,220H64V36h9.37L192,154.63V220Zm-32-32a8,8,0,0,1-16,0V160H112v28a8,8,0,0,1-16,0V152a8,8,0,0,1,8-8h64a8,8,0,0,1,8,8Z"></path></svg> Save</button>
                   </div>
                 </div>
-
                 <div class="px-4 py-3 @container">
                   <div class="flex overflow-hidden rounded-lg border border-[#cfdbe7] bg-slate-50 overflow-x-auto relative">
                     <table class="flex-1 min-w-[900px]" id="events-table">
+                      <thead><tr class="bg-purple-50 border-b border-purple-100"><th class="w-[40px] px-2 py-3 text-center">#</th><th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold text-purple-700">Date</th><th class="px-4 py-3 text-left text-[#0d141b] w-[100px] text-sm font-bold text-gray-500">Day</th><th class="px-4 py-3 text-left text-[#0d141b] w-[140px] text-sm font-bold">Time</th><th class="px-4 py-3 text-left text-[#0d141b] w-[250px] text-sm font-bold">Content</th><th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold">Location</th><th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold">Memo</th></tr></thead>
+                      <tbody id="events-view-table-body"></tbody>
+                    </table>
+                  </div>
+                </div>
+            </div>
+
+            <!-- 🟠 VIEW 4: TASKS -->
+            <div id="view-tasks" class="view-section hidden-view flex flex-col h-full">
+                <div class="flex flex-wrap justify-between gap-3 p-4 items-center">
+                  <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight">Tasks</p>
+                  <div class="flex gap-3">
+                    <button onclick="window.addNewTaskItem()" class="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-colors font-medium text-sm"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg> Add Task</button>
+                    <button onclick="window.saveTaskChanges()" class="flex items-center gap-2 px-4 py-2 bg-[#111418] text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm shadow-md"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,53.66l-32-32A8,8,0,0,0,192,20H64A16,16,0,0,0,48,36V220a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V80a8,8,0,0,0-2.34-5.66ZM192,220H64V36h9.37L192,154.63V220Zm-32-32a8,8,0,0,1-16,0V160H112v28a8,8,0,0,1-16,0V152a8,8,0,0,1,8-8h64a8,8,0,0,1,8,8Z"></path></svg> Save</button>
+                  </div>
+                </div>
+                <div class="px-4 py-3 @container">
+                  <div class="flex overflow-hidden rounded-lg border border-[#cfdbe7] bg-slate-50 overflow-x-auto relative">
+                    <table class="flex-1 min-w-[900px]" id="tasks-table">
                       <thead>
-                        <tr class="bg-purple-50 border-b border-purple-100">
+                        <tr class="bg-orange-50 border-b border-orange-100">
                           <th class="w-[40px] px-2 py-3 text-center">#</th>
-                          <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold text-purple-700">Date</th> 
-                          <th class="px-4 py-3 text-left text-[#0d141b] w-[100px] text-sm font-bold text-gray-500">Day</th>
-                          <th class="px-4 py-3 text-left text-[#0d141b] w-[140px] text-sm font-bold">Time</th>
-                          <th class="px-4 py-3 text-left text-[#0d141b] w-[250px] text-sm font-bold">Content</th>
-                          <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold">Location</th>
-                          <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold">Memo</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[120px] text-sm font-bold text-orange-700">Status</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[250px] text-sm font-bold">Title</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold">Due Date</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold">Created At</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[200px] text-sm font-bold">Memo</th>
                         </tr>
                       </thead>
-                      <tbody id="events-view-table-body"></tbody>
+                      <tbody id="tasks-view-table-body"></tbody>
                     </table>
                   </div>
                 </div>
@@ -280,7 +242,7 @@
             <div id="saving-overlay" class="hidden fixed inset-0 bg-white/80 z-50 flex items-center justify-center">
                 <div class="bg-white p-6 rounded-lg shadow-xl border border-gray-200 flex flex-col items-center">
                     <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
-                    <span class="text-blue-600 font-bold">Saving updates...</span>
+                    <span class="text-blue-600 font-bold">Processing...</span>
                 </div>
             </div>
 
@@ -317,6 +279,7 @@
 
       let allCourses = [];
       let allSchedules = [];
+      let allTasks = []; 
       let courseFilter = 'All';
       let dragSrcEl = null; 
       let currentCalendarDate = new Date();
@@ -331,10 +294,8 @@
       onValue(ref(db, 'courses'), (snapshot) => {
           const data = snapshot.val();
           allCourses = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
-          renderCourseFilterTabs(); // Render Tabs when data loads
-          if(!document.getElementById('view-courses').classList.contains('hidden-view')) {
-             renderCoursesViewTable(); 
-          }
+          renderCourseFilterTabs(); 
+          if(!document.getElementById('view-courses').classList.contains('hidden-view')) renderCoursesViewTable(); 
       });
 
       onValue(ref(db, 'schedules'), (snapshot) => {
@@ -346,7 +307,7 @@
               if (dateA !== dateB) return dateA.localeCompare(dateB);
               return (a.Time || '').localeCompare(b.Time || '');
           });
-
+          
           const overlay = document.getElementById('saving-overlay');
           if(overlay.classList.contains('hidden')) {
               renderScheduleViewTable();
@@ -356,228 +317,200 @@
           }
       });
 
-      // === Calendar ===
+      onValue(ref(db, 'tasks'), (snapshot) => {
+          const data = snapshot.val();
+          allTasks = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
+          allTasks.sort((a, b) => (a.dueOn || '9999-12-31').localeCompare(b.dueOn || '9999-12-31'));
+          const overlay = document.getElementById('saving-overlay');
+          if(overlay.classList.contains('hidden') && !document.getElementById('view-tasks').classList.contains('hidden-view')) {
+              renderTasksViewTable();
+          }
+      });
+
       function initCalendar() { renderCalendar(); }
-      window.changeMonth = (offset) => {
-          currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset);
-          renderCalendar();
-      }
+      window.changeMonth = (offset) => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset); renderCalendar(); }
       function renderCalendar() {
-          const year = currentCalendarDate.getFullYear();
-          const month = currentCalendarDate.getMonth();
+          const year = currentCalendarDate.getFullYear(); const month = currentCalendarDate.getMonth();
           const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
           document.getElementById('calendar-title').innerText = `${monthNames[month]} ${year}`;
-          const firstDay = new Date(year, month, 1).getDay();
-          const daysInMonth = new Date(year, month + 1, 0).getDate();
-          const grid = document.getElementById('calendar-grid');
-          grid.innerHTML = '';
-          const today = new Date();
-          const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
-
+          const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
+          const grid = document.getElementById('calendar-grid'); grid.innerHTML = '';
+          const today = new Date(); const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
           for (let i = 0; i < firstDay; i++) { grid.appendChild(document.createElement('div')); }
           for (let i = 1; i <= daysInMonth; i++) {
-              const dayEl = document.createElement('div');
-              dayEl.className = 'calendar-day';
-              dayEl.innerText = i;
+              const dayEl = document.createElement('div'); dayEl.className = 'calendar-day'; dayEl.innerText = i;
               if (isCurrentMonth && i === today.getDate()) dayEl.classList.add('today');
               const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
               if(allSchedules.some(s => s.Date === dateStr)) dayEl.classList.add('has-event');
               grid.appendChild(dayEl);
           }
       }
-
-      // === Helpers ===
-      function getWeekday(dateString) {
-          if (!dateString) return '';
-          const date = new Date(dateString);
-          if (isNaN(date)) return '';
-          return date.toLocaleDateString('en-US', { weekday: 'long' });
+      function getWeekday(dateString) { if (!dateString) return ''; const date = new Date(dateString); if (isNaN(date)) return ''; return date.toLocaleDateString('en-US', { weekday: 'long' }); }
+      window.updateRowDay = (dateInput) => { const row = dateInput.closest('tr'); const dayCell = row.querySelector('[data-field="Day"]'); if (dayCell) dayCell.textContent = getWeekday(dateInput.value); };
+      function getCourseDropdownHTML(cCode, cName) {
+          let opts = `<option value="">-- Select Course --</option>`;
+          if (!cCode && cName) { const m = allCourses.find(c => c.course === cName); if (m) cCode = m.courseCode; }
+          allCourses.forEach(c => { opts += `<option value="${c.courseCode || ''}" ${c.courseCode === cCode ? "selected" : ""}>${c.course || "Unnamed"}</option>`; });
+          return `<select class="table-input" data-field="courseCodeSelector">${opts}</select>`;
       }
-      window.updateRowDay = (dateInput) => {
-         const row = dateInput.closest('tr');
-         const dayCell = row.querySelector('[data-field="Day"]');
-         if (dayCell) dayCell.textContent = getWeekday(dateInput.value);
-      };
-      function getCourseDropdownHTML(currentCourseCode, currentCourseName) {
-          let options = `<option value="">-- Select Course --</option>`;
-          if (!currentCourseCode && currentCourseName) {
-              const match = allCourses.find(c => c.course === currentCourseName);
-              if (match) currentCourseCode = match.courseCode;
-          }
-          allCourses.forEach(course => {
-              const name = course.course || "Unnamed";
-              const code = course.courseCode || "";
-              const isSelected = (code === currentCourseCode) ? "selected" : "";
-              options += `<option value="${code}" ${isSelected}>${name}</option>`;
-          });
-          return `<select class="table-input" data-field="courseCodeSelector">${options}</select>`;
-      }
-
-      // === RESTORED: Course Filter Tabs Logic ===
       function renderCourseFilterTabs() {
-          const container = document.getElementById('course-filter-tabs');
-          if (!container) return;
-
-          let html = '';
-          
-          // Using original styling logic: border-b-[#2b8dee] for active
-          const getTabClass = (isActive) => {
-              return isActive
-                  ? 'border-b-[#2b8dee] text-[#0d141b]'
-                  : 'border-b-transparent text-[#4c739a] hover:text-[#2b8dee]';
-          };
-
-          // "All Courses" Tab
-          const allActive = courseFilter === 'All';
-          html += `
-            <a onclick="window.setCourseFilter('All')" class="flex flex-col items-center justify-center border-b-[3px] ${getTabClass(allActive)} pb-[13px] pt-4 cursor-pointer transition-colors min-w-[80px]">
-                <p class="text-sm font-bold leading-normal tracking-[0.015em]">All Courses</p>
-            </a>
-          `;
-
-          // Dynamic Tabs
-          allCourses.forEach(c => {
-              const name = c.course || c.courseCode || "Unnamed";
-              const isActive = courseFilter === name || courseFilter === c.courseCode;
-              html += `
-                <a onclick="window.setCourseFilter('${name}')" class="flex flex-col items-center justify-center border-b-[3px] ${getTabClass(isActive)} pb-[13px] pt-4 cursor-pointer transition-colors min-w-[80px]">
-                    <p class="text-sm font-bold leading-normal tracking-[0.015em] whitespace-nowrap">${name}</p>
-                </a>
-              `;
-          });
-          container.innerHTML = html;
+          const c = document.getElementById('course-filter-tabs'); if (!c) return;
+          let html = `<div onclick="window.setCourseFilter('All')" class="px-4 py-3 border-b-[3px] ${courseFilter==='All'?'border-b-[#111418] text-[#111418]':'border-b-transparent text-[#4c739a] hover:text-[#111418]'} text-sm font-bold cursor-pointer transition-colors min-w-[80px]">All Courses</div>`;
+          allCourses.forEach(k => { html += `<div onclick="window.setCourseFilter('${k.course||k.courseCode}')" class="px-4 py-3 border-b-[3px] ${(courseFilter===k.course||courseFilter===k.courseCode)?'border-b-[#111418] text-[#111418]':'border-b-transparent text-[#4c739a] hover:text-[#111418]'} text-sm font-bold cursor-pointer transition-colors min-w-[80px] whitespace-nowrap">${k.course||"Unnamed"}</div>`; });
+          c.innerHTML = html;
       }
 
-      // === Render Views ===
+      // === Render Tables (Schedule, Courses, Events) - Existing Logic ===
       function renderScheduleViewTable() {
-        const tbody = document.getElementById('schedule-table-body');
-        if (!tbody) return;
-        const today = new Date(); today.setHours(0,0,0,0);
-        const tMinus3 = new Date(today); tMinus3.setDate(today.getDate() - 3);
-        const tPlus7 = new Date(today); tPlus7.setDate(today.getDate() + 7);
-        
-        const filtered = allSchedules.filter(item => {
-            if(!item.Date) return false;
-            const d = new Date(item.Date); d.setHours(0,0,0,0);
-            return d >= tMinus3 && d <= tPlus7;
-        });
-
+        const tbody = document.getElementById('schedule-table-body'); if (!tbody) return;
+        const today = new Date(); today.setHours(0,0,0,0); const tMinus3 = new Date(today); tMinus3.setDate(today.getDate()-3); const tPlus7 = new Date(today); tPlus7.setDate(today.getDate()+7);
+        const filtered = allSchedules.filter(i => { if(!i.Date)return false; const d = new Date(i.Date); d.setHours(0,0,0,0); return d>=tMinus3 && d<=tPlus7; });
         if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="h-24 text-center text-gray-400 text-sm">No upcoming events.</td></tr>`; return; }
         let html = '';
-        filtered.forEach(item => {
-            const itemDate = new Date(item.Date); itemDate.setHours(0,0,0,0);
-            const isPast = itemDate < today;
-            const title = item.course || item.Content || "Event";
-            const dateTime = `${item.Date || ''} ${item.Time || ''}`;
-            const info = item.Lecturer || item.Location || '-';
-            const isPersonal = item.activityClass === 'PersonalEvent';
-            let rowClass = isPast ? "schedule-past" : (isPersonal ? "bg-purple-50/30 hover:bg-purple-50" : "hover:bg-slate-50");
-            const typeBadge = isPersonal ? `<span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded ml-2">Event</span>` : '';
-            html += `<tr class="border-t border-t-[#dbe0e6] transition-colors ${rowClass}"><td class="px-4 py-3 text-sm font-medium flex items-center">${title} ${typeBadge}</td><td class="px-4 py-3 text-sm">${dateTime}</td><td class="px-4 py-3 text-sm">${info}</td><td class="px-4 py-3 text-sm truncate max-w-[150px]">${item.Memo || ''}</td></tr>`;
+        filtered.forEach(i => {
+            const d = new Date(i.Date); d.setHours(0,0,0,0); const isPast = d < today;
+            const rowClass = isPast ? "schedule-past" : (i.activityClass==='PersonalEvent' ? "bg-purple-50/30 hover:bg-purple-50" : "hover:bg-slate-50");
+            const badge = i.activityClass==='PersonalEvent' ? `<span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded ml-2">Event</span>` : '';
+            html += `<tr class="border-t border-t-[#dbe0e6] transition-colors ${rowClass}"><td class="px-4 py-3 text-sm font-medium flex items-center">${i.course||i.Content||"Event"} ${badge}</td><td class="px-4 py-3 text-sm">${i.Date} ${i.Time||''}</td><td class="px-4 py-3 text-sm">${i.Lecturer||i.Location||'-'}</td><td class="px-4 py-3 text-sm truncate max-w-[150px]">${i.Memo||''}</td></tr>`;
         });
         tbody.innerHTML = html;
       }
-
       function renderCoursesViewTable() {
-          const tbody = document.getElementById('courses-view-table-body');
-          if (!tbody) return;
-          let filtered = allSchedules.filter(item => item.activityClass !== 'PersonalEvent');
+          const tbody = document.getElementById('courses-view-table-body'); if(!tbody) return;
+          let filtered = allSchedules.filter(i => i.activityClass !== 'PersonalEvent');
           if (courseFilter !== 'All') filtered = filtered.filter(s => s.course === courseFilter || s.courseCode === courseFilter);
           if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="9" class="h-24 text-center text-[#4c739a] text-sm">No items.</td></tr>`; return; }
           tbody.innerHTML = ''; 
-          filtered.forEach(item => {
-              const tr = document.createElement('tr');
-              tr.className = "border-t border-t-[#cfdbe7] hover:bg-white transition-colors bg-white";
-              tr.dataset.id = item.id; tr.setAttribute('draggable', 'true');
-              tr.innerHTML = `
+          filtered.forEach(i => {
+              const tr = document.createElement('tr'); tr.className="border-t border-t-[#cfdbe7] hover:bg-white transition-colors bg-white"; tr.dataset.id=i.id; tr.setAttribute('draggable','true');
+              // Added Action Button Column
+              tr.innerHTML=`
                 <td class="px-2 py-2 text-center cursor-grab text-gray-300">::</td>
-                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="WeekNO">${item.WeekNO || ''}</td>
-                <td class="px-4 py-2"><input type="date" class="table-input text-blue-700 font-medium" data-field="DateInput" value="${item.Date || ''}" onchange="window.updateRowDay(this)"></td>
-                <td class="px-4 py-2 text-gray-500 text-sm bg-gray-50" data-field="Day">${item.Day || getWeekday(item.Date)}</td>
-                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Time">${item.Time || ''}</td>
-                <td class="px-4 py-2 text-[#0d141b] text-sm font-medium" contenteditable="true" data-field="Content">${item.Content || ''}</td>
-                <td class="px-4 py-2">${getCourseDropdownHTML(item.courseCode, item.course)}</td>
-                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Location">${item.Location || ''}</td>
-                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Memo">${item.Memo || ''}</td>`;
+                <td class="px-4 py-2 text-sm" contenteditable="true" data-field="WeekNO">${i.WeekNO||''}</td>
+                <td class="px-4 py-2"><input type="date" class="table-input text-blue-700 font-medium" data-field="DateInput" value="${i.Date||''}" onchange="window.updateRowDay(this)"></td>
+                <td class="px-4 py-2 text-gray-500 text-sm" data-field="Day">${i.Day||getWeekday(i.Date)}</td>
+                <td class="px-4 py-2 text-sm" contenteditable="true" data-field="Time">${i.Time||''}</td>
+                <td class="px-4 py-2 text-sm font-medium" contenteditable="true" data-field="Content">${i.Content||''}</td>
+                <td class="px-4 py-2">${getCourseDropdownHTML(i.courseCode, i.course)}</td>
+                <td class="px-4 py-2 text-sm" contenteditable="true" data-field="Location">${i.Location||''}</td>
+                <td class="px-4 py-2 text-sm" contenteditable="true" data-field="Memo">${i.Memo||''}</td>
+                <td class="px-4 py-2 text-center">
+                    <button onclick="window.generateReviewTasks('${i.id}')" class="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1.5 rounded-full transition-colors" title="Generate Review Tasks">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M227.32,73.37,182.63,28.69a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.32,96A16,16,0,0,0,227.32,73.37ZM95.5,164.26l-42-42L164.32,56.3l42,42Z"></path><path d="M200,224a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H192A8,8,0,0,1,200,224Z" opacity="0.2"></path><path d="M128,128a8,8,0,0,1,8,8v40a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h32V136A8,8,0,0,1,128,128Z"></path></svg>
+                    </button>
+                </td>
+              `;
               addDragEvents(tr); tbody.appendChild(tr);
           });
       }
-
       function renderEventsViewTable() {
-          const tbody = document.getElementById('events-view-table-body');
-          if (!tbody) return;
-          let filtered = allSchedules.filter(item => item.activityClass === 'PersonalEvent');
+          const tbody = document.getElementById('events-view-table-body'); if(!tbody) return;
+          let filtered = allSchedules.filter(i => i.activityClass === 'PersonalEvent');
           if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="h-24 text-center text-[#4c739a] text-sm">No events.</td></tr>`; return; }
           tbody.innerHTML = ''; 
-          filtered.forEach(item => {
-              const tr = document.createElement('tr');
-              tr.className = "border-t border-t-[#cfdbe7] hover:bg-purple-50/50 transition-colors bg-white";
-              tr.dataset.id = item.id; tr.setAttribute('draggable', 'true');
-              tr.innerHTML = `
-                <td class="px-2 py-2 text-center cursor-grab text-gray-300">::</td>
-                <td class="px-4 py-2"><input type="date" class="table-input text-purple-700 font-medium" data-field="DateInput" value="${item.Date || ''}" onchange="window.updateRowDay(this)"></td>
-                <td class="px-4 py-2 text-gray-500 text-sm bg-gray-50" data-field="Day">${item.Day || getWeekday(item.Date)}</td>
-                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Time">${item.Time || ''}</td>
-                <td class="px-4 py-2 text-[#0d141b] text-sm font-medium" contenteditable="true" data-field="Content">${item.Content || ''}</td>
-                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Location">${item.Location || ''}</td>
-                <td class="px-4 py-2 text-[#4c739a] text-sm" contenteditable="true" data-field="Memo">${item.Memo || ''}</td>`;
+          filtered.forEach(i => {
+              const tr = document.createElement('tr'); tr.className="border-t border-t-[#cfdbe7] hover:bg-purple-50/50 transition-colors bg-white"; tr.dataset.id=i.id; tr.setAttribute('draggable','true');
+              tr.innerHTML=`<td class="px-2 py-2 text-center cursor-grab text-gray-300">::</td><td class="px-4 py-2"><input type="date" class="table-input text-purple-700 font-medium" data-field="DateInput" value="${i.Date||''}" onchange="window.updateRowDay(this)"></td><td class="px-4 py-2 text-gray-500 text-sm" data-field="Day">${i.Day||getWeekday(i.Date)}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Time">${i.Time||''}</td><td class="px-4 py-2 text-sm font-medium" contenteditable="true" data-field="Content">${i.Content||''}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Location">${i.Location||''}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Memo">${i.Memo||''}</td>`;
               addDragEvents(tr); tbody.appendChild(tr);
           });
       }
+      function renderTasksViewTable() {
+          const tbody = document.getElementById('tasks-view-table-body'); if(!tbody) return;
+          if (allTasks.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="h-24 text-center text-[#4c739a] text-sm">No tasks found.</td></tr>`; return; }
+          tbody.innerHTML = '';
+          allTasks.forEach(t => {
+              const tr = document.createElement('tr'); 
+              const isDone = t.status === 'done';
+              tr.className = `border-t border-t-[#cfdbe7] hover:bg-orange-50/30 transition-colors bg-white ${isDone ? 'opacity-60' : ''}`;
+              tr.dataset.id = t.id;
+              const statusHtml = `<select class="table-input font-bold ${isDone?'text-green-600':'text-orange-600'}" data-field="status"><option value="todo" ${t.status==='todo'?'selected':''}>To Do</option><option value="done" ${t.status==='done'?'selected':''}>Done</option></select>`;
+              tr.innerHTML = `<td class="px-2 py-2 text-center text-gray-300">::</td><td class="px-4 py-2">${statusHtml}</td><td class="px-4 py-2 text-sm ${isDone?'line-through text-gray-400':'text-[#0d141b] font-medium'}" contenteditable="true" data-field="title">${t.title||''}</td><td class="px-4 py-2"><input type="date" class="table-input text-[#4c739a]" data-field="dueOn" value="${t.dueOn||''}"></td><td class="px-4 py-2 text-sm text-gray-400 select-none">${t.createdAt||'-'}</td><td class="px-4 py-2 text-sm text-[#4c739a]" contenteditable="true" data-field="memo">${t.memo||''}</td>`;
+              tbody.appendChild(tr);
+          });
+      }
 
-      // === Add & Save ===
-      window.addNewCourseItem = () => {
-          const tbody = document.getElementById('courses-view-table-body');
-          if(tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
-          const newRow = document.createElement('tr');
-          newRow.className = "border-t border-t-[#cfdbe7] bg-blue-50/30 hover:bg-blue-50 transition-colors";
-          newRow.dataset.id = 'new_' + Date.now(); newRow.dataset.isNew = "true"; newRow.setAttribute('draggable', 'true');
-          const today = new Date().toISOString().split('T')[0];
-          let dCode = "", dName = "";
-          if (courseFilter !== 'All') { const c = allCourses.find(x => x.course === courseFilter || x.courseCode === courseFilter); if(c){ dCode = c.courseCode; dName = c.course; } }
-          newRow.innerHTML = `<td class="px-2 py-2 text-center cursor-grab">::</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="WeekNO">1</td><td class="px-4 py-2"><input type="date" class="table-input text-blue-700" data-field="DateInput" value="${today}" onchange="window.updateRowDay(this)"></td><td class="px-4 py-2 text-gray-500 text-sm" data-field="Day">${getWeekday(today)}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Time">09:00</td><td class="px-4 py-2 text-sm font-medium" contenteditable="true" data-field="Content">Class</td><td class="px-4 py-2">${getCourseDropdownHTML(dCode, dName)}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Location">Room</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Memo"></td>`;
+      window.addNewCourseItem = () => { /* ... */ 
+          const tbody = document.getElementById('courses-view-table-body'); if(tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
+          const newRow = document.createElement('tr'); newRow.className = "border-t border-t-[#cfdbe7] bg-blue-50/30 hover:bg-blue-50 transition-colors"; newRow.dataset.id = 'new_' + Date.now(); newRow.dataset.isNew = "true"; newRow.setAttribute('draggable', 'true');
+          const today = new Date().toISOString().split('T')[0]; let dCode = "", dName = ""; if (courseFilter !== 'All') { const c = allCourses.find(x => x.course === courseFilter || x.courseCode === courseFilter); if(c){ dCode = c.courseCode; dName = c.course; } }
+          // Updated to include Actions column
+          newRow.innerHTML = `<td class="px-2 py-2 text-center cursor-grab">::</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="WeekNO">1</td><td class="px-4 py-2"><input type="date" class="table-input text-blue-700" data-field="DateInput" value="${today}" onchange="window.updateRowDay(this)"></td><td class="px-4 py-2 text-gray-500 text-sm" data-field="Day">${getWeekday(today)}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Time">09:00</td><td class="px-4 py-2 text-sm font-medium" contenteditable="true" data-field="Content">Class</td><td class="px-4 py-2">${getCourseDropdownHTML(dCode, dName)}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Location">Room</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Memo"></td><td class="px-4 py-2 text-center text-gray-300">-</td>`;
           addDragEvents(newRow); tbody.prepend(newRow);
       };
-      window.saveCourseChanges = async () => {
-          const rows = document.querySelectorAll('#courses-view-table-body tr');
-          const updates = {};
-          rows.forEach(row => {
-              if(!row.dataset.id && !row.dataset.isNew) return;
-              const getText = (f) => row.querySelector(`[data-field="${f}"]`)?.innerText.trim() || "";
-              const getVal = (s) => row.querySelector(s)?.value || "";
-              const cCode = getVal('select[data-field="courseCodeSelector"]');
-              let cName = ""; const found = allCourses.find(c => c.courseCode == cCode);
-              if(found) cName = found.course; else if (cCode==="") cName=""; else cName=cCode; 
-              const record = { WeekNO: getText('WeekNO'), Date: getVal('input[data-field="DateInput"]'), Day: getText('Day'), Time: getText('Time'), Content: getText('Content'), courseCode: cCode, course: cName, Location: getText('Location'), Memo: getText('Memo'), activityClass: "Course Schedule" };
-              updates['/schedules/' + (row.dataset.isNew === "true" ? push(child(ref(db), 'schedules')).key : row.dataset.id)] = record;
-          });
+      window.saveCourseChanges = async () => { /* ... */ 
+          const rows = document.querySelectorAll('#courses-view-table-body tr'); const updates = {};
+          rows.forEach(row => { if(!row.dataset.id && !row.dataset.isNew) return; const getText = (f) => row.querySelector(`[data-field="${f}"]`)?.innerText.trim() || ""; const getVal = (s) => row.querySelector(s)?.value || ""; const cCode = getVal('select[data-field="courseCodeSelector"]'); let cName = ""; const found = allCourses.find(c => c.courseCode == cCode); if(found) cName = found.course; else if (cCode==="") cName=""; else cName=cCode; const record = { WeekNO: getText('WeekNO'), Date: getVal('input[data-field="DateInput"]'), Day: getText('Day'), Time: getText('Time'), Content: getText('Content'), courseCode: cCode, course: cName, Location: getText('Location'), Memo: getText('Memo'), activityClass: "Course Schedule" }; updates['/schedules/' + (row.dataset.isNew === "true" ? push(child(ref(db), 'schedules')).key : row.dataset.id)] = record; });
           try { document.getElementById('saving-overlay').classList.remove('hidden'); await update(ref(db), updates); setTimeout(() => document.getElementById('saving-overlay').classList.add('hidden'), 500); } catch (e) { alert(e); }
       };
-      window.addNewEventItem = () => {
-           const tbody = document.getElementById('events-view-table-body');
-           if(tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
-           const newRow = document.createElement('tr'); newRow.className = "border-t border-t-[#cfdbe7] bg-purple-50/30 hover:bg-purple-50 transition-colors";
-           newRow.dataset.id = 'new_evt_' + Date.now(); newRow.dataset.isNew = "true"; newRow.setAttribute('draggable', 'true');
-           const today = new Date().toISOString().split('T')[0];
+      window.addNewEventItem = () => { /* ... */ 
+           const tbody = document.getElementById('events-view-table-body'); if(tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
+           const newRow = document.createElement('tr'); newRow.className = "border-t border-t-[#cfdbe7] bg-purple-50/30 hover:bg-purple-50 transition-colors"; newRow.dataset.id = 'new_evt_' + Date.now(); newRow.dataset.isNew = "true"; newRow.setAttribute('draggable', 'true'); const today = new Date().toISOString().split('T')[0];
            newRow.innerHTML = `<td class="px-2 py-2 text-center cursor-grab">::</td><td class="px-4 py-2"><input type="date" class="table-input text-purple-700" data-field="DateInput" value="${today}" onchange="window.updateRowDay(this)"></td><td class="px-4 py-2 text-gray-500 text-sm" data-field="Day">${getWeekday(today)}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Time">10:00</td><td class="px-4 py-2 text-sm font-medium" contenteditable="true" data-field="Content">Event</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Location">Loc</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Memo"></td>`;
            addDragEvents(newRow); tbody.prepend(newRow);
       };
-      window.saveEventChanges = async () => {
-          const rows = document.querySelectorAll('#events-view-table-body tr');
-          const updates = {};
-          rows.forEach(row => {
-              if(!row.dataset.id && !row.dataset.isNew) return;
-              const getText = (f) => row.querySelector(`[data-field="${f}"]`)?.innerText.trim() || "";
-              const getVal = (s) => row.querySelector(s)?.value || "";
-              const record = { Date: getVal('input[data-field="DateInput"]'), Day: getText('Day'), Time: getText('Time'), Content: getText('Content'), Location: getText('Location'), Memo: getText('Memo'), activityClass: "PersonalEvent", owner: "alexszhang@gmail.com" };
-              updates['/schedules/' + (row.dataset.isNew === "true" ? push(child(ref(db), 'schedules')).key : row.dataset.id)] = record;
-          });
+      window.saveEventChanges = async () => { /* ... */ 
+          const rows = document.querySelectorAll('#events-view-table-body tr'); const updates = {};
+          rows.forEach(row => { if(!row.dataset.id && !row.dataset.isNew) return; const getText = (f) => row.querySelector(`[data-field="${f}"]`)?.innerText.trim() || ""; const getVal = (s) => row.querySelector(s)?.value || ""; const record = { Date: getVal('input[data-field="DateInput"]'), Day: getText('Day'), Time: getText('Time'), Content: getText('Content'), Location: getText('Location'), Memo: getText('Memo'), activityClass: "PersonalEvent", owner: "alexszhang@gmail.com" }; updates['/schedules/' + (row.dataset.isNew === "true" ? push(child(ref(db), 'schedules')).key : row.dataset.id)] = record; });
           try { document.getElementById('saving-overlay').classList.remove('hidden'); await update(ref(db), updates); setTimeout(() => document.getElementById('saving-overlay').classList.add('hidden'), 500); } catch (e) { alert(e); }
       };
+      window.addNewTaskItem = () => { /* ... */ 
+          const tbody = document.getElementById('tasks-view-table-body'); if(tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
+          const newRow = document.createElement('tr'); newRow.className = "border-t border-t-[#cfdbe7] bg-orange-50/30 hover:bg-orange-50 transition-colors";
+          const tempId = 'new_task_' + Math.random().toString(36).substr(2, 9); newRow.dataset.id = tempId; newRow.dataset.isNew = "true";
+          const today = new Date().toISOString().split('T')[0];
+          newRow.innerHTML = `<td class="px-2 py-2 text-center text-gray-300">::</td><td class="px-4 py-2"><select class="table-input font-bold text-orange-600" data-field="status"><option value="todo">To Do</option><option value="done">Done</option></select></td><td class="px-4 py-2 text-sm font-medium text-[#0d141b]" contenteditable="true" data-field="title">New Task</td><td class="px-4 py-2"><input type="date" class="table-input text-[#4c739a]" data-field="dueOn" value="${today}"></td><td class="px-4 py-2 text-sm text-gray-400">${today}</td><td class="px-4 py-2 text-sm text-[#4c739a]" contenteditable="true" data-field="memo"></td>`;
+          tbody.prepend(newRow);
+      };
+      window.saveTaskChanges = async () => { /* ... */ 
+          const overlay = document.getElementById('saving-overlay'); overlay.classList.remove('hidden');
+          const rows = document.querySelectorAll('#tasks-view-table-body tr'); const updates = {};
+          rows.forEach(row => { if(!row.dataset.id && !row.dataset.isNew) return; let key = row.dataset.id; if (row.dataset.isNew === "true") { key = Math.random().toString(36).substring(2, 10); }
+              const getVal = (s) => row.querySelector(s)?.value || ""; const getText = (f) => row.querySelector(`[data-field="${f}"]`)?.innerText.trim() || "";
+              const existingTask = allTasks.find(t => t.id === row.dataset.id); const createdAt = existingTask ? existingTask.createdAt : new Date().toISOString().split('T')[0];
+              const record = { title: getText('title'), status: getVal('select[data-field="status"]'), dueOn: getVal('input[data-field="dueOn"]'), memo: getText('memo'), createdAt: createdAt, owner: "raytfl@gmail.com" };
+              updates['/tasks/' + key] = record; });
+          try { await update(ref(db), updates); setTimeout(() => overlay.classList.add('hidden'), 500); } catch (e) { alert(e); overlay.classList.add('hidden'); }
+      };
 
-      // === Drag & Drop, Nav, Filter ===
+      // === NEW: Auto-generate Review Tasks ===
+      window.generateReviewTasks = async (scheduleId) => {
+          const item = allSchedules.find(s => s.id === scheduleId);
+          if (!item || !item.Date) { alert("Cannot generate tasks: Invalid item or missing Date."); return; }
+          
+          const subject = item.course || item.Content || "Untitled";
+          const baseDate = new Date(item.Date);
+          
+          const addDays = (d, n) => { const res = new Date(d); res.setDate(res.getDate() + n); return res.toISOString().split('T')[0]; };
+          const createdAt = new Date().toISOString().split('T')[0];
+          
+          const updates = {};
+          const tasks = [
+              { title: `${subject} assignment/note`, dueOn: item.Date }, // T+0
+              { title: `${subject} review note #2`, dueOn: addDays(baseDate, 1) }, // T+1
+              { title: `${subject} review #3`, dueOn: addDays(baseDate, 7) } // T+7
+          ];
+          
+          tasks.forEach(t => {
+              const key = Math.random().toString(36).substring(2, 10);
+              updates[`/tasks/${key}`] = { ...t, status: 'todo', owner: 'raytfl@gmail.com', memo: 'Auto-generated review', createdAt };
+          });
+          
+          try {
+              const overlay = document.getElementById('saving-overlay');
+              if(overlay) overlay.classList.remove('hidden');
+              await update(ref(db), updates);
+              setTimeout(() => { 
+                  if(overlay) overlay.classList.add('hidden'); 
+                  alert(`Successfully created 3 review tasks for "${subject}"!`);
+              }, 500);
+          } catch (e) {
+              alert("Error generating tasks: " + e.message);
+              document.getElementById('saving-overlay').classList.add('hidden');
+          }
+      };
+
       function addDragEvents(row) { row.addEventListener('dragstart', e=>{e.dataTransfer.effectAllowed='move'; dragSrcEl=row; row.style.opacity='0.4';}); row.addEventListener('dragover', e=>{e.preventDefault();return false;}); row.addEventListener('drop', function(e){e.stopPropagation(); if(dragSrcEl!==this){const p=this.parentNode,s=[...p.children].indexOf(dragSrcEl),t=[...p.children].indexOf(this); s<t?p.insertBefore(dragSrcEl,this.nextSibling):p.insertBefore(dragSrcEl,this);} return false;}); row.addEventListener('dragend', ()=>row.style.opacity='1'); }
-      window.switchView = (v) => { ['schedule', 'courses', 'events'].forEach(x => { document.getElementById(`view-${x}`).classList.toggle('hidden-view', x!==v); document.getElementById(`nav-${x}`).classList.toggle('nav-item-active', x===v); document.getElementById(`nav-${x}`).classList.toggle('nav-item-inactive', x!==v); }); if(v==='courses') renderCoursesViewTable(); };
+      window.switchView = (v) => { ['schedule', 'courses', 'events', 'tasks'].forEach(x => { document.getElementById(`view-${x}`).classList.toggle('hidden-view', x!==v); document.getElementById(`nav-${x}`).classList.toggle('nav-item-active', x===v); document.getElementById(`nav-${x}`).classList.toggle('nav-item-inactive', x!==v); }); if(v==='courses') renderCoursesViewTable(); if(v==='tasks') renderTasksViewTable(); };
       window.setCourseFilter = (v) => { courseFilter = v; renderCourseFilterTabs(); renderCoursesViewTable(); };
     </script>
   </body>
