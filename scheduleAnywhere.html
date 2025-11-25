@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Schedule & Task Automation</title>
+    <title>Student Schedule & Task Tags</title>
     <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
     <link
       rel="stylesheet"
@@ -158,7 +158,7 @@
                 </div>
             </div>
 
-            <!-- VIEW 2: COURSES (Added Task Generator) -->
+            <!-- VIEW 2: COURSES -->
             <div id="view-courses" class="view-section hidden-view flex flex-col h-full">
                 <div class="flex flex-wrap justify-between gap-3 p-4 items-center">
                   <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight">Course Editor</p>
@@ -182,7 +182,6 @@
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[180px] text-sm font-bold text-blue-700">Course</th>
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[100px] text-sm font-bold">Loc</th>
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[140px] text-sm font-bold">Memo</th>
-                          <!-- New Actions Column -->
                           <th class="px-4 py-3 text-center w-[80px] text-sm font-bold text-[#0d141b]">Actions</th>
                         </tr>
                       </thead>
@@ -211,7 +210,7 @@
                 </div>
             </div>
 
-            <!-- 🟠 VIEW 4: TASKS -->
+            <!-- 🟠 VIEW 4: TASKS (Updated with Tags) -->
             <div id="view-tasks" class="view-section hidden-view flex flex-col h-full">
                 <div class="flex flex-wrap justify-between gap-3 p-4 items-center">
                   <p class="text-[#111418] tracking-light text-[32px] font-bold leading-tight">Tasks</p>
@@ -222,18 +221,22 @@
                 </div>
                 <div class="px-4 py-3 @container">
                   <div class="flex overflow-hidden rounded-lg border border-[#cfdbe7] bg-slate-50 overflow-x-auto relative">
-                    <table class="flex-1 min-w-[900px]" id="tasks-table">
+                    <table class="flex-1 min-w-[1000px]" id="tasks-table">
                       <thead>
                         <tr class="bg-orange-50 border-b border-orange-100">
                           <th class="w-[40px] px-2 py-3 text-center">#</th>
                           <th class="px-4 py-3 text-left text-[#0d141b] w-[120px] text-sm font-bold text-orange-700">Status</th>
-                          <th class="px-4 py-3 text-left text-[#0d141b] w-[250px] text-sm font-bold">Title</th>
-                          <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold">Due Date</th>
-                          <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold">Created At</th>
-                          <th class="px-4 py-3 text-left text-[#0d141b] w-[200px] text-sm font-bold">Memo</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[200px] text-sm font-bold">Title</th>
+                          <!-- Added Tags Column -->
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[150px] text-sm font-bold text-blue-700">Tags</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[130px] text-sm font-bold">Due Date</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[120px] text-sm font-bold">Created At</th>
+                          <th class="px-4 py-3 text-left text-[#0d141b] w-[180px] text-sm font-bold">Memo</th>
                         </tr>
                       </thead>
-                      <tbody id="tasks-view-table-body"></tbody>
+                      <tbody id="tasks-view-table-body">
+                        <tr class="border-t border-t-[#cfdbe7]"><td colspan="7" class="h-[150px] text-center text-[#4c739a] text-sm">Loading tasks...</td></tr>
+                      </tbody>
                     </table>
                   </div>
                 </div>
@@ -360,7 +363,6 @@
           c.innerHTML = html;
       }
 
-      // === Render Tables (Schedule, Courses, Events) - Existing Logic ===
       function renderScheduleViewTable() {
         const tbody = document.getElementById('schedule-table-body'); if (!tbody) return;
         const today = new Date(); today.setHours(0,0,0,0); const tMinus3 = new Date(today); tMinus3.setDate(today.getDate()-3); const tPlus7 = new Date(today); tPlus7.setDate(today.getDate()+7);
@@ -383,7 +385,6 @@
           tbody.innerHTML = ''; 
           filtered.forEach(i => {
               const tr = document.createElement('tr'); tr.className="border-t border-t-[#cfdbe7] hover:bg-white transition-colors bg-white"; tr.dataset.id=i.id; tr.setAttribute('draggable','true');
-              // Added Action Button Column
               tr.innerHTML=`
                 <td class="px-2 py-2 text-center cursor-grab text-gray-300">::</td>
                 <td class="px-4 py-2 text-sm" contenteditable="true" data-field="WeekNO">${i.WeekNO||''}</td>
@@ -414,17 +415,32 @@
               addDragEvents(tr); tbody.appendChild(tr);
           });
       }
+      
+      // === Updated Task Render Logic with Tags ===
       function renderTasksViewTable() {
           const tbody = document.getElementById('tasks-view-table-body'); if(!tbody) return;
-          if (allTasks.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="h-24 text-center text-[#4c739a] text-sm">No tasks found.</td></tr>`; return; }
+          if (allTasks.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="h-24 text-center text-[#4c739a] text-sm">No tasks found.</td></tr>`; return; }
           tbody.innerHTML = '';
           allTasks.forEach(t => {
               const tr = document.createElement('tr'); 
               const isDone = t.status === 'done';
               tr.className = `border-t border-t-[#cfdbe7] hover:bg-orange-50/30 transition-colors bg-white ${isDone ? 'opacity-60' : ''}`;
               tr.dataset.id = t.id;
+              
               const statusHtml = `<select class="table-input font-bold ${isDone?'text-green-600':'text-orange-600'}" data-field="status"><option value="todo" ${t.status==='todo'?'selected':''}>To Do</option><option value="done" ${t.status==='done'?'selected':''}>Done</option></select>`;
-              tr.innerHTML = `<td class="px-2 py-2 text-center text-gray-300">::</td><td class="px-4 py-2">${statusHtml}</td><td class="px-4 py-2 text-sm ${isDone?'line-through text-gray-400':'text-[#0d141b] font-medium'}" contenteditable="true" data-field="title">${t.title||''}</td><td class="px-4 py-2"><input type="date" class="table-input text-[#4c739a]" data-field="dueOn" value="${t.dueOn||''}"></td><td class="px-4 py-2 text-sm text-gray-400 select-none">${t.createdAt||'-'}</td><td class="px-4 py-2 text-sm text-[#4c739a]" contenteditable="true" data-field="memo">${t.memo||''}</td>`;
+              
+              // Tags Handling: Array -> String
+              const tagsStr = (t.tags && Array.isArray(t.tags)) ? t.tags.join(', ') : '';
+
+              tr.innerHTML = `
+                <td class="px-2 py-2 text-center text-gray-300">::</td>
+                <td class="px-4 py-2">${statusHtml}</td>
+                <td class="px-4 py-2 text-sm ${isDone?'line-through text-gray-400':'text-[#0d141b] font-medium'}" contenteditable="true" data-field="title">${t.title||''}</td>
+                <td class="px-4 py-2 text-sm text-blue-700 font-medium" contenteditable="true" data-field="tags">${tagsStr}</td>
+                <td class="px-4 py-2"><input type="date" class="table-input text-[#4c739a]" data-field="dueOn" value="${t.dueOn||''}"></td>
+                <td class="px-4 py-2 text-sm text-gray-400 select-none">${t.createdAt||'-'}</td>
+                <td class="px-4 py-2 text-sm text-[#4c739a]" contenteditable="true" data-field="memo">${t.memo||''}</td>
+              `;
               tbody.appendChild(tr);
           });
       }
@@ -433,7 +449,6 @@
           const tbody = document.getElementById('courses-view-table-body'); if(tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
           const newRow = document.createElement('tr'); newRow.className = "border-t border-t-[#cfdbe7] bg-blue-50/30 hover:bg-blue-50 transition-colors"; newRow.dataset.id = 'new_' + Date.now(); newRow.dataset.isNew = "true"; newRow.setAttribute('draggable', 'true');
           const today = new Date().toISOString().split('T')[0]; let dCode = "", dName = ""; if (courseFilter !== 'All') { const c = allCourses.find(x => x.course === courseFilter || x.courseCode === courseFilter); if(c){ dCode = c.courseCode; dName = c.course; } }
-          // Updated to include Actions column
           newRow.innerHTML = `<td class="px-2 py-2 text-center cursor-grab">::</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="WeekNO">1</td><td class="px-4 py-2"><input type="date" class="table-input text-blue-700" data-field="DateInput" value="${today}" onchange="window.updateRowDay(this)"></td><td class="px-4 py-2 text-gray-500 text-sm" data-field="Day">${getWeekday(today)}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Time">09:00</td><td class="px-4 py-2 text-sm font-medium" contenteditable="true" data-field="Content">Class</td><td class="px-4 py-2">${getCourseDropdownHTML(dCode, dName)}</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Location">Room</td><td class="px-4 py-2 text-sm" contenteditable="true" data-field="Memo"></td><td class="px-4 py-2 text-center text-gray-300">-</td>`;
           addDragEvents(newRow); tbody.prepend(newRow);
       };
@@ -453,60 +468,92 @@
           rows.forEach(row => { if(!row.dataset.id && !row.dataset.isNew) return; const getText = (f) => row.querySelector(`[data-field="${f}"]`)?.innerText.trim() || ""; const getVal = (s) => row.querySelector(s)?.value || ""; const record = { Date: getVal('input[data-field="DateInput"]'), Day: getText('Day'), Time: getText('Time'), Content: getText('Content'), Location: getText('Location'), Memo: getText('Memo'), activityClass: "PersonalEvent", owner: "alexszhang@gmail.com" }; updates['/schedules/' + (row.dataset.isNew === "true" ? push(child(ref(db), 'schedules')).key : row.dataset.id)] = record; });
           try { document.getElementById('saving-overlay').classList.remove('hidden'); await update(ref(db), updates); setTimeout(() => document.getElementById('saving-overlay').classList.add('hidden'), 500); } catch (e) { alert(e); }
       };
-      window.addNewTaskItem = () => { /* ... */ 
+      
+      // === Updated Add Task Logic (with Tags) ===
+      window.addNewTaskItem = () => { 
           const tbody = document.getElementById('tasks-view-table-body'); if(tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
           const newRow = document.createElement('tr'); newRow.className = "border-t border-t-[#cfdbe7] bg-orange-50/30 hover:bg-orange-50 transition-colors";
           const tempId = 'new_task_' + Math.random().toString(36).substr(2, 9); newRow.dataset.id = tempId; newRow.dataset.isNew = "true";
           const today = new Date().toISOString().split('T')[0];
-          newRow.innerHTML = `<td class="px-2 py-2 text-center text-gray-300">::</td><td class="px-4 py-2"><select class="table-input font-bold text-orange-600" data-field="status"><option value="todo">To Do</option><option value="done">Done</option></select></td><td class="px-4 py-2 text-sm font-medium text-[#0d141b]" contenteditable="true" data-field="title">New Task</td><td class="px-4 py-2"><input type="date" class="table-input text-[#4c739a]" data-field="dueOn" value="${today}"></td><td class="px-4 py-2 text-sm text-gray-400">${today}</td><td class="px-4 py-2 text-sm text-[#4c739a]" contenteditable="true" data-field="memo"></td>`;
+          newRow.innerHTML = `
+            <td class="px-2 py-2 text-center text-gray-300">::</td>
+            <td class="px-4 py-2"><select class="table-input font-bold text-orange-600" data-field="status"><option value="todo">To Do</option><option value="done">Done</option></select></td>
+            <td class="px-4 py-2 text-sm font-medium text-[#0d141b]" contenteditable="true" data-field="title">New Task</td>
+            <td class="px-4 py-2 text-sm text-blue-700 font-medium" contenteditable="true" data-field="tags"></td>
+            <td class="px-4 py-2"><input type="date" class="table-input text-[#4c739a]" data-field="dueOn" value="${today}"></td>
+            <td class="px-4 py-2 text-sm text-gray-400">${today}</td>
+            <td class="px-4 py-2 text-sm text-[#4c739a]" contenteditable="true" data-field="memo"></td>
+          `;
           tbody.prepend(newRow);
       };
-      window.saveTaskChanges = async () => { /* ... */ 
+
+      // === Updated Save Task Logic (with Tags) ===
+      window.saveTaskChanges = async () => { 
           const overlay = document.getElementById('saving-overlay'); overlay.classList.remove('hidden');
           const rows = document.querySelectorAll('#tasks-view-table-body tr'); const updates = {};
-          rows.forEach(row => { if(!row.dataset.id && !row.dataset.isNew) return; let key = row.dataset.id; if (row.dataset.isNew === "true") { key = Math.random().toString(36).substring(2, 10); }
-              const getVal = (s) => row.querySelector(s)?.value || ""; const getText = (f) => row.querySelector(`[data-field="${f}"]`)?.innerText.trim() || "";
-              const existingTask = allTasks.find(t => t.id === row.dataset.id); const createdAt = existingTask ? existingTask.createdAt : new Date().toISOString().split('T')[0];
-              const record = { title: getText('title'), status: getVal('select[data-field="status"]'), dueOn: getVal('input[data-field="dueOn"]'), memo: getText('memo'), createdAt: createdAt, owner: "raytfl@gmail.com" };
-              updates['/tasks/' + key] = record; });
+          rows.forEach(row => { 
+              if(!row.dataset.id && !row.dataset.isNew) return; 
+              let key = row.dataset.id; 
+              if (row.dataset.isNew === "true") { key = Math.random().toString(36).substring(2, 10); }
+              
+              const getVal = (s) => row.querySelector(s)?.value || ""; 
+              const getText = (f) => row.querySelector(`[data-field="${f}"]`)?.innerText.trim() || "";
+              
+              // Parse tags: string -> array
+              const tagsStr = getText('tags');
+              const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
+
+              const existingTask = allTasks.find(t => t.id === row.dataset.id); 
+              const createdAt = existingTask ? existingTask.createdAt : new Date().toISOString().split('T')[0];
+              
+              const record = { 
+                  title: getText('title'), 
+                  status: getVal('select[data-field="status"]'), 
+                  dueOn: getVal('input[data-field="dueOn"]'), 
+                  memo: getText('memo'), 
+                  tags: tags, // Save array
+                  createdAt: createdAt, 
+                  owner: "raytfl@gmail.com" 
+              };
+              updates['/tasks/' + key] = record; 
+          });
           try { await update(ref(db), updates); setTimeout(() => overlay.classList.add('hidden'), 500); } catch (e) { alert(e); overlay.classList.add('hidden'); }
       };
 
-      // === NEW: Auto-generate Review Tasks ===
       window.generateReviewTasks = async (scheduleId) => {
           const item = allSchedules.find(s => s.id === scheduleId);
           if (!item || !item.Date) { alert("Cannot generate tasks: Invalid item or missing Date."); return; }
           
-          const subject = item.course || item.Content || "Untitled";
-          const baseDate = new Date(item.Date);
+          // Logic for Course Name or Code
+          const courseName = item.course || item.courseCode || "Untitled";
           
+          // Calculate Dates
+          const baseDate = new Date(item.Date);
           const addDays = (d, n) => { const res = new Date(d); res.setDate(res.getDate() + n); return res.toISOString().split('T')[0]; };
           const createdAt = new Date().toISOString().split('T')[0];
           
+          // Tags: include course name and 'review'
+          const tags = [courseName, 'review'];
+          
           const updates = {};
+          // Task Titles Format: {action} {course/content}
+          const content = item.Content || "Class";
           const tasks = [
-              { title: `${subject} assignment/note`, dueOn: item.Date }, // T+0
-              { title: `${subject} review note #2`, dueOn: addDays(baseDate, 1) }, // T+1
-              { title: `${subject} review #3`, dueOn: addDays(baseDate, 7) } // T+7
+              { title: `assignment/note ${content}`, dueOn: item.Date }, // T+0
+              { title: `review note #2 ${content}`, dueOn: addDays(baseDate, 1) }, // T+1
+              { title: `review #3 ${content}`, dueOn: addDays(baseDate, 7) } // T+7
           ];
           
           tasks.forEach(t => {
               const key = Math.random().toString(36).substring(2, 10);
-              updates[`/tasks/${key}`] = { ...t, status: 'todo', owner: 'raytfl@gmail.com', memo: 'Auto-generated review', createdAt };
+              updates[`/tasks/${key}`] = { ...t, status: 'todo', owner: 'raytfl@gmail.com', memo: `Review for ${courseName}`, tags: tags, createdAt };
           });
           
           try {
-              const overlay = document.getElementById('saving-overlay');
-              if(overlay) overlay.classList.remove('hidden');
+              const overlay = document.getElementById('saving-overlay'); if(overlay) overlay.classList.remove('hidden');
               await update(ref(db), updates);
-              setTimeout(() => { 
-                  if(overlay) overlay.classList.add('hidden'); 
-                  alert(`Successfully created 3 review tasks for "${subject}"!`);
-              }, 500);
-          } catch (e) {
-              alert("Error generating tasks: " + e.message);
-              document.getElementById('saving-overlay').classList.add('hidden');
-          }
+              setTimeout(() => { if(overlay) overlay.classList.add('hidden'); alert(`Successfully created 3 review tasks for "${courseName}"!`); }, 500);
+          } catch (e) { alert("Error generating tasks: " + e.message); document.getElementById('saving-overlay').classList.add('hidden'); }
       };
 
       function addDragEvents(row) { row.addEventListener('dragstart', e=>{e.dataTransfer.effectAllowed='move'; dragSrcEl=row; row.style.opacity='0.4';}); row.addEventListener('dragover', e=>{e.preventDefault();return false;}); row.addEventListener('drop', function(e){e.stopPropagation(); if(dragSrcEl!==this){const p=this.parentNode,s=[...p.children].indexOf(dragSrcEl),t=[...p.children].indexOf(this); s<t?p.insertBefore(dragSrcEl,this.nextSibling):p.insertBefore(dragSrcEl,this);} return false;}); row.addEventListener('dragend', ()=>row.style.opacity='1'); }

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html class="light" lang="zh">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>TaskFlow - 任务跟踪看板</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#007BFF",
+              "background-light": "#F8F9FA",
+              "background-dark": "#101922",
+              "text-light": "#343A40",
+              "text-dark": "#E9ECEF",
+              "card-light": "#FFFFFF",
+              "card-dark": "#1A2632",
+              "border-light": "#DEE2E6",
+              "border-dark": "#2C3A47",
+              "status-inprogress": "#FFC107",
+              "status-highpriority": "#DC3545",
+              "status-completed": "#28A745",
+              "status-notstarted": "#6C757D",
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"],
+              "roboto": ["Roboto", "sans-serif"]
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 }
+      /* Loading Spinner */
+      .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #09f; animation: spin 1s ease infinite; }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      
+      /* Modal Transition */
+      .modal { transition: opacity 0.25s ease; }
+      body.modal-active { overflow-y: hidden; }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark relative">
+
+<!-- ================= LOGIN SPLASH SCREEN ================= -->
+<div id="login-splash" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background-light dark:bg-background-dark transition-opacity duration-500">
+    <div class="flex flex-col items-center gap-6 p-8 bg-card-light dark:bg-card-dark rounded-2xl shadow-xl border border-border-light dark:border-border-dark max-w-sm w-full mx-4">
+        <div class="size-16 text-primary mb-2">
+            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M13.8261 30.5736C16.7203 29.8826 20.2244 29.4783 24 29.4783C27.7756 29.4783 31.2797 29.8826 34.1739 30.5736C36.9144 31.2278 39.9967 32.7669 41.3563 33.8352L24.8486 7.36089C24.4571 6.73303 23.5429 6.73303 23.1514 7.36089L6.64374 33.8352C8.00331 32.7669 11.0856 31.2278 13.8261 30.5736Z" fill="currentColor"></path><path clip-rule="evenodd" d="M39.998 35.764C39.9944 35.7463 39.9875 35.7155 39.9748 35.6706C39.9436 35.5601 39.8949 35.4259 39.8346 35.2825C39.8168 35.2403 39.7989 35.1993 39.7813 35.1602C38.5103 34.2887 35.9788 33.0607 33.7095 32.5189C30.9875 31.8691 27.6413 31.4783 24 31.4783C20.3587 31.4783 17.0125 31.8691 14.2905 32.5189C12.0012 33.0654 9.44505 34.3104 8.18538 35.1832C8.17384 35.2075 8.16216 35.233 8.15052 35.2592C8.09919 35.3751 8.05721 35.4886 8.02977 35.589C8.00356 35.6848 8.00039 35.7333 8.00004 35.7388C8.00004 35.739 8 35.7393 8.00004 35.7388C8.00004 35.7641 8.0104 36.0767 8.68485 36.6314C9.34546 37.1746 10.4222 37.7531 11.9291 38.2772C14.9242 39.319 19.1919 40 24 40C28.8081 40 33.0758 39.319 36.0709 38.2772C37.5778 37.7531 38.6545 37.1746 39.3151 36.6314C39.9006 36.1499 39.9857 35.8511 39.998 35.764ZM4.95178 32.7688L21.4543 6.30267C22.6288 4.4191 25.3712 4.41909 26.5457 6.30267L43.0534 32.777C43.0709 32.8052 43.0878 32.8338 43.104 32.8629L41.3563 33.8352C43.104 32.8629 43.1038 32.8626 43.104 32.8629L43.1051 32.865L43.1065 32.8675L43.1101 32.8739L43.1199 32.8918C43.1276 32.906 43.1377 32.9246 43.1497 32.9473C43.1738 32.9925 43.2062 33.0545 43.244 33.1299C43.319 33.2792 43.4196 33.489 43.5217 33.7317C43.6901 34.1321 44 34.9311 44 35.7391C44 37.4427 43.003 38.7775 41.8558 39.7209C40.6947 40.6757 39.1354 41.4464 37.385 42.0552C33.8654 43.2794 29.133 44 24 44C18.867 44 14.1346 43.2794 10.615 42.0552C8.86463 41.4464 7.30529 40.6757 6.14419 39.7209C4.99695 38.7775 3.99999 37.4427 3.99999 35.7391C3.99999 34.8725 4.29264 34.0922 4.49321 33.6393C4.60375 33.3898 4.71348 33.1804 4.79687 33.0311C4.83898 32.9556 4.87547 32.8935 4.9035 32.8471C4.91754 32.8238 4.92954 32.8043 4.93916 32.7889L4.94662 32.777L4.95178 32.7688ZM35.9868 29.004L24 9.77997L12.0131 29.004C12.4661 28.8609 12.9179 28.7342 13.3617 28.6282C16.4281 27.8961 20.0901 27.4783 24 27.4783C27.9099 27.4783 31.5719 27.8961 34.6383 28.6282C35.082 28.7342 35.5339 28.8609 35.9868 29.004Z" fill="currentColor" fill-rule="evenodd"></path></svg>
+        </div>
+        <h1 class="text-2xl font-bold text-text-light dark:text-text-dark">Welcome to TaskFlow</h1>
+        <p class="text-text-light/70 dark:text-text-dark/70 text-center text-sm">请登录以访问您的任务看板</p>
+        <button id="btn-login" class="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-800 text-text-light dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg px-6 py-3 font-medium shadow-sm hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="Google">
+            <span>Sign in with Google</span>
+        </button>
+        <div id="login-loader" class="hidden spinner"></div>
+    </div>
+</div>
+
+<!-- ================= MAIN APP ================= -->
+<div id="app-container" class="relative flex h-auto min-h-screen w-full flex-col hidden">
+    <!-- HEADER -->
+    <header class="sticky top-0 z-10 flex items-center justify-between whitespace-nowrap border-b border-solid border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm px-4 sm:px-6 lg:px-10 py-3">
+        <div class="flex items-center gap-4">
+            <div class="size-6 text-primary">
+                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M13.8261 30.5736C16.7203 29.8826 20.2244 29.4783 24 29.4783C27.7756 29.4783 31.2797 29.8826 34.1739 30.5736C36.9144 31.2278 39.9967 32.7669 41.3563 33.8352L24.8486 7.36089C24.4571 6.73303 23.5429 6.73303 23.1514 7.36089L6.64374 33.8352C8.00331 32.7669 11.0856 31.2278 13.8261 30.5736Z" fill="currentColor"></path><path clip-rule="evenodd" d="M39.998 35.764C39.9944 35.7463 39.9875 35.7155 39.9748 35.6706C39.9436 35.5601 39.8949 35.4259 39.8346 35.2825C39.8168 35.2403 39.7989 35.1993 39.7813 35.1602C38.5103 34.2887 35.9788 33.0607 33.7095 32.5189C30.9875 31.8691 27.6413 31.4783 24 31.4783C20.3587 31.4783 17.0125 31.8691 14.2905 32.5189C12.0012 33.0654 9.44505 34.3104 8.18538 35.1832C8.17384 35.2075 8.16216 35.233 8.15052 35.2592C8.09919 35.3751 8.05721 35.4886 8.02977 35.589C8.00356 35.6848 8.00039 35.7333 8.00004 35.7388C8.00004 35.739 8 35.7393 8.00004 35.7388C8.00004 35.7641 8.0104 36.0767 8.68485 36.6314C9.34546 37.1746 10.4222 37.7531 11.9291 38.2772C14.9242 39.319 19.1919 40 24 40C28.8081 40 33.0758 39.319 36.0709 38.2772C37.5778 37.7531 38.6545 37.1746 39.3151 36.6314C39.9006 36.1499 39.9857 35.8511 39.998 35.764ZM4.95178 32.7688L21.4543 6.30267C22.6288 4.4191 25.3712 4.41909 26.5457 6.30267L43.0534 32.777C43.0709 32.8052 43.0878 32.8338 43.104 32.8629L41.3563 33.8352C43.104 32.8629 43.1038 32.8626 43.104 32.8629L43.1051 32.865L43.1065 32.8675L43.1101 32.8739L43.1199 32.8918C43.1276 32.906 43.1377 32.9246 43.1497 32.9473C43.1738 32.9925 43.2062 33.0545 43.244 33.1299C43.319 33.2792 43.4196 33.489 43.5217 33.7317C43.6901 34.1321 44 34.9311 44 35.7391C44 37.4427 43.003 38.7775 41.8558 39.7209C40.6947 40.6757 39.1354 41.4464 37.385 42.0552C33.8654 43.2794 29.133 44 24 44C18.867 44 14.1346 43.2794 10.615 42.0552C8.86463 41.4464 7.30529 40.6757 6.14419 39.7209C4.99695 38.7775 3.99999 37.4427 3.99999 35.7391C3.99999 34.8725 4.29264 34.0922 4.49321 33.6393C4.60375 33.3898 4.71348 33.1804 4.79687 33.0311C4.83898 32.9556 4.87547 32.8935 4.9035 32.8471C4.91754 32.8238 4.92954 32.8043 4.93916 32.7889L4.94662 32.777L4.95178 32.7688ZM35.9868 29.004L24 9.77997L12.0131 29.004C12.4661 28.8609 12.9179 28.7342 13.3617 28.6282C16.4281 27.8961 20.0901 27.4783 24 27.4783C27.9099 27.4783 31.5719 27.8961 34.6383 28.6282C35.082 28.7342 35.5339 28.8609 35.9868 29.004Z" fill="currentColor" fill-rule="evenodd"></path></svg>
+            </div>
+            <h2 class="text-lg font-bold">TaskFlow 看板</h2>
+        </div>
+        <div class="flex flex-1 justify-end items-center gap-2 sm:gap-4">
+            <button id="btn-new-task" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] gap-2 hover:bg-primary/90 transition-colors">
+                <span class="material-symbols-outlined !text-xl">add</span>
+                <span class="hidden sm:inline truncate">新建任务</span>
+            </button>
+            <div class="flex gap-2">
+                <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark text-text-light dark:text-text-dark gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <span class="material-symbols-outlined !text-xl">filter_list</span>
+                </button>
+            </div>
+            <div id="user-avatar" class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-border-light" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2NjIiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIiAvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTAiIHI9IjMiIC8+PHBhdGggZD0iTTcgMjAuNmMuMi02LjEgMTMtNi4xIDEwLjIgMCIgLz48L3N2Zz4=');"></div>
+            <button id="btn-logout" class="text-xs text-red-500 hover:text-red-700 font-medium ml-2">退出</button>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- FILTERS -->
+        <div id="filter-container" class="flex gap-3 px-4 pb-6 overflow-x-auto scrollbar-hide">
+            <div data-filter="All" class="filter-chip active flex h-8 shrink-0 cursor-pointer items-center justify-center gap-x-2 rounded-full bg-primary/20 text-primary px-4 transition-colors">
+                <p class="text-sm font-medium leading-normal">全部</p>
+            </div>
+            <div data-filter="Work" class="filter-chip flex h-8 shrink-0 cursor-pointer items-center justify-center gap-x-2 rounded-full bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark px-4 hover:bg-primary/10 transition-colors">
+                <p class="text-sm font-medium leading-normal">工作</p>
+            </div>
+            <div data-filter="Personal" class="filter-chip flex h-8 shrink-0 cursor-pointer items-center justify-center gap-x-2 rounded-full bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark px-4 hover:bg-primary/10 transition-colors">
+                <p class="text-sm font-medium leading-normal">个人</p>
+            </div>
+            <div data-filter="Urgent" class="filter-chip flex h-8 shrink-0 cursor-pointer items-center justify-center gap-x-2 rounded-full bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark px-4 hover:bg-primary/10 transition-colors">
+                <p class="text-sm font-medium leading-normal">紧急</p>
+            </div>
+        </div>
+
+        <!-- BOARD GRID -->
+        <div id="task-board" class="sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
+            <!-- Tasks will be injected here -->
+            <div class="break-inside-avoid flex flex-col gap-4 p-5 rounded-xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm">
+                <div class="animate-pulse flex space-x-4">
+                    <div class="flex-1 space-y-4 py-1">
+                        <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div class="space-y-2">
+                            <div class="h-4 bg-gray-200 rounded"></div>
+                            <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ================= CREATE TASK MODAL ================= -->
+<div id="create-modal" class="modal opacity-0 pointer-events-none fixed inset-0 z-50 flex items-center justify-center">
+  <div class="modal-overlay absolute inset-0 bg-black opacity-50"></div>
+  <div class="modal-container bg-white dark:bg-gray-800 w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+    <div class="modal-content py-4 text-left px-6">
+      <div class="flex justify-between items-center pb-3">
+        <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">新建任务</p>
+        <div class="modal-close cursor-pointer z-50">
+          <span class="material-symbols-outlined">close</span>
+        </div>
+      </div>
+
+      <div class="my-5 space-y-4">
+        <div>
+            <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">标题</label>
+            <input id="input-title" type="text" class="w-full px-3 py-2 text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 border rounded focus:outline-none focus:ring-2 focus:ring-primary" placeholder="例如：完成周报">
+        </div>
+        <div>
+            <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">描述</label>
+            <textarea id="input-memo" class="w-full px-3 py-2 text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 border rounded focus:outline-none focus:ring-2 focus:ring-primary" rows="3" placeholder="添加任务详情..."></textarea>
+        </div>
+        <div class="flex gap-4">
+            <div class="flex-1">
+                <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">分类</label>
+                <select id="input-category" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border rounded focus:outline-none">
+                    <option value="Work">工作</option>
+                    <option value="Personal">个人</option>
+                    <option value="Study">学习</option>
+                </select>
+            </div>
+            <div class="flex-1">
+                <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">优先级</label>
+                <select id="input-priority" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border rounded focus:outline-none">
+                    <option value="Medium">中</option>
+                    <option value="High">高</option>
+                    <option value="Low">低</option>
+                </select>
+            </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button class="modal-close px-4 bg-transparent p-3 rounded-lg text-indigo-500 hover:bg-gray-100 hover:text-indigo-400 mr-2">取消</button>
+        <button id="btn-save-task" class="px-4 bg-primary p-3 rounded-lg text-white hover:bg-primary/90">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, push, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    // --- Firebase Config ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+        authDomain: "outpost-8d74e.firebaseapp.com",
+        databaseURL: "https://outpost-8d74e-985fa-schedule.asia-southeast1.firebasedatabase.app/",
+        projectId: "outpost-8d74e",
+        storageBucket: "outpost-8d74e.firebasestorage.app",
+        messagingSenderId: "724993324937",
+        appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+        measurementId: "G-QPHWRTH6BH"
+    };
+
+    // --- Initialization ---
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    // --- DOM Elements ---
+    const splash = document.getElementById('login-splash');
+    const appContainer = document.getElementById('app-container');
+    const btnLogin = document.getElementById('btn-login');
+    const btnLogout = document.getElementById('btn-logout');
+    const loader = document.getElementById('login-loader');
+    const userAvatar = document.getElementById('user-avatar');
+    const taskBoard = document.getElementById('task-board');
+    const filterChips = document.querySelectorAll('.filter-chip');
+    
+    // Modal Elements
+    const modal = document.getElementById('create-modal');
+    const btnNewTask = document.getElementById('btn-new-task');
+    const btnSaveTask = document.getElementById('btn-save-task');
+    const closeElements = document.querySelectorAll('.modal-close');
+    const overlay = document.querySelector('.modal-overlay');
+
+    // State
+    let currentUser = null;
+    let allTasks = [];
+    let currentFilter = 'All';
+
+    // --- Auth Logic ---
+    btnLogin.addEventListener('click', () => {
+        loader.classList.remove('hidden');
+        signInWithPopup(auth, provider).catch((error) => {
+            console.error("Login failed", error);
+            loader.classList.add('hidden');
+            alert("登录失败: " + error.message);
+        });
+    });
+
+    btnLogout.addEventListener('click', () => {
+        signOut(auth).then(() => location.reload());
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            // Hide splash, Show app
+            splash.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => splash.classList.add('hidden'), 500);
+            appContainer.classList.remove('hidden');
+            
+            if(user.photoURL) {
+                userAvatar.style.backgroundImage = `url('${user.photoURL}')`;
+            }
+            
+            // Load Data
+            loadTasks();
+        } else {
+            // Show splash
+            splash.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+            appContainer.classList.add('hidden');
+            loader.classList.add('hidden');
+        }
+    });
+
+    // --- Data Logic ---
+    function loadTasks() {
+        const tasksRef = ref(db, 'tasks');
+        onValue(tasksRef, (snapshot) => {
+            const data = snapshot.val();
+            allTasks = data ? Object.keys(data).map(key => ({id: key, ...data[key]})) : [];
+            renderBoard();
+        });
+    }
+
+    // --- Render Logic ---
+    function renderBoard() {
+        let tasksToRender = allTasks;
+
+        // Filtering
+        if (currentFilter === 'Work') {
+            tasksToRender = allTasks.filter(t => t.category === 'Work' || t.title.includes('Work')); // Fallback for old data
+        } else if (currentFilter === 'Personal') {
+            tasksToRender = allTasks.filter(t => t.category === 'Personal' || t.activityClass === 'PersonalEvent');
+        } else if (currentFilter === 'Urgent') {
+            tasksToRender = allTasks.filter(t => t.priority === 'High' || t.status === 'high');
+        }
+
+        if (tasksToRender.length === 0) {
+            taskBoard.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-400">
+                    <span class="material-symbols-outlined text-6xl mb-4">inbox</span>
+                    <p>暂无任务</p>
+                </div>`;
+            return;
+        }
+
+        let html = '';
+        tasksToRender.forEach(task => {
+            // Determine visuals based on data
+            const category = task.category || (task.activityClass === 'PersonalEvent' ? 'Personal' : 'Work');
+            const categoryColor = category === 'Personal' ? 'text-green-500' : 'text-primary';
+            
+            let priorityIcon = '';
+            if (task.priority === 'High') {
+                priorityIcon = `<span class="inline-flex items-center justify-center size-8 rounded-full bg-status-highpriority/10 text-status-highpriority flex-shrink-0" title="高优先级"><span class="material-symbols-outlined !text-xl !font-bold">priority_high</span></span>`;
+            } else if (task.priority === 'Low') {
+                priorityIcon = `<span class="inline-flex items-center justify-center size-8 rounded-full bg-gray-500/10 text-gray-500 flex-shrink-0" title="低优先级"><span class="material-symbols-outlined !text-xl">arrow_downward</span></span>`;
+            } else {
+                priorityIcon = `<span class="inline-flex items-center justify-center size-8 rounded-full bg-orange-500/10 text-orange-500 flex-shrink-0" title="中优先级"><span class="material-symbols-outlined !text-xl">horizontal_rule</span></span>`;
+            }
+
+            const isDone = task.status === 'done';
+            const titleClass = isDone ? 'line-through text-text-light/60 dark:text-text-dark/60' : 'text-text-light dark:text-text-dark';
+            const cardBg = isDone ? 'bg-card-light/60 dark:bg-card-dark/60' : 'bg-card-light dark:bg-card-dark';
+            
+            // Progress/Status Badge logic
+            let statusIndicator = '';
+            if (task.progress) {
+                // If has specific numeric progress
+                const width = parseInt(task.progress);
+                const color = width === 100 ? 'bg-status-completed' : 'bg-status-inprogress';
+                statusIndicator = `
+                    <div class="flex items-center justify-between text-xs font-medium text-text-light/50 dark:text-text-dark/50">
+                        <span class="font-roboto">Progress</span>
+                        <span>${width}%</span>
+                    </div>
+                    <div class="w-full bg-border-light dark:bg-border-dark rounded-full h-1.5 mt-1">
+                        <div class="${color} h-1.5 rounded-full" style="width: ${width}%"></div>
+                    </div>
+                `;
+            } else {
+                // Simple Badge
+                const badgeText = isDone ? '已完成' : '进行中';
+                const badgeClass = isDone ? 'bg-status-completed/10 text-status-completed' : 'bg-status-inprogress/10 text-status-inprogress';
+                statusIndicator = `
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}">${badgeText}</span>
+                    </div>
+                `;
+            }
+
+            html += `
+            <div class="break-inside-avoid flex flex-col gap-4 p-5 rounded-xl ${cardBg} border border-border-light dark:border-border-dark shadow-sm hover:shadow-md transition-shadow cursor-pointer group relative">
+                <div class="flex justify-between items-start gap-3">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs font-medium ${categoryColor}">${category === 'Work' ? '工作' : (category === 'Personal' ? '个人' : '其他')}</span>
+                        <p class="text-base font-bold leading-tight ${titleClass}">${task.title}</p>
+                    </div>
+                    ${priorityIcon}
+                </div>
+                <p class="text-sm text-text-light/70 dark:text-text-dark/70 line-clamp-3" title="${task.memo || ''}">${task.memo || '暂无描述'}</p>
+                <div class="flex flex-col gap-2 mt-auto pt-2">
+                    ${statusIndicator}
+                </div>
+            </div>`;
+        });
+
+        taskBoard.innerHTML = html;
+    }
+
+    // --- Interaction: Filtering ---
+    filterChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            // Update UI
+            filterChips.forEach(c => {
+                c.classList.remove('bg-primary/20', 'text-primary');
+                c.classList.add('bg-card-light', 'dark:bg-card-dark', 'border');
+            });
+            chip.classList.remove('bg-card-light', 'dark:bg-card-dark', 'border');
+            chip.classList.add('bg-primary/20', 'text-primary');
+            
+            // Update State
+            currentFilter = chip.dataset.filter;
+            renderBoard();
+        });
+    });
+
+    // --- Interaction: Modal ---
+    const toggleModal = () => {
+        modal.classList.toggle('opacity-0');
+        modal.classList.toggle('pointer-events-none');
+        document.body.classList.toggle('modal-active');
+    }
+
+    btnNewTask.addEventListener('click', toggleModal);
+    overlay.addEventListener('click', toggleModal);
+    closeElements.forEach(el => el.addEventListener('click', toggleModal));
+
+    // --- Create Task ---
+    btnSaveTask.addEventListener('click', async () => {
+        const title = document.getElementById('input-title').value;
+        const memo = document.getElementById('input-memo').value;
+        const category = document.getElementById('input-category').value;
+        const priority = document.getElementById('input-priority').value;
+
+        if(!title) { alert("请输入标题"); return; }
+
+        const newTask = {
+            title,
+            memo,
+            category,
+            priority,
+            status: 'todo',
+            progress: 0,
+            createdAt: new Date().toISOString().split('T')[0],
+            owner: currentUser ? currentUser.email : 'anonymous'
+        };
+
+        // Use shortUUID as key logic from previous requirement
+        const key = Math.random().toString(36).substring(2, 10);
+        
+        try {
+            const updates = {};
+            updates['/tasks/' + key] = newTask;
+            await update(ref(db), updates);
+            
+            // Reset & Close
+            document.getElementById('input-title').value = '';
+            document.getElementById('input-memo').value = '';
+            toggleModal();
+        } catch (e) {
+            alert("保存失败: " + e.message);
+        }
+    });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>控制台导航</title>
+    <!-- 引入Tailwind CSS以快速构建现代化界面 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        /* 自定义滚动条样式，提升美观度 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* 添加卡片悬浮时的动效 */
+        .app-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* 拖拽时的样式 */
+        .app-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        /* 拖拽放置区域样式 */
+        .drop-zone {
+            min-height: 50px;
+            transition: all 0.2s;
+        }
+        /* 按钮悬停效果 */
+        .action-btn {
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            transform: scale(1.2);
+        }
+        /* 编辑按钮容器默认隐藏 */
+        .action-buttons {
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+        /* 卡片悬停时显示编辑按钮 */
+        .app-card:hover .action-buttons {
+            opacity: 1;
+        }
+        /* 身份选择器样式 */
+        .identity-selector {
+            transition: all 0.2s;
+        }
+        .identity-selector:hover {
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+    <div class="flex h-screen">
+        <!-- 左侧垂直工具条 -->
+        <aside class="w-16 bg-white shadow-md flex flex-col items-center py-4 space-y-6">
+            <!-- Logo/主图标 -->
+            <div class="w-10 h-10 p-2 bg-indigo-600 text-white rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.79-2.73 9.563M12 11c0-3.517.99-6.79 2.73-9.563M12 11h.01M4.86 19.14a9 9 0 01-1.73-9.563M21.14 19.14a9 9 0 00-1.73-9.563" />
+                </svg>
+            </div>
+            <!-- 其他图标按钮 -->
+            <button class="p-2 rounded-lg hover:bg-gray-200 text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+            </button>
+            <button class="p-2 rounded-lg hover:bg-gray-200 text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a4 4 0 014-4h10a4 4 0 014 4v12a4 4 0 01-4 4H7z" />
+                </svg>
+            </button>
+            <button class="p-2 rounded-lg hover:bg-gray-200 text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </button>
+        </aside>
+
+        <!-- 主内容区 -->
+        <div class="flex-1 flex flex-col">
+            <!-- 顶部导航条 -->
+            <header class="bg-white shadow-sm flex items-center justify-between px-6 py-3">
+                <h1 class="text-xl font-semibold text-gray-700">我的主页</h1>
+                <div class="flex items-center space-x-4">
+                    <!-- 用户信息和身份选择 -->
+                    <div id="user-info" class="hidden flex items-center space-x-3">
+                        <div class="relative group">
+                            <button id="identity-selector" class="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">
+                                <span id="current-identity" class="font-medium">选择身份</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div id="identity-dropdown" class="hidden absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                                <!-- 身份选项将通过JS动态插入 -->
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                <span id="user-avatar">U</span>
+                            </div>
+                            <span id="user-name" class="font-medium">用户</span>
+                        </div>
+                        <button id="logout-button" class="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600">
+                            退出
+                        </button>
+                    </div>
+                    <!-- 登录按钮 -->
+                    <button id="login-button" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                        登录
+                    </button>
+                    
+                    <button class="p-2 rounded-full hover:bg-gray-200 text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                    <button class="p-2 rounded-full hover:bg-gray-200 text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.096 2.572-1.065z" />
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 应用卡片网格 -->
+            <main class="flex-1 p-6 overflow-y-auto">
+                <div id="app-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-6">
+                    <!-- App 卡片将通过JS动态插入这里 -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 添加新APP的浮动按钮 -->
+    <button id="add-app-button" class="fixed bottom-8 right-8 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 transition-transform transform hover:scale-110 hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+    </button>
+
+    <!-- 添加/编辑 App 的模态对话框 (默认隐藏) -->
+    <div id="app-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md m-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modal-title" class="text-2xl font-bold">添加新应用</h2>
+                <button id="close-modal-button" class="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <form id="app-form">
+                <input type="hidden" id="appIndex" name="appIndex" value="-1">
+                <input type="hidden" id="appId" name="appId" value="">
+                <div class="mb-4">
+                    <label for="appName" class="block text-sm font-medium text-gray-700 mb-1">应用名称</label>
+                    <input type="text" id="appName" name="appName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="appUrl" class="block text-sm font-medium text-gray-700 mb-1">URL链接</label>
+                    <input type="url" id="appUrl" name="appUrl" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="appIcon" class="block text-sm font-medium text-gray-700 mb-1">图标 (SVG代码)</label>
+                    <textarea id="appIcon" name="appIcon" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required></textarea>
+                </div>
+                <div class="mb-6">
+                    <label for="appRemark" class="block text-sm font-medium text-gray-700 mb-1">备注</label>
+                    <input type="text" id="appRemark" name="appRemark" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancel-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Firebase配置
+    const firebaseConfig = {
+        apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+        authDomain: "outpost-8d74e.firebaseapp.com",
+        databaseURL: "https://outpost-8d74e-4ec53.asia-southeast1.firebasedatabase.app/",
+        projectId: "outpost-8d74e",
+        storageBucket: "outpost-8d74e.firebasestorage.app",
+        messagingSenderId: "724993324937",
+        appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+        measurementId: "G-QPHWRTH6BH"
+    };
+
+    // 初始化Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    // 应用状态
+    let currentUser = null;
+    let currentIdentity = null;
+    let userIdentities = [];
+    let apps = [];
+
+    // DOM元素
+    const appGrid = document.getElementById('app-grid');
+    const modal = document.getElementById('app-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const addAppButton = document.getElementById('add-app-button');
+    const closeModalButton = document.getElementById('close-modal-button');
+    const cancelButton = document.getElementById('cancel-button');
+    const appForm = document.getElementById('app-form');
+    const appIndexInput = document.getElementById('appIndex');
+    const appIdInput = document.getElementById('appId');
+    
+    // 用户界面元素
+    const loginButton = document.getElementById('login-button');
+    const logoutButton = document.getElementById('logout-button');
+    const userInfo = document.getElementById('user-info');
+    const userName = document.getElementById('user-name');
+    const userAvatar = document.getElementById('user-avatar');
+    const currentIdentityElement = document.getElementById('current-identity');
+    const identitySelector = document.getElementById('identity-selector');
+    const identityDropdown = document.getElementById('identity-dropdown');
+
+    // 拖拽相关变量
+    let draggedItem = null;
+    let dragStartIndex = null;
+
+    // 初始化认证状态监听
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            currentUser = user;
+            await loadUserData();
+            showUserInterface();
+        } else {
+            currentUser = null;
+            currentIdentity = null;
+            userIdentities = [];
+            apps = [];
+            showLoginInterface();
+        }
+        renderApps();
+    });
+
+    // 登录按钮事件
+    loginButton.addEventListener('click', () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch((error) => {
+            console.error('登录错误:', error);
+            alert('登录失败: ' + error.message);
+        });
+    });
+
+    // 退出按钮事件
+    logoutButton.addEventListener('click', () => {
+        auth.signOut();
+    });
+
+    // 身份选择器事件
+    identitySelector.addEventListener('click', (e) => {
+        e.stopPropagation();
+        identityDropdown.classList.toggle('hidden');
+    });
+
+    // 点击其他地方关闭身份下拉菜单
+    document.addEventListener('click', () => {
+        identityDropdown.classList.add('hidden');
+    });
+
+    // 加载用户数据
+    async function loadUserData() {
+        try {
+            // 获取用户身份信息
+            const userSnapshot = await database.ref('users').orderByChild('email').equalTo(currentUser.email).once('value');
+            const userData = userSnapshot.val();
+            
+            if (userData) {
+                const userId = Object.keys(userData)[0];
+                const userInfo = userData[userId];
+                userIdentities = userInfo.identities || [];
+                
+                // 设置默认身份
+                if (userIdentities.length > 0) {
+                    currentIdentity = userIdentities[0];
+                    currentIdentityElement.textContent = currentIdentity;
+                    userAvatar.textContent = userInfo.name.charAt(0).toUpperCase();
+                    userName.textContent = userInfo.name;
+                    
+                    // 加载书签数据
+                    await loadBookmarks();
+                }
+                
+                // 更新身份下拉菜单
+                updateIdentityDropdown();
+            } else {
+                console.warn('未找到用户数据');
+            }
+        } catch (error) {
+            console.error('加载用户数据错误:', error);
+        }
+    }
+
+    // 更新身份下拉菜单
+    function updateIdentityDropdown() {
+        identityDropdown.innerHTML = '';
+        userIdentities.forEach(identity => {
+            const identityOption = document.createElement('div');
+            identityOption.className = 'identity-selector px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer';
+            identityOption.textContent = identity;
+            identityOption.addEventListener('click', () => {
+                switchIdentity(identity);
+                identityDropdown.classList.add('hidden');
+            });
+            identityDropdown.appendChild(identityOption);
+        });
+    }
+
+    // 切换身份
+    async function switchIdentity(identity) {
+        currentIdentity = identity;
+        currentIdentityElement.textContent = identity;
+        await loadBookmarks();
+        renderApps();
+    }
+
+    // 加载书签数据
+    async function loadBookmarks() {
+        try {
+            const bookmarksSnapshot = await database.ref('userBookmarks')
+                .orderByChild('user')
+                .equalTo(currentUser.email)
+                .once('value');
+            
+            const bookmarksData = bookmarksSnapshot.val();
+            apps = [];
+            
+            if (bookmarksData) {
+                Object.keys(bookmarksData).forEach(key => {
+                    const bookmark = bookmarksData[key];
+                    if (bookmark.identity === currentIdentity) {
+                        apps.push({
+                            id: key,
+                            name: bookmark.bookmark.name,
+                            url: bookmark.bookmark.url,
+                            icon: bookmark.bookmark.icon,
+                            remark: bookmark.bookmark.remark
+                        });
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('加载书签错误:', error);
+        }
+    }
+
+    // 保存书签到Firebase
+    async function saveBookmark(app, id = null) {
+        try {
+            const bookmarkData = {
+                user: currentUser.email,
+                identity: currentIdentity,
+                bookmark: {
+                    name: app.name,
+                    url: app.url,
+                    icon: app.icon,
+                    remark: app.remark
+                },
+                createdAt: new Date().toISOString().split('T')[0]
+            };
+            
+            if (id) {
+                // 更新现有书签
+                await database.ref('userBookmarks/' + id).update(bookmarkData);
+            } else {
+                // 创建新书签
+                const newRef = await database.ref('userBookmarks').push(bookmarkData);
+                return newRef.key;
+            }
+        } catch (error) {
+            console.error('保存书签错误:', error);
+            throw error;
+        }
+    }
+
+    // 删除书签
+    async function deleteBookmark(id) {
+        try {
+            await database.ref('userBookmarks/' + id).remove();
+        } catch (error) {
+            console.error('删除书签错误:', error);
+            throw error;
+        }
+    }
+
+    // 显示用户界面
+    function showUserInterface() {
+        loginButton.classList.add('hidden');
+        userInfo.classList.remove('hidden');
+        addAppButton.classList.remove('hidden');
+    }
+
+    // 显示登录界面
+    function showLoginInterface() {
+        loginButton.classList.remove('hidden');
+        userInfo.classList.add('hidden');
+        addAppButton.classList.add('hidden');
+    }
+
+    // 渲染所有应用卡片的函数
+    const renderApps = () => {
+        appGrid.innerHTML = ''; // 清空现有卡片
+        
+        if (!currentUser) {
+            appGrid.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <p class="text-gray-500 text-lg">请登录以查看您的应用</p>
+                </div>
+            `;
+            return;
+        }
+        
+        if (apps.length === 0) {
+            appGrid.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <p class="text-gray-500 text-lg">暂无应用，点击右下角按钮添加</p>
+                </div>
+            `;
+            return;
+        }
+        
+        apps.forEach((app, index) => {
+            const card = document.createElement('div');
+            card.className = 'app-card bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center space-y-3 cursor-pointer transition-all duration-300 relative';
+            card.setAttribute('draggable', 'true');
+            card.setAttribute('data-index', index);
+            
+            card.innerHTML = `
+                <div class="action-buttons absolute top-2 right-2 flex space-x-1 z-10">
+                    <button class="edit-btn action-btn p-1 rounded-full bg-white shadow-md hover:bg-gray-100" data-index="${index}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                    <button class="delete-btn action-btn p-1 rounded-full bg-white shadow-md hover:bg-gray-100" data-index="${index}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="icon-container w-16 h-16 flex items-center justify-center bg-gray-100 rounded-full">
+                    ${app.icon}
+                </div>
+                <div class="text-center">
+                    <p class="font-semibold text-gray-800">${app.name}</p>
+                    <p class="text-xs text-gray-500">${app.remark}</p>
+                </div>
+            `;
+            
+            // 添加点击事件打开应用
+            card.addEventListener('click', (e) => {
+                // 如果点击的是编辑或删除按钮，则不触发打开应用
+                if (!e.target.closest('.edit-btn') && !e.target.closest('.delete-btn')) {
+                    window.open(app.url, '_blank');
+                }
+            });
+            
+            // 添加拖拽事件
+            card.addEventListener('dragstart', handleDragStart);
+            card.addEventListener('dragend', handleDragEnd);
+            card.addEventListener('dragover', handleDragOver);
+            card.addEventListener('dragenter', handleDragEnter);
+            card.addEventListener('dragleave', handleDragLeave);
+            card.addEventListener('drop', handleDrop);
+            
+            appGrid.appendChild(card);
+        });
+        
+        // 添加编辑和删除按钮的事件监听
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const index = parseInt(btn.getAttribute('data-index'));
+                editApp(index);
+            });
+        });
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const index = parseInt(btn.getAttribute('data-index'));
+                deleteApp(index);
+            });
+        });
+    };
+
+    // 拖拽相关函数
+    function handleDragStart(e) {
+        if (!currentUser) return;
+        
+        draggedItem = this;
+        dragStartIndex = parseInt(this.getAttribute('data-index'));
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.innerHTML);
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        appGrid.querySelectorAll('.app-card').forEach(card => {
+            card.classList.remove('drop-zone');
+        });
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        return false;
+    }
+
+    function handleDragEnter(e) {
+        this.classList.add('drop-zone');
+    }
+
+    function handleDragLeave(e) {
+        this.classList.remove('drop-zone');
+    }
+
+    function handleDrop(e) {
+        if (!currentUser) return;
+        
+        e.stopPropagation();
+        if (draggedItem !== this) {
+            const dragEndIndex = parseInt(this.getAttribute('data-index'));
+            swapApps(dragStartIndex, dragEndIndex);
+        }
+        return false;
+    }
+
+    // 交换应用位置
+    function swapApps(fromIndex, toIndex) {
+        const temp = apps[fromIndex];
+        apps[fromIndex] = apps[toIndex];
+        apps[toIndex] = temp;
+        renderApps();
+        // 注意：由于Firebase实时数据库没有内置排序，这里我们只在前端进行排序
+        // 如果需要持久化排序，可以考虑添加一个order字段到书签数据中
+    }
+
+    // 显示模态框
+    const showModal = (isEdit = false, index = -1) => {
+        if (!currentUser) {
+            alert('请先登录');
+            return;
+        }
+        
+        modalTitle.textContent = isEdit ? '编辑应用' : '添加新应用';
+        appIndexInput.value = index;
+        appIdInput.value = isEdit ? apps[index].id : '';
+        modal.classList.remove('hidden');
+    };
+
+    // 隐藏模态框
+    const hideModal = () => {
+        modal.classList.add('hidden');
+        appForm.reset();
+        appIndexInput.value = '-1';
+        appIdInput.value = '';
+    };
+
+    // 编辑应用
+    const editApp = (index) => {
+        const app = apps[index];
+        document.getElementById('appName').value = app.name;
+        document.getElementById('appUrl').value = app.url;
+        document.getElementById('appIcon').value = app.icon;
+        document.getElementById('appRemark').value = app.remark;
+        showModal(true, index);
+    };
+
+    // 删除应用
+    const deleteApp = async (index) => {
+        if (confirm(`确定要删除应用 "${apps[index].name}" 吗？`)) {
+            try {
+                await deleteBookmark(apps[index].id);
+                apps.splice(index, 1);
+                renderApps();
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+    };
+
+    // 事件监听
+    addAppButton.addEventListener('click', () => showModal(false));
+    closeModalButton.addEventListener('click', hideModal);
+    cancelButton.addEventListener('click', hideModal);
+    
+    // 点击模态框背景区域关闭
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            hideModal();
+        }
+    });
+
+    // 表单提交处理
+    appForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!currentUser) {
+            alert('请先登录');
+            return;
+        }
+        
+        const index = parseInt(appIndexInput.value);
+        const appId = appIdInput.value;
+        const newApp = {
+            name: e.target.appName.value,
+            url: e.target.appUrl.value,
+            icon: e.target.appIcon.value,
+            remark: e.target.appRemark.value
+        };
+        
+        try {
+            if (index >= 0) {
+                // 编辑现有应用
+                await saveBookmark(newApp, appId);
+                apps[index] = { ...newApp, id: appId };
+            } else {
+                // 添加新应用
+                const newId = await saveBookmark(newApp);
+                apps.push({ ...newApp, id: newId });
+            }
+            
+            renderApps();
+            hideModal();
+        } catch (error) {
+            alert('保存失败: ' + error.message);
+        }
+    });
+
+    // 初始渲染
+    renderApps();
+});
+</script>
+
+</body>
+</html>
