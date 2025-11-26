@@ -8,20 +8,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <style>
         :root {
-            --bg-color: #1e1e1e;
-            --text-color: #cccccc;
-            --accent-color: #0e639c;
-            --border-color: #3c3c3c;
-            --hover-color: #2a2d2e;
-            --toolbar-height: 40px;
-            --sidebar-width: 300px;
+            --bg-color: #f8fafc;
+            --sidebar-bg: #ffffff;
+            --content-bg: #ffffff;
+            --text-color: #334155;
+            --text-light: #64748b;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --border-color: #e2e8f0;
+            --hover-color: #f1f5f9;
+            --toolbar-height: 60px;
+            --sidebar-width: 320px;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 8px;
         }
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
         }
         
         body {
@@ -29,36 +36,53 @@
             color: var(--text-color);
             height: 100vh;
             overflow: hidden;
+            line-height: 1.5;
         }
         
         /* 顶部工具条 */
         .toolbar {
             height: var(--toolbar-height);
-            background-color: #2d2d30;
+            background-color: white;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            padding: 0 15px;
+            padding: 0 20px;
             justify-content: space-between;
+            box-shadow: var(--shadow);
         }
         
         .toolbar-title {
-            font-weight: bold;
-            color: #fff;
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 18px;
+        }
+        
+        .auth-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        #user-info {
+            font-size: 14px;
+            color: var(--text-light);
         }
         
         .auth-section button {
             background-color: var(--accent-color);
             color: white;
             border: none;
-            padding: 6px 12px;
-            border-radius: 3px;
+            padding: 8px 16px;
+            border-radius: var(--radius);
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
         
         .auth-section button:hover {
-            background-color: #1177bb;
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
         }
         
         /* 主内容区 */
@@ -70,24 +94,29 @@
         /* 左侧导航区 */
         .sidebar {
             width: var(--sidebar-width);
-            background-color: #252526;
+            background-color: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
             overflow-y: auto;
-            padding: 10px;
+            padding: 16px;
         }
         
         .accordion {
-            margin-bottom: 10px;
+            margin-bottom: 16px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
         }
         
         .accordion-header {
-            background-color: #2d2d30;
-            padding: 8px 12px;
+            background-color: white;
+            padding: 12px 16px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border: 1px solid var(--border-color);
+            font-weight: 600;
+            transition: all 0.2s ease;
         }
         
         .accordion-header:hover {
@@ -95,10 +124,11 @@
         }
         
         .accordion-content {
-            padding: 8px 12px;
+            padding: 16px;
             border: 1px solid var(--border-color);
             border-top: none;
             display: none;
+            background-color: white;
         }
         
         .accordion.active .accordion-content {
@@ -106,78 +136,80 @@
         }
         
         .filter-section {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         .filter-group {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         
         .filter-group label {
             display: block;
-            margin-bottom: 5px;
-            font-size: 12px;
-            color: #aaa;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: var(--text-light);
+            font-weight: 500;
         }
         
-        .filter-input {
+        .filter-input, .filter-select {
             width: 100%;
-            padding: 6px 8px;
-            background-color: #3c3c3c;
+            padding: 10px 12px;
+            background-color: white;
             border: 1px solid var(--border-color);
             color: var(--text-color);
-            border-radius: 3px;
-            font-size: 12px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            transition: border-color 0.2s ease;
         }
         
-        .filter-select {
-            width: 100%;
-            padding: 6px 8px;
-            background-color: #3c3c3c;
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            border-radius: 3px;
-            font-size: 12px;
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         .filter-actions {
             display: flex;
-            gap: 5px;
-            margin-top: 10px;
+            gap: 8px;
+            margin-top: 12px;
         }
         
         .filter-actions button {
             flex: 1;
-            padding: 6px;
-            background-color: #383838;
+            padding: 10px;
+            background-color: white;
             color: var(--text-color);
             border: 1px solid var(--border-color);
-            border-radius: 3px;
+            border-radius: var(--radius);
             cursor: pointer;
-            font-size: 11px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
         
         .filter-actions button:hover {
-            background-color: #484848;
+            background-color: var(--hover-color);
         }
         
         .filter-actions button.active {
             background-color: var(--accent-color);
             color: white;
+            border-color: var(--accent-color);
         }
         
         .wordsets-container {
             max-height: 400px;
             overflow-y: auto;
             border: 1px solid var(--border-color);
-            border-radius: 3px;
+            border-radius: var(--radius);
         }
         
         .wordset-item {
-            padding: 6px 8px;
+            padding: 12px;
             cursor: pointer;
-            border-left: 3px solid transparent;
+            border-left: 4px solid transparent;
             border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease;
         }
         
         .wordset-item:hover {
@@ -194,145 +226,368 @@
         }
         
         .wordset-name {
-            font-weight: bold;
-            margin-bottom: 2px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #1e293b;
         }
         
         .wordset-meta {
-            font-size: 11px;
-            color: #aaa;
+            font-size: 13px;
+            color: var(--text-light);
             display: flex;
             justify-content: space-between;
         }
         
         .wordset-actions {
             display: flex;
-            gap: 5px;
-            margin-top: 5px;
+            gap: 8px;
+            margin-top: 8px;
         }
         
         .wordset-actions button {
-            background-color: #383838;
+            background-color: white;
             color: var(--text-color);
             border: 1px solid var(--border-color);
-            padding: 3px 8px;
-            font-size: 11px;
+            padding: 6px 12px;
+            font-size: 12px;
             cursor: pointer;
-            border-radius: 2px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
         }
         
         .wordset-actions button:hover {
-            background-color: #484848;
+            background-color: var(--hover-color);
         }
         
         .wordset-actions button.delete {
-            color: #f14c4c;
+            color: #ef4444;
+            border-color: #fecaca;
+        }
+        
+        .wordset-actions button.delete:hover {
+            background-color: #fef2f2;
         }
         
         /* 右侧内容区 */
         .content {
             flex: 1;
-            padding: 20px;
+            padding: 24px;
             overflow-y: auto;
+            background-color: var(--content-bg);
         }
         
-        /* 表格样式 */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        
-        th, td {
+        /* 分类编辑区域 */
+        .classification-editor {
+            background-color: white;
+            padding: 16px;
+            border-radius: var(--radius);
             border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            text-align: left;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
         }
         
-        th {
-            background-color: #2d2d30;
+        .classification-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
         }
         
-        tr:nth-child(even) {
-            background-color: #252526;
+        .form-group {
+            margin-bottom: 0;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+        
+        /* 词汇卡片样式 */
+        .word-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .word-card {
+            background-color: white;
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        
+        .word-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .word-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        
+        .word-thai {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .lookup-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .lookup-btn:hover {
+            background-color: var(--hover-color);
+            color: var(--accent-color);
+        }
+        
+        .word-index {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-bottom: 4px;
         }
         
         /* 表单样式 */
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-size: 14px;
+            font-weight: 500;
+            color: #374151;
         }
         
         input, textarea, select {
             width: 100%;
-            padding: 8px 10px;
-            background-color: #3c3c3c;
+            padding: 12px 16px;
+            background-color: white;
             border: 1px solid var(--border-color);
             color: var(--text-color);
-            border-radius: 3px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         textarea {
-            min-height: 100px;
+            min-height: 120px;
             resize: vertical;
         }
         
         .form-actions {
-            margin-top: 20px;
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
         }
         
         .form-actions button {
             background-color: var(--accent-color);
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 3px;
+            padding: 12px 24px;
+            border-radius: var(--radius);
             cursor: pointer;
-            margin-right: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
         
         .form-actions button:hover {
-            background-color: #1177bb;
+            background-color: var(--accent-hover);
         }
         
         .form-actions button.cancel {
-            background-color: #5a5a5a;
+            background-color: white;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        .form-actions button.cancel:hover {
+            background-color: var(--hover-color);
+        }
+        
+        /* 操作按钮组 */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: white;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background-color: var(--hover-color);
+            transform: translateY(-1px);
+        }
+        
+        .action-btn.primary {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        
+        .action-btn.primary:hover {
+            background-color: var(--accent-hover);
         }
         
         /* 状态消息 */
         .status-message {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 3px;
+            padding: 12px 16px;
+            margin: 16px 0;
+            border-radius: var(--radius);
             display: none;
+            font-size: 14px;
         }
         
         .status-message.success {
-            background-color: #1e5320;
-            border: 1px solid #2d7b30;
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
             display: block;
         }
         
         .status-message.error {
-            background-color: #5a1e1e;
-            border: 1px solid #c42b2b;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
             display: block;
         }
         
         .status-message.info {
-            background-color: #1e3a5a;
-            border: 1px solid #2d5a9b;
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
             display: block;
+        }
+        
+        /* 模态对话框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        
+        .modal-close:hover {
+            background-color: var(--hover-color);
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .definition-section {
+            margin-bottom: 20px;
+        }
+        
+        .definition-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1e293b;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .definition-item {
+            margin-bottom: 8px;
+            padding-left: 16px;
+            position: relative;
+        }
+        
+        .definition-item:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
         }
         
         /* 加载指示器 */
         .loader {
-            border: 3px solid #3c3c3c;
+            border: 3px solid #e2e8f0;
             border-top: 3px solid var(--accent-color);
             border-radius: 50%;
             width: 20px;
@@ -349,23 +604,30 @@
         
         /* 进度条 */
         .progress-container {
-            margin: 15px 0;
-            background-color: #3c3c3c;
-            border-radius: 3px;
+            margin: 16px 0;
+            background-color: #e2e8f0;
+            border-radius: 10px;
             overflow: hidden;
         }
         
         .progress-bar {
-            height: 20px;
+            height: 8px;
             background-color: var(--accent-color);
             width: 0%;
             transition: width 0.3s ease;
-            text-align: center;
-            line-height: 20px;
-            font-size: 12px;
         }
         
         /* 响应式调整 */
+        @media (max-width: 1024px) {
+            .word-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .classification-form {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         @media (max-width: 768px) {
             .main-container {
                 flex-direction: column;
@@ -379,6 +641,14 @@
             .content {
                 height: 60%;
             }
+            
+            .word-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
@@ -388,8 +658,8 @@
         <div class="toolbar-title">泰语词汇集管理工具</div>
         <div class="auth-section">
             <span id="user-info"></span>
-            <button id="signin-btn">Sign In</button>
-            <button id="signout-btn" style="display: none;">Sign Out</button>
+            <button id="signin-btn">登录</button>
+            <button id="signout-btn" style="display: none;">退出</button>
         </div>
     </div>
     
@@ -403,7 +673,7 @@
                     <span>▼</span>
                 </div>
                 <div class="accordion-content">
-                    <button id="new-wordset-btn" style="width: 100%; margin-bottom: 15px;">新建词汇集</button>
+                    <button id="new-wordset-btn" style="width: 100%; margin-bottom: 16px; padding: 12px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: background-color 0.2s ease;">新建词汇集</button>
                     
                     <!-- 过滤和搜索区域 -->
                     <div class="filter-section">
@@ -413,20 +683,22 @@
                         </div>
                         
                         <div class="filter-group">
-                            <label for="filter-category">按分类过滤</label>
-                            <select id="filter-category" class="filter-select">
-                                <option value="">所有分类</option>
+                            <label for="filter-level">按级别过滤</label>
+                            <select id="filter-level" class="filter-select">
+                                <option value="">所有级别</option>
+                                <option value="A1">A1</option>
+                                <option value="A2">A2</option>
+                                <option value="B1">B1</option>
+                                <option value="B2">B2</option>
+                                <option value="C1">C1</option>
+                                <option value="C2">C2</option>
                             </select>
                         </div>
                         
                         <div class="filter-group">
-                            <label for="filter-level">按级别过滤</label>
-                            <select id="filter-level" class="filter-select">
-                                <option value="">所有级别</option>
-                                <option value="C.TBD">C.TBD</option>
-                                <option value="A.初级">A.初级</option>
-                                <option value="B.中级">B.中级</option>
-                                <option value="C.高级">C.高级</option>
+                            <label for="filter-scenario">按场景过滤</label>
+                            <select id="filter-scenario" class="filter-select">
+                                <option value="">所有场景</option>
                             </select>
                         </div>
                         
@@ -449,28 +721,75 @@
             
             <!-- 词汇集详情视图 -->
             <div id="wordset-detail-view" style="display: none;">
-                <h2 id="wordset-title"></h2>
-                <div class="wordset-meta">
-                    <p><strong>分类:</strong> <span id="wordset-category"></span></p>
-                    <p><strong>级别:</strong> <span id="wordset-level"></span></p>
-                    <p><strong>创建时间:</strong> <span id="wordset-created"></span></p>
+                <h2 id="wordset-title" style="margin-bottom: 8px; color: #1e293b;"></h2>
+                
+                <!-- 分类编辑区域 -->
+                <div class="classification-editor">
+                    <h3 style="margin-bottom: 16px; color: #1e293b;">分类设置</h3>
+                    <div class="classification-form">
+                        <div class="form-group">
+                            <label for="current-level">级别</label>
+                            <select id="current-level" class="filter-select">
+                                <option value="">请选择级别</option>
+                                <option value="A1">A1</option>
+                                <option value="A2">A2</option>
+                                <option value="B1">B1</option>
+                                <option value="B2">B2</option>
+                                <option value="C1">C1</option>
+                                <option value="C2">C2</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="current-scenario">场景</label>
+                            <select id="current-scenario" class="filter-select">
+                                <option value="">请先选择级别</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button id="update-classification-btn" style="padding: 12px 16px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: background-color 0.2s ease;">更新分类</button>
+                        </div>
+                    </div>
                 </div>
-                <table id="words-table">
-                    <thead>
-                        <tr>
-                            <th>序号</th>
-                            <th>泰语词汇</th>
-                        </tr>
-                    </thead>
-                    <tbody id="words-table-body">
-                        <!-- 词汇将通过JS动态填充 -->
-                    </tbody>
-                </table>
+                
+                <!-- 操作按钮组 -->
+                <div class="action-buttons">
+                    <button class="action-btn primary" id="export-anki-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        发布为Anki
+                    </button>
+                    <button class="action-btn" id="create-quiz-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                        创建Quiz
+                    </button>
+                    <button class="action-btn" id="print-output-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                            <rect x="6" y="14" width="12" height="8"></rect>
+                        </svg>
+                        打印输出
+                    </button>
+                </div>
+                
+                <!-- 词汇卡片容器 -->
+                <div class="word-cards" id="word-cards-container">
+                    <!-- 词汇卡片将通过JS动态填充 -->
+                </div>
             </div>
             
             <!-- 新建词汇集表单 -->
             <div id="wordset-form-view" style="display: none;">
-                <h2>新建词汇集</h2>
+                <h2 style="margin-bottom: 20px; color: #1e293b;">新建词汇集</h2>
                 <form id="wordset-form">
                     <div class="form-group">
                         <label for="wordset-title-input">词汇集标题</label>
@@ -478,18 +797,22 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="wordset-category-input">分类</label>
-                        <input type="text" id="wordset-category-input" required>
-                    </div>
-                    
-                    <div class="form-group">
                         <label for="wordset-level-select">级别</label>
                         <select id="wordset-level-select" required>
                             <option value="">请选择级别</option>
-                            <option value="C.TBD">C.TBD</option>
-                            <option value="A.初级">A.初级</option>
-                            <option value="B.中级">B.中级</option>
-                            <option value="C.高级">C.高级</option>
+                            <option value="A1">A1</option>
+                            <option value="A2">A2</option>
+                            <option value="B1">B1</option>
+                            <option value="B2">B2</option>
+                            <option value="C1">C1</option>
+                            <option value="C2">C2</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="wordset-scenario-select">场景</label>
+                        <select id="wordset-scenario-select" required>
+                            <option value="">请先选择级别</option>
                         </select>
                     </div>
                     
@@ -500,14 +823,32 @@
                     
                     <div class="form-actions">
                         <button type="submit">保存词汇集</button>
-                        <button type="button" id="cancel-form-btn">取消</button>
+                        <button type="button" id="cancel-form-btn" class="cancel">取消</button>
                     </div>
                 </form>
             </div>
             
             <!-- 初始提示信息 -->
-            <div id="initial-message">
+            <div id="initial-message" style="text-align: center; padding: 60px 20px; color: var(--text-light);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; opacity: 0.5;">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+                <h3 style="margin-bottom: 8px; color: var(--text-color);">欢迎使用泰语词汇集管理工具</h3>
                 <p>请从左侧选择一个词汇集查看详情，或点击"新建词汇集"创建新的词汇集。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 字典查询模态对话框 -->
+    <div id="dictionary-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="dictionary-modal-title">单词释义</h3>
+                <button class="modal-close" id="dictionary-modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="dictionary-modal-body">
+                <!-- 字典内容将通过JS动态填充 -->
             </div>
         </div>
     </div>
@@ -553,16 +894,38 @@
         const wordsetForm = document.getElementById('wordset-form');
         const cancelFormBtn = document.getElementById('cancel-form-btn');
         const statusMessage = document.getElementById('status-message');
+        const wordCardsContainer = document.getElementById('word-cards-container');
+        
+        // 分类编辑元素
+        const currentLevelSelect = document.getElementById('current-level');
+        const currentScenarioSelect = document.getElementById('current-scenario');
+        const updateClassificationBtn = document.getElementById('update-classification-btn');
+        
+        // 新建词汇集表单元素
+        const wordsetLevelSelect = document.getElementById('wordset-level-select');
+        const wordsetScenarioSelect = document.getElementById('wordset-scenario-select');
+        
+        // 操作按钮
+        const exportAnkiBtn = document.getElementById('export-anki-btn');
+        const createQuizBtn = document.getElementById('create-quiz-btn');
+        const printOutputBtn = document.getElementById('print-output-btn');
+        
+        // 模态对话框元素
+        const dictionaryModal = document.getElementById('dictionary-modal');
+        const dictionaryModalTitle = document.getElementById('dictionary-modal-title');
+        const dictionaryModalBody = document.getElementById('dictionary-modal-body');
+        const dictionaryModalClose = document.getElementById('dictionary-modal-close');
         
         // 过滤相关元素
         const searchTitleInput = document.getElementById('search-title');
-        const filterCategorySelect = document.getElementById('filter-category');
         const filterLevelSelect = document.getElementById('filter-level');
+        const filterScenarioSelect = document.getElementById('filter-scenario');
         const applyFiltersBtn = document.getElementById('apply-filters');
         const clearFiltersBtn = document.getElementById('clear-filters');
 
         // 当前选中的词汇集
         let currentWordsetId = null;
+        let currentWordsetData = null;
         
         // 本地字典缓存
         let dictionaryCache = new Map();
@@ -571,11 +934,15 @@
         let allWordsets = new Map();
         let filteredWordsets = new Map();
         
+        // 分类数据缓存
+        let classifications = new Map();
+        let levelScenarios = new Map(); // 按级别组织的场景数据
+        
         // 当前过滤条件
         let currentFilters = {
             searchTitle: '',
-            category: '',
-            level: ''
+            level: '',
+            scenario: ''
         };
 
         // API客户端
@@ -635,12 +1002,31 @@
             cancelFormBtn.addEventListener('click', hideWordsetForm);
             wordsetForm.addEventListener('submit', saveWordset);
             
+            // 绑定分类编辑事件
+            currentLevelSelect.addEventListener('change', updateScenarioOptions);
+            wordsetLevelSelect.addEventListener('change', updateNewWordsetScenarioOptions);
+            updateClassificationBtn.addEventListener('click', updateWordsetClassification);
+            
+            // 绑定操作按钮事件
+            exportAnkiBtn.addEventListener('click', exportToAnki);
+            createQuizBtn.addEventListener('click', createQuiz);
+            printOutputBtn.addEventListener('click', printOutput);
+            
+            // 绑定模态对话框事件
+            dictionaryModalClose.addEventListener('click', closeDictionaryModal);
+            dictionaryModal.addEventListener('click', function(e) {
+                if (e.target === dictionaryModal) {
+                    closeDictionaryModal();
+                }
+            });
+            
             // 绑定过滤事件
             applyFiltersBtn.addEventListener('click', applyFilters);
             clearFiltersBtn.addEventListener('click', clearFilters);
             searchTitleInput.addEventListener('input', debounce(applyFilters, 300));
-            filterCategorySelect.addEventListener('change', applyFilters);
+            filterLevelSelect.addEventListener('change', updateFilterScenarioOptions);
             filterLevelSelect.addEventListener('change', applyFilters);
+            filterScenarioSelect.addEventListener('change', applyFilters);
             
             // 初始化手风琴效果
             initAccordion();
@@ -654,7 +1040,8 @@
                 signoutBtn.style.display = 'inline-block';
                 userInfo.textContent = `欢迎, ${user.email}`;
                 
-                // 加载词汇集和初始化字典缓存
+                // 加载分类数据和词汇集
+                loadClassifications();
                 loadWordsets();
                 initDictionaryCache();
             } else {
@@ -673,6 +1060,126 @@
                 dictionaryCache.clear();
                 allWordsets.clear();
                 filteredWordsets.clear();
+                classifications.clear();
+                levelScenarios.clear();
+            }
+        }
+
+        // 加载分类数据
+        function loadClassifications() {
+            database.ref('thaiWordList/metaWordList/classifications').once('value')
+                .then((snapshot) => {
+                    classifications.clear();
+                    levelScenarios.clear();
+                    
+                    if (snapshot.exists()) {
+                        const classificationData = snapshot.val();
+                        Object.keys(classificationData).forEach(classificationId => {
+                            const classification = classificationData[classificationId];
+                            classifications.set(classificationId, classification);
+                            
+                            // 按级别组织场景数据
+                            if (!levelScenarios.has(classification.level)) {
+                                levelScenarios.set(classification.level, new Map());
+                            }
+                            levelScenarios.get(classification.level).set(classificationId, classification.scenario);
+                        });
+                        
+                        console.log(`已加载 ${classifications.size} 个分类`);
+                        
+                        // 更新过滤器的场景选项
+                        updateFilterScenarioOptions();
+                    } else {
+                        console.log('分类数据不存在');
+                    }
+                })
+                .catch((error) => {
+                    console.error('加载分类数据错误:', error);
+                });
+        }
+
+        // 根据分类ID获取分类信息
+        function getClassificationInfo(classificationId) {
+            if (!classificationId || !classifications.has(classificationId)) {
+                return {
+                    level: '待定级',
+                    scenario: '待分类'
+                };
+            }
+            
+            return classifications.get(classificationId);
+        }
+
+        // 根据级别和场景获取分类ID
+        function getClassificationId(level, scenario) {
+            for (const [id, classification] of classifications) {
+                if (classification.level === level && classification.scenario === scenario) {
+                    return id;
+                }
+            }
+            return null;
+        }
+
+        // 更新过滤器的场景选项
+        function updateFilterScenarioOptions() {
+            const selectedLevel = filterLevelSelect.value;
+            const currentScenario = filterScenarioSelect.value;
+            
+            filterScenarioSelect.innerHTML = '<option value="">所有场景</option>';
+            
+            if (selectedLevel && levelScenarios.has(selectedLevel)) {
+                const scenarios = levelScenarios.get(selectedLevel);
+                scenarios.forEach((scenario, id) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = scenario;
+                    filterScenarioSelect.appendChild(option);
+                });
+                
+                // 恢复之前选中的场景
+                if (scenarios.has(currentScenario)) {
+                    filterScenarioSelect.value = currentScenario;
+                }
+            }
+        }
+
+        // 更新场景选项（用于分类编辑）
+        function updateScenarioOptions() {
+            const selectedLevel = currentLevelSelect.value;
+            const currentScenario = currentScenarioSelect.value;
+            
+            currentScenarioSelect.innerHTML = '<option value="">请选择场景</option>';
+            
+            if (selectedLevel && levelScenarios.has(selectedLevel)) {
+                const scenarios = levelScenarios.get(selectedLevel);
+                scenarios.forEach((scenario, id) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = scenario;
+                    currentScenarioSelect.appendChild(option);
+                });
+                
+                // 恢复之前选中的场景
+                if (scenarios.has(currentScenario)) {
+                    currentScenarioSelect.value = currentScenario;
+                }
+            }
+        }
+
+        // 更新新建词汇集的场景选项
+        function updateNewWordsetScenarioOptions() {
+            const selectedLevel = wordsetLevelSelect.value;
+            
+            wordsetScenarioSelect.innerHTML = '<option value="">请选择场景</option>';
+            
+            if (selectedLevel && levelScenarios.has(selectedLevel)) {
+                const scenarios = levelScenarios.get(selectedLevel);
+                scenarios.forEach((scenario, id) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = scenario;
+                    wordsetScenarioSelect.appendChild(option);
+                });
             }
         }
 
@@ -775,8 +1282,8 @@
         function applyFilters() {
             currentFilters = {
                 searchTitle: searchTitleInput.value.toLowerCase(),
-                category: filterCategorySelect.value,
-                level: filterLevelSelect.value
+                level: filterLevelSelect.value,
+                scenario: filterScenarioSelect.value
             };
             
             filterWordsets();
@@ -785,13 +1292,13 @@
         // 清除过滤
         function clearFilters() {
             searchTitleInput.value = '';
-            filterCategorySelect.value = '';
             filterLevelSelect.value = '';
+            filterScenarioSelect.value = '';
             
             currentFilters = {
                 searchTitle: '',
-                category: '',
-                level: ''
+                level: '',
+                scenario: ''
             };
             
             filterWordsets();
@@ -812,14 +1319,19 @@
                     }
                 }
                 
-                // 分类过滤
-                if (currentFilters.category && wordset.大类title !== currentFilters.category) {
-                    matches = false;
+                // 级别过滤
+                if (currentFilters.level) {
+                    const classificationInfo = getClassificationInfo(wordset.classification);
+                    if (classificationInfo.level !== currentFilters.level) {
+                        matches = false;
+                    }
                 }
                 
-                // 级别过滤
-                if (currentFilters.level && wordset.级别 !== currentFilters.level) {
-                    matches = false;
+                // 场景过滤
+                if (currentFilters.scenario) {
+                    if (wordset.classification !== currentFilters.scenario) {
+                        matches = false;
+                    }
                 }
                 
                 if (matches) {
@@ -835,41 +1347,12 @@
             wordsetsList.innerHTML = '';
             
             if (filteredWordsets.size === 0) {
-                wordsetsList.innerHTML = '<div style="padding: 10px; text-align: center; color: #aaa;">没有找到匹配的词汇集</div>';
+                wordsetsList.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--text-light);">没有找到匹配的词汇集</div>';
                 return;
             }
             
             for (const [wordsetId, wordset] of filteredWordsets) {
                 addWordsetToList(wordsetId, wordset);
-            }
-        }
-
-        // 更新分类选项
-        function updateCategoryOptions() {
-            const categories = new Set();
-            
-            for (const wordset of allWordsets.values()) {
-                if (wordset.大类title) {
-                    categories.add(wordset.大类title);
-                }
-            }
-            
-            // 保存当前选中的分类
-            const currentCategory = filterCategorySelect.value;
-            
-            // 清空并重新填充选项
-            filterCategorySelect.innerHTML = '<option value="">所有分类</option>';
-            
-            categories.forEach(category => {
-                const option = document.createElement('option');
-                option.value = category;
-                option.textContent = category;
-                filterCategorySelect.appendChild(option);
-            });
-            
-            // 恢复之前选中的分类
-            if (categories.has(currentCategory)) {
-                filterCategorySelect.value = currentCategory;
             }
         }
 
@@ -944,7 +1427,7 @@
 
         // 加载词汇集列表
         function loadWordsets() {
-            wordsetsList.innerHTML = '<div class="loader"></div> 加载中...';
+            wordsetsList.innerHTML = '<div style="padding: 20px; text-align: center;"><div class="loader"></div> 加载中...</div>';
             
             database.ref('thaiWordList').once('value')
                 .then((snapshot) => {
@@ -952,26 +1435,26 @@
                     filteredWordsets.clear();
                     
                     if (!snapshot.exists()) {
-                        wordsetsList.innerHTML = '<p>暂无词汇集</p>';
+                        wordsetsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-light);">暂无词汇集</div>';
                         return;
                     }
                     
                     const wordsets = snapshot.val();
                     Object.keys(wordsets).forEach(wordsetId => {
+                        // 跳过metaWordList路径
+                        if (wordsetId === 'metaWordList') return;
+                        
                         const wordset = wordsets[wordsetId];
                         allWordsets.set(wordsetId, wordset);
                         filteredWordsets.set(wordsetId, wordset);
                     });
-                    
-                    // 更新分类选项
-                    updateCategoryOptions();
                     
                     // 渲染词汇集列表
                     renderFilteredWordsets();
                 })
                 .catch((error) => {
                     console.error('加载词汇集错误:', error);
-                    wordsetsList.innerHTML = '<p>加载词汇集失败</p>';
+                    wordsetsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">加载词汇集失败</div>';
                 });
         }
 
@@ -981,11 +1464,13 @@
             wordsetItem.className = 'wordset-item';
             wordsetItem.dataset.id = wordsetId;
             
+            const classificationInfo = getClassificationInfo(wordset.classification);
+            
             wordsetItem.innerHTML = `
                 <div class="wordset-name">${wordset.分类title || '未命名词汇集'}</div>
                 <div class="wordset-meta">
-                    <span>${wordset.大类title || '未分类'}</span>
-                    <span>${wordset.级别 || '未设置'}</span>
+                    <span>${classificationInfo.level}</span>
+                    <span>${classificationInfo.scenario}</span>
                 </div>
                 <div class="wordset-actions">
                     <button class="view">查看</button>
@@ -1011,27 +1496,16 @@
         // 显示词汇集详情
         function showWordsetDetail(wordsetId, wordset) {
             currentWordsetId = wordsetId;
+            currentWordsetData = wordset;
             
             // 更新UI
             document.getElementById('wordset-title').textContent = wordset.分类title || '未命名词汇集';
-            document.getElementById('wordset-category').textContent = wordset.大类title || '未分类';
-            document.getElementById('wordset-level').textContent = wordset.级别 || '未设置';
-            document.getElementById('wordset-created').textContent = wordset.createdAt || '未知';
             
-            // 填充词汇表格
-            const wordsTableBody = document.getElementById('words-table-body');
-            wordsTableBody.innerHTML = '';
+            // 更新分类编辑器
+            updateClassificationEditor(wordset);
             
-            if (wordset.words && Array.isArray(wordset.words)) {
-                wordset.words.forEach((word, index) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${word}</td>
-                    `;
-                    wordsTableBody.appendChild(row);
-                });
-            }
+            // 填充词汇卡片
+            renderWordCards(wordset);
             
             // 显示详情视图
             hideWordsetForm();
@@ -1045,6 +1519,241 @@
             document.querySelector(`.wordset-item[data-id="${wordsetId}"]`).classList.add('active');
         }
 
+        // 更新分类编辑器
+        function updateClassificationEditor(wordset) {
+            const classificationInfo = getClassificationInfo(wordset.classification);
+            
+            // 设置当前级别
+            currentLevelSelect.value = classificationInfo.level;
+            
+            // 更新场景选项
+            updateScenarioOptions();
+            
+            // 设置当前场景
+            if (wordset.classification && classifications.has(wordset.classification)) {
+                currentScenarioSelect.value = wordset.classification;
+            } else {
+                currentScenarioSelect.value = '';
+            }
+        }
+
+        // 更新词汇集分类
+        function updateWordsetClassification() {
+            const selectedLevel = currentLevelSelect.value;
+            const selectedScenarioId = currentScenarioSelect.value;
+            
+            if (!selectedLevel || !selectedScenarioId) {
+                showStatus('请选择级别和场景', 'error');
+                return;
+            }
+            
+            // 更新数据库
+            database.ref(`thaiWordList/${currentWordsetId}/classification`).set(selectedScenarioId)
+                .then(() => {
+                    showStatus('分类更新成功', 'success');
+                    
+                    // 更新本地缓存
+                    if (allWordsets.has(currentWordsetId)) {
+                        allWordsets.get(currentWordsetId).classification = selectedScenarioId;
+                    }
+                    if (filteredWordsets.has(currentWordsetId)) {
+                        filteredWordsets.get(currentWordsetId).classification = selectedScenarioId;
+                    }
+                    
+                    // 更新UI显示
+                    const wordsetItem = document.querySelector(`.wordset-item[data-id="${currentWordsetId}"]`);
+                    if (wordsetItem) {
+                        const classificationInfo = getClassificationInfo(selectedScenarioId);
+                        const metaElements = wordsetItem.querySelectorAll('.wordset-meta span');
+                        if (metaElements.length >= 2) {
+                            metaElements[0].textContent = classificationInfo.level;
+                            metaElements[1].textContent = classificationInfo.scenario;
+                        }
+                    }
+                })
+                .catch((error) => {
+                    console.error('更新分类错误:', error);
+                    showStatus('更新失败: ' + error.message, 'error');
+                });
+        }
+
+        // 渲染词汇卡片
+        function renderWordCards(wordset) {
+            wordCardsContainer.innerHTML = '';
+            
+            if (wordset.words && Array.isArray(wordset.words)) {
+                wordset.words.forEach((word, index) => {
+                    const wordCard = document.createElement('div');
+                    wordCard.className = 'word-card';
+                    
+                    wordCard.innerHTML = `
+                        <div class="word-index">${index + 1}</div>
+                        <div class="word-card-header">
+                            <div class="word-thai">${word}</div>
+                            <button class="lookup-btn" data-word="${word}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    
+                    // 绑定字典查询事件
+                    wordCard.querySelector('.lookup-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showDictionaryDefinition(word);
+                    });
+                    
+                    wordCardsContainer.appendChild(wordCard);
+                });
+            }
+        }
+
+        // 显示字典定义
+        function showDictionaryDefinition(word) {
+            // 设置模态对话框标题
+            dictionaryModalTitle.textContent = `"${word}" 的释义`;
+            
+            // 显示加载状态
+            dictionaryModalBody.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loader"></div> 加载中...</div>';
+            
+            // 显示模态对话框
+            dictionaryModal.style.display = 'flex';
+            
+            // 查询单词定义
+            if (dictionaryCache.has(word)) {
+                const definition = dictionaryCache.get(word);
+                renderDictionaryDefinition(definition);
+            } else {
+                // 如果不在缓存中，尝试从Firebase查询
+                database.ref(`thaiDictionary/${word}`).once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const definition = snapshot.val();
+                            // 更新缓存
+                            dictionaryCache.set(word, definition);
+                            renderDictionaryDefinition(definition);
+                        } else {
+                            dictionaryModalBody.innerHTML = `
+                                <div style="text-align: center; padding: 20px; color: var(--text-light);">
+                                    <p>未找到单词 "${word}" 的释义</p>
+                                    <p style="margin-top: 10px; font-size: 14px;">该单词可能尚未添加到字典中</p>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('查询字典定义错误:', error);
+                        dictionaryModalBody.innerHTML = `
+                            <div style="text-align: center; padding: 20px; color: #ef4444;">
+                                <p>查询单词释义时出错</p>
+                                <p style="margin-top: 10px; font-size: 14px;">${error.message}</p>
+                            </div>
+                        `;
+                    });
+            }
+        }
+
+        // 渲染字典定义
+        function renderDictionaryDefinition(definition) {
+            let html = '';
+            
+            // 基本信息
+            if (definition.thai) {
+                html += `
+                    <div class="definition-section">
+                        <h3>基本信息</h3>
+                        <div class="definition-item"><strong>单词:</strong> ${definition.thai.word || 'N/A'}</div>
+                        <div class="definition-item"><strong>发音:</strong> ${definition.thai.pronunciation || 'N/A'}</div>
+                        <div class="definition-item"><strong>拼写分解:</strong> ${definition.thai.spelling_breakdown || 'N/A'}</div>
+                    </div>
+                `;
+            }
+            
+            // 词性
+            if (definition.pos) {
+                html += `
+                    <div class="definition-section">
+                        <h3>词性</h3>
+                        <div class="definition-item">${definition.pos}</div>
+                    </div>
+                `;
+            }
+            
+            // 定义
+            if (definition.definitions && definition.definitions.length > 0) {
+                html += `
+                    <div class="definition-section">
+                        <h3>定义</h3>
+                        ${definition.definitions.map(def => 
+                            `<div class="definition-item"><strong>${def.en || ''}</strong> - ${def.zh || ''}</div>`
+                        ).join('')}
+                    </div>
+                `;
+            }
+            
+            // 同义词
+            if (definition.synonyms && definition.synonyms.length > 0) {
+                html += `
+                    <div class="definition-section">
+                        <h3>同义词</h3>
+                        <div class="definition-item">${definition.synonyms.join(', ')}</div>
+                    </div>
+                `;
+            }
+            
+            // 反义词
+            if (definition.antonyms && definition.antonyms.length > 0) {
+                html += `
+                    <div class="definition-section">
+                        <h3>反义词</h3>
+                        <div class="definition-item">${definition.antonyms.join(', ')}</div>
+                    </div>
+                `;
+            }
+            
+            // 常用短语
+            if (definition.common_phrases && definition.common_phrases.length > 0) {
+                html += `
+                    <div class="definition-section">
+                        <h3>常用短语</h3>
+                        ${definition.common_phrases.map(phrase => 
+                            `<div class="definition-item"><strong>${phrase.phrase || ''}</strong> - ${phrase.translation || ''}</div>`
+                        ).join('')}
+                    </div>
+                `;
+            }
+            
+            // 语法说明
+            if (definition.grammar_notes) {
+                html += `
+                    <div class="definition-section">
+                        <h3>语法说明</h3>
+                        <div class="definition-item">${definition.grammar_notes}</div>
+                    </div>
+                `;
+            }
+            
+            // 级别和标签
+            if (definition.level || definition.tags) {
+                html += `
+                    <div class="definition-section">
+                        <h3>其他信息</h3>
+                        ${definition.level ? `<div class="definition-item"><strong>级别:</strong> ${definition.level}</div>` : ''}
+                        ${definition.tags ? `<div class="definition-item"><strong>标签:</strong> ${definition.tags.join(', ')}</div>` : ''}
+                    </div>
+                `;
+            }
+            
+            dictionaryModalBody.innerHTML = html || '<div style="text-align: center; padding: 20px; color: var(--text-light);">暂无可用释义</div>';
+        }
+
+        // 关闭字典模态对话框
+        function closeDictionaryModal() {
+            dictionaryModal.style.display = 'none';
+        }
+
         // 隐藏词汇集详情
         function hideWordsetDetail() {
             wordsetDetailView.style.display = 'none';
@@ -1052,6 +1761,7 @@
                 item.classList.remove('active');
             });
             currentWordsetId = null;
+            currentWordsetData = null;
         }
 
         // 显示词汇集表单
@@ -1060,6 +1770,7 @@
             initialMessage.style.display = 'none';
             wordsetFormView.style.display = 'block';
             wordsetForm.reset();
+            wordsetScenarioSelect.innerHTML = '<option value="">请先选择级别</option>';
         }
 
         // 隐藏词汇集表单
@@ -1074,8 +1785,8 @@
             
             // 获取表单数据
             const title = document.getElementById('wordset-title-input').value;
-            const category = document.getElementById('wordset-category-input').value;
             const level = document.getElementById('wordset-level-select').value;
+            const scenarioId = document.getElementById('wordset-scenario-select').value;
             const wordsText = document.getElementById('wordset-words-textarea').value;
             
             // 处理词汇列表
@@ -1085,6 +1796,11 @@
             
             if (words.length === 0) {
                 showStatus('请输入至少一个词汇', 'error');
+                return;
+            }
+            
+            if (!level || !scenarioId) {
+                showStatus('请选择级别和场景', 'error');
                 return;
             }
             
@@ -1112,7 +1828,6 @@
                 processedWords++;
                 const progress = (processedWords / words.length) * 100;
                 progressBar.style.width = `${progress}%`;
-                progressBar.textContent = `${processedWords}/${words.length}`;
                 
                 // 添加小延迟避免请求过于频繁
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -1124,8 +1839,7 @@
             // 创建词汇集对象
             const wordset = {
                 "分类title": title,
-                "大类title": category,
-                "级别": level,
+                "classification": scenarioId,
                 "words": words,
                 "createdAt": new Date().toISOString().split('T')[0] // YYYY-MM-DD格式
             };
@@ -1158,9 +1872,6 @@
                         allWordsets.delete(wordsetId);
                         filteredWordsets.delete(wordsetId);
                         
-                        // 更新分类选项
-                        updateCategoryOptions();
-                        
                         // 如果当前显示的是被删除的词汇集，则隐藏详情
                         if (currentWordsetId === wordsetId) {
                             hideWordsetDetail();
@@ -1172,7 +1883,7 @@
                         
                         // 如果列表为空，显示提示
                         if (filteredWordsets.size === 0) {
-                            wordsetsList.innerHTML = '<p>暂无词汇集</p>';
+                            wordsetsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-light);">暂无词汇集</div>';
                         }
                     })
                     .catch((error) => {
@@ -1180,6 +1891,24 @@
                         showStatus('删除失败: ' + error.message, 'error');
                     });
             }
+        }
+
+        // 导出为Anki
+        function exportToAnki() {
+            showStatus('导出为Anki功能开发中...', 'info');
+            // TODO: 实现导出为Anki的功能
+        }
+
+        // 创建Quiz
+        function createQuiz() {
+            showStatus('创建Quiz功能开发中...', 'info');
+            // TODO: 实现创建Quiz的功能
+        }
+
+        // 打印输出
+        function printOutput() {
+            showStatus('打印输出功能开发中...', 'info');
+            // TODO: 实现打印输出的功能
         }
 
         // 初始化手风琴效果

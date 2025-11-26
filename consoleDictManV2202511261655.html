@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语词汇集管理工具</title>
+    <!-- 引入LocalForage -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --text-color: #cccccc;
+            --accent-color: #0e639c;
+            --border-color: #3c3c3c;
+            --hover-color: #2a2d2e;
+            --toolbar-height: 40px;
+            --sidebar-width: 300px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 顶部工具条 */
+        .toolbar {
+            height: var(--toolbar-height);
+            background-color: #2d2d30;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            justify-content: space-between;
+        }
+        
+        .toolbar-title {
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .auth-section button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .auth-section button:hover {
+            background-color: #1177bb;
+        }
+        
+        /* 主内容区 */
+        .main-container {
+            display: flex;
+            height: calc(100vh - var(--toolbar-height));
+        }
+        
+        /* 左侧导航区 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #252526;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .accordion {
+            margin-bottom: 10px;
+        }
+        
+        .accordion-header {
+            background-color: #2d2d30;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .accordion-header:hover {
+            background-color: var(--hover-color);
+        }
+        
+        .accordion-content {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            display: none;
+        }
+        
+        .accordion.active .accordion-content {
+            display: block;
+        }
+        
+        .filter-section {
+            margin-bottom: 15px;
+        }
+        
+        .filter-group {
+            margin-bottom: 10px;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .filter-input {
+            width: 100%;
+            padding: 6px 8px;
+            background-color: #3c3c3c;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .filter-select {
+            width: 100%;
+            padding: 6px 8px;
+            background-color: #3c3c3c;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .filter-actions button {
+            flex: 1;
+            padding: 6px;
+            background-color: #383838;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .filter-actions button:hover {
+            background-color: #484848;
+        }
+        
+        .filter-actions button.active {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .wordsets-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+        }
+        
+        .wordset-item {
+            padding: 6px 8px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .wordset-item:hover {
+            background-color: var(--hover-color);
+        }
+        
+        .wordset-item.active {
+            border-left-color: var(--accent-color);
+            background-color: var(--hover-color);
+        }
+        
+        .wordset-item:last-child {
+            border-bottom: none;
+        }
+        
+        .wordset-name {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        
+        .wordset-meta {
+            font-size: 11px;
+            color: #aaa;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .wordset-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        
+        .wordset-actions button {
+            background-color: #383838;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 3px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+        
+        .wordset-actions button:hover {
+            background-color: #484848;
+        }
+        
+        .wordset-actions button.delete {
+            color: #f14c4c;
+        }
+        
+        /* 右侧内容区 */
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #2d2d30;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #252526;
+        }
+        
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 8px 10px;
+            background-color: #3c3c3c;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 3px;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            margin-top: 20px;
+        }
+        
+        .form-actions button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        .form-actions button:hover {
+            background-color: #1177bb;
+        }
+        
+        .form-actions button.cancel {
+            background-color: #5a5a5a;
+        }
+        
+        /* 状态消息 */
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            display: none;
+        }
+        
+        .status-message.success {
+            background-color: #1e5320;
+            border: 1px solid #2d7b30;
+            display: block;
+        }
+        
+        .status-message.error {
+            background-color: #5a1e1e;
+            border: 1px solid #c42b2b;
+            display: block;
+        }
+        
+        .status-message.info {
+            background-color: #1e3a5a;
+            border: 1px solid #2d5a9b;
+            display: block;
+        }
+        
+        /* 加载指示器 */
+        .loader {
+            border: 3px solid #3c3c3c;
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 进度条 */
+        .progress-container {
+            margin: 15px 0;
+            background-color: #3c3c3c;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s ease;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 40%;
+            }
+            
+            .content {
+                height: 60%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部工具条 -->
+    <div class="toolbar">
+        <div class="toolbar-title">泰语词汇集管理工具</div>
+        <div class="auth-section">
+            <span id="user-info"></span>
+            <button id="signin-btn">Sign In</button>
+            <button id="signout-btn" style="display: none;">Sign Out</button>
+        </div>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div class="main-container">
+        <!-- 左侧导航区 -->
+        <div class="sidebar">
+            <div class="accordion active">
+                <div class="accordion-header">
+                    <span>词汇集管理</span>
+                    <span>▼</span>
+                </div>
+                <div class="accordion-content">
+                    <button id="new-wordset-btn" style="width: 100%; margin-bottom: 15px;">新建词汇集</button>
+                    
+                    <!-- 过滤和搜索区域 -->
+                    <div class="filter-section">
+                        <div class="filter-group">
+                            <label for="search-title">搜索标题</label>
+                            <input type="text" id="search-title" class="filter-input" placeholder="输入标题关键词...">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="filter-category">按分类过滤</label>
+                            <select id="filter-category" class="filter-select">
+                                <option value="">所有分类</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="filter-level">按级别过滤</label>
+                            <select id="filter-level" class="filter-select">
+                                <option value="">所有级别</option>
+                                <option value="C.TBD">C.TBD</option>
+                                <option value="A.初级">A.初级</option>
+                                <option value="B.中级">B.中级</option>
+                                <option value="C.高级">C.高级</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <button id="apply-filters" class="active">应用过滤</button>
+                            <button id="clear-filters">清除过滤</button>
+                        </div>
+                    </div>
+                    
+                    <div class="wordsets-container">
+                        <div id="wordsets-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧内容区 -->
+        <div class="content">
+            <div id="status-message" class="status-message"></div>
+            
+            <!-- 词汇集详情视图 -->
+            <div id="wordset-detail-view" style="display: none;">
+                <h2 id="wordset-title"></h2>
+                <div class="wordset-meta">
+                    <p><strong>分类:</strong> <span id="wordset-category"></span></p>
+                    <p><strong>级别:</strong> <span id="wordset-level"></span></p>
+                    <p><strong>创建时间:</strong> <span id="wordset-created"></span></p>
+                </div>
+                <table id="words-table">
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>泰语词汇</th>
+                        </tr>
+                    </thead>
+                    <tbody id="words-table-body">
+                        <!-- 词汇将通过JS动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 新建词汇集表单 -->
+            <div id="wordset-form-view" style="display: none;">
+                <h2>新建词汇集</h2>
+                <form id="wordset-form">
+                    <div class="form-group">
+                        <label for="wordset-title-input">词汇集标题</label>
+                        <input type="text" id="wordset-title-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="wordset-category-input">分类</label>
+                        <input type="text" id="wordset-category-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="wordset-level-select">级别</label>
+                        <select id="wordset-level-select" required>
+                            <option value="">请选择级别</option>
+                            <option value="C.TBD">C.TBD</option>
+                            <option value="A.初级">A.初级</option>
+                            <option value="B.中级">B.中级</option>
+                            <option value="C.高级">C.高级</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="wordset-words-textarea">词汇列表 (每行一个词汇)</label>
+                        <textarea id="wordset-words-textarea" placeholder="请输入泰语词汇，每行一个" required></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit">保存词汇集</button>
+                        <button type="button" id="cancel-form-btn">取消</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- 初始提示信息 -->
+            <div id="initial-message">
+                <p>请从左侧选择一个词汇集查看详情，或点击"新建词汇集"创建新的词汇集。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // 初始化LocalForage
+        const dictionaryStorage = localforage.createInstance({
+            name: 'thaiDictionaryCache',
+            description: '泰语字典本地缓存'
+        });
+
+        // DOM元素
+        const signinBtn = document.getElementById('signin-btn');
+        const signoutBtn = document.getElementById('signout-btn');
+        const userInfo = document.getElementById('user-info');
+        const newWordsetBtn = document.getElementById('new-wordset-btn');
+        const wordsetsList = document.getElementById('wordsets-list');
+        const wordsetDetailView = document.getElementById('wordset-detail-view');
+        const wordsetFormView = document.getElementById('wordset-form-view');
+        const initialMessage = document.getElementById('initial-message');
+        const wordsetForm = document.getElementById('wordset-form');
+        const cancelFormBtn = document.getElementById('cancel-form-btn');
+        const statusMessage = document.getElementById('status-message');
+        
+        // 过滤相关元素
+        const searchTitleInput = document.getElementById('search-title');
+        const filterCategorySelect = document.getElementById('filter-category');
+        const filterLevelSelect = document.getElementById('filter-level');
+        const applyFiltersBtn = document.getElementById('apply-filters');
+        const clearFiltersBtn = document.getElementById('clear-filters');
+
+        // 当前选中的词汇集
+        let currentWordsetId = null;
+        
+        // 本地字典缓存
+        let dictionaryCache = new Map();
+        
+        // 词汇集数据缓存
+        let allWordsets = new Map();
+        let filteredWordsets = new Map();
+        
+        // 当前过滤条件
+        let currentFilters = {
+            searchTitle: '',
+            category: '',
+            level: ''
+        };
+
+        // API客户端
+        class APIClient {
+            constructor() {
+                this.baseURL = 'http://localhost:3200';
+            }
+
+            async request(endpoint, options = {}) {
+                const url = `${this.baseURL}${endpoint}`;
+                const config = {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    ...options
+                };
+
+                if (options.body && typeof options.body === 'object') {
+                    config.body = JSON.stringify(options.body);
+                }
+
+                try {
+                    const response = await fetch(url, config);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error('API request failed:', error);
+                    throw error;
+                }
+            }
+
+            // 查询泰语单词
+            async lookupThaiWord(word, service = 'deepseek', userId = 'anonymous') {
+                return this.request('/api/dictionary/lookup', {
+                    method: 'POST',
+                    body: { word, service, user_id: userId }
+                });
+            }
+        }
+
+        const apiClient = new APIClient();
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置认证状态监听
+            auth.onAuthStateChanged(handleAuthStateChange);
+            
+            // 绑定事件
+            signinBtn.addEventListener('click', signIn);
+            signoutBtn.addEventListener('click', signOut);
+            newWordsetBtn.addEventListener('click', showWordsetForm);
+            cancelFormBtn.addEventListener('click', hideWordsetForm);
+            wordsetForm.addEventListener('submit', saveWordset);
+            
+            // 绑定过滤事件
+            applyFiltersBtn.addEventListener('click', applyFilters);
+            clearFiltersBtn.addEventListener('click', clearFilters);
+            searchTitleInput.addEventListener('input', debounce(applyFilters, 300));
+            filterCategorySelect.addEventListener('change', applyFilters);
+            filterLevelSelect.addEventListener('change', applyFilters);
+            
+            // 初始化手风琴效果
+            initAccordion();
+        });
+
+        // 处理认证状态变化
+        function handleAuthStateChange(user) {
+            if (user) {
+                // 用户已登录
+                signinBtn.style.display = 'none';
+                signoutBtn.style.display = 'inline-block';
+                userInfo.textContent = `欢迎, ${user.email}`;
+                
+                // 加载词汇集和初始化字典缓存
+                loadWordsets();
+                initDictionaryCache();
+            } else {
+                // 用户未登录
+                signinBtn.style.display = 'inline-block';
+                signoutBtn.style.display = 'none';
+                userInfo.textContent = '';
+                wordsetsList.innerHTML = '';
+                
+                // 隐藏内容区
+                hideWordsetDetail();
+                hideWordsetForm();
+                initialMessage.style.display = 'block';
+                
+                // 清空缓存
+                dictionaryCache.clear();
+                allWordsets.clear();
+                filteredWordsets.clear();
+            }
+        }
+
+        // 获取今天的日期字符串（用于缓存键）
+        function getTodayDateKey() {
+            const today = new Date();
+            return today.toISOString().split('T')[0]; // YYYY-MM-DD格式
+        }
+
+        // 初始化字典缓存
+        async function initDictionaryCache() {
+            console.log('初始化字典缓存...');
+            const todayKey = getTodayDateKey();
+            const cacheKey = `dictionary_${todayKey}`;
+            
+            try {
+                // 首先检查本地存储中是否有今天的缓存
+                const cachedData = await dictionaryStorage.getItem(cacheKey);
+                
+                if (cachedData) {
+                    console.log('从本地存储加载字典缓存');
+                    dictionaryCache = new Map(Object.entries(cachedData));
+                    console.log(`字典缓存已加载，当前缓存 ${dictionaryCache.size} 个单词`);
+                    return;
+                }
+                
+                // 如果没有本地缓存，从Firebase加载
+                console.log('从Firebase加载字典数据...');
+                const snapshot = await database.ref('thaiDictionary').once('value');
+                
+                if (snapshot.exists()) {
+                    const dictionaryData = snapshot.val();
+                    dictionaryCache.clear();
+                    
+                    Object.keys(dictionaryData).forEach(word => {
+                        dictionaryCache.set(word, dictionaryData[word]);
+                    });
+                    
+                    // 保存到本地存储
+                    const cacheObject = Object.fromEntries(dictionaryCache);
+                    await dictionaryStorage.setItem(cacheKey, cacheObject);
+                    
+                    console.log(`字典缓存已更新并保存到本地存储，当前缓存 ${dictionaryCache.size} 个单词`);
+                } else {
+                    console.log('thaiDictionary路径下暂无数据');
+                    // 初始化空缓存到本地存储
+                    await dictionaryStorage.setItem(cacheKey, {});
+                }
+                
+            } catch (error) {
+                console.error('初始化字典缓存错误:', error);
+            }
+            
+            // 设置Firebase实时监听，以便在数据变化时更新缓存
+            setupDictionaryListener();
+        }
+
+        // 设置字典数据实时监听
+        function setupDictionaryListener() {
+            database.ref('thaiDictionary').on('value', async (snapshot) => {
+                if (snapshot.exists()) {
+                    const dictionaryData = snapshot.val();
+                    dictionaryCache.clear();
+                    
+                    Object.keys(dictionaryData).forEach(word => {
+                        dictionaryCache.set(word, dictionaryData[word]);
+                    });
+                    
+                    // 更新本地存储
+                    const todayKey = getTodayDateKey();
+                    const cacheKey = `dictionary_${todayKey}`;
+                    const cacheObject = Object.fromEntries(dictionaryCache);
+                    
+                    try {
+                        await dictionaryStorage.setItem(cacheKey, cacheObject);
+                        console.log(`字典缓存已实时更新，当前缓存 ${dictionaryCache.size} 个单词`);
+                    } catch (error) {
+                        console.error('更新本地存储缓存错误:', error);
+                    }
+                }
+            }, (error) => {
+                console.error('监听字典数据错误:', error);
+            });
+        }
+
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 应用过滤
+        function applyFilters() {
+            currentFilters = {
+                searchTitle: searchTitleInput.value.toLowerCase(),
+                category: filterCategorySelect.value,
+                level: filterLevelSelect.value
+            };
+            
+            filterWordsets();
+        }
+
+        // 清除过滤
+        function clearFilters() {
+            searchTitleInput.value = '';
+            filterCategorySelect.value = '';
+            filterLevelSelect.value = '';
+            
+            currentFilters = {
+                searchTitle: '',
+                category: '',
+                level: ''
+            };
+            
+            filterWordsets();
+        }
+
+        // 过滤词汇集
+        function filterWordsets() {
+            filteredWordsets.clear();
+            
+            for (const [wordsetId, wordset] of allWordsets) {
+                let matches = true;
+                
+                // 标题搜索过滤
+                if (currentFilters.searchTitle) {
+                    const title = wordset.分类title || '';
+                    if (!title.toLowerCase().includes(currentFilters.searchTitle)) {
+                        matches = false;
+                    }
+                }
+                
+                // 分类过滤
+                if (currentFilters.category && wordset.大类title !== currentFilters.category) {
+                    matches = false;
+                }
+                
+                // 级别过滤
+                if (currentFilters.level && wordset.级别 !== currentFilters.level) {
+                    matches = false;
+                }
+                
+                if (matches) {
+                    filteredWordsets.set(wordsetId, wordset);
+                }
+            }
+            
+            renderFilteredWordsets();
+        }
+
+        // 渲染过滤后的词汇集
+        function renderFilteredWordsets() {
+            wordsetsList.innerHTML = '';
+            
+            if (filteredWordsets.size === 0) {
+                wordsetsList.innerHTML = '<div style="padding: 10px; text-align: center; color: #aaa;">没有找到匹配的词汇集</div>';
+                return;
+            }
+            
+            for (const [wordsetId, wordset] of filteredWordsets) {
+                addWordsetToList(wordsetId, wordset);
+            }
+        }
+
+        // 更新分类选项
+        function updateCategoryOptions() {
+            const categories = new Set();
+            
+            for (const wordset of allWordsets.values()) {
+                if (wordset.大类title) {
+                    categories.add(wordset.大类title);
+                }
+            }
+            
+            // 保存当前选中的分类
+            const currentCategory = filterCategorySelect.value;
+            
+            // 清空并重新填充选项
+            filterCategorySelect.innerHTML = '<option value="">所有分类</option>';
+            
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                filterCategorySelect.appendChild(option);
+            });
+            
+            // 恢复之前选中的分类
+            if (categories.has(currentCategory)) {
+                filterCategorySelect.value = currentCategory;
+            }
+        }
+
+        // 检查单词是否在字典中
+        async function checkAndFetchWordDefinition(word) {
+            // 首先检查本地缓存
+            if (dictionaryCache.has(word)) {
+                console.log(`单词 "${word}" 已在字典缓存中`);
+                return { exists: true, data: dictionaryCache.get(word) };
+            }
+            
+            // 如果不在缓存中，通过API查询
+            console.log(`单词 "${word}" 不在字典中，通过API查询...`);
+            try {
+                const currentUser = auth.currentUser;
+                const userId = currentUser ? currentUser.uid : 'anonymous';
+                
+                const result = await apiClient.lookupThaiWord(word, 'deepseek', userId);
+                
+                if (result && result.success) {
+                    // 将查询结果保存到Firebase字典中
+                    await database.ref(`thaiDictionary/${word}`).set(result.data);
+                    
+                    // 更新本地缓存
+                    dictionaryCache.set(word, result.data);
+                    
+                    // 更新本地存储
+                    const todayKey = getTodayDateKey();
+                    const cacheKey = `dictionary_${todayKey}`;
+                    const cacheObject = Object.fromEntries(dictionaryCache);
+                    await dictionaryStorage.setItem(cacheKey, cacheObject);
+                    
+                    console.log(`单词 "${word}" 已添加到字典和缓存`);
+                    return { exists: false, data: result.data, newlyAdded: true };
+                } else {
+                    console.warn(`单词 "${word}" 查询失败:`, result?.error);
+                    return { exists: false, data: null, error: result?.error };
+                }
+            } catch (error) {
+                console.error(`单词 "${word}" API查询错误:`, error);
+                return { exists: false, data: null, error: error.message };
+            }
+        }
+
+        // 用户登录
+        function signIn() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({
+                prompt: 'select_account'
+            });
+            
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    showStatus('登录成功!', 'success');
+                })
+                .catch((error) => {
+                    console.error('登录错误:', error);
+                    showStatus('登录失败: ' + error.message, 'error');
+                });
+        }
+
+        // 用户登出
+        function signOut() {
+            auth.signOut()
+                .then(() => {
+                    showStatus('已成功登出', 'success');
+                })
+                .catch((error) => {
+                    console.error('登出错误:', error);
+                });
+        }
+
+        // 加载词汇集列表
+        function loadWordsets() {
+            wordsetsList.innerHTML = '<div class="loader"></div> 加载中...';
+            
+            database.ref('thaiWordList').once('value')
+                .then((snapshot) => {
+                    allWordsets.clear();
+                    filteredWordsets.clear();
+                    
+                    if (!snapshot.exists()) {
+                        wordsetsList.innerHTML = '<p>暂无词汇集</p>';
+                        return;
+                    }
+                    
+                    const wordsets = snapshot.val();
+                    Object.keys(wordsets).forEach(wordsetId => {
+                        const wordset = wordsets[wordsetId];
+                        allWordsets.set(wordsetId, wordset);
+                        filteredWordsets.set(wordsetId, wordset);
+                    });
+                    
+                    // 更新分类选项
+                    updateCategoryOptions();
+                    
+                    // 渲染词汇集列表
+                    renderFilteredWordsets();
+                })
+                .catch((error) => {
+                    console.error('加载词汇集错误:', error);
+                    wordsetsList.innerHTML = '<p>加载词汇集失败</p>';
+                });
+        }
+
+        // 添加词汇集到列表
+        function addWordsetToList(wordsetId, wordset) {
+            const wordsetItem = document.createElement('div');
+            wordsetItem.className = 'wordset-item';
+            wordsetItem.dataset.id = wordsetId;
+            
+            wordsetItem.innerHTML = `
+                <div class="wordset-name">${wordset.分类title || '未命名词汇集'}</div>
+                <div class="wordset-meta">
+                    <span>${wordset.大类title || '未分类'}</span>
+                    <span>${wordset.级别 || '未设置'}</span>
+                </div>
+                <div class="wordset-actions">
+                    <button class="view">查看</button>
+                    <button class="delete">删除</button>
+                </div>
+            `;
+            
+            // 绑定查看事件
+            wordsetItem.querySelector('.view').addEventListener('click', (e) => {
+                e.stopPropagation();
+                showWordsetDetail(wordsetId, wordset);
+            });
+            
+            // 绑定删除事件
+            wordsetItem.querySelector('.delete').addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteWordset(wordsetId);
+            });
+            
+            wordsetsList.appendChild(wordsetItem);
+        }
+
+        // 显示词汇集详情
+        function showWordsetDetail(wordsetId, wordset) {
+            currentWordsetId = wordsetId;
+            
+            // 更新UI
+            document.getElementById('wordset-title').textContent = wordset.分类title || '未命名词汇集';
+            document.getElementById('wordset-category').textContent = wordset.大类title || '未分类';
+            document.getElementById('wordset-level').textContent = wordset.级别 || '未设置';
+            document.getElementById('wordset-created').textContent = wordset.createdAt || '未知';
+            
+            // 填充词汇表格
+            const wordsTableBody = document.getElementById('words-table-body');
+            wordsTableBody.innerHTML = '';
+            
+            if (wordset.words && Array.isArray(wordset.words)) {
+                wordset.words.forEach((word, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${word}</td>
+                    `;
+                    wordsTableBody.appendChild(row);
+                });
+            }
+            
+            // 显示详情视图
+            hideWordsetForm();
+            initialMessage.style.display = 'none';
+            wordsetDetailView.style.display = 'block';
+            
+            // 高亮选中的词汇集
+            document.querySelectorAll('.wordset-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.wordset-item[data-id="${wordsetId}"]`).classList.add('active');
+        }
+
+        // 隐藏词汇集详情
+        function hideWordsetDetail() {
+            wordsetDetailView.style.display = 'none';
+            document.querySelectorAll('.wordset-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            currentWordsetId = null;
+        }
+
+        // 显示词汇集表单
+        function showWordsetForm() {
+            hideWordsetDetail();
+            initialMessage.style.display = 'none';
+            wordsetFormView.style.display = 'block';
+            wordsetForm.reset();
+        }
+
+        // 隐藏词汇集表单
+        function hideWordsetForm() {
+            wordsetFormView.style.display = 'none';
+            initialMessage.style.display = 'block';
+        }
+
+        // 保存词汇集
+        async function saveWordset(e) {
+            e.preventDefault();
+            
+            // 获取表单数据
+            const title = document.getElementById('wordset-title-input').value;
+            const category = document.getElementById('wordset-category-input').value;
+            const level = document.getElementById('wordset-level-select').value;
+            const wordsText = document.getElementById('wordset-words-textarea').value;
+            
+            // 处理词汇列表
+            const words = wordsText.split('\n')
+                .map(word => word.trim())
+                .filter(word => word.length > 0);
+            
+            if (words.length === 0) {
+                showStatus('请输入至少一个词汇', 'error');
+                return;
+            }
+            
+            // 显示保存进度
+            showStatus(`正在检查 ${words.length} 个单词的字典定义...`, 'info');
+            
+            // 创建进度条
+            const progressContainer = document.createElement('div');
+            progressContainer.className = 'progress-container';
+            const progressBar = document.createElement('div');
+            progressBar.className = 'progress-bar';
+            progressContainer.appendChild(progressBar);
+            statusMessage.appendChild(progressContainer);
+            
+            // 检查每个单词的字典定义
+            let missingWords = 0;
+            let processedWords = 0;
+            
+            for (const word of words) {
+                const result = await checkAndFetchWordDefinition(word);
+                if (!result.exists && !result.error) {
+                    missingWords++;
+                }
+                
+                processedWords++;
+                const progress = (processedWords / words.length) * 100;
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${processedWords}/${words.length}`;
+                
+                // 添加小延迟避免请求过于频繁
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // 生成UUID
+            const wordsetId = generateUUID();
+            
+            // 创建词汇集对象
+            const wordset = {
+                "分类title": title,
+                "大类title": category,
+                "级别": level,
+                "words": words,
+                "createdAt": new Date().toISOString().split('T')[0] // YYYY-MM-DD格式
+            };
+            
+            // 保存到Firebase
+            database.ref(`thaiWordList/${wordsetId}`).set(wordset)
+                .then(() => {
+                    let message = '词汇集保存成功!';
+                    if (missingWords > 0) {
+                        message += ` ${missingWords} 个新单词已提交AI查询。`;
+                    }
+                    showStatus(message, 'success');
+                    hideWordsetForm();
+                    loadWordsets(); // 刷新列表
+                })
+                .catch((error) => {
+                    console.error('保存词汇集错误:', error);
+                    showStatus('保存失败: ' + error.message, 'error');
+                });
+        }
+
+        // 删除词汇集
+        function deleteWordset(wordsetId) {
+            if (confirm('确定要删除这个词汇集吗？此操作不可撤销。')) {
+                database.ref(`thaiWordList/${wordsetId}`).remove()
+                    .then(() => {
+                        showStatus('词汇集已删除', 'success');
+                        
+                        // 从缓存中移除
+                        allWordsets.delete(wordsetId);
+                        filteredWordsets.delete(wordsetId);
+                        
+                        // 更新分类选项
+                        updateCategoryOptions();
+                        
+                        // 如果当前显示的是被删除的词汇集，则隐藏详情
+                        if (currentWordsetId === wordsetId) {
+                            hideWordsetDetail();
+                            initialMessage.style.display = 'block';
+                        }
+                        
+                        // 重新渲染列表
+                        renderFilteredWordsets();
+                        
+                        // 如果列表为空，显示提示
+                        if (filteredWordsets.size === 0) {
+                            wordsetsList.innerHTML = '<p>暂无词汇集</p>';
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('删除词汇集错误:', error);
+                        showStatus('删除失败: ' + error.message, 'error');
+                    });
+            }
+        }
+
+        // 初始化手风琴效果
+        function initAccordion() {
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+            
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const accordion = header.parentElement;
+                    accordion.classList.toggle('active');
+                });
+            });
+        }
+
+        // 显示状态消息
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+            
+            // 移除可能存在的进度条
+            const progressContainer = statusMessage.querySelector('.progress-container');
+            if (progressContainer) {
+                progressContainer.remove();
+            }
+            
+            // 5秒后自动隐藏（如果是info类型则延长显示时间）
+            const timeout = type === 'info' ? 10000 : 5000;
+            setTimeout(() => {
+                statusMessage.className = 'status-message';
+            }, timeout);
+        }
+
+        // 生成UUID
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+    </script>
+</body>
+</html>
