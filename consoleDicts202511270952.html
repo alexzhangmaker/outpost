@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Thai Dictionary Management</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    <style type="text/tailwindcss">
+        @layer base {
+            .material-symbols-outlined {
+                font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            }
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+    <!-- 登录窗口 -->
+    <div id="loginModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-[#19222c] rounded-xl shadow-lg w-full max-w-md mx-4 p-8">
+            <div class="text-center mb-8">
+                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-20 mx-auto mb-4" data-alt="Thai Dictionary logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCyWFfdU9UX9BxAdec-9VtB48JMxhmZ61ZqO-VMzlBi0iR2TblL4ZGSBqJZILnFfvYLC_qLjF-Y4QK0zF-MkhA3B8wtBvYvVB9xKNa1kqMVoFcYZgo7im2cM1qh7VdTZwYVR5ZnnjCDokZW_MQL3Om2BD3QsYIiyvztKs4EF4LgYy_kb3V44noGG86gb0SWNABSHxc_JW0eKcGwNM83Ml54Ftklumer094lVmvH6e9QAVpEYMyALxkxpFhVHAy5xrnE_c-7vSvO8wpi");'></div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Thai Dictionary</h2>
+                <p class="text-gray-600 dark:text-gray-400">Management Console</p>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="text-center">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Sign In Required</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">
+                        Please sign in with your Google account to access the dictionary management system.
+                    </p>
+                </div>
+                
+                <button id="googleSignInBtn" class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-[#1e293b] dark:border-gray-700 dark:hover:bg-gray-800 transition-colors">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43-.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300 font-medium">Sign in with Google</span>
+                </button>
+                
+                <div class="text-center">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Only authorized Gmail accounts are allowed to access this system.
+                    </p>
+                </div>
+            </div>
+            
+            <div id="loginError" class="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm hidden">
+                <span class="font-medium">Authentication failed:</span> <span id="errorMessage"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主应用界面 (默认隐藏) -->
+    <div id="mainApp" class="hidden">
+        <div class="flex h-screen w-full">
+            <!-- 侧边栏 -->
+            <aside class="flex w-64 flex-col bg-white dark:bg-[#19222c] border-r border-gray-200 dark:border-gray-800">
+                <div class="flex h-full flex-col justify-between p-4">
+                    <div class="flex flex-col gap-4">
+                        <div class="flex items-center gap-3 px-3 py-2">
+                            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Thai Dictionary logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCyWFfdU9UX9BxAdec-9VtB48JMxhmZ61ZqO-VMzlBi0iR2TblL4ZGSBqJZILnFfvYLC_qLjF-Y4QK0zF-MkhA3B8wtBvYvVB9xKNa1kqMVoFcYZgo7im2cM1qh7VdTZwYVR5ZnnjCDokZW_MQL3Om2BD3QsYIiyvztKs4EF4LgYy_kb3V44noGG86gb0SWNABSHxc_JW0eKcGwNM83Ml54Ftklumer094lVmvH6e9QAVpEYMyALxkxpFhVHAy5xrnE_c-7vSvO8wpi");'></div>
+                            <div class="flex flex-col">
+                                <h1 class="text-gray-900 dark:text-white text-base font-medium leading-normal">Thai Dictionary</h1>
+                                <p class="text-gray-500 dark:text-[#9dabb9] text-sm font-normal leading-normal">Management Console</p>
+                            </div>
+                        </div>
+                        <nav class="flex flex-col gap-2 mt-4">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                                <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">dashboard</span>
+                                <p class="text-sm font-medium leading-normal">Dashboard</p>
+                            </a>
+                            <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20 text-primary dark:bg-primary/30 dark:text-white" href="#">
+                                <span class="material-symbols-outlined font-bold">menu_book</span>
+                                <p class="text-sm font-bold leading-normal">Dictionary</p>
+                            </a>
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                                <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">bar_chart</span>
+                                <p class="text-sm font-medium leading-normal">Reports</p>
+                            </a>
+                            <div>
+                                <button class="w-full flex items-center justify-between gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" type="button">
+                                    <div class="flex items-center gap-3">
+                                        <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">build</span>
+                                        <p class="text-sm font-medium leading-normal">Tools</p>
+                                    </div>
+                                    <span class="material-symbols-outlined text-gray-500 dark:text-gray-400 transition-transform">expand_more</span>
+                                </button>
+                                <div class="mt-1 pl-6 flex flex-col gap-1">
+                                    <a id="toolIndexBtn" class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20 cursor-pointer">
+                                        <p class="text-sm font-medium leading-normal">tool.Index</p>
+                                    </a>
+                                    <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                                        <p class="text-sm font-medium leading-normal">tool.rebuild</p>
+                                    </a>
+                                </div>
+                            </div>
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                                <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">settings</span>
+                                <p class="text-sm font-medium leading-normal">Settings</p>
+                            </a>
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                                <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">help</span>
+                                <p class="text-sm font-medium leading-normal">Help</p>
+                            </a>
+                        </nav>
+                    </div>
+                    <div class="flex flex-col gap-1 border-t border-gray-200 dark:border-gray-800 pt-4">
+                        <div class="flex items-center gap-3 px-3 py-2">
+                            <img id="userAvatar" class="w-8 h-8 rounded-full" src="" alt="User avatar">
+                            <div class="flex flex-col">
+                                <p id="userName" class="text-sm font-medium text-gray-700 dark:text-gray-300">User</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+                            </div>
+                        </div>
+                        <button id="signOutBtn" class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20">
+                            <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">logout</span>
+                            <p class="text-sm font-medium leading-normal">Sign Out</p>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 主内容区 -->
+            <main class="flex-1 flex flex-col h-screen overflow-hidden">
+                <header class="sticky top-0 z-10 flex h-20 items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-800 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm px-8">
+                    <p class="text-gray-900 dark:text-white text-3xl font-black tracking-tight">Dictionary Management</p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-80">
+                            <label class="flex flex-col h-12 w-full">
+                                <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                                    <div class="text-gray-500 dark:text-[#9dabb9] flex bg-white dark:bg-[#19222c] items-center justify-center pl-4 rounded-l-lg border border-gray-300 dark:border-gray-700 border-r-0">
+                                        <span class="material-symbols-outlined">search</span>
+                                    </div>
+                                    <input id="searchInput" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary border-gray-300 dark:border-gray-700 bg-white dark:bg-[#19222c] h-full placeholder:text-gray-500 dark:placeholder:text-[#9dabb9] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Search by word, definition..." value=""/>
+                                </div>
+                            </label>
+                        </div>
+                        <button id="addEntryBtn" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary text-white gap-2 text-sm font-bold leading-normal tracking-wide hover:bg-primary/90">
+                            <span class="material-symbols-outlined">add</span>
+                            <span class="truncate">Add New Entry</span>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex flex-1 p-8 gap-8 overflow-hidden">
+                    <!-- 字母导航 - 添加滚动支持 -->
+                    <nav id="alphabetNav" class="flex flex-col gap-1 w-20 border-r border-gray-200 dark:border-gray-800 pr-8 overflow-y-auto">
+                        <!-- 字母按钮将通过JavaScript动态生成 -->
+                    </nav>
+
+                    <!-- 字典内容 - 卡片式布局 -->
+                    <div class="flex-1 flex flex-col overflow-hidden">
+                        <!-- 统计信息栏 -->
+                        <div id="statsBar" class="bg-white dark:bg-[#19222c] rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 mb-6">
+                            <div class="grid grid-cols-4 gap-6">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-primary" id="totalWords">0</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Words</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-green-500" id="currentView">0</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Current View</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-blue-500" id="cacheStatus">No Cache</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Cache Status</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-purple-500" id="lastUpdated">-</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Last Updated</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-[#19222c] rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex-1 flex flex-col">
+                            <div class="overflow-y-auto flex-1 p-6">
+                                <div id="wordCardsContainer" class="grid grid-cols-4 gap-4">
+                                    <!-- 单词卡片将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#19222c]">
+                                <span id="paginationInfo" class="text-sm font-normal text-gray-500 dark:text-gray-400">
+                                    Showing <span class="font-semibold text-gray-900 dark:text-white">1-4</span> of <span class="font-semibold text-gray-900 dark:text-white">100</span>
+                                </span>
+                                <div class="inline-flex -space-x-px rounded-md text-sm">
+                                    <button id="prevPageBtn" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-[#19222c] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Previous</button>
+                                    <button id="nextPageBtn" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-[#19222c] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Next</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 添加/编辑条目的模态框 -->
+    <div id="entryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-[#19222c] rounded-xl shadow-lg w-full max-w-md mx-4 p-6">
+            <h3 id="modalTitle" class="text-xl font-bold text-gray-900 dark:text-white mb-4">Add New Entry</h3>
+            <form id="entryForm" class="space-y-4">
+                <div>
+                    <label for="thaiWord" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Thai Word</label>
+                    <input type="text" id="thaiWord" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e293b] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div>
+                    <label for="romanization" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Romanization</label>
+                    <input type="text" id="romanization" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e293b] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div>
+                    <label for="wordType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                    <select id="wordType" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e293b] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">Select type</option>
+                        <option value="Noun">Noun</option>
+                        <option value="Verb">Verb</option>
+                        <option value="Adjective">Adjective</option>
+                        <option value="Adverb">Adverb</option>
+                        <option value="Pronoun">Pronoun</option>
+                        <option value="Preposition">Preposition</option>
+                        <option value="Conjunction">Conjunction</option>
+                        <option value="Interjection">Interjection</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="definition" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Definition</label>
+                    <textarea id="definition" required rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e293b] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" id="cancelBtn" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Cancel</button>
+                    <button type="submit" id="saveBtn" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 单词详情模态框 -->
+    <div id="wordDetailModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-[#19222c] rounded-xl shadow-lg w-full max-w-2xl mx-4 p-6">
+            <div class="flex justify-between items-start mb-4">
+                <h3 id="wordDetailTitle" class="text-2xl font-bold text-gray-900 dark:text-white">Word Details</h3>
+                <button id="closeDetailBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="wordDetailContent" class="space-y-4">
+                <!-- 单词详情内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-[#19222c] rounded-xl shadow-lg w-full max-w-md mx-4 p-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Confirm Deletion</h3>
+            <p class="text-gray-700 dark:text-gray-300 mb-6">Are you sure you want to delete this entry? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDeleteBtn" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Cancel</button>
+                <button id="confirmDeleteBtn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 进度提示模态框 -->
+    <div id="progressModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-[#19222c] rounded-xl shadow-lg w-full max-w-md mx-4 p-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4" id="progressTitle">Processing...</h3>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mb-4">
+                <div id="progressBar" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <p id="progressMessage" class="text-gray-700 dark:text-gray-300 text-center">Initializing...</p>
+        </div>
+    </div>
+
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // 应用状态
+        const state = {
+            dictionary: [],
+            filteredDictionary: [],
+            currentPage: 1,
+            itemsPerPage: 20, // 每页显示20个单词卡片
+            currentFilter: null,
+            searchTerm: '',
+            editingId: null,
+            indexedDB: null,
+            currentUser: null,
+            segmentIndex: null,
+            dictionaryCache: {},
+            cacheDate: null,
+            useRealData: false
+        };
+
+        // 泰文字母
+        const thaiAlphabet = [
+            'ก', 'ข', 'ฃ', 'ค', 'ฅ', 'ฆ', 'ง', 'จ', 'ฉ', 'ช', 'ซ', 'ฌ', 'ญ', 'ฎ', 'ฏ', 'ฐ', 'ฑ', 'ฒ', 'ณ', 'ด', 'ต', 'ถ', 'ท', 'ธ', 'น', 'บ', 'ป', 'ผ', 'ฝ', 'พ', 'ฟ', 'ภ', 'ม', 'ย', 'ร', 'ล', 'ว', 'ศ', 'ษ', 'ส', 'ห', 'ฬ', 'อ', 'ฮ'
+        ];
+
+        // DOM元素
+        const elements = {
+            loginModal: document.getElementById('loginModal'),
+            mainApp: document.getElementById('mainApp'),
+            googleSignInBtn: document.getElementById('googleSignInBtn'),
+            signOutBtn: document.getElementById('signOutBtn'),
+            loginError: document.getElementById('loginError'),
+            errorMessage: document.getElementById('errorMessage'),
+            userAvatar: document.getElementById('userAvatar'),
+            userName: document.getElementById('userName'),
+            alphabetNav: document.getElementById('alphabetNav'),
+            wordCardsContainer: document.getElementById('wordCardsContainer'),
+            searchInput: document.getElementById('searchInput'),
+            addEntryBtn: document.getElementById('addEntryBtn'),
+            entryModal: document.getElementById('entryModal'),
+            wordDetailModal: document.getElementById('wordDetailModal'),
+            deleteModal: document.getElementById('deleteModal'),
+            progressModal: document.getElementById('progressModal'),
+            entryForm: document.getElementById('entryForm'),
+            modalTitle: document.getElementById('modalTitle'),
+            thaiWord: document.getElementById('thaiWord'),
+            romanization: document.getElementById('romanization'),
+            wordType: document.getElementById('wordType'),
+            definition: document.getElementById('definition'),
+            cancelBtn: document.getElementById('cancelBtn'),
+            saveBtn: document.getElementById('saveBtn'),
+            wordDetailTitle: document.getElementById('wordDetailTitle'),
+            wordDetailContent: document.getElementById('wordDetailContent'),
+            closeDetailBtn: document.getElementById('closeDetailBtn'),
+            cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
+            confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+            toolIndexBtn: document.getElementById('toolIndexBtn'),
+            paginationInfo: document.getElementById('paginationInfo'),
+            prevPageBtn: document.getElementById('prevPageBtn'),
+            nextPageBtn: document.getElementById('nextPageBtn'),
+            progressBar: document.getElementById('progressBar'),
+            progressTitle: document.getElementById('progressTitle'),
+            progressMessage: document.getElementById('progressMessage'),
+            statsBar: document.getElementById('statsBar'),
+            totalWords: document.getElementById('totalWords'),
+            currentView: document.getElementById('currentView'),
+            cacheStatus: document.getElementById('cacheStatus'),
+            lastUpdated: document.getElementById('lastUpdated')
+        };
+
+        // 身份验证功能
+        function initAuth() {
+            // 监听认证状态变化
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    // 用户已登录
+                    state.currentUser = user;
+                    showMainApp();
+                    updateUserInfo(user);
+                } else {
+                    // 用户未登录
+                    state.currentUser = null;
+                    showLoginModal();
+                }
+            });
+
+            // Google登录按钮事件
+            elements.googleSignInBtn.addEventListener('click', signInWithGoogle);
+            
+            // 退出登录按钮事件
+            elements.signOutBtn.addEventListener('click', signOut);
+        }
+
+        // Google登录
+        function signInWithGoogle() {
+            hideLoginError();
+            
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('email');
+            
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    // 登录成功
+                    console.log('User signed in:', result.user);
+                })
+                .catch((error) => {
+                    // 登录失败
+                    console.error('Authentication error:', error);
+                    showLoginError(error.message);
+                });
+        }
+
+        // 退出登录
+        function signOut() {
+            auth.signOut()
+                .then(() => {
+                    console.log('User signed out');
+                })
+                .catch((error) => {
+                    console.error('Sign out error:', error);
+                });
+        }
+
+        // 显示登录错误
+        function showLoginError(message) {
+            elements.errorMessage.textContent = message;
+            elements.loginError.classList.remove('hidden');
+        }
+
+        // 隐藏登录错误
+        function hideLoginError() {
+            elements.loginError.classList.add('hidden');
+        }
+
+        // 显示主应用
+        function showMainApp() {
+            elements.loginModal.classList.add('hidden');
+            elements.mainApp.classList.remove('hidden');
+            initApp();
+        }
+
+        // 显示登录窗口
+        function showLoginModal() {
+            elements.mainApp.classList.add('hidden');
+            elements.loginModal.classList.remove('hidden');
+            hideLoginError();
+        }
+
+        // 更新用户信息
+        function updateUserInfo(user) {
+            if (user.photoURL) {
+                elements.userAvatar.src = user.photoURL;
+            } else {
+                elements.userAvatar.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iMTYiIGZpbGw9IiMxMzE3ZjIiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDEyQzE0LjIwOTEgMTIgMTYgMTAuMjA5MSAxNiA4QzE2IDUuNzkwODYgMTQuMjA5MSA0IDEyIDRDOS43OTA4NiA0IDggNS43OTA4NiA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMTQuNUM3LjAwMzc0IDE0LjUgMyAxOC41MDM3IDMgMjMuNUgyMUMyMSAxOC41MDM3IDE2Ljk5NjMgMTQuNSAxMiAxNC41WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cjwvc3ZnPgo=';
+            }
+            
+            if (user.displayName) {
+                elements.userName.textContent = user.displayName;
+            } else if (user.email) {
+                elements.userName.textContent = user.email.split('@')[0];
+            } else {
+                elements.userName.textContent = 'User';
+            }
+        }
+
+        // IndexedDB 初始化 - 修复版本问题
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                // 先尝试打开数据库而不指定版本
+                const openRequest = indexedDB.open('thaiDictionaryCache');
+                
+                openRequest.onerror = () => reject(openRequest.error);
+                
+                openRequest.onsuccess = () => {
+                    const db = openRequest.result;
+                    // 获取当前版本
+                    const currentVersion = db.version;
+                    
+                    // 关闭当前连接
+                    db.close();
+                    
+                    // 使用当前版本重新打开
+                    const versionRequest = indexedDB.open('thaiDictionaryCache', currentVersion);
+                    
+                    versionRequest.onerror = () => reject(versionRequest.error);
+                    versionRequest.onsuccess = () => {
+                        state.indexedDB = versionRequest.result;
+                        resolve(state.indexedDB);
+                    };
+                    
+                    versionRequest.onupgradeneeded = (event) => {
+                        const upgradingDB = event.target.result;
+                        if (!upgradingDB.objectStoreNames.contains('keyvaluepairs')) {
+                            upgradingDB.createObjectStore('keyvaluepairs');
+                        }
+                    };
+                };
+                
+                openRequest.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('keyvaluepairs')) {
+                        db.createObjectStore('keyvaluepairs');
+                    }
+                };
+            });
+        }
+
+        // 从IndexedDB读取数据
+        function readFromIndexedDB(key) {
+            return new Promise((resolve, reject) => {
+                if (!state.indexedDB) {
+                    reject(new Error('IndexedDB not initialized'));
+                    return;
+                }
+                
+                const transaction = state.indexedDB.transaction(['keyvaluepairs'], 'readonly');
+                const store = transaction.objectStore('keyvaluepairs');
+                const request = store.get(key);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+            });
+        }
+
+        // 写入数据到IndexedDB
+        function writeToIndexedDB(key, value) {
+            return new Promise((resolve, reject) => {
+                if (!state.indexedDB) {
+                    reject(new Error('IndexedDB not initialized'));
+                    return;
+                }
+                
+                const transaction = state.indexedDB.transaction(['keyvaluepairs'], 'readwrite');
+                const store = transaction.objectStore('keyvaluepairs');
+                const request = store.put(value, key);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve();
+            });
+        }
+
+        // 显示进度模态框
+        function showProgress(title, message, progress = 0) {
+            elements.progressTitle.textContent = title;
+            elements.progressMessage.textContent = message;
+            elements.progressBar.style.width = `${progress}%`;
+            elements.progressModal.classList.remove('hidden');
+        }
+
+        // 隐藏进度模态框
+        function hideProgress() {
+            elements.progressModal.classList.add('hidden');
+        }
+
+        // 更新进度
+        function updateProgress(message, progress) {
+            elements.progressMessage.textContent = message;
+            elements.progressBar.style.width = `${progress}%`;
+        }
+
+        // 获取最近的缓存日期
+        function getRecentCacheDates() {
+            const today = new Date();
+            const dates = [];
+            
+            // 检查最近7天的缓存
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const dateString = date.toISOString().split('T')[0];
+                dates.push(dateString);
+            }
+            
+            return dates;
+        }
+
+        // 加载字典索引
+        async function loadDictionaryIndex() {
+            try {
+                // 首先尝试从本地IndexedDB加载索引
+                let segmentIndex = await readFromIndexedDB('thaiDictionaryIndex');
+                
+                if (segmentIndex) {
+                    console.log('Loaded segment index from local cache');
+                    state.segmentIndex = segmentIndex;
+                    return true;
+                }
+                
+                // 如果本地没有索引，尝试从Firebase加载
+                console.log('No local index found, loading from Firebase...');
+                const snapshot = await database.ref('thaiDictionaryIndex').once('value');
+                segmentIndex = snapshot.val();
+                
+                if (segmentIndex) {
+                    state.segmentIndex = segmentIndex;
+                    // 保存到本地缓存
+                    await writeToIndexedDB('thaiDictionaryIndex', segmentIndex);
+                    console.log('Loaded segment index from Firebase and saved to local cache');
+                    return true;
+                }
+                
+                console.log('No segment index found in Firebase');
+                return false;
+            } catch (error) {
+                console.error('Error loading dictionary index:', error);
+                return false;
+            }
+        }
+
+        // 加载字典数据
+        async function loadDictionaryData() {
+            try {
+                // 首先尝试从最近的本地缓存加载数据
+                const recentDates = getRecentCacheDates();
+                let dictionaryData = null;
+                let cacheDate = null;
+                
+                for (const date of recentDates) {
+                    const cacheKey = `dictionary_${date}`;
+                    try {
+                        dictionaryData = await readFromIndexedDB(cacheKey);
+                        if (dictionaryData) {
+                            cacheDate = date;
+                            console.log(`Loaded dictionary data from cache: ${date}`);
+                            break;
+                        }
+                    } catch (error) {
+                        // 继续检查下一个日期
+                    }
+                }
+                
+                // 如果没有找到缓存数据，从Firebase加载
+                if (!dictionaryData) {
+                    console.log('No recent cache found, loading from Firebase...');
+                    const snapshot = await database.ref('thaiDictionary').once('value');
+                    dictionaryData = snapshot.val();
+                    
+                    if (dictionaryData) {
+                        // 保存到今天的缓存
+                        const today = new Date().toISOString().split('T')[0];
+                        const cacheKey = `dictionary_${today}`;
+                        await writeToIndexedDB(cacheKey, dictionaryData);
+                        cacheDate = today;
+                        console.log('Loaded dictionary data from Firebase and saved to local cache');
+                    }
+                }
+                
+                if (dictionaryData) {
+                    state.dictionaryCache = dictionaryData;
+                    state.cacheDate = cacheDate;
+                    state.useRealData = true;
+                    return true;
+                }
+                
+                console.log('No dictionary data found');
+                return false;
+            } catch (error) {
+                console.error('Error loading dictionary data:', error);
+                return false;
+            }
+        }
+
+        // 获取单词详情
+        async function getWordDetails(dictKey) {
+            // 首先尝试从本地缓存获取
+            if (state.dictionaryCache[dictKey]) {
+                return state.dictionaryCache[dictKey];
+            }
+            
+            // 如果本地缓存没有，从Firebase获取
+            try {
+                const snapshot = await database.ref(`thaiDictionary/${dictKey}`).once('value');
+                const wordData = snapshot.val();
+                
+                if (wordData) {
+                    // 更新本地缓存
+                    state.dictionaryCache[dictKey] = wordData;
+                    return wordData;
+                }
+            } catch (error) {
+                console.error('Error fetching word details from Firebase:', error);
+            }
+            
+            return null;
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            // 总单词数
+            elements.totalWords.textContent = state.dictionary.length;
+            
+            // 当前视图单词数
+            elements.currentView.textContent = state.filteredDictionary.length;
+            
+            // 缓存状态
+            if (state.useRealData) {
+                elements.cacheStatus.textContent = state.cacheDate || 'Live Data';
+                elements.cacheStatus.className = 'text-2xl font-bold text-green-500';
+            } else {
+                elements.cacheStatus.textContent = 'Mock Data';
+                elements.cacheStatus.className = 'text-2xl font-bold text-yellow-500';
+            }
+            
+            // 最后更新时间
+            elements.lastUpdated.textContent = state.cacheDate ? 
+                new Date(state.cacheDate).toLocaleDateString() : 
+                new Date().toLocaleDateString();
+        }
+
+        // tool.Index 功能
+        async function toolIndex() {
+            if (!state.currentUser) {
+                alert('Please sign in to use this feature');
+                return;
+            }
+
+            try {
+                showProgress('Building Index', 'Checking local cache...', 10);
+                
+                // 检查本地缓存
+                const today = new Date().toISOString().split('T')[0];
+                const cacheKey = `dictionary_${today}`;
+                
+                let localDictionary;
+                try {
+                    localDictionary = await readFromIndexedDB(cacheKey);
+                    updateProgress('Local cache found, checking data...', 30);
+                } catch (error) {
+                    console.log('No local cache found, fetching from Firebase...');
+                    updateProgress('No local cache, fetching from Firebase...', 30);
+                }
+                
+                // 如果没有本地缓存，从Firebase读取数据
+                if (!localDictionary) {
+                    updateProgress('Downloading dictionary data...', 40);
+                    const snapshot = await database.ref('thaiDictionary').once('value');
+                    localDictionary = snapshot.val();
+                    
+                    if (!localDictionary) {
+                        hideProgress();
+                        alert('No dictionary data found in Firebase');
+                        return;
+                    }
+                    
+                    // 保存到本地缓存
+                    updateProgress('Saving to local cache...', 60);
+                    await writeToIndexedDB(cacheKey, localDictionary);
+                }
+                
+                // 构建分段索引
+                updateProgress('Building segment index...', 70);
+                const segmentIndex = {};
+                
+                Object.keys(localDictionary).forEach(key => {
+                    const entry = localDictionary[key];
+                    if (entry && entry.thai && entry.thai.word) {
+                        const firstChar = entry.thai.word.charAt(0);
+                        if (!segmentIndex[firstChar]) {
+                            segmentIndex[firstChar] = [];
+                        }
+                        segmentIndex[firstChar].push({
+                            dictKey: key,
+                            thaiWord: entry.thai.word
+                        });
+                    }
+                });
+                
+                // 保存索引到本地IndexedDB
+                updateProgress('Saving index to local storage...', 85);
+                await writeToIndexedDB('thaiDictionaryIndex', segmentIndex);
+                
+                // 保存索引到Firebase
+                updateProgress('Uploading index to Firebase...', 95);
+                await database.ref('thaiDictionaryIndex').set(segmentIndex);
+                
+                updateProgress('Index build completed!', 100);
+                setTimeout(() => {
+                    hideProgress();
+                    alert('Index build completed successfully!');
+                    // 重新加载数据
+                    loadDictionary();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error in toolIndex:', error);
+                hideProgress();
+                alert('Error building index: ' + error.message);
+            }
+        }
+
+        // 初始化应用
+        async function initApp() {
+            try {
+                await initIndexedDB();
+                renderAlphabetNav();
+                
+                // 加载字典索引和数据
+                const indexLoaded = await loadDictionaryIndex();
+                const dataLoaded = await loadDictionaryData();
+                
+                if (indexLoaded && dataLoaded) {
+                    console.log('Using real Firebase data with cache');
+                    loadDictionary();
+                } else {
+                    // 如果没有索引或数据，使用模拟数据
+                    console.log('Using mock data');
+                    loadMockDictionary();
+                }
+                
+                setupEventListeners();
+                updateStats();
+                console.log('App initialized successfully');
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                // 如果IndexedDB初始化失败，使用模拟数据
+                renderAlphabetNav();
+                loadMockDictionary();
+                setupEventListeners();
+                updateStats();
+                console.log('App initialized with limited functionality (IndexedDB not available)');
+            }
+        }
+
+        // 渲染字母导航
+        function renderAlphabetNav() {
+            elements.alphabetNav.innerHTML = '';
+            
+            // 添加"全部"按钮
+            const allButton = document.createElement('a');
+            allButton.className = 'flex items-center justify-center h-12 w-12 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20 text-gray-500 dark:text-gray-400';
+            allButton.innerHTML = '<p class="text-lg font-medium">All</p>';
+            allButton.addEventListener('click', () => filterByAlphabet(null));
+            elements.alphabetNav.appendChild(allButton);
+            
+            // 添加泰文字母按钮
+            thaiAlphabet.forEach(letter => {
+                const button = document.createElement('a');
+                button.className = 'flex items-center justify-center h-12 w-12 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20 text-gray-500 dark:text-gray-400';
+                button.innerHTML = `<p class="text-lg font-medium">${letter}</p>`;
+                button.addEventListener('click', () => filterByAlphabet(letter));
+                elements.alphabetNav.appendChild(button);
+            });
+        }
+
+        // 加载字典数据
+        function loadDictionary() {
+            if (!state.segmentIndex) {
+                console.log('No segment index available');
+                return;
+            }
+            
+            // 从索引构建字典数据
+            state.dictionary = [];
+            
+            Object.keys(state.segmentIndex).forEach(letter => {
+                state.segmentIndex[letter].forEach(item => {
+                    state.dictionary.push({
+                        id: item.dictKey,
+                        thaiWord: item.thaiWord,
+                        dictKey: item.dictKey
+                    });
+                });
+            });
+            
+            // 按泰语单词排序
+            state.dictionary.sort((a, b) => a.thaiWord.localeCompare(b.thaiWord));
+            
+            state.filteredDictionary = [...state.dictionary];
+            renderDictionary();
+            updatePaginationInfo();
+            updateStats();
+        }
+
+        // 加载模拟字典数据
+        function loadMockDictionary() {
+            const mockData = [
+                { id: '1', thaiWord: 'กบ', romanization: 'gòp', type: 'Noun', definition: 'Frog; an amphibian.' },
+                { id: '2', thaiWord: 'ไก่', romanization: 'gài', type: 'Noun', definition: 'Chicken; a domestic fowl.' },
+                { id: '3', thaiWord: 'กิน', romanization: 'gin', type: 'Verb', definition: 'To eat; to consume.' },
+                { id: '4', thaiWord: 'แก้ว', romanization: 'gâew', type: 'Noun', definition: 'Glass; a cup made of glass.' },
+                { id: '5', thaiWord: 'ขวด', romanization: 'kùat', type: 'Noun', definition: 'Bottle; a container.' },
+                { id: '6', thaiWord: 'คน', romanization: 'kon', type: 'Noun', definition: 'Person; human being.' },
+                { id: '7', thaiWord: 'คืน', romanization: 'keun', type: 'Noun', definition: 'Night; the period of darkness.' },
+                { id: '8', thaiWord: 'งาม', romanization: 'ngaam', type: 'Adjective', definition: 'Beautiful; pleasing to the eye.' },
+                { id: '9', thaiWord: 'จาน', romanization: 'jaan', type: 'Noun', definition: 'Plate; a flat dish.' },
+                { id: '10', thaiWord: 'ใจ', romanization: 'jai', type: 'Noun', definition: 'Heart; the organ or the emotional center.' }
+            ];
+            
+            state.dictionary = [...mockData];
+            state.filteredDictionary = [...mockData];
+            state.useRealData = false;
+            renderDictionary();
+            updatePaginationInfo();
+            updateStats();
+        }
+
+        // 渲染字典卡片
+        function renderDictionary() {
+            elements.wordCardsContainer.innerHTML = '';
+            
+            const startIndex = (state.currentPage - 1) * state.itemsPerPage;
+            const endIndex = startIndex + state.itemsPerPage;
+            const currentItems = state.filteredDictionary.slice(startIndex, endIndex);
+            
+            if (currentItems.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'col-span-4 text-center py-8 text-gray-500 dark:text-gray-400';
+                emptyMessage.textContent = 'No entries found';
+                elements.wordCardsContainer.appendChild(emptyMessage);
+                return;
+            }
+            
+            currentItems.forEach(entry => {
+                const card = document.createElement('div');
+                card.className = 'bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer';
+                card.innerHTML = `
+                    <div class="text-center">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">${entry.thaiWord}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Click to view details</p>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    showWordDetails(entry);
+                });
+                
+                elements.wordCardsContainer.appendChild(card);
+            });
+        }
+
+        // 显示单词详情
+        async function showWordDetails(entry) {
+            elements.wordDetailTitle.textContent = entry.thaiWord;
+            elements.wordDetailContent.innerHTML = '<div class="text-center py-4">Loading...</div>';
+            elements.wordDetailModal.classList.remove('hidden');
+            
+            try {
+                let wordData;
+                
+                // 如果有dictKey，尝试获取完整数据
+                if (entry.dictKey) {
+                    wordData = await getWordDetails(entry.dictKey);
+                }
+                
+                // 如果没有获取到完整数据，使用基本数据
+                if (!wordData) {
+                    wordData = {
+                        thai: {
+                            word: entry.thaiWord,
+                            romanization: entry.romanization || 'N/A'
+                        },
+                        type: entry.type || 'N/A',
+                        definition: entry.definition || 'No definition available'
+                    };
+                }
+                
+                // 渲染单词详情
+                elements.wordDetailContent.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">Thai Word</h4>
+                            <p class="text-lg font-bold text-gray-900 dark:text-white">${wordData.thai.word}</p>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">Romanization</h4>
+                            <p class="text-lg text-gray-900 dark:text-white">${wordData.thai.romanization || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">Type</h4>
+                            <p class="text-lg text-gray-900 dark:text-white">${wordData.type || 'N/A'}</p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">Definition</h4>
+                            <p class="text-gray-900 dark:text-white">${wordData.definition || 'No definition available'}</p>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading word details:', error);
+                elements.wordDetailContent.innerHTML = `
+                    <div class="text-center py-4 text-red-500">
+                        Error loading word details: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // 按字母筛选
+        function filterByAlphabet(letter) {
+            state.currentFilter = letter;
+            state.currentPage = 1;
+            
+            // 更新字母导航的激活状态
+            document.querySelectorAll('#alphabetNav a').forEach(a => {
+                a.className = 'flex items-center justify-center h-12 w-12 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20 text-gray-500 dark:text-gray-400';
+            });
+            
+            if (letter === null) {
+                // 选择"全部"时，高亮第一个按钮
+                document.querySelectorAll('#alphabetNav a')[0].className = 'flex items-center justify-center h-12 w-12 rounded-lg bg-primary/20 dark:bg-primary/30 text-primary dark:text-white';
+            } else {
+                // 高亮选中的字母按钮
+                const buttons = document.querySelectorAll('#alphabetNav a');
+                for (let i = 0; i < buttons.length; i++) {
+                    if (buttons[i].textContent.trim() === letter) {
+                        buttons[i].className = 'flex items-center justify-center h-12 w-12 rounded-lg bg-primary/20 dark:bg-primary/30 text-primary dark:text-white';
+                        break;
+                    }
+                }
+            }
+            
+            // 应用筛选
+            applyFilters();
+        }
+
+        // 应用所有筛选（字母和搜索）
+        function applyFilters() {
+            let filtered = [...state.dictionary];
+            
+            // 应用字母筛选
+            if (state.currentFilter) {
+                filtered = filtered.filter(entry => 
+                    entry.thaiWord.startsWith(state.currentFilter)
+                );
+            }
+            
+            // 应用搜索筛选
+            if (state.searchTerm) {
+                const term = state.searchTerm.toLowerCase();
+                filtered = filtered.filter(entry => 
+                    entry.thaiWord.toLowerCase().includes(term) ||
+                    (entry.romanization && entry.romanization.toLowerCase().includes(term)) ||
+                    (entry.type && entry.type.toLowerCase().includes(term)) ||
+                    (entry.definition && entry.definition.toLowerCase().includes(term))
+                );
+            }
+            
+            state.filteredDictionary = filtered;
+            renderDictionary();
+            updatePaginationInfo();
+            updateStats();
+        }
+
+        // 更新分页信息
+        function updatePaginationInfo() {
+            const startIndex = (state.currentPage - 1) * state.itemsPerPage + 1;
+            const endIndex = Math.min(state.currentPage * state.itemsPerPage, state.filteredDictionary.length);
+            const total = state.filteredDictionary.length;
+            
+            elements.paginationInfo.innerHTML = `
+                Showing <span class="font-semibold text-gray-900 dark:text-white">${startIndex}-${endIndex}</span> of <span class="font-semibold text-gray-900 dark:text-white">${total}</span>
+            `;
+            
+            // 更新分页按钮状态
+            elements.prevPageBtn.disabled = state.currentPage === 1;
+            elements.nextPageBtn.disabled = state.currentPage * state.itemsPerPage >= state.filteredDictionary.length;
+        }
+
+        // 打开添加条目模态框
+        function openAddModal() {
+            state.editingId = null;
+            elements.modalTitle.textContent = 'Add New Entry';
+            elements.entryForm.reset();
+            elements.entryModal.classList.remove('hidden');
+        }
+
+        // 打开编辑条目模态框
+        function openEditModal(id) {
+            const entry = state.dictionary.find(item => item.id === id);
+            if (!entry) return;
+            
+            state.editingId = id;
+            elements.modalTitle.textContent = 'Edit Entry';
+            elements.thaiWord.value = entry.thaiWord;
+            elements.romanization.value = entry.romanization;
+            elements.wordType.value = entry.type;
+            elements.definition.value = entry.definition;
+            elements.entryModal.classList.remove('hidden');
+        }
+
+        // 打开删除确认模态框
+        function openDeleteModal(id) {
+            state.editingId = id;
+            elements.deleteModal.classList.remove('hidden');
+        }
+
+        // 保存条目
+        function saveEntry(e) {
+            e.preventDefault();
+            
+            const entryData = {
+                thaiWord: elements.thaiWord.value,
+                romanization: elements.romanization.value,
+                type: elements.wordType.value,
+                definition: elements.definition.value
+            };
+            
+            if (state.editingId) {
+                // 更新现有条目
+                const index = state.dictionary.findIndex(item => item.id === state.editingId);
+                if (index !== -1) {
+                    state.dictionary[index] = { ...state.dictionary[index], ...entryData };
+                }
+            } else {
+                // 添加新条目
+                const newId = Date.now().toString();
+                state.dictionary.push({ id: newId, ...entryData });
+            }
+            
+            applyFilters();
+            closeModal();
+        }
+
+        // 删除条目
+        function deleteEntry() {
+            state.dictionary = state.dictionary.filter(item => item.id !== state.editingId);
+            applyFilters();
+            closeModal();
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            elements.entryModal.classList.add('hidden');
+            elements.deleteModal.classList.add('hidden');
+            elements.wordDetailModal.classList.add('hidden');
+            state.editingId = null;
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 搜索
+            elements.searchInput.addEventListener('input', (e) => {
+                state.searchTerm = e.target.value;
+                state.currentPage = 1;
+                applyFilters();
+            });
+            
+            // 添加条目按钮
+            elements.addEntryBtn.addEventListener('click', openAddModal);
+            
+            // 表单提交
+            elements.entryForm.addEventListener('submit', saveEntry);
+            
+            // 取消按钮
+            elements.cancelBtn.addEventListener('click', closeModal);
+            
+            // 关闭详情按钮
+            elements.closeDetailBtn.addEventListener('click', closeModal);
+            
+            // 删除确认按钮
+            elements.confirmDeleteBtn.addEventListener('click', deleteEntry);
+            
+            // 取消删除按钮
+            elements.cancelDeleteBtn.addEventListener('click', closeModal);
+            
+            // 分页按钮
+            elements.prevPageBtn.addEventListener('click', () => {
+                if (state.currentPage > 1) {
+                    state.currentPage--;
+                    renderDictionary();
+                    updatePaginationInfo();
+                }
+            });
+            
+            elements.nextPageBtn.addEventListener('click', () => {
+                if (state.currentPage * state.itemsPerPage < state.filteredDictionary.length) {
+                    state.currentPage++;
+                    renderDictionary();
+                    updatePaginationInfo();
+                }
+            });
+            
+            // tool.Index 按钮
+            elements.toolIndexBtn.addEventListener('click', toolIndex);
+            
+            // 点击模态框外部关闭
+            elements.entryModal.addEventListener('click', (e) => {
+                if (e.target === elements.entryModal) {
+                    closeModal();
+                }
+            });
+            
+            elements.deleteModal.addEventListener('click', (e) => {
+                if (e.target === elements.deleteModal) {
+                    closeModal();
+                }
+            });
+            
+            elements.wordDetailModal.addEventListener('click', (e) => {
+                if (e.target === elements.wordDetailModal) {
+                    closeModal();
+                }
+            });
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            initAuth();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Thai Word Practice Sheet</title>
+  <!-- Tailwind CSS via CDN (v3.4+) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Optional: configure Tailwind (e.g., dark mode, plugins)
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6', // blue-500
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+  <!-- Login Splash (Hidden by default) -->
+  <div id="login-splash" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-4 hidden">
+    <div class="text-center max-w-md">
+      <h1 class="text-2xl font-bold text-gray-800 mb-6">Sign in to Print</h1>
+      <button id="btn-google-login" 
+              class="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-medium px-6 py-3 rounded-lg shadow-md transition">
+        <svg class="w-5 h-5" viewBox="0 0 24 24">
+          <path fill="currentColor" d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.344-7.574 7.439-7.574c2.328 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z"/>
+        </svg>
+        Sign in with Google
+      </button>
+      <div class="mt-6">
+        <button id="btn-guest-mode" class="text-blue-600 hover:underline text-sm">
+          ↪️ Continue as Guest (for testing)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App (Hidden until auth/data ready) -->
+  <div id="app-container" class="hidden">
+    <!-- Top Bar -->
+    <header class="bg-white shadow">
+      <div class="px-4 py-3 flex justify-between items-center">
+        <h1 class="text-xl font-semibold text-gray-800">Thai Word Practice Sheet</h1>
+        <div>
+          <span id="user-display" class="text-sm text-gray-600 mr-4"></span>
+          <button id="btn-logout" class="text-sm text-blue-600 hover:underline">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex flex-col md:flex-row h-[calc(100vh-64px)]">
+      <!-- Parameter Panel -->
+      <div id="param-panel" class="w-full md:w-80 bg-white p-4 border-r overflow-y-auto">
+        <h2 class="font-bold text-gray-700 mb-4">🖨️ Print Settings</h2>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600">Worksheet Title</label>
+            <input type="text" id="param-title" value="Thai Word Practice" 
+                   class="mt-1 block w-full rounded border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"/>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600">Instructions</label>
+            <textarea id="param-instructions" rows="3" class="mt-1 block w-full rounded border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500">Write the meaning and part of speech for each Thai word.</textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600">Font Size</label>
+            <select id="param-font-size" class="mt-1 block w-full rounded border-gray-300 px-3 py-2 text-sm">
+              <option value="text-sm">Small</option>
+              <option value="text-base" selected>Medium</option>
+              <option value="text-lg">Large</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600">Show Header</label>
+            <input type="checkbox" id="param-show-header" checked 
+                   class="mt-2 h-4 w-4 text-blue-600 rounded focus:ring-blue-500"/>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600">Show Footer (Page Numbers)</label>
+            <input type="checkbox" id="param-show-footer" checked 
+                   class="mt-2 h-4 w-4 text-blue-600 rounded focus:ring-blue-500"/>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600">Columns per Row</label>
+            <select id="param-columns" class="mt-1 block w-full rounded border-gray-300 px-3 py-2 text-sm">
+              <option value="1">1 Column</option>
+              <option value="2" selected>2 Columns</option>
+              <option value="3">3 Columns</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600">Rows per Page</label>
+            <select id="param-rows" class="mt-1 block w-full rounded border-gray-300 px-3 py-2 text-sm">
+              <option value="10">10 Rows</option>
+              <option value="15" selected>15 Rows</option>
+              <option value="20">20 Rows</option>
+            </select>
+          </div>
+
+          <button id="btn-apply" 
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition">
+            🔄 Apply & Preview
+          </button>
+
+          <button id="btn-print" 
+                  class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition mt-2">
+            🖨️ Print Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Print Content Preview -->
+      <div class="flex-1 p-4 overflow-auto bg-gray-100">
+        <div id="print-content" class="bg-white shadow rounded-lg p-6">
+          <!-- Rendered here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-40 hidden">
+    <div class="bg-white px-6 py-4 rounded-lg shadow-lg flex items-center">
+      <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Loading data...
+    </div>
+  </div>
+
+  <!-- Script Section -->
+  <script>
+    // ┌──────────────────────────────┐
+    // │ 🔐 Firebase Config (REPLACE!) │
+    // └──────────────────────────────┘
+    const firebaseConfig = {
+        apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+        authDomain: "outpost-8d74e.firebaseapp.com",
+        databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+        projectId: "outpost-8d74e",
+        storageBucket: "outpost-8d74e.firebasestorage.app",
+        messagingSenderId: "724993324937",
+        appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+        measurementId: "G-QPHWRTH6BH"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // ┌──────────────────────┐
+    // │ 🧪 Mock Data (Guest) │
+    // └──────────────────────┘
+    const MOCK_DATA = {
+      classification: "a2RWBCvyLbQHVom4eGDoNt",
+      createdAt: "2025-11-26",
+      words: ["ประเพณี", "เอกลักษณ์", "ภูมิปัญญา", "ชุมชน", "หัตถกรรม", "ประวัติศาสตร์", "พิธีกรรม", "สืบทอด", "วัฒนธรรม", "บรรยากาศ", "อนุรักษ์", "ศิลปะ", "ทอผ้า", "ท้องถิ่น"],
+      "分类title": "Reading.20251126"
+    };
+
+    // ┌──────────────────────────────┐
+    // │ 🧩 DOM Elements              │
+    // └──────────────────────────────┘
+    const elLoginSplash = document.getElementById('login-splash');
+    const elAppContainer = document.getElementById('app-container');
+    const elUserDisplay = document.getElementById('user-display');
+    const elPrintContent = document.getElementById('print-content');
+    const elLoading = document.getElementById('loading-overlay');
+
+    // ┌──────────────────────────────┐
+    // │ 🚀 Auth & Entry Logic        │
+    // └──────────────────────────────┘
+    let currentUser = null;
+    let currentData = null;
+
+    // Show/hide loading
+    function showLoading(show = true) {
+      elLoading.classList.toggle('hidden', !show);
+    }
+
+    // Parse URL parameters (e.g., ?wordsetID=xyz123)
+    function getUrlParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    // Fetch data from Firebase RTDB (or use mock)
+    async function fetchData(wordsetID) {
+      showLoading(true);
+      try {
+        if (currentUser && wordsetID) {
+          const snapshot = await db.ref(`thaiWordList/${wordsetID}`).once('value');
+          const data = snapshot.val();
+          if (!data) throw new Error('No data found for wordsetID: ' + wordsetID);
+          return data;
+        } else {
+          // Guest mode → use mock
+          console.warn('[GUEST MODE] Using mock data');
+          return MOCK_DATA;
+        }
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // Render print content based on params + data
+    function renderPrintContent(params, data) {
+      const {
+        title = data["分类title"] || "Thai Word Practice",
+        instructions = "Write the meaning and part of speech for each Thai word.",
+        fontSize = "text-base",
+        showHeader = true,
+        showFooter = true,
+        columns = 2,
+        rowsPerPage = 15
+      } = params;
+
+      // Get words from data
+      const words = data.words || [];
+      
+      // Calculate how many pages we need
+      const wordsPerPage = columns * rowsPerPage;
+      const totalPages = Math.ceil(words.length / wordsPerPage);
+      
+      let pagesHTML = '';
+      
+      for (let page = 0; page < totalPages; page++) {
+        const startIndex = page * wordsPerPage;
+        const endIndex = Math.min(startIndex + wordsPerPage, words.length);
+        const pageWords = words.slice(startIndex, endIndex);
+        
+        // Build header for each page
+        let headerHTML = '';
+        if (showHeader) {
+          headerHTML = `
+            <div class="border-b pb-2 mb-4">
+              <h2 class="text-xl font-bold text-gray-800">${title}</h2>
+              <p class="text-sm text-gray-500">${instructions}</p>
+              <p class="text-xs text-gray-400 mt-1">Name: ___________________ Date: ___________________</p>
+            </div>
+          `;
+        }
+        
+        // Build table for this page
+        let tableHTML = '';
+        const rows = Math.ceil(pageWords.length / columns);
+        
+        for (let row = 0; row < rows; row++) {
+          let rowHTML = '<tr>';
+          for (let col = 0; col < columns; col++) {
+            const index = row * columns + col;
+            if (index < pageWords.length) {
+              const word = pageWords[index];
+              rowHTML += `
+                <td class="border border-gray-300 p-2 align-top">
+                  <div class="flex flex-col h-24">
+                    <div class="font-bold text-lg mb-1 text-center">${word}</div>
+                    <div class="flex-1 border-t border-gray-300 pt-1">
+                      <div class="text-xs text-gray-500">Meaning:</div>
+                      <div class="h-6 border-b border-gray-200 mb-1"></div>
+                      <div class="text-xs text-gray-500">Part of Speech:</div>
+                      <div class="h-6 border-b border-gray-200"></div>
+                    </div>
+                  </div>
+                </td>
+              `;
+            } else {
+              // Empty cell
+              rowHTML += `
+                <td class="border border-gray-300 p-2 align-top">
+                  <div class="flex flex-col h-24">
+                    <div class="font-bold text-lg mb-1 text-center">&nbsp;</div>
+                    <div class="flex-1 border-t border-gray-300 pt-1">
+                      <div class="text-xs text-gray-500">Meaning:</div>
+                      <div class="h-6 border-b border-gray-200 mb-1"></div>
+                      <div class="text-xs text-gray-500">Part of Speech:</div>
+                      <div class="h-6 border-b border-gray-200"></div>
+                    </div>
+                  </div>
+                </td>
+              `;
+            }
+          }
+          rowHTML += '</tr>';
+          tableHTML += rowHTML;
+        }
+        
+        // Build footer for this page
+        let footerHTML = '';
+        if (showFooter) {
+          footerHTML = `
+            <div class="mt-6 pt-4 border-t text-center text-sm text-gray-500">
+              Page <span class="print-page-number">${page + 1}</span> of <span class="total-pages">${totalPages}</span>
+            </div>
+          `;
+        }
+        
+        // Assemble page
+        pagesHTML += `
+          <div class="print-page ${page > 0 ? 'page-break' : ''}">
+            ${headerHTML}
+            <table class="${fontSize} w-full border-collapse mb-4">
+              <tbody>
+                ${tableHTML}
+              </tbody>
+            </table>
+            ${footerHTML}
+          </div>
+        `;
+      }
+
+      // Final assembly
+      elPrintContent.innerHTML = `
+        <div class="print-container max-w-4xl mx-auto">
+          ${pagesHTML}
+        </div>
+      `;
+
+      // Inject print-specific CSS
+      const style = document.getElementById('print-style');
+      if (style) style.remove();
+      
+      const printStyle = document.createElement('style');
+      printStyle.id = 'print-style';
+      printStyle.textContent = `
+        @media print {
+          body * { visibility: hidden; }
+          .print-container,
+          .print-container * { visibility: visible; }
+          .print-container { 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+          }
+          .page-break {
+            page-break-before: always;
+          }
+          .print-page-number:after { content: counter(page); }
+          .total-pages:after { content: counter(pages); }
+        }
+        @media screen {
+          .page-break {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px dashed #ccc;
+          }
+        }
+      `;
+      document.head.appendChild(printStyle);
+    }
+
+    // Apply current param values to preview
+    function applyParams() {
+      const params = {
+        title: document.getElementById('param-title').value,
+        instructions: document.getElementById('param-instructions').value,
+        fontSize: document.getElementById('param-font-size').value,
+        showHeader: document.getElementById('param-show-header').checked,
+        showFooter: document.getElementById('param-show-footer').checked,
+        columns: parseInt(document.getElementById('param-columns').value),
+        rowsPerPage: parseInt(document.getElementById('param-rows').value)
+      };
+      if (currentData) {
+        renderPrintContent(params, currentData);
+      }
+    }
+
+    // ┌──────────────────────────────┐
+    // │ 🎮 Event Handlers            │
+    // └──────────────────────────────┘
+    document.getElementById('btn-google-login').addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
+      auth.signInWithPopup(provider)
+        .catch(err => alert('Login failed: ' + err.message));
+    });
+
+    document.getElementById('btn-guest-mode').addEventListener('click', async () => {
+      currentUser = { isGuest: true, displayName: 'Guest', email: 'guest@example.com' };
+      elLoginSplash.classList.add('hidden');
+      elAppContainer.classList.remove('hidden');
+      elUserDisplay.textContent = 'Guest (testing)';
+      await initializeApp();
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      auth.signOut().then(() => {
+        currentUser = null;
+        elAppContainer.classList.add('hidden');
+        elLoginSplash.classList.remove('hidden');
+      });
+    });
+
+    document.getElementById('btn-apply').addEventListener('click', applyParams);
+    document.getElementById('btn-print').addEventListener('click', () => {
+      window.print();
+    });
+
+    // ┌──────────────────────────────┐
+    // │ 🧱 App Initialization        │
+    // └──────────────────────────────┘
+    async function initializeApp() {
+      showLoading(true);
+      try {
+        const wordsetID = getUrlParam('wordsetID') || 'default';
+        currentData = await fetchData(wordsetID);
+        applyParams(); // initial render
+      } catch (err) {
+        alert('⚠️ Failed to load data:\n' + err.message);
+        console.error(err);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // Auth state observer
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        elUserDisplay.textContent = user.displayName || user.email;
+        elLoginSplash.classList.add('hidden');
+        elAppContainer.classList.remove('hidden');
+        initializeApp();
+      } else if (!currentUser?.isGuest) {
+        // Only show login if not in guest mode
+        elLoginSplash.classList.remove('hidden');
+        elAppContainer.classList.add('hidden');
+      }
+    });
+
+    // Initial check: if ?guest=1 in URL → auto guest mode
+    if (getUrlParam('guest') === '1') {
+      document.getElementById('btn-guest-mode').click();
+    }
+  </script>
+</body>
+</html>

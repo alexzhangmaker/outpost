@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Thai Dictionary Management</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    <style type="text/tailwindcss">
+        @layer base {
+            .material-symbols-outlined {
+                font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            }
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+    <div class="flex h-screen w-full">
+        <!-- 侧边栏 -->
+        <aside class="flex w-64 flex-col bg-white dark:bg-[#19222c] border-r border-gray-200 dark:border-gray-800">
+            <div class="flex h-full flex-col justify-between p-4">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 px-3 py-2">
+                        <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Thai Dictionary logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCyWFfdU9UX9BxAdec-9VtB48JMxhmZ61ZqO-VMzlBi0iR2TblL4ZGSBqJZILnFfvYLC_qLjF-Y4QK0zF-MkhA3B8wtBvYvVB9xKNa1kqMVoFcYZgo7im2cM1qh7VdTZwYVR5ZnnjCDokZW_MQL3Om2BD3QsYIiyvztKs4EF4LgYy_kb3V44noGG86gb0SWNABSHxc_JW0eKcGwNM83Ml54Ftklumer094lVmvH6e9QAVpEYMyALxkxpFhVHAy5xrnE_c-7vSvO8wpi");'></div>
+                        <div class="flex flex-col">
+                            <h1 class="text-gray-900 dark:text-white text-base font-medium leading-normal">Thai Dictionary</h1>
+                            <p class="text-gray-500 dark:text-[#9dabb9] text-sm font-normal leading-normal">Management Console</p>
+                        </div>
+                    </div>
+                    <nav class="flex flex-col gap-2 mt-4">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                            <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">dashboard</span>
+                            <p class="text-sm font-medium leading-normal">Dashboard</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20 text-primary dark:bg-primary/30 dark:text-white" href="#">
+                            <span class="material-symbols-outlined font-bold">menu_book</span>
+                            <p class="text-sm font-bold leading-normal">Dictionary</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                            <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">bar_chart</span>
+                            <p class="text-sm font-medium leading-normal">Reports</p>
+                        </a>
+                        <div>
+                            <button class="w-full flex items-center justify-between gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" type="button">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">build</span>
+                                    <p class="text-sm font-medium leading-normal">Tools</p>
+                                </div>
+                                <span class="material-symbols-outlined text-gray-500 dark:text-gray-400 transition-transform">expand_more</span>
+                            </button>
+                            <div class="mt-1 pl-6 flex flex-col gap-1">
+                                <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                                    <p class="text-sm font-medium leading-normal">tool.Index</p>
+                                </a>
+                                <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                                    <p class="text-sm font-medium leading-normal">tool.rebuild</p>
+                                </a>
+                            </div>
+                        </div>
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                            <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">settings</span>
+                            <p class="text-sm font-medium leading-normal">Settings</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                            <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">help</span>
+                            <p class="text-sm font-medium leading-normal">Help</p>
+                        </a>
+                    </nav>
+                </div>
+                <div class="flex flex-col gap-1 border-t border-gray-200 dark:border-gray-800 pt-4">
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20" href="#">
+                        <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">account_circle</span>
+                        <p class="text-sm font-medium leading-normal">User Profile</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden">
+            <header class="sticky top-0 z-10 flex h-20 items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-800 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm px-8">
+                <p class="text-gray-900 dark:text-white text-3xl font-black tracking-tight">Dictionary Management</p>
+                <div class="flex items-center gap-4">
+                    <div class="w-80">
+                        <label class="flex flex-col h-12 w-full">
+                            <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                                <div class="text-gray-500 dark:text-[#9dabb9] flex bg-white dark:bg-[#19222c] items-center justify-center pl-4 rounded-l-lg border border-gray-300 dark:border-gray-700 border-r-0">
+                                    <span class="material-symbols-outlined">search</span>
+                                </div>
+                                <input id="searchInput" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary border-gray-300 dark:border-gray-700 bg-white dark:bg-[#19222c] h-full placeholder:text-gray-500 dark:placeholder:text-[#9dabb9] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Search by word, definition..." value=""/>
+                            </div>
+                        </label>
+                    </div>
+                    <button id="addEntryBtn" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary text-white gap-2 text-sm font-bold leading-normal tracking-wide hover:bg-primary/90">
+                        <span class="material-symbols-outlined">add</span>
+                        <span class="truncate">Add New Entry</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex flex-1 p-8 gap-8 overflow-hidden">
+                <!-- 字母导航 - 添加滚动支持 -->
+                <nav id="alphabetNav" class="flex flex-col gap-1 w-20 border-r border-gray-200 dark:border-gray-800 pr-8 overflow-y-auto">
+                    <!-- 字母按钮将通过JavaScript动态生成 -->
+                </nav>
+
+                <!-- 字典内容 - 添加滚动支持 -->
+                <div class="flex-1 flex flex-col overflow-hidden">
+                    <div class="bg-white dark:bg-[#19222c] rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex-1 flex flex-col">
+                        <div class="overflow-y-auto flex-1">
+                            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                                <thead class="text-xs text-gray-700 dark:text-gray-300 uppercase bg-gray-50 dark:bg-gray-900/50 sticky top-0 z-10">
+                                    <tr>
+                                        <th class="px-6 py-4 font-medium" scope="col">Thai Word</th>
+                                        <th class="px-6 py-4 font-medium" scope="col">Romanization</th>
+                                        <th class="px-6 py-4 font-medium" scope="col">Type</th>
+                                        <th class="px-6 py-4 font-medium" scope="col">Definition</th>
+                                        <th class="px-6 py-4 font-medium text-right" scope="col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dictionaryTableBody">
+                                    <!-- 字典条目将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#19222c]">
+                            <span id="paginationInfo" class="text-sm font-normal text-gray-500 dark:text-gray-400">
+                                Showing <span class="font-semibold text-gray-900 dark:text-white">1-4</span> of <span class="font-semibold text-gray-900 dark:text-white">100</span>
+                            </span>
+                            <div class="inline-flex -space-x-px rounded-md text-sm">
+                                <button id="prevPageBtn" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-[#19222c] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Previous</button>
+                                <button id="nextPageBtn" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-[#19222c] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 添加/编辑条目的模态框 -->
+    <div id="entryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-[#19222c] rounded-xl shadow-lg w-full max-w-md mx-4 p-6">
+            <h3 id="modalTitle" class="text-xl font-bold text-gray-900 dark:text-white mb-4">Add New Entry</h3>
+            <form id="entryForm" class="space-y-4">
+                <div>
+                    <label for="thaiWord" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Thai Word</label>
+                    <input type="text" id="thaiWord" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e293b] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div>
+                    <label for="romanization" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Romanization</label>
+                    <input type="text" id="romanization" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e293b] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div>
+                    <label for="wordType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                    <select id="wordType" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e293b] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">Select type</option>
+                        <option value="Noun">Noun</option>
+                        <option value="Verb">Verb</option>
+                        <option value="Adjective">Adjective</option>
+                        <option value="Adverb">Adverb</option>
+                        <option value="Pronoun">Pronoun</option>
+                        <option value="Preposition">Preposition</option>
+                        <option value="Conjunction">Conjunction</option>
+                        <option value="Interjection">Interjection</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="definition" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Definition</label>
+                    <textarea id="definition" required rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e293b] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" id="cancelBtn" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Cancel</button>
+                    <button type="submit" id="saveBtn" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-[#19222c] rounded-xl shadow-lg w-full max-w-md mx-4 p-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Confirm Deletion</h3>
+            <p class="text-gray-700 dark:text-gray-300 mb-6">Are you sure you want to delete this entry? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDeleteBtn" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Cancel</button>
+                <button id="confirmDeleteBtn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase配置 - 请替换为您的实际配置
+        const firebaseConfig = {
+            apiKey: "your-api-key",
+            authDomain: "your-project.firebaseapp.com",
+            databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id"
+        };
+
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 应用状态
+        const state = {
+            dictionary: [],
+            filteredDictionary: [],
+            currentPage: 1,
+            itemsPerPage: 10,
+            currentFilter: null,
+            searchTerm: '',
+            editingId: null
+        };
+
+        // 泰文字母
+        const thaiAlphabet = [
+            'ก', 'ข', 'ฃ', 'ค', 'ฅ', 'ฆ', 'ง', 'จ', 'ฉ', 'ช', 'ซ', 'ฌ', 'ญ', 'ฎ', 'ฏ', 'ฐ', 'ฑ', 'ฒ', 'ณ', 'ด', 'ต', 'ถ', 'ท', 'ธ', 'น', 'บ', 'ป', 'ผ', 'ฝ', 'พ', 'ฟ', 'ภ', 'ม', 'ย', 'ร', 'ล', 'ว', 'ศ', 'ษ', 'ส', 'ห', 'ฬ', 'อ', 'ฮ'
+        ];
+
+        // 模拟数据
+        const mockData = [
+            { id: '1', thaiWord: 'กบ', romanization: 'gòp', type: 'Noun', definition: 'Frog; an amphibian.' },
+            { id: '2', thaiWord: 'ไก่', romanization: 'gài', type: 'Noun', definition: 'Chicken; a domestic fowl.' },
+            { id: '3', thaiWord: 'กิน', romanization: 'gin', type: 'Verb', definition: 'To eat; to consume.' },
+            { id: '4', thaiWord: 'แก้ว', romanization: 'gâew', type: 'Noun', definition: 'Glass; a cup made of glass.' },
+            { id: '5', thaiWord: 'ขวด', romanization: 'kùat', type: 'Noun', definition: 'Bottle; a container.' },
+            { id: '6', thaiWord: 'คน', romanization: 'kon', type: 'Noun', definition: 'Person; human being.' },
+            { id: '7', thaiWord: 'คืน', romanization: 'keun', type: 'Noun', definition: 'Night; the period of darkness.' },
+            { id: '8', thaiWord: 'งาม', romanization: 'ngaam', type: 'Adjective', definition: 'Beautiful; pleasing to the eye.' },
+            { id: '9', thaiWord: 'จาน', romanization: 'jaan', type: 'Noun', definition: 'Plate; a flat dish.' },
+            { id: '10', thaiWord: 'ใจ', romanization: 'jai', type: 'Noun', definition: 'Heart; the organ or the emotional center.' },
+            { id: '11', thaiWord: 'ชอบ', romanization: 'chôp', type: 'Verb', definition: 'To like; to enjoy.' },
+            { id: '12', thaiWord: 'ซื้อ', romanization: 'séu', type: 'Verb', definition: 'To buy; to purchase.' },
+            { id: '13', thaiWord: 'ดวง', romanization: 'duang', type: 'Noun', definition: 'Star; a celestial body.' },
+            { id: '14', thaiWord: 'ต้น', romanization: 'dton', type: 'Noun', definition: 'Tree; a woody plant.' },
+            { id: '15', thaiWord: 'ตาย', romanization: 'dtaai', type: 'Verb', definition: 'To die; to cease living.' },
+            { id: '16', thaiWord: 'ถนน', romanization: 'tà-nǒn', type: 'Noun', definition: 'Road; a paved way for vehicles.' },
+            { id: '17', thaiWord: 'ทาง', romanization: 'taang', type: 'Noun', definition: 'Way; path or route.' },
+            { id: '18', thaiWord: 'น้ำ', romanization: 'náam', type: 'Noun', definition: 'Water; a clear liquid.' },
+            { id: '19', thaiWord: 'บ้าน', romanization: 'bâan', type: 'Noun', definition: 'House; a building for living in.' },
+            { id: '20', thaiWord: 'ปลา', romanization: 'bplaa', type: 'Noun', definition: 'Fish; an aquatic animal.' },
+            { id: '21', thaiWord: 'ปี', romanization: 'bpee', type: 'Noun', definition: 'Year; a period of 365 days.' },
+            { id: '22', thaiWord: 'เปิด', romanization: 'bpèrt', type: 'Verb', definition: 'To open; to make accessible.' },
+            { id: '23', thaiWord: 'ผ้า', romanization: 'pâa', type: 'Noun', definition: 'Cloth; fabric material.' },
+            { id: '24', thaiWord: 'ฝน', romanization: 'fǒn', type: 'Noun', definition: 'Rain; precipitation from clouds.' },
+            { id: '25', thaiWord: 'พี่', romanization: 'pêe', type: 'Noun', definition: 'Elder sibling; older brother or sister.' },
+            { id: '26', thaiWord: 'ฟ้า', romanization: 'fáa', type: 'Noun', definition: 'Sky; the atmosphere above.' },
+            { id: '27', thaiWord: 'ภูเขา', romanization: 'puu-kǎo', type: 'Noun', definition: 'Mountain; a large natural elevation.' },
+            { id: '28', thaiWord: 'ม้า', romanization: 'máa', type: 'Noun', definition: 'Horse; a large hoofed animal.' },
+            { id: '29', thaiWord: 'ยา', romanization: 'yaa', type: 'Noun', definition: 'Medicine; substance for treating illness.' },
+            { id: '30', thaiWord: 'รถ', romanization: 'rót', type: 'Noun', definition: 'Car; a motor vehicle.' },
+            { id: '31', thaiWord: 'ลม', romanization: 'lom', type: 'Noun', definition: 'Wind; moving air.' },
+            { id: '32', thaiWord: 'วง', romanization: 'wong', type: 'Noun', definition: 'Circle; a round shape.' },
+            { id: '33', thaiWord: 'ศาล', romanization: 'sǎan', type: 'Noun', definition: 'Court; a place where justice is administered.' },
+            { id: '34', thaiWord: 'ษา', romanization: 'sǎa', type: 'Noun', definition: 'Lion; a large wild cat.' },
+            { id: '35', thaiWord: 'สวย', romanization: 'sǔay', type: 'Adjective', definition: 'Beautiful; attractive in appearance.' },
+            { id: '36', thaiWord: 'ห้า', romanization: 'hâa', type: 'Numeral', definition: 'Five; the number 5.' },
+            { id: '37', thaiWord: 'ฬา', romanization: 'laa', type: 'Noun', definition: 'Kite; a flying toy.' },
+            { id: '38', thaiWord: 'อา', romanization: 'aa', type: 'Noun', definition: 'Aunt; father"s sister.' },
+            { id: '39', thaiWord: 'ฮา', romanization: 'haa', type: 'Verb', definition: 'To laugh; to make laughter.' }
+        ];
+
+        // DOM元素
+        const elements = {
+            alphabetNav: document.getElementById('alphabetNav'),
+            dictionaryTableBody: document.getElementById('dictionaryTableBody'),
+            searchInput: document.getElementById('searchInput'),
+            addEntryBtn: document.getElementById('addEntryBtn'),
+            entryModal: document.getElementById('entryModal'),
+            deleteModal: document.getElementById('deleteModal'),
+            entryForm: document.getElementById('entryForm'),
+            modalTitle: document.getElementById('modalTitle'),
+            thaiWord: document.getElementById('thaiWord'),
+            romanization: document.getElementById('romanization'),
+            wordType: document.getElementById('wordType'),
+            definition: document.getElementById('definition'),
+            cancelBtn: document.getElementById('cancelBtn'),
+            saveBtn: document.getElementById('saveBtn'),
+            cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
+            confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+            paginationInfo: document.getElementById('paginationInfo'),
+            prevPageBtn: document.getElementById('prevPageBtn'),
+            nextPageBtn: document.getElementById('nextPageBtn')
+        };
+
+        // 初始化应用
+        function initApp() {
+            renderAlphabetNav();
+            loadDictionary();
+            setupEventListeners();
+        }
+
+        // 渲染字母导航
+        function renderAlphabetNav() {
+            elements.alphabetNav.innerHTML = '';
+            
+            // 添加"全部"按钮
+            const allButton = document.createElement('a');
+            allButton.className = 'flex items-center justify-center h-12 w-12 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20 text-gray-500 dark:text-gray-400';
+            allButton.innerHTML = '<p class="text-lg font-medium">All</p>';
+            allButton.addEventListener('click', () => filterByAlphabet(null));
+            elements.alphabetNav.appendChild(allButton);
+            
+            // 添加泰文字母按钮
+            thaiAlphabet.forEach(letter => {
+                const button = document.createElement('a');
+                button.className = 'flex items-center justify-center h-12 w-12 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20 text-gray-500 dark:text-gray-400';
+                button.innerHTML = `<p class="text-lg font-medium">${letter}</p>`;
+                button.addEventListener('click', () => filterByAlphabet(letter));
+                elements.alphabetNav.appendChild(button);
+            });
+        }
+
+        // 加载字典数据
+        function loadDictionary() {
+            // 在实际应用中，这里会从Firebase加载数据
+            // 现在使用模拟数据
+            state.dictionary = [...mockData];
+            state.filteredDictionary = [...mockData];
+            renderDictionary();
+            updatePaginationInfo();
+        }
+
+        // 渲染字典表格
+        function renderDictionary() {
+            elements.dictionaryTableBody.innerHTML = '';
+            
+            const startIndex = (state.currentPage - 1) * state.itemsPerPage;
+            const endIndex = startIndex + state.itemsPerPage;
+            const currentItems = state.filteredDictionary.slice(startIndex, endIndex);
+            
+            if (currentItems.length === 0) {
+                const row = document.createElement('tr');
+                row.className = 'bg-white dark:bg-[#19222c] border-b dark:border-gray-800';
+                row.innerHTML = `
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                        No entries found
+                    </td>
+                `;
+                elements.dictionaryTableBody.appendChild(row);
+                return;
+            }
+            
+            currentItems.forEach(entry => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white dark:bg-[#19222c] border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/30';
+                row.innerHTML = `
+                    <th class="px-6 py-4 font-bold text-gray-900 dark:text-white whitespace-nowrap" scope="row">${entry.thaiWord}</th>
+                    <td class="px-6 py-4">${entry.romanization}</td>
+                    <td class="px-6 py-4">${entry.type}</td>
+                    <td class="px-6 py-4">${entry.definition}</td>
+                    <td class="px-6 py-4 text-right space-x-2">
+                        <button class="edit-btn p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" data-id="${entry.id}">
+                            <span class="material-symbols-outlined text-base">edit</span>
+                        </button>
+                        <button class="delete-btn p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-800/50 hover:text-red-600 dark:hover:text-red-400" data-id="${entry.id}">
+                            <span class="material-symbols-outlined text-base">delete</span>
+                        </button>
+                    </td>
+                `;
+                elements.dictionaryTableBody.appendChild(row);
+            });
+            
+            // 添加编辑和删除按钮的事件监听器
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    openEditModal(id);
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    openDeleteModal(id);
+                });
+            });
+        }
+
+        // 按字母筛选
+        function filterByAlphabet(letter) {
+            state.currentFilter = letter;
+            state.currentPage = 1;
+            
+            // 更新字母导航的激活状态
+            document.querySelectorAll('#alphabetNav a').forEach(a => {
+                a.className = 'flex items-center justify-center h-12 w-12 rounded-lg hover:bg-gray-100 dark:hover:bg-primary/20 text-gray-500 dark:text-gray-400';
+            });
+            
+            if (letter === null) {
+                // 选择"全部"时，高亮第一个按钮
+                document.querySelectorAll('#alphabetNav a')[0].className = 'flex items-center justify-center h-12 w-12 rounded-lg bg-primary/20 dark:bg-primary/30 text-primary dark:text-white';
+            } else {
+                // 高亮选中的字母按钮
+                const buttons = document.querySelectorAll('#alphabetNav a');
+                for (let i = 0; i < buttons.length; i++) {
+                    if (buttons[i].textContent.trim() === letter) {
+                        buttons[i].className = 'flex items-center justify-center h-12 w-12 rounded-lg bg-primary/20 dark:bg-primary/30 text-primary dark:text-white';
+                        break;
+                    }
+                }
+            }
+            
+            // 应用筛选
+            applyFilters();
+        }
+
+        // 应用所有筛选（字母和搜索）
+        function applyFilters() {
+            let filtered = [...state.dictionary];
+            
+            // 应用字母筛选
+            if (state.currentFilter) {
+                filtered = filtered.filter(entry => 
+                    entry.thaiWord.startsWith(state.currentFilter)
+                );
+            }
+            
+            // 应用搜索筛选
+            if (state.searchTerm) {
+                const term = state.searchTerm.toLowerCase();
+                filtered = filtered.filter(entry => 
+                    entry.thaiWord.toLowerCase().includes(term) ||
+                    entry.romanization.toLowerCase().includes(term) ||
+                    entry.type.toLowerCase().includes(term) ||
+                    entry.definition.toLowerCase().includes(term)
+                );
+            }
+            
+            state.filteredDictionary = filtered;
+            renderDictionary();
+            updatePaginationInfo();
+        }
+
+        // 更新分页信息
+        function updatePaginationInfo() {
+            const startIndex = (state.currentPage - 1) * state.itemsPerPage + 1;
+            const endIndex = Math.min(state.currentPage * state.itemsPerPage, state.filteredDictionary.length);
+            const total = state.filteredDictionary.length;
+            
+            elements.paginationInfo.innerHTML = `
+                Showing <span class="font-semibold text-gray-900 dark:text-white">${startIndex}-${endIndex}</span> of <span class="font-semibold text-gray-900 dark:text-white">${total}</span>
+            `;
+            
+            // 更新分页按钮状态
+            elements.prevPageBtn.disabled = state.currentPage === 1;
+            elements.nextPageBtn.disabled = state.currentPage * state.itemsPerPage >= state.filteredDictionary.length;
+        }
+
+        // 打开添加条目模态框
+        function openAddModal() {
+            state.editingId = null;
+            elements.modalTitle.textContent = 'Add New Entry';
+            elements.entryForm.reset();
+            elements.entryModal.classList.remove('hidden');
+        }
+
+        // 打开编辑条目模态框
+        function openEditModal(id) {
+            const entry = state.dictionary.find(item => item.id === id);
+            if (!entry) return;
+            
+            state.editingId = id;
+            elements.modalTitle.textContent = 'Edit Entry';
+            elements.thaiWord.value = entry.thaiWord;
+            elements.romanization.value = entry.romanization;
+            elements.wordType.value = entry.type;
+            elements.definition.value = entry.definition;
+            elements.entryModal.classList.remove('hidden');
+        }
+
+        // 打开删除确认模态框
+        function openDeleteModal(id) {
+            state.editingId = id;
+            elements.deleteModal.classList.remove('hidden');
+        }
+
+        // 保存条目
+        function saveEntry(e) {
+            e.preventDefault();
+            
+            const entryData = {
+                thaiWord: elements.thaiWord.value,
+                romanization: elements.romanization.value,
+                type: elements.wordType.value,
+                definition: elements.definition.value
+            };
+            
+            if (state.editingId) {
+                // 更新现有条目
+                const index = state.dictionary.findIndex(item => item.id === state.editingId);
+                if (index !== -1) {
+                    state.dictionary[index] = { ...state.dictionary[index], ...entryData };
+                }
+            } else {
+                // 添加新条目
+                const newId = Date.now().toString();
+                state.dictionary.push({ id: newId, ...entryData });
+            }
+            
+            // 在实际应用中，这里会保存到Firebase
+            // saveToFirebase();
+            
+            applyFilters();
+            closeModal();
+        }
+
+        // 删除条目
+        function deleteEntry() {
+            state.dictionary = state.dictionary.filter(item => item.id !== state.editingId);
+            
+            // 在实际应用中，这里会从Firebase删除
+            // deleteFromFirebase();
+            
+            applyFilters();
+            closeModal();
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            elements.entryModal.classList.add('hidden');
+            elements.deleteModal.classList.add('hidden');
+            state.editingId = null;
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 搜索
+            elements.searchInput.addEventListener('input', (e) => {
+                state.searchTerm = e.target.value;
+                state.currentPage = 1;
+                applyFilters();
+            });
+            
+            // 添加条目按钮
+            elements.addEntryBtn.addEventListener('click', openAddModal);
+            
+            // 表单提交
+            elements.entryForm.addEventListener('submit', saveEntry);
+            
+            // 取消按钮
+            elements.cancelBtn.addEventListener('click', closeModal);
+            
+            // 删除确认按钮
+            elements.confirmDeleteBtn.addEventListener('click', deleteEntry);
+            
+            // 取消删除按钮
+            elements.cancelDeleteBtn.addEventListener('click', closeModal);
+            
+            // 分页按钮
+            elements.prevPageBtn.addEventListener('click', () => {
+                if (state.currentPage > 1) {
+                    state.currentPage--;
+                    renderDictionary();
+                    updatePaginationInfo();
+                }
+            });
+            
+            elements.nextPageBtn.addEventListener('click', () => {
+                if (state.currentPage * state.itemsPerPage < state.filteredDictionary.length) {
+                    state.currentPage++;
+                    renderDictionary();
+                    updatePaginationInfo();
+                }
+            });
+            
+            // 点击模态框外部关闭
+            elements.entryModal.addEventListener('click', (e) => {
+                if (e.target === elements.entryModal) {
+                    closeModal();
+                }
+            });
+            
+            elements.deleteModal.addEventListener('click', (e) => {
+                if (e.target === elements.deleteModal) {
+                    closeModal();
+                }
+            });
+        }
+
+        // Firebase相关函数
+        function saveToFirebase() {
+            // 在实际应用中，将数据保存到Firebase
+            // database.ref('dictionary').set(state.dictionary);
+        }
+        
+        function deleteFromFirebase(id) {
+            // 在实际应用中，从Firebase删除数据
+            // database.ref('dictionary/' + id).remove();
+        }
+        
+        function loadFromFirebase() {
+            // 在实际应用中，从Firebase加载数据
+            // database.ref('dictionary').on('value', (snapshot) => {
+            //     const data = snapshot.val();
+            //     if (data) {
+            //         state.dictionary = Object.values(data);
+            //         applyFilters();
+            //     }
+            // });
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
