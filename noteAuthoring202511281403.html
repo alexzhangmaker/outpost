@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能学习系统 - 课程笔记浏览器</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/white.css">
+    
+    <style>
+        /* 整体布局 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f7fa;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* 侧边栏样式优化 - 手风琴效果 */
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-right: 1px solid #e1e5e9;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        /* 文件夹分组样式 */
+        .folder-group {
+            margin-bottom: 8px;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .folder-header {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #2c3e50;
+            transition: background 0.2s;
+            border-bottom: 1px solid transparent;
+        }
+
+        .folder-header:hover {
+            background: #e9ecef;
+        }
+
+        .folder-header.active {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .folder-icon {
+            margin-right: 8px;
+        }
+
+        .folder-count {
+            font-size: 12px;
+            background: #dee2e6;
+            color: #495057;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .folder-content {
+            display: none;
+            background: white;
+        }
+
+        .folder-content.show {
+            display: block;
+        }
+
+        /* 笔记列表项样式 */
+        .document-item {
+            padding: 10px 15px 10px 30px; /* 左侧缩进表示层级 */
+            border-bottom: 1px solid #f1f3f5;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .document-item:last-child {
+            border-bottom: none;
+        }
+
+        .document-item:hover {
+            background: #f8f9fa;
+            color: #3498db;
+        }
+        
+        .document-item.active {
+            background: #e3f2fd;
+            border-left: 4px solid #3498db;
+            padding-left: 26px; /* 调整以保持对齐 */
+        }
+        
+        .document-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #333;
+        }
+        
+        .document-meta {
+            font-size: 11px;
+            color: #95a5a6;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 编辑器区域 */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-right: 1px solid #e1e5e9;
+        }
+        
+        .panel-header {
+            background: #34495e;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* 加载遮罩层 */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        textarea {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            margin-bottom: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        button.secondary {
+            background: #95a5a6;
+        }
+        
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        button.success {
+            background: #27ae60;
+        }
+        
+        button.success:hover {
+            background: #219653;
+        }
+        
+        button.warning {
+            background: #e67e22;
+        }
+        
+        button.warning:hover {
+            background: #d35400;
+        }
+        
+        button.info {
+            background: #17a2b8;
+        }
+        
+        button.info:hover {
+            background: #138496;
+        }
+        
+        button.primary {
+            background: #3498db;
+        }
+        
+        button.primary:hover {
+            background: #2980b9;
+        }
+        
+        /* 预览区域 */
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        .preview-container {
+            flex: 1;
+            overflow: auto;
+        }
+        
+        /* Firebase 认证界面 */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .auth-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .auth-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .auth-btn {
+            padding: 12px 24px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+            margin: 10px;
+        }
+        
+        .auth-btn:hover {
+            background: #2980b9;
+        }
+        
+        .auth-btn.google {
+            background: #db4437;
+        }
+        
+        .auth-btn.google:hover {
+            background: #c23321;
+        }
+
+        /* 状态指示器 */
+        .status {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        /* JSON预览模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            height: 80%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .modal-close {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            flex: 1;
+            overflow: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        /* Reveal.js 自定义样式 (保持原样) */
+        .reveal { height: 100%; }
+        .reveal .slides { text-align: left; font-size: 28px; }
+        .reveal h1, .reveal h2 { text-align: center; color: #2c3e50; }
+        .reveal h1 { border-bottom: 3px solid #3498db; padding-bottom: 15px; }
+        .reveal h2 { color: #3498db; margin-bottom: 30px; }
+        .reveal ul, .reveal ol { margin-left: 40px; }
+        .reveal li { margin-bottom: 15px; }
+        .reveal strong { color: #e74c3c; }
+        .reveal code { background: #f8f9fa; padding: 2px 6px; border-radius: 3px; color: #e83e8c; }
+        .reveal pre { background: #2c3e50; border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .reveal pre code { background: none; color: #ecf0f1; padding: 0; }
+        
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; height: 250px; }
+            .editor-panel { height: 50vh; }
+            .preview-panel { height: 50vh; }
+            .controls { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div id="auth-container" class="auth-container" style="display: none;">
+        <div class="auth-box">
+            <h2 class="auth-title">登录笔记系统</h2>
+            <p style="margin-bottom: 20px; color: #7f8c8d;">请使用 Google 账户登录以访问数据</p>
+            <button id="google-login-btn" class="auth-btn google">使用 Google 登录</button>
+            <div id="auth-error" class="status error" style="display: none; margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                课程笔记列表
+                <button id="refresh-docs-btn" class="auth-btn" style="padding: 4px 8px; font-size: 12px; background: rgba(255,255,255,0.2);">刷新</button>
+            </div>
+            <div class="sidebar-content">
+                <div id="documents-list" class="documents-list">
+                    </div>
+                <div id="documents-status" class="status info" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div class="editor-panel">
+            <div class="panel-header">
+                <span>Markdown 内容</span>
+                <div class="user-info" id="user-info" style="display: none;">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <span id="user-name">用户</span>
+                    <button id="user-logout-btn" class="auth-btn secondary" style="padding: 4px 8px; font-size: 12px;">退出</button>
+                </div>
+                <button id="login-display-btn" class="auth-btn" style="padding: 4px 8px; font-size: 12px;">登录</button>
+            </div>
+            <div class="editor-container">
+                <div id="editor-loading" class="loading-overlay" style="display: none;">
+                    正在加载笔记内容...
+                </div>
+                <div class="controls">
+                    <button id="convert-btn">刷新预览</button>
+                    <button id="json-btn" class="success">查看JSON结构</button>
+                    <button id="reset-btn" class="secondary">显示示例</button>
+                    <button id="fullscreen-btn" class="secondary">全屏</button>
+                    <button id="save-placeholder-btn" class="warning" title="当前模式仅支持浏览" style="opacity: 0.6; cursor: not-allowed;">保存(已禁用)</button>
+                </div>
+                <textarea id="markdown-input" placeholder="选择左侧笔记以查看内容..."></textarea>
+                <div id="current-document-info" class="status info" style="display: none;"></div>
+                <div id="status" class="status"></div>
+            </div>
+        </div>
+        
+        <div class="preview-panel">
+            <div class="panel-header">
+                幻灯片预览
+            </div>
+            <div class="preview-container">
+                <div class="reveal">
+                    <div class="slides" id="slides-container">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="json-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">幻灯片数据结构</div>
+                <button class="modal-close" id="close-modal">关闭</button>
+            </div>
+            <div class="modal-body" id="json-preview"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        // Firebase配置 - 已更新数据库URL
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            // UPDATED: 使用您提供的新数据库地址
+            databaseURL: "https://outpost-otes-86b07.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // 增强Markdown到Reveal.js转换器 (保留原有逻辑)
+        class EnhancedMarkdownToReveal {
+            constructor() {
+                this.slideSeparator = '---';
+                this.configureMarked();
+            }
+
+            configureMarked() {
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true,
+                    smartLists: true,
+                    smartypants: true
+                });
+            }
+
+            convertToMultipleFormats(enhancedMarkdown) {
+                try {
+                    const slides = enhancedMarkdown.split(this.slideSeparator);
+                    let revealContent = '';
+                    let jsonData = {
+                        title: '',
+                        slides: [],
+                        metadata: {},
+                        totalSlides: 0
+                    };
+                    
+                    slides.forEach((slideContent, index) => {
+                        if (slideContent.trim()) {
+                            const { revealSlide, jsonSlide, metadata } = this.convertSlide(slideContent, index);
+                            revealContent += revealSlide + '\n\n---\n\n';
+                            
+                            if (index === 0) {
+                                jsonData.title = this.extractTitle(slideContent);
+                            }
+                            jsonData.slides.push(jsonSlide);
+                            Object.assign(jsonData.metadata, metadata);
+                        }
+                    });
+                    
+                    jsonData.totalSlides = jsonData.slides.length;
+                    
+                    return { revealContent, jsonData };
+                } catch (error) {
+                    throw new Error(`转换失败: ${error.message}`);
+                }
+            }
+
+            convertSlide(slideContent, slideIndex) {
+                const metadata = this.extractMetadata(slideContent);
+                const revealVersion = this.processForReveal(slideContent);
+                const jsonVersion = this.processForJSON(slideContent, slideIndex, metadata);
+                
+                return {
+                    revealSlide: revealVersion,
+                    jsonSlide: jsonVersion,
+                    metadata: metadata
+                };
+            }
+
+            processForReveal(content) {
+                let processed = content;
+                processed = processed.replace(/:::meta[\s\S]*?:::/g, '');
+                processed = processed.replace(/[\s\S]*?/g, '');
+                processed = processed.replace(/[\s\S]*?/g, '');
+                processed = this.processCustomBlocks(processed);
+                return processed;
+            }
+
+            processForJSON(content, slideIndex, metadata) {
+                const visibleContent = this.processForReveal(content);
+                return {
+                    index: slideIndex,
+                    title: this.extractTitle(content),
+                    visibleContent: visibleContent,
+                    metadata: metadata,
+                    rawContent: content,
+                    wordCount: this.countWords(visibleContent)
+                };
+            }
+
+            extractMetadata(content) {
+                const metaMatch = content.match(/:::meta\s*\n([\s\S]*?)\s*:::/);
+                if (!metaMatch) return {};
+                
+                const metaContent = metaMatch[1];
+                const metadata = {};
+                
+                metaContent.split('\n').forEach(line => {
+                    const [key, ...valueParts] = line.split(':');
+                    if (key && valueParts.length > 0) {
+                        metadata[key.trim()] = valueParts.join(':').trim();
+                    }
+                });
+                return metadata;
+            }
+
+            extractTitle(content) {
+                const titleMatch = content.match(/^# (.*)$/m) || content.match(/^## (.*)$/m);
+                return titleMatch ? titleMatch[1].trim() : `页 ${slideIndex + 1}`;
+            }
+
+            processCustomBlocks(content) {
+                return content
+                    .replace(/:::key-point\s*\n([\s\S]*?)\s*:::/g, '<div class="key-point" style="background:#fff3cd;padding:15px;border-left:4px solid #ffc107;margin:10px 0;"><strong>关键理解：</strong>$1</div>')
+                    .replace(/:::grammar\s*\n([\s\S]*?)\s*:::/g, '<div style="background:#d1ecf1;padding:15px;border-left:4px solid #17a2b8;margin:10px 0;"><strong>核心公式：</strong><br>$1</div>')
+                    .replace(/:::examples\s*\n([\s\S]*?)\s*:::/g, '<div style="background:#d4edda;padding:15px;border-left:4px solid #28a745;margin:10px 0;"><strong>例句：</strong><br>$1</div>');
+            }
+
+            countWords(text) {
+                return text.replace(/[#\*`\-]/g, '').split(/\s+/).filter(word => word.length > 0).length;
+            }
+        }
+
+        // Firebase 管理器 (重点修改部分)
+        class FirebaseManager {
+            constructor() {
+                this.auth = null;
+                this.database = null;
+                this.user = null;
+                this.init();
+            }
+
+            init() {
+                firebase.initializeApp(firebaseConfig);
+                this.auth = firebase.auth();
+                this.database = firebase.database();
+
+                this.auth.onAuthStateChanged((user) => {
+                    this.handleAuthStateChange(user);
+                });
+            }
+
+            handleAuthStateChange(user) {
+                this.user = user;
+                if (user) {
+                    document.getElementById('user-info').style.display = 'flex';
+                    document.getElementById('login-display-btn').style.display = 'none';
+                    document.getElementById('user-name').textContent = user.displayName || user.email;
+                    document.getElementById('user-avatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+                    document.getElementById('auth-container').style.display = 'none';
+                    
+                    this.showStatus('✓ 已登录', 'success');
+                    this.loadDocuments();
+                } else {
+                    document.getElementById('user-info').style.display = 'none';
+                    document.getElementById('login-display-btn').style.display = 'block';
+                    document.getElementById('auth-container').style.display = 'flex';
+                    this.clearDocuments();
+                }
+            }
+
+            async signInWithGoogle() {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                try {
+                    await this.auth.signInWithPopup(provider);
+                } catch (error) {
+                    this.showAuthError(`登录失败: ${error.message}`);
+                }
+            }
+
+            async signOut() {
+                try {
+                    await this.auth.signOut();
+                    this.showStatus('已退出登录', 'info');
+                    document.getElementById('markdown-input').value = '';
+                    window.slideApp.convertAndRender();
+                } catch (error) {
+                    console.error('退出登录失败:', error);
+                }
+            }
+
+            // ==========================================
+            // 核心修改: 加载文档逻辑 (Folders + Notes)
+            // ==========================================
+            async loadDocuments() {
+                if (!this.user) return;
+
+                const documentsStatus = document.getElementById('documents-status');
+                documentsStatus.textContent = '正在加载课程和笔记...';
+                documentsStatus.style.display = 'block';
+
+                try {
+                    // 并行获取 Folders 和 Notes
+                    const [foldersSnapshot, notesSnapshot] = await Promise.all([
+                        this.database.ref('noteFolders').once('value'),
+                        this.database.ref('mdNotes').once('value')
+                    ]);
+
+                    const foldersData = foldersSnapshot.val() || {};
+                    const notesData = notesSnapshot.val() || {};
+
+                    // 组织数据结构
+                    // Map: FolderID -> { info: FolderInfo, notes: [] }
+                    const organizedData = {};
+
+                    // 1. 初始化文件夹
+                    for (const [key, folder] of Object.entries(foldersData)) {
+                        organizedData[key] = {
+                            info: folder,
+                            notes: []
+                        };
+                    }
+                    
+                    // 添加一个"未分类"文件夹，以防有笔记找不到归属
+                    organizedData['uncategorized'] = {
+                        info: { course: '未分类笔记', courseCode: 'OTHER' },
+                        notes: []
+                    };
+
+                    // 2. 分配笔记到文件夹
+                    for (const [noteKey, note] of Object.entries(notesData)) {
+                        let matched = false;
+                        
+                        // 尝试通过 subject 匹配文件夹
+                        // 注意：mdNotes 中的 subject 包含 {course, courseCode}，但不一定包含 folderId
+                        // 我们需要通过 courseCode 来匹配 foldersData
+                        
+                        const noteCourseCode = note.subject?.courseCode;
+                        
+                        if (noteCourseCode) {
+                            // 查找匹配 courseCode 的文件夹ID
+                            const folderId = Object.keys(foldersData).find(fid => 
+                                foldersData[fid].courseCode === noteCourseCode
+                            );
+                            
+                            if (folderId && organizedData[folderId]) {
+                                organizedData[folderId].notes.push({ ...note, key: noteKey });
+                                matched = true;
+                            }
+                        }
+
+                        if (!matched) {
+                            organizedData['uncategorized'].notes.push({ ...note, key: noteKey });
+                        }
+                    }
+
+                    // 3. 渲染 UI (Accordion)
+                    this.renderSidebar(organizedData);
+                    
+                    documentsStatus.style.display = 'none';
+
+                } catch (error) {
+                    console.error(error);
+                    documentsStatus.textContent = `加载失败: ${error.message}`;
+                    documentsStatus.className = 'status error';
+                }
+            }
+
+            // 渲染侧边栏 (Accordion 风格)
+            renderSidebar(organizedData) {
+                const container = document.getElementById('documents-list');
+                container.innerHTML = '';
+
+                // 排序文件夹 (按 courseCode)
+                const sortedFolderKeys = Object.keys(organizedData).sort((a, b) => {
+                    if (a === 'uncategorized') return 1;
+                    if (b === 'uncategorized') return -1;
+                    return organizedData[a].info.courseCode.localeCompare(organizedData[b].info.courseCode);
+                });
+
+                sortedFolderKeys.forEach(folderId => {
+                    const group = organizedData[folderId];
+                    // 如果文件夹是空的且不是未分类，可以选择隐藏，这里选择显示
+                    if (group.notes.length === 0 && folderId === 'uncategorized') return;
+
+                    // 创建文件夹组容器
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'folder-group';
+
+                    // 1. 文件夹头部
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'folder-header';
+                    headerDiv.innerHTML = `
+                        <span>
+                            <span class="folder-icon">📂</span>
+                            ${group.info.courseCode} - ${group.info.course}
+                        </span>
+                        <span class="folder-count">${group.notes.length}</span>
+                    `;
+
+                    // 2. 文件夹内容容器 (笔记列表)
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'folder-content';
+                    
+                    // 点击头部切换显示/隐藏
+                    headerDiv.addEventListener('click', () => {
+                        const isVisible = contentDiv.classList.contains('show');
+                        // 关闭其他所有打开的文件夹 (手风琴效果) - 可选
+                        document.querySelectorAll('.folder-content').forEach(el => el.classList.remove('show'));
+                        document.querySelectorAll('.folder-header').forEach(el => el.classList.remove('active'));
+
+                        if (!isVisible) {
+                            contentDiv.classList.add('show');
+                            headerDiv.classList.add('active');
+                        }
+                    });
+
+                    // 3. 添加笔记项
+                    // 按更新时间倒序排序
+                    group.notes.sort((a, b) => {
+                        const dateA = new Date(a.updatedAt || a.createdAt || 0);
+                        const dateB = new Date(b.updatedAt || b.createdAt || 0);
+                        return dateB - dateA;
+                    });
+
+                    group.notes.forEach(note => {
+                        const noteItem = document.createElement('div');
+                        noteItem.className = 'document-item';
+                        noteItem.dataset.url = note.mdNote; // 存储下载URL
+                        noteItem.dataset.title = note.title;
+                        
+                        // 格式化日期
+                        const dateStr = note.updatedAt ? new Date(note.updatedAt).toLocaleDateString() : '未知日期';
+
+                        noteItem.innerHTML = `
+                            <div class="document-title">📄 ${note.title || '无标题'}</div>
+                            <div class="document-meta">
+                                <span>${dateStr}</span>
+                            </div>
+                        `;
+
+                        // 点击笔记事件
+                        noteItem.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            this.selectDocument(note, noteItem);
+                        });
+
+                        contentDiv.appendChild(noteItem);
+                    });
+
+                    groupDiv.appendChild(headerDiv);
+                    groupDiv.appendChild(contentDiv);
+                    container.appendChild(groupDiv);
+                });
+            }
+
+            // ==========================================
+            // 核心修改: 选择并加载笔记内容
+            // ==========================================
+            async selectDocument(noteData, domElement) {
+                // UI 高亮处理
+                document.querySelectorAll('.document-item').forEach(item => item.classList.remove('active'));
+                if (domElement) domElement.classList.add('active');
+
+                const infoElement = document.getElementById('current-document-info');
+                infoElement.textContent = `当前文档: ${noteData.title}`;
+                infoElement.style.display = 'block';
+
+                const loadingOverlay = document.getElementById('editor-loading');
+                const markdownInput = document.getElementById('markdown-input');
+
+                // 显示加载状态
+                loadingOverlay.style.display = 'flex';
+                
+                try {
+                    // 从 URL 获取内容
+                    if (noteData.mdNote && noteData.mdNote.startsWith('http')) {
+                        const response = await fetch(noteData.mdNote);
+                        if (!response.ok) throw new Error('无法下载笔记内容');
+                        const text = await response.text();
+                        
+                        markdownInput.value = text;
+                        this.showStatus(`已加载: ${noteData.title}`, 'success');
+                        
+                        // 自动转换渲染
+                        window.slideApp.convertAndRender();
+                    } else {
+                        throw new Error('笔记链接无效');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    markdownInput.value = `# 错误\n\n无法加载笔记内容: ${error.message}`;
+                    this.showStatus(`加载失败: ${error.message}`, 'error');
+                } finally {
+                    loadingOverlay.style.display = 'none';
+                }
+            }
+
+            clearDocuments() {
+                document.getElementById('documents-list').innerHTML = '';
+                const documentsStatus = document.getElementById('documents-status');
+                documentsStatus.textContent = '请登录后查看笔记';
+                documentsStatus.className = 'status info';
+                documentsStatus.style.display = 'block';
+            }
+
+            showAuthError(message) {
+                const errorElement = document.getElementById('auth-error');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+
+            showStatus(message, type = 'info') {
+                const statusElement = document.getElementById('status');
+                statusElement.textContent = message;
+                statusElement.className = `status ${type}`;
+                setTimeout(() => {
+                    if (statusElement.textContent === message) {
+                        statusElement.textContent = '';
+                        statusElement.className = 'status';
+                    }
+                }, 5000);
+            }
+        }
+
+        // 应用主类
+        class SlideApp {
+            constructor() {
+                this.converter = new EnhancedMarkdownToReveal();
+                this.firebaseManager = new FirebaseManager();
+                this.revealInitialized = false;
+                this.currentJsonData = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                // 默认加载一个空示例或欢迎页
+                document.getElementById('markdown-input').value = "# 欢迎\n\n请在左侧选择课程笔记进行浏览。";
+                this.convertAndRender();
+            }
+
+            setupEventListeners() {
+                document.getElementById('convert-btn').addEventListener('click', () => this.convertAndRender());
+                document.getElementById('json-btn').addEventListener('click', () => this.showJsonData());
+                document.getElementById('reset-btn').addEventListener('click', () => {
+                    document.getElementById('markdown-input').value = "# 示例幻灯片\n\n---\n\n## 页面一\n内容...";
+                    this.convertAndRender();
+                });
+                document.getElementById('fullscreen-btn').addEventListener('click', () => this.toggleFullscreen());
+                
+                document.getElementById('refresh-docs-btn').addEventListener('click', () => this.firebaseManager.loadDocuments());
+
+                // 认证按钮
+                document.getElementById('google-login-btn').addEventListener('click', () => this.firebaseManager.signInWithGoogle());
+                document.getElementById('login-display-btn').addEventListener('click', () => {
+                    document.getElementById('auth-container').style.display = 'flex';
+                });
+                document.getElementById('user-logout-btn').addEventListener('click', () => this.firebaseManager.signOut());
+
+                // 模态框
+                document.getElementById('close-modal').addEventListener('click', () => {
+                    document.getElementById('json-modal').style.display = 'none';
+                });
+                
+                // 点击遮罩层关闭登录框（如果是点击背景）
+                document.getElementById('auth-container').addEventListener('click', (e) => {
+                    if (e.target.id === 'auth-container') {
+                        document.getElementById('auth-container').style.display = 'none';
+                    }
+                });
+            }
+
+            convertAndRender() {
+                const enhancedMarkdown = document.getElementById('markdown-input').value;
+                const statusElement = document.getElementById('status');
+                
+                try {
+                    const { revealContent, jsonData } = this.converter.convertToMultipleFormats(enhancedMarkdown);
+                    this.renderSlidesWithMarked(revealContent);
+                    this.currentJsonData = jsonData;
+                } catch (error) {
+                    statusElement.textContent = `转换错误: ${error.message}`;
+                    statusElement.className = 'status error';
+                }
+            }
+
+            renderSlidesWithMarked(markdownContent) {
+                const slidesContainer = document.getElementById('slides-container');
+                slidesContainer.innerHTML = '';
+                
+                const slides = markdownContent.split('---').filter(slide => slide.trim());
+                
+                slides.forEach((slideContent) => {
+                    const section = document.createElement('section');
+                    section.innerHTML = marked.parse(slideContent);
+                    slidesContainer.appendChild(section);
+                });
+
+                if (!this.revealInitialized) {
+                    Reveal.initialize({
+                        hash: true,
+                        transition: 'slide',
+                        backgroundTransition: 'fade',
+                        slideNumber: true,
+                        embedded: true // 确保在容器内正确渲染
+                    });
+                    this.revealInitialized = true;
+                } else {
+                    Reveal.sync();
+                    Reveal.slide(0, 0, 0);
+                }
+            }
+
+            showJsonData() {
+                if (!this.currentJsonData) return;
+                document.getElementById('json-preview').textContent = JSON.stringify(this.currentJsonData, null, 2);
+                document.getElementById('json-modal').style.display = 'block';
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => console.log(err));
+                } else {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.slideApp = new SlideApp();
+        });
+    </script>
+</body>
+</html>

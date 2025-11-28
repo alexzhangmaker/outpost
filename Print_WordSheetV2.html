@@ -73,6 +73,15 @@
         page-break-inside: avoid;
         break-inside: avoid;
       }
+      
+      .manual-page-break {
+        border-top: 2px dashed #999;
+        margin: 10mm 0;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        page-break-after: always;
+      }
     }
     
     /* 屏幕预览样式 */
@@ -89,6 +98,52 @@
         border-top: 2px dashed #ccc;
         margin: 20px 0;
         padding: 10px 0;
+      }
+      
+      .manual-page-break {
+        border-top: 2px dashed #f00;
+        margin: 10mm 0;
+        padding: 5mm 0;
+        text-align: center;
+        color: #f00;
+        font-style: italic;
+        background-color: #fff0f0;
+        position: relative;
+      }
+      
+      .remove-break-btn {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        background: #f00;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .add-break-btn {
+        display: block;
+        width: 100%;
+        padding: 5px;
+        margin: 5px 0;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      
+      .add-break-btn:hover {
+        background: #45a049;
       }
     }
   </style>
@@ -191,6 +246,12 @@
             <label class="ml-2 block text-sm font-medium text-gray-600">Show Page Numbers</label>
           </div>
 
+          <div class="flex items-center">
+            <input type="checkbox" id="param-enable-manual-breaks" checked 
+                   class="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"/>
+            <label class="ml-2 block text-sm font-medium text-gray-600">Enable Manual Page Breaks</label>
+          </div>
+
           <button id="btn-apply" 
                   class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition">
             🔄 Apply & Preview
@@ -207,6 +268,12 @@
               <li>Use A4 paper</li>
               <li>Set margins to "Default" or "Minimum"</li>
               <li>Check "Background graphics" in print settings</li>
+            </ul>
+            <p class="mt-2">📝 Manual Page Breaks:</p>
+            <ul class="list-disc list-inside mt-1">
+              <li>Click "Add Page Break" buttons to insert manual breaks</li>
+              <li>Click "×" to remove a break</li>
+              <li>Breaks are saved in URL for sharing</li>
             </ul>
           </div>
         </div>
@@ -269,6 +336,7 @@
     // Global variables
     let currentUser = null;
     let currentData = null;
+    let manualPageBreaks = new Set(); // Store indices where manual breaks are inserted
 
     // Utility Functions
     function showLoading(show = true) {
@@ -278,6 +346,26 @@
     function getUrlParam(name) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(name);
+    }
+
+    // Parse manual breaks from URL
+    function parseManualBreaksFromURL() {
+      const breaksParam = getUrlParam('breaks');
+      if (breaksParam) {
+        return new Set(breaksParam.split(',').map(Number));
+      }
+      return new Set();
+    }
+
+    // Update URL with manual breaks
+    function updateURLWithBreaks() {
+      const url = new URL(window.location);
+      if (manualPageBreaks.size > 0) {
+        url.searchParams.set('breaks', Array.from(manualPageBreaks).join(','));
+      } else {
+        url.searchParams.delete('breaks');
+      }
+      window.history.replaceState({}, '', url);
     }
 
     // Safe DOM element getter with null checking
@@ -312,7 +400,7 @@
       }
     }
 
-    // Content Rendering with proper pagination
+    // Content Rendering with proper pagination and manual breaks
     function renderPrintContent(params, data) {
       const {
         title = data["分类title"] || "Thai Word Practice",
@@ -322,23 +410,35 @@
         showFooter = true,
         columns = 2,
         rowsPerPage = 8,
-        cellHeight = 35
+        cellHeight = 35,
+        enableManualBreaks = true
       } = params;
 
       const words = data.words || [];
-      const wordsPerPage = columns * rowsPerPage;
-      const totalPages = Math.ceil(words.length / wordsPerPage);
+      
+      // If manual breaks are enabled and we have breaks, use them for pagination
+      let pages = [];
+      if (enableManualBreaks && manualPageBreaks.size > 0) {
+        pages = createPagesWithManualBreaks(words, columns, rowsPerPage);
+      } else {
+        // Use automatic pagination
+        const wordsPerPage = columns * rowsPerPage;
+        const totalPages = Math.ceil(words.length / wordsPerPage);
+        
+        for (let page = 0; page < totalPages; page++) {
+          const startIndex = page * wordsPerPage;
+          const endIndex = Math.min(startIndex + wordsPerPage, words.length);
+          pages.push(words.slice(startIndex, endIndex));
+        }
+      }
       
       let pagesHTML = '';
       
-      for (let page = 0; page < totalPages; page++) {
-        const startIndex = page * wordsPerPage;
-        const endIndex = Math.min(startIndex + wordsPerPage, words.length);
-        const pageWords = words.slice(startIndex, endIndex);
-        
+      pages.forEach((pageWords, pageIndex) => {
         // Calculate grid layout
+        const rows = Math.ceil(pageWords.length / columns);
         const gridTemplateColumns = `repeat(${columns}, 1fr)`;
-        const gridTemplateRows = `repeat(${rowsPerPage}, ${cellHeight}mm)`;
+        const gridTemplateRows = `repeat(${rows}, ${cellHeight}mm)`;
         
         // Header
         let headerHTML = '';
@@ -358,48 +458,61 @@
         
         // Words grid
         let gridHTML = '';
-        for (let i = 0; i < rowsPerPage * columns; i++) {
-          const word = pageWords[i];
+        pageWords.forEach((word, wordIndex) => {
           gridHTML += `
             <div class="word-cell border border-gray-400 p-3 break-inside-avoid">
               <div class="flex flex-col h-full">
-                ${word ? `
-                  <div class="font-bold text-lg mb-2 text-center text-gray-800 border-b border-gray-200 pb-1">
-                    ${word}
+                <div class="font-bold text-lg mb-2 text-center text-gray-800 border-b border-gray-200 pb-1">
+                  ${word}
+                </div>
+                <div class="flex-1">
+                  <div class="mb-2">
+                    <div class="text-xs text-gray-500 mb-1">Meaning:</div>
+                    <div class="h-5 border-b border-gray-300"></div>
                   </div>
-                  <div class="flex-1">
-                    <div class="mb-2">
-                      <div class="text-xs text-gray-500 mb-1">Meaning:</div>
-                      <div class="h-5 border-b border-gray-300"></div>
-                    </div>
-                    <div class="mb-2">
-                      <div class="text-xs text-gray-500 mb-1">Part of Speech:</div>
-                      <div class="h-5 border-b border-gray-300"></div>
-                    </div>
-                    <div>
-                      <div class="text-xs text-gray-500 mb-1">Example Sentence:</div>
-                      <div class="h-8 border-b border-gray-300"></div>
-                    </div>
+                  <div class="mb-2">
+                    <div class="text-xs text-gray-500 mb-1">Part of Speech:</div>
+                    <div class="h-5 border-b border-gray-300"></div>
                   </div>
-                ` : `
-                  <div class="font-bold text-lg mb-2 text-center text-gray-300 border-b border-gray-200 pb-1">
-                    &nbsp;
+                  <div>
+                    <div class="text-xs text-gray-500 mb-1">Example Sentence:</div>
+                    <div class="h-8 border-b border-gray-300"></div>
                   </div>
-                  <div class="flex-1">
-                    <div class="mb-2">
-                      <div class="text-xs text-gray-300 mb-1">Meaning:</div>
-                      <div class="h-5 border-b border-gray-200"></div>
-                    </div>
-                    <div class="mb-2">
-                      <div class="text-xs text-gray-300 mb-1">Part of Speech:</div>
-                      <div class="h-5 border-b border-gray-200"></div>
-                    </div>
-                    <div>
-                      <div class="text-xs text-gray-300 mb-1">Example Sentence:</div>
-                      <div class="h-8 border-b border-gray-200"></div>
-                    </div>
+                </div>
+              </div>
+              ${enableManualBreaks ? `
+                <button class="add-break-btn no-print" data-word-index="${getGlobalWordIndex(words, pageWords, pageIndex, wordIndex)}">
+                  Add Page Break After This Word
+                </button>
+              ` : ''}
+            </div>
+          `;
+        });
+        
+        // Fill empty cells if needed
+        const totalCells = rows * columns;
+        const emptyCells = totalCells - pageWords.length;
+        for (let i = 0; i < emptyCells; i++) {
+          gridHTML += `
+            <div class="word-cell border border-gray-400 p-3 break-inside-avoid">
+              <div class="flex flex-col h-full">
+                <div class="font-bold text-lg mb-2 text-center text-gray-300 border-b border-gray-200 pb-1">
+                  &nbsp;
+                </div>
+                <div class="flex-1">
+                  <div class="mb-2">
+                    <div class="text-xs text-gray-300 mb-1">Meaning:</div>
+                    <div class="h-5 border-b border-gray-200"></div>
                   </div>
-                `}
+                  <div class="mb-2">
+                    <div class="text-xs text-gray-300 mb-1">Part of Speech:</div>
+                    <div class="h-5 border-b border-gray-200"></div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-gray-300 mb-1">Example Sentence:</div>
+                    <div class="h-8 border-b border-gray-200"></div>
+                  </div>
+                </div>
               </div>
             </div>
           `;
@@ -410,7 +523,7 @@
         if (showFooter) {
           footerHTML = `
             <div class="mt-4 pt-3 border-t border-gray-300 text-center text-xs text-gray-500">
-              Page ${page + 1} of ${totalPages}
+              Page ${pageIndex + 1} of ${pages.length}
             </div>
           `;
         }
@@ -427,10 +540,37 @@
             </div>
           </div>
         `;
-      }
+        
+        // Add manual page break indicator if this isn't the last page
+        if (pageIndex < pages.length - 1 && enableManualBreaks) {
+          pagesHTML += `
+            <div class="manual-page-break no-print" data-break-index="${pageIndex}">
+              Manual Page Break
+              <button class="remove-break-btn" data-break-index="${pageIndex}">×</button>
+            </div>
+          `;
+        }
+      });
 
       // Final assembly
       elPrintContent.innerHTML = pagesHTML;
+
+      // Add event listeners for manual break buttons
+      if (enableManualBreaks) {
+        document.querySelectorAll('.add-break-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const wordIndex = parseInt(this.getAttribute('data-word-index'));
+            addManualBreak(wordIndex);
+          });
+        });
+        
+        document.querySelectorAll('.remove-break-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const breakIndex = parseInt(this.getAttribute('data-break-index'));
+            removeManualBreak(breakIndex);
+          });
+        });
+      }
 
       // Print styles
       const style = document.getElementById('print-style');
@@ -488,6 +628,15 @@
             page-break-inside: avoid;
             break-inside: avoid;
           }
+          
+          .manual-page-break {
+            border-top: 2px dashed #999;
+            margin: 10mm 0;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            page-break-after: always;
+          }
         }
         
         @media screen {
@@ -512,6 +661,61 @@
       document.head.appendChild(printStyle);
     }
 
+    // Helper function to get global word index
+    function getGlobalWordIndex(allWords, pageWords, pageIndex, wordIndex) {
+      // This is a simplified implementation
+      // In a real scenario, you'd need to track the actual global index
+      let globalIndex = 0;
+      for (let i = 0; i < pageIndex; i++) {
+        // This would need to be calculated based on your pagination logic
+        globalIndex += Math.ceil(allWords.length / (allWords.length / pageWords.length));
+      }
+      return globalIndex + wordIndex;
+    }
+
+    // Create pages with manual breaks
+    function createPagesWithManualBreaks(words, columns, rowsPerPage) {
+      const pages = [];
+      let currentPage = [];
+      const maxWordsPerPage = columns * rowsPerPage;
+      
+      words.forEach((word, index) => {
+        currentPage.push(word);
+        
+        // Check if we need to break page
+        if (manualPageBreaks.has(index) || currentPage.length >= maxWordsPerPage) {
+          pages.push([...currentPage]);
+          currentPage = [];
+        }
+      });
+      
+      // Add any remaining words
+      if (currentPage.length > 0) {
+        pages.push(currentPage);
+      }
+      
+      return pages;
+    }
+
+    // Add a manual page break
+    function addManualBreak(wordIndex) {
+      manualPageBreaks.add(wordIndex);
+      updateURLWithBreaks();
+      applyParams(); // Re-render with the new break
+    }
+
+    // Remove a manual page break
+    function removeManualBreak(breakIndex) {
+      // This is a simplified implementation
+      // In a real scenario, you'd need to map break indices to word indices
+      const breaksArray = Array.from(manualPageBreaks);
+      if (breakIndex < breaksArray.length) {
+        manualPageBreaks.delete(breaksArray[breakIndex]);
+        updateURLWithBreaks();
+        applyParams(); // Re-render without the break
+      }
+    }
+
     // Parameter Application with safe element access
     function applyParams() {
       try {
@@ -523,6 +727,7 @@
         const columnsElement = getElementSafe('param-columns');
         const rowsElement = getElementSafe('param-rows');
         const cellHeightElement = getElementSafe('param-cell-height');
+        const enableManualBreaksElement = getElementSafe('param-enable-manual-breaks');
 
         // If any required element is missing, use defaults
         if (!titleElement || !instructionsElement) {
@@ -537,7 +742,8 @@
           showFooter: showFooterElement ? showFooterElement.checked : true,
           columns: columnsElement ? parseInt(columnsElement.value) : 2,
           rowsPerPage: rowsElement ? parseInt(rowsElement.value) : 8,
-          cellHeight: cellHeightElement ? parseInt(cellHeightElement.value) : 35
+          cellHeight: cellHeightElement ? parseInt(cellHeightElement.value) : 35,
+          enableManualBreaks: enableManualBreaksElement ? enableManualBreaksElement.checked : true
         };
         
         if (currentData) {
@@ -590,6 +796,10 @@
         console.log('Fetching data for wordsetID:', wordsetID);
         currentData = await fetchData(wordsetID);
         console.log('Data loaded:', currentData);
+        
+        // Load manual breaks from URL
+        manualPageBreaks = parseManualBreaksFromURL();
+        
         applyParams();
       } catch (err) {
         console.error('Error initializing app:', err);

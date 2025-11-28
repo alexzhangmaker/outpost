@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mnemosyne ADHD Protocol Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Main brand color
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a' },
+                        // New color for Interaction/Thinking zone (Indigo)
+                        think: { 50: '#eef2ff', 100: '#e0e7ff', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3' }
+                    },
+                    typography: (theme) => ({
+                        DEFAULT: {
+                            css: {
+                                color: theme('colors.slate.700'),
+                                h2: {
+                                    color: theme('colors.slate.800'),
+                                    fontWeight: '700',
+                                    marginTop: '0', /* Fix prose default margin */
+                                },
+                                strong: {
+                                    color: theme('colors.brand.600'),
+                                    fontWeight: '600',
+                                },
+                                ul: {
+                                    listStyleType: 'disc',
+                                    paddingLeft: '1.25rem',
+                                },
+                                'ul > li::marker': {
+                                    color: theme('colors.slate.400'),
+                                },
+                            },
+                        },
+                    }),
+                }
+            },
+            plugins: [
+                // We need to load the typography plugin from CDN within the script block
+                function({ addBase, theme }) {
+                    const proseStyles = theme('typography.DEFAULT.css');
+                    addBase({
+                        '.prose': proseStyles,
+                        // Add specific overrides for list items to make them compact
+                        '.prose li': { margin: '0.25rem 0' },
+                         // Ensure slide content doesn't have huge margins
+                        '.section-slide > :first-child': { marginTop: '0' },
+                        '.section-slide > :last-child': { marginBottom: '0' },
+                    });
+                }
+            ]
+        }
+    </script>
+    <style>
+        /* Custom Base Styles */
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f8fafc; }
+        
+        /* Quiz Option Styles */
+        .quiz-option { cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none; }
+        .quiz-option:hover { background-color: #f1f5f9; transform: translateY(-1px); }
+        .quiz-option:active { transform: translateY(0); }
+        .quiz-option.selected { border-color: #3b82f6; background-color: #eff6ff; }
+        .quiz-option.correct { border-color: #22c55e; background-color: #dcfce7; box-shadow: 0 1px 2px 0 rgb(34 197 94 / 0.1); }
+        .quiz-option.wrong { border-color: #ef4444; background-color: #fee2e2; }
+
+        /* Details Summary Marker Customization */
+        details > summary::-webkit-details-marker { display: none; }
+        details > summary { list-style: none; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 antialiased">
+
+    <nav class="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="font-bold text-xl text-slate-800 flex items-center gap-2">
+                <span>🧠</span> Mnemosyne <span class="text-xs text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full font-medium">ADHD Focus</span>
+            </div>
+            <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+                <button onclick="switchView('learn')" id="btn-learn" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200">学习模式</button>
+                <button onclick="switchView('feynman')" id="btn-feynman" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 text-slate-600 hover:text-slate-900">费曼剧本</button>
+                <button onclick="switchView('quiz')" id="btn-quiz" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 text-slate-600 hover:text-slate-900">测验模式</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-4 py-8">
+        <div id="loading" class="text-center py-20 text-slate-400 flex flex-col items-center">
+            <svg class="animate-spin h-8 w-8 mb-4 text-brand-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-sm font-medium">正在加载 ADHD 优化笔记...</span>
+        </div>
+
+        <div id="app" class="hidden space-y-8 transition-opacity duration-300 opacity-0"></div>
+    </main>
+
+    <script type="text/template" id="markdown-source">
+:::unit[Simple Past Tense]{id="grammar-simple-past" tag="IELTS/Grammar"}
+
+  :::script
+  想象你正在看一部**已经放映结束的电影**。
+  虽然电影很精彩，但屏幕已经黑了，电影里的故事和此时此刻坐在影院里的你，**没有任何联系**。
+  这就是“一般过去时”——它只关乎“过去那个时间点”发生的事，它是时间轴上一个**孤立的黑点**。
+  :::
+
+  :::slide
+  ## 知识点的关键构成
+  一般过去时的核心在于动词的“变形”。
+
+  * **1. 肯定句 (Positive)**: `Subject + Verb-ed (or irregular form)`
+      * *例*: He **worked** yesterday. / She **went** out.
+  * **2. 否定句 (Negative)**: `Subject + did not (didn't) + Verb (原形)`
+      * *重点*: 只要出现 `did/didn't`，动词必须打回原形！
+  * **3. 疑问句 (Question)**: `Did + Subject + Verb (原形)?`
+
+  ---
+
+  ## 用途
+  我们在以下三种主要情境使用它：
+
+  1.  **特定时间发生的动作**：明确知道动作发生在“昨天”、“上周”等过去时间。
+  2.  **连续发生的一系列动作**：讲故事时，动作按时间顺序一个接一个发生。
+  3.  **过去的习惯或状态**：以前常做的事，现在已经结束了。
+
+  ---
+
+  ## 常见用途示例
+
+  1.  **Specific Time (特定时间)**:
+      * We **watched** a movie **last night**.
+      * 我们昨晚看了一场电影。（时间点明确）
+  2.  **Sequence (连续动作)**:
+      * He **came** in, **took** off his coat and **sat** down.
+      * 他走进来，脱下外套，然后坐了下来。
+  3.  **Past State (过去的状况)**:
+      * I **lived** in London for 10 years, but now I live in Paris.
+      * 我（以前）在伦敦住了10年。（暗示现在不住了）
+
+  ---
+
+  ## 练习
+  *请在纸上写下答案后核对。*
+
+  1.  **填空**: Last summer, I \_\_\_\_\_\_ (go) to Thailand.
+  2.  **改错**: He didn't bought the ticket.
+
+  **【参考答案】**
+  1.  **went**
+  2.  **bought -> buy** (didn't后接原形)
+  ---
+  :::
+
+  :::interaction
+    ::ask[🎯 Level 1 (直击要点): 闭上眼睛回忆一下，一般过去时的“否定句”公式是什么？动词需要变形吗？]
+    ::reveal[
+      公式是：**Subject + didn't + 动词原形**。
+      关键点：**不需要**变形！一定要用**原形**。
+      记忆口诀：有了助动词 `did`，动词就“解放”了，变回原来的样子。
+    ]
+
+    ::ask[🎯 Level 2 (深度辨析): 既然 "I lived in London" 和 "I have lived in London" 翻译成中文差不多，它们的根本区别是什么？]
+    ::reveal[
+      **换句话说 (Rephrase):**
+      区别在于**“现在是否还在那里”**。
+      * **Lived (过去时)** = 它是**遗照**。那段经历死了，结束了。我现在**不在**伦敦。
+      * **Have lived (完成时)** = 它是**直播**。那段经历一直持续到**现在**。我现在**还在**伦敦。
+    ]
+  :::
+
+  :::quiz{type="mc"}
+    Q: [Form Check] Which sentence is grammatically CORRECT?
+    [ ] He didn't went to school.
+    [x] He didn't go to school.
+    [ ] He not went to school.
+  :::
+
+  :::quiz{type="cloze"}
+    Q: [Signal Word Check] I met him three days ______.
+    [x] ago
+    [ ] before
+    [ ] last
+  :::
+
+  :::quiz{type="mc"}
+    Q: [Context Check] Shakespeare ______ 154 sonnets. (Fact: Shakespeare died in 1616)
+    [ ] has written
+    [x] wrote
+    [ ] was writing
+  :::
+
+:::
+    </script>
+
+    <script type="module">
+        import { unified } from 'https://esm.sh/unified@11?bundle';
+        import remarkParse from 'https://esm.sh/remark-parse@11?bundle';
+        import remarkDirective from 'https://esm.sh/remark-directive@3?bundle';
+        import remarkRehype from 'https://esm.sh/remark-rehype@11?bundle';
+        import rehypeStringify from 'https://esm.sh/rehype-stringify@10?bundle';
+        import { visit } from 'https://esm.sh/unist-util-visit@5?bundle';
+        import { h } from 'https://esm.sh/hastscript@9?bundle';
+
+        // 1. Define Custom Plugin (Updated styling for ADHD focus)
+        // 1. Define Custom Plugin (Fixed Quiz Parsing)
+        function mnemosynePlugin() {
+            return (tree) => {
+                visit(tree, (node) => {
+                    if (node.type === 'containerDirective' || node.type === 'leafDirective') {
+                        const data = node.data || (node.data = {});
+                        const attributes = node.attributes || {};
+                        const name = node.name;
+
+                        // :::unit -> Card Container
+                        if (name === 'unit') {
+                            const tag = attributes.tag || 'General';
+                            data.hName = 'article';
+                            data.hProperties = { class: 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:shadow-md section-unit' };
+                            
+                            // Title extraction
+                            let title = attributes.title || 'Unit';
+                            // Safe check for title extraction
+                            if(node.children[0]?.type === 'paragraph' && node.children[0].children?.[0]?.type === 'text') {
+                                title = node.children[0].children[0].value;
+                                node.children.shift(); 
+                            }
+
+                            node.children.unshift({type: 'html', value: `
+                                <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                                    <h1 class="text-xl font-bold text-slate-900">${title}</h1>
+                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-brand-50 text-brand-600 border border-brand-100">${tag}</span>
+                                </div>
+                            `});
+                        }
+
+                        // :::script
+                        if (name === 'script') {
+                            data.hName = 'div';
+                            data.hProperties = {
+                                class: 'bg-[#1a1b26] text-emerald-400 font-mono text-[15px] p-6 leading-relaxed mx-6 my-6 rounded-xl shadow-inner border border-slate-800 section-script hidden',
+                            };
+                            node.children.unshift({type: 'html', value: '<div class="text-xs text-slate-500 mb-3 uppercase tracking-widest font-semibold flex items-center gap-2"><span>🎙️</span> Feynman Script / 费曼剧本</div>'});
+                        }
+
+                        // :::slide
+                        if (name === 'slide') {
+                            data.hName = 'div';
+                            data.hProperties = { class: 'px-6 py-5 slide-content prose prose-slate max-w-none section-slide' };
+                        }
+
+                        // :::interaction
+                        if (name === 'interaction') {
+                            data.hName = 'div';
+                            data.hProperties = { class: 'px-6 py-5 bg-think-50 border-t border-think-100 section-interaction rounded-b-xl' };
+                        }
+
+                        // ::ask
+                        if (name === 'ask') {
+                            data.hName = 'h3';
+                            data.hProperties = { class: 'text-think-800 font-bold flex items-start gap-2 mb-3 text-base' };
+                            node.children.unshift({type: 'html', value: '<span class="flex-shrink-0 mt-0.5">🎯</span>'});
+                        }
+
+                        // ::reveal
+                        if (name === 'reveal') {
+                            data.hName = 'details';
+                            data.hProperties = { class: 'group cursor-pointer mt-2' };
+                            node.children.unshift({type: 'html', value: `
+                                <summary class="inline-flex items-center gap-2 text-sm text-think-600 hover:text-think-800 font-semibold select-none transition-colors py-2 px-3 rounded-lg hover:bg-think-100/50 mb-1">
+                                    <span class="transition-transform duration-200 group-open:rotate-180">🔄</span>
+                                    <span>查看 "换句话说" (Rephrase)</span>
+                                </summary>
+                                <div class="text-slate-700 bg-white p-4 rounded-lg border border-think-200 shadow-sm text-[15px] leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                            `});
+                            node.children.push({type: 'html', value: '</div>'});
+                        }
+
+                        // :::quiz -> 修复了这里的解析逻辑
+                        if (name === 'quiz') {
+                            data.hName = 'div';
+                            data.hProperties = { class: 'p-6 border border-slate-200 rounded-xl shadow-sm bg-white section-quiz hidden' };
+                            
+                            // [FIX START] 健壮的文本提取逻辑
+                            let textContent = "";
+                            const firstChild = node.children[0];
+                            
+                            if (firstChild && firstChild.type === 'paragraph') {
+                                // 如果是段落，提取段落内所有 Text 节点的值
+                                textContent = firstChild.children
+                                    .filter(c => c.type === 'text')
+                                    .map(c => c.value)
+                                    .join('');
+                            } else if (firstChild && firstChild.type === 'text') {
+                                textContent = firstChild.value;
+                            }
+                            // [FIX END]
+
+                            const lines = textContent.split('\n').filter(line => line.trim() !== '');
+                            
+                            // 安全检查：防止 lines[0] 为 undefined
+                            const questionText = lines[0] ? lines[0].replace('Q:', '').trim() : "Error: Question not found";
+                            
+                            let html = `<div class="font-bold text-lg text-slate-900 mb-6 flex items-start gap-2"><span class="text-brand-500">Q:</span> ${questionText}</div><div class="space-y-3">`;
+                            
+                            for(let i=1; i<lines.length; i++) {
+                                const line = lines[i].trim();
+                                if(!line.startsWith('[')) continue;
+                                const isCorrect = line.startsWith('[x]');
+                                const text = line.replace(/^\[.\]/, '').trim();
+                                html += `
+                                    <div class="quiz-option border-2 border-slate-200 rounded-xl p-4 flex items-center gap-4 bg-white" onclick="checkAnswer(this, ${isCorrect})">
+                                        <div class="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center flex-shrink-0 status-icon transition-colors"></div>
+                                        <span class="text-base text-slate-800 font-medium">${text}</span>
+                                    </div>
+                                `;
+                            }
+                            html += '</div>';
+                            
+                            // 将生成的 HTML 作为一个 raw html 节点插回去
+                            node.children = [{type: 'html', value: html}];
+                        }
+                    }
+                });
+            };
+        }
+
+        // 2. Main Render Logic
+        async function render() {
+            const rawMarkdown = document.getElementById('markdown-source').innerHTML;
+            const app = document.getElementById('app');
+            const loading = document.getElementById('loading');
+
+            try {
+                const processor = unified()
+                    .use(remarkParse)
+                    .use(remarkDirective)
+                    .use(mnemosynePlugin)
+                    .use(remarkRehype, { allowDangerousHtml: true }) // Important for our HTML injections
+                    .use(rehypeStringify, { allowDangerousHtml: true });
+
+                const file = await processor.process(rawMarkdown);
+                
+                app.innerHTML = String(file);
+                loading.style.display = 'none';
+                app.classList.remove('hidden', 'opacity-0');
+                app.classList.add('opacity-100');
+
+            } catch (error) {
+                loading.innerHTML = `<div class="text-red-500">渲染错误: ${error.message}</div>`;
+                console.error(error);
+            }
+        }
+
+        // 3. UI Logic (View Switching with updated styles)
+        window.switchView = (mode) => {
+            // Update Buttons State
+            const buttons = { learn: 'btn-learn', feynman: 'btn-feynman', quiz: 'btn-quiz' };
+            for (const [m, id] of Object.entries(buttons)) {
+                const btn = document.getElementById(id);
+                if (m === mode) {
+                    btn.className = "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 bg-white text-brand-600 shadow-sm ring-1 ring-slate-200";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50/50";
+                }
+            }
+
+            // Update Section Visibility
+            const elements = {
+                script: document.querySelectorAll('.section-script'),
+                slide: document.querySelectorAll('.section-slide'),
+                interaction: document.querySelectorAll('.section-interaction'),
+                quiz: document.querySelectorAll('.section-quiz')
+            };
+
+            const setVisibility = (type, show) => {
+                elements[type].forEach(el => el.classList.toggle('hidden', !show));
+            }
+
+            if (mode === 'learn') {
+                setVisibility('script', false);
+                setVisibility('slide', true);
+                setVisibility('interaction', true);
+                setVisibility('quiz', false);
+            } else if (mode === 'feynman') {
+                setVisibility('script', true);
+                setVisibility('slide', false);
+                setVisibility('interaction', false);
+                setVisibility('quiz', false);
+            } else if (mode === 'quiz') {
+                setVisibility('script', false);
+                setVisibility('slide', false);
+                setVisibility('interaction', false);
+                setVisibility('quiz', true);
+            }
+        };
+
+        // 4. Quiz Interaction Logic
+        window.checkAnswer = (el, isCorrect) => {
+            if(el.classList.contains('correct') || el.classList.contains('wrong')) return; // Prevent re-clicking
+
+            const parent = el.parentElement;
+            // Disable siblings
+            Array.from(parent.children).forEach(child => {
+                child.classList.remove('selected');
+                child.style.pointerEvents = 'none'; // Lock other options
+                if (child !== el) child.classList.add('opacity-60');
+            });
+
+            el.classList.add('selected');
+            const icon = el.querySelector('.status-icon');
+            
+            if (isCorrect) {
+                el.classList.add('correct');
+                icon.classList.remove('border-slate-300');
+                icon.classList.add('border-green-500', 'bg-green-500', 'text-white');
+                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>';
+            } else {
+                el.classList.add('wrong');
+                icon.classList.remove('border-slate-300');
+                icon.classList.add('border-red-500', 'bg-red-500', 'text-white');
+                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>';
+            }
+        };
+
+        // Initialize
+        render().then(() => switchView('learn'));
+
+    </script>
+</body>
+</html>

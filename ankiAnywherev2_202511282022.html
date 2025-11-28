@@ -784,9 +784,13 @@
             loadProgress();
             showCurrentWord();
             
-            // Fix: 不要在 initApp 内部添加 flashcard 和 reset 的 addEventListener
-            // 因为 initApp 可能会被多次调用（例如切换 Set 时），导致事件重复绑定
-            // 事件绑定已移动到 DOMContentLoaded 或是一次性执行的区域
+            // 添加事件监听器
+            document.getElementById('flashcard').addEventListener('click', function() {
+                this.classList.toggle('flipped');
+            });
+                        
+            // 重置按钮事件
+            document.getElementById('reset-btn').addEventListener('click', resetApp);
         }
 
         // 评分按钮事件
@@ -905,22 +909,8 @@
         }) ;
     </script>
     <script>
-        // 新增：独立的翻转逻辑函数，供点击事件和快捷键调用
-        function toggleFlashcard() {
-            // 防止选中文本时误触翻转
-            const selection = window.getSelection();
-            if(selection.toString().length > 0) return;
-
-            const card = document.getElementById('flashcard');
-            card.classList.toggle('flipped');
-        }
-
         document.addEventListener('DOMContentLoaded', async (event)=>{
             console.log('DOMContentLoaded') ;
-
-            // Fix: 在 DOMContentLoaded 中绑定事件，确保生命周期内只执行一次
-            document.getElementById('flashcard').addEventListener('click', toggleFlashcard);
-            document.getElementById('reset-btn').addEventListener('click', resetApp);
 
             const svgBTNSize = 18 ;
             createStickyToolbar({
@@ -991,9 +981,10 @@
         } ;
 
         const hotKeyCall_SPACE = (event)=>{
-            console.log("hotKeyCall_SPACE called:"+event.key) ;
-            // Fix: 直接调用 toggleFlashcard 函数，而不是触发 click 事件
-            toggleFlashcard();
+            console.log("hotKeyCall_A called:"+event.key) ;
+            //let tagBTNPlayer = document.getElementById('idBTNPlayer') ;
+            // 添加事件监听器
+            document.getElementById('flashcard').click(event) ;
         } ;
 
         const hotKeyCall_Num1 = (event)=>{
