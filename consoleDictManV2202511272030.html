@@ -1459,116 +1459,80 @@ function updateNewWordsetScenarioOptions() {
         }
 
         // 初始化字典缓存
-async function initDictionaryCache() {
-    console.log('[CACHE] 开始初始化字典缓存...');
-    const todayKey = getTodayDateKey();
-    const cacheKey = `dictionary_${todayKey}`;
-    
-    try {
-        console.log(`[CACHE] 检查本地存储缓存，键: ${cacheKey}`);
-        
-        // 首先检查本地存储中是否有今天的缓存
-        const cachedData = await dictionaryStorage.getItem(cacheKey);
-        
-        if (cachedData) {
-            console.log('[CACHE] 从本地存储加载字典缓存');
-            dictionaryCache = new Map(Object.entries(cachedData));
-            console.log(`[CACHE] 字典缓存已加载，当前缓存 ${dictionaryCache.size} 个单词`);
+        async function initDictionaryCache() {
+            console.log('初始化字典缓存...');
+            const todayKey = getTodayDateKey();
+            const cacheKey = `dictionary_${todayKey}`;
             
-            // 设置增量监听
+            try {
+                // 首先检查本地存储中是否有今天的缓存
+                const cachedData = await dictionaryStorage.getItem(cacheKey);
+                
+                if (cachedData) {
+                    console.log('从本地存储加载字典缓存');
+                    dictionaryCache = new Map(Object.entries(cachedData));
+                    console.log(`字典缓存已加载，当前缓存 ${dictionaryCache.size} 个单词`);
+                    return;
+                }
+                
+                // 如果没有本地缓存，从Firebase加载
+                console.log('从Firebase加载字典数据...');
+                const snapshot = await database.ref('thaiDictionary').once('value');
+                
+                if (snapshot.exists()) {
+                    const dictionaryData = snapshot.val();
+                    dictionaryCache.clear();
+                    
+                    Object.keys(dictionaryData).forEach(word => {
+                        dictionaryCache.set(word, dictionaryData[word]);
+                    });
+                    
+                    // 保存到本地存储
+                    const cacheObject = Object.fromEntries(dictionaryCache);
+                    await dictionaryStorage.setItem(cacheKey, cacheObject);
+                    
+                    console.log(`字典缓存已更新并保存到本地存储，当前缓存 ${dictionaryCache.size} 个单词`);
+                } else {
+                    console.log('thaiDictionary路径下暂无数据');
+                    // 初始化空缓存到本地存储
+                    await dictionaryStorage.setItem(cacheKey, {});
+                }
+                
+            } catch (error) {
+                console.error('初始化字典缓存错误:', error);
+            }
+            
+            // 设置Firebase实时监听，以便在数据变化时更新缓存
             setupDictionaryListener();
-            return;
         }
-        
-        // 如果没有本地缓存，从Firebase加载
-        console.log('[CACHE] 没有本地缓存，从Firebase加载字典数据...');
-        const snapshot = await database.ref('thaiDictionary').once('value');
-        
-        if (snapshot.exists()) {
-            const dictionaryData = snapshot.val();
-            dictionaryCache.clear();
-            
-            Object.keys(dictionaryData).forEach(word => {
-                dictionaryCache.set(word, dictionaryData[word]);
-            });
-            
-            console.log(`[CACHE] 从Firebase加载了 ${dictionaryCache.size} 个单词`);
-            
-            // 保存到本地存储
-            const cacheObject = Object.fromEntries(dictionaryCache);
-            await dictionaryStorage.setItem(cacheKey, cacheObject);
-            
-            console.log(`[CACHE] 字典缓存已更新并保存到本地存储`);
-        } else {
-            console.log('[CACHE] thaiDictionary路径下暂无数据');
-            // 初始化空缓存到本地存储
-            await dictionaryStorage.setItem(cacheKey, {});
-        }
-        
-        // 设置增量监听
-        setupDictionaryListener();
-        
-    } catch (error) {
-        console.error('[CACHE] 初始化字典缓存错误:', error);
-        console.error('[CACHE] 错误详情:', error.message, error.stack);
-    }
-}
 
         // 设置字典数据实时监听
-function setupDictionaryListener() {
-    console.log('设置字典数据实时监听...');
-    
-    // 监听新增的单词
-    database.ref('thaiDictionary').on('child_added', (snapshot) => {
-        const word = snapshot.key;
-        const definition = snapshot.val();
-        
-        console.log(`[CACHE] 新增单词 "${word}" 添加到缓存`);
-        dictionaryCache.set(word, definition);
-        updateLocalStorageCache();
-    });
-
-    // 监听更新的单词
-    database.ref('thaiDictionary').on('child_changed', (snapshot) => {
-        const word = snapshot.key;
-        const definition = snapshot.val();
-        
-        console.log(`[CACHE] 更新单词 "${word}" 的缓存`);
-        dictionaryCache.set(word, definition);
-        updateLocalStorageCache();
-    });
-
-    // 监听删除的单词
-    database.ref('thaiDictionary').on('child_removed', (snapshot) => {
-        const word = snapshot.key;
-        
-        console.log(`[CACHE] 删除单词 "${word}" 从缓存`);
-        dictionaryCache.delete(word);
-        updateLocalStorageCache();
-    });
-
-    console.log('字典数据实时监听已设置完成');
-}
-
-// 更新本地存储缓存（防抖处理）
-let storageUpdateTimeout;
-function updateLocalStorageCache() {
-    clearTimeout(storageUpdateTimeout);
-    storageUpdateTimeout = setTimeout(async () => {
-        const todayKey = getTodayDateKey();
-        const cacheKey = `dictionary_${todayKey}`;
-        const cacheObject = Object.fromEntries(dictionaryCache);
-        
-        try {
-            console.log(`[CACHE] 更新本地存储缓存，当前缓存 ${dictionaryCache.size} 个单词`);
-            await dictionaryStorage.setItem(cacheKey, cacheObject);
-            console.log(`[CACHE] 本地存储缓存更新完成`);
-        } catch (error) {
-            console.error('[CACHE] 更新本地存储缓存错误:', error);
+        function setupDictionaryListener() {
+            database.ref('thaiDictionary').on('value', async (snapshot) => {
+                if (snapshot.exists()) {
+                    const dictionaryData = snapshot.val();
+                    dictionaryCache.clear();
+                    
+                    Object.keys(dictionaryData).forEach(word => {
+                        dictionaryCache.set(word, dictionaryData[word]);
+                    });
+                    
+                    // 更新本地存储
+                    const todayKey = getTodayDateKey();
+                    const cacheKey = `dictionary_${todayKey}`;
+                    const cacheObject = Object.fromEntries(dictionaryCache);
+                    
+                    try {
+                        await dictionaryStorage.setItem(cacheKey, cacheObject);
+                        console.log(`字典缓存已实时更新，当前缓存 ${dictionaryCache.size} 个单词`);
+                    } catch (error) {
+                        console.error('更新本地存储缓存错误:', error);
+                    }
+                }
+            }, (error) => {
+                console.error('监听字典数据错误:', error);
+            });
         }
-    }, 2000); // 防抖延迟2秒
-}
-
 
         // 防抖函数
         function debounce(func, wait) {
@@ -1662,51 +1626,45 @@ function updateLocalStorageCache() {
         }
 
         // 检查单词是否在字典中
-        // 检查单词是否在字典中
-async function checkAndFetchWordDefinition(word) {
-    console.log(`[WORD CHECK] 开始检查单词 "${word}"`);
-    
-    // 首先检查本地缓存
-    if (dictionaryCache.has(word)) {
-        console.log(`[WORD CHECK] 单词 "${word}" 已在字典缓存中`);
-        return { exists: true, data: dictionaryCache.get(word) };
-    }
-    
-    // 如果不在缓存中，通过API查询
-    console.log(`[WORD CHECK] 单词 "${word}" 不在字典中，通过API查询...`);
-    try {
-        const currentUser = auth.currentUser;
-        const userId = currentUser ? currentUser.uid : 'anonymous';
-        
-        console.log(`[API] 调用字典查询API，单词: "${word}", 用户: ${userId}`);
-        const result = await apiClient.lookupThaiWord(word, 'deepseek', userId);
-        
-        if (result && result.success) {
-            console.log(`[API] 单词 "${word}" 查询成功，保存到Firebase`);
+        async function checkAndFetchWordDefinition(word) {
+            // 首先检查本地缓存
+            if (dictionaryCache.has(word)) {
+                console.log(`单词 "${word}" 已在字典缓存中`);
+                return { exists: true, data: dictionaryCache.get(word) };
+            }
             
-            // 将查询结果保存到Firebase字典中
-            await database.ref(`thaiDictionary/${word}`).set(result.data);
-            
-            // 更新本地缓存
-            dictionaryCache.set(word, result.data);
-            
-            // 更新本地存储
-            const todayKey = getTodayDateKey();
-            const cacheKey = `dictionary_${todayKey}`;
-            const cacheObject = Object.fromEntries(dictionaryCache);
-            await dictionaryStorage.setItem(cacheKey, cacheObject);
-            
-            console.log(`[WORD CHECK] 单词 "${word}" 已添加到字典和缓存`);
-            return { exists: false, data: result.data, newlyAdded: true };
-        } else {
-            console.warn(`[WORD CHECK] 单词 "${word}" 查询失败:`, result?.error);
-            return { exists: false, data: null, error: result?.error };
+            // 如果不在缓存中，通过API查询
+            console.log(`单词 "${word}" 不在字典中，通过API查询...`);
+            try {
+                const currentUser = auth.currentUser;
+                const userId = currentUser ? currentUser.uid : 'anonymous';
+                
+                const result = await apiClient.lookupThaiWord(word, 'deepseek', userId);
+                
+                if (result && result.success) {
+                    // 将查询结果保存到Firebase字典中
+                    await database.ref(`thaiDictionary/${word}`).set(result.data);
+                    
+                    // 更新本地缓存
+                    dictionaryCache.set(word, result.data);
+                    
+                    // 更新本地存储
+                    const todayKey = getTodayDateKey();
+                    const cacheKey = `dictionary_${todayKey}`;
+                    const cacheObject = Object.fromEntries(dictionaryCache);
+                    await dictionaryStorage.setItem(cacheKey, cacheObject);
+                    
+                    console.log(`单词 "${word}" 已添加到字典和缓存`);
+                    return { exists: false, data: result.data, newlyAdded: true };
+                } else {
+                    console.warn(`单词 "${word}" 查询失败:`, result?.error);
+                    return { exists: false, data: null, error: result?.error };
+                }
+            } catch (error) {
+                console.error(`单词 "${word}" API查询错误:`, error);
+                return { exists: false, data: null, error: error.message };
+            }
         }
-    } catch (error) {
-        console.error(`[WORD CHECK] 单词 "${word}" API查询错误:`, error);
-        return { exists: false, data: null, error: error.message };
-    }
-}
 
         // 用户登录
         function signIn() {
@@ -1736,52 +1694,38 @@ async function checkAndFetchWordDefinition(word) {
                 });
         }
 
-
         // 加载词汇集列表
-function loadWordsets() {
-    console.log('[LOAD] 开始加载词汇集列表...');
-    wordsetsList.innerHTML = '<div style="padding: 20px; text-align: center;"><div class="loader"></div> 加载中...</div>';
-    
-    database.ref('thaiWordList').once('value')
-        .then((snapshot) => {
-            console.log('[LOAD] Firebase数据加载完成');
-            allWordsets.clear();
-            filteredWordsets.clear();
+        function loadWordsets() {
+            wordsetsList.innerHTML = '<div style="padding: 20px; text-align: center;"><div class="loader"></div> 加载中...</div>';
             
-            if (!snapshot.exists()) {
-                console.log('[LOAD] 没有找到词汇集数据');
-                wordsetsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-light);">暂无词汇集</div>';
-                return;
-            }
-            
-            const wordsets = snapshot.val();
-            console.log(`[LOAD] 从Firebase加载了 ${Object.keys(wordsets).length} 个词汇集`);
-            
-            Object.keys(wordsets).forEach(wordsetId => {
-                // 跳过metaWordList路径
-                if (wordsetId === 'metaWordList') {
-                    console.log('[LOAD] 跳过 metaWordList 路径');
-                    return;
-                }
-                
-                const wordset = wordsets[wordsetId];
-                console.log(`[LOAD] 处理词汇集 ${wordsetId}:`, wordset.分类title);
-                allWordsets.set(wordsetId, wordset);
-                filteredWordsets.set(wordsetId, wordset);
-            });
-            
-            console.log(`[LOAD] 最终加载了 ${allWordsets.size} 个词汇集`);
-            
-            // 渲染词汇集列表
-            renderFilteredWordsets();
-            
-        })
-        .catch((error) => {
-            console.error('[LOAD] 加载词汇集错误:', error);
-            console.error('[LOAD] 错误详情:', error.message, error.stack);
-            wordsetsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">加载词汇集失败</div>';
-        });
-}
+            database.ref('thaiWordList').once('value')
+                .then((snapshot) => {
+                    allWordsets.clear();
+                    filteredWordsets.clear();
+                    
+                    if (!snapshot.exists()) {
+                        wordsetsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-light);">暂无词汇集</div>';
+                        return;
+                    }
+                    
+                    const wordsets = snapshot.val();
+                    Object.keys(wordsets).forEach(wordsetId => {
+                        // 跳过metaWordList路径
+                        if (wordsetId === 'metaWordList') return;
+                        
+                        const wordset = wordsets[wordsetId];
+                        allWordsets.set(wordsetId, wordset);
+                        filteredWordsets.set(wordsetId, wordset);
+                    });
+                    
+                    // 渲染词汇集列表
+                    renderFilteredWordsets();
+                })
+                .catch((error) => {
+                    console.error('加载词汇集错误:', error);
+                    wordsetsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">加载词汇集失败</div>';
+                });
+        }
 
         // 添加词汇集到列表
         function addWordsetToList(wordsetId, wordset) {
@@ -2105,120 +2049,88 @@ function loadWordsets() {
         }
 
         // 保存词汇集
-async function saveWordset(e) {
-    e.preventDefault();
-    console.log('[WORDSAVE] 开始保存词汇集...');
-    
-    // 获取表单数据
-    const title = document.getElementById('wordset-title-input').value;
-    const level = document.getElementById('wordset-level-select').value;
-    const scenarioId = document.getElementById('wordset-scenario-select').value;
-    const wordsText = document.getElementById('wordset-words-textarea').value;
-    
-    console.log(`[WORDSAVE] 表单数据 - 标题: "${title}", 级别: "${level}", 场景ID: "${scenarioId}"`);
-    console.log(`[WORDSAVE] 词汇文本: "${wordsText.substring(0, 100)}..."`);
-    
-    // 处理词汇列表
-    const words = wordsText.split('\n')
-        .map(word => word.trim())
-        .filter(word => word.length > 0);
-    
-    console.log(`[WORDSAVE] 处理后的词汇列表:`, words);
-    
-    if (words.length === 0) {
-        console.warn('[WORDSAVE] 错误: 没有有效的词汇');
-        showStatus('请输入至少一个词汇', 'error');
-        return;
-    }
-    
-    if (!level || !scenarioId) {
-        console.warn('[WORDSAVE] 错误: 级别或场景未选择');
-        showStatus('请选择级别和场景', 'error');
-        return;
-    }
-    
-    // 显示保存进度
-    showStatus(`正在检查 ${words.length} 个单词的字典定义...`, 'info');
-    
-    // 创建进度条
-    const progressContainer = document.createElement('div');
-    progressContainer.className = 'progress-container';
-    const progressBar = document.createElement('div');
-    progressBar.className = 'progress-bar';
-    progressContainer.appendChild(progressBar);
-    statusMessage.appendChild(progressContainer);
-    
-    // 检查每个单词的字典定义
-    let missingWords = 0;
-    let processedWords = 0;
-    
-    console.log(`[WORDSAVE] 开始检查 ${words.length} 个单词的字典定义`);
-    
-    for (const word of words) {
-        console.log(`[WORDSAVE] 检查单词 ${processedWords + 1}/${words.length}: "${word}"`);
-        const result = await checkAndFetchWordDefinition(word);
-        
-        if (!result.exists && !result.error) {
-            missingWords++;
-            console.log(`[WORDSAVE] 单词 "${word}" 是新单词，已提交查询`);
-        } else if (result.exists) {
-            console.log(`[WORDSAVE] 单词 "${word}" 已在字典中`);
-        } else if (result.error) {
-            console.warn(`[WORDSAVE] 单词 "${word}" 查询失败:`, result.error);
+        async function saveWordset(e) {
+            e.preventDefault();
+            
+            // 获取表单数据
+            const title = document.getElementById('wordset-title-input').value;
+            const level = document.getElementById('wordset-level-select').value;
+            const scenarioId = document.getElementById('wordset-scenario-select').value;
+            const wordsText = document.getElementById('wordset-words-textarea').value;
+            
+            // 处理词汇列表
+            const words = wordsText.split('\n')
+                .map(word => word.trim())
+                .filter(word => word.length > 0);
+            
+            if (words.length === 0) {
+                showStatus('请输入至少一个词汇', 'error');
+                return;
+            }
+            
+            if (!level || !scenarioId) {
+                showStatus('请选择级别和场景', 'error');
+                return;
+            }
+            
+            // 显示保存进度
+            showStatus(`正在检查 ${words.length} 个单词的字典定义...`, 'info');
+            
+            // 创建进度条
+            const progressContainer = document.createElement('div');
+            progressContainer.className = 'progress-container';
+            const progressBar = document.createElement('div');
+            progressBar.className = 'progress-bar';
+            progressContainer.appendChild(progressBar);
+            statusMessage.appendChild(progressContainer);
+            
+            // 检查每个单词的字典定义
+            let missingWords = 0;
+            let processedWords = 0;
+            
+            for (const word of words) {
+                const result = await checkAndFetchWordDefinition(word);
+                if (!result.exists && !result.error) {
+                    missingWords++;
+                }
+                
+                processedWords++;
+                const progress = (processedWords / words.length) * 100;
+                progressBar.style.width = `${progress}%`;
+                
+                // 添加小延迟避免请求过于频繁
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // 生成UUID
+            const wordsetId = generateUUID();
+            
+            // 创建词汇集对象
+            const wordset = {
+                "分类title": title,
+                "classification": scenarioId,
+                "words": words,
+                "createdAt": new Date().toISOString().split('T')[0] // YYYY-MM-DD格式
+            };
+            console.log(wordset);
+            
+            // 保存到Firebase
+            database.ref(`thaiWordList/${wordsetId}`).set(wordset)
+                .then(() => {
+                    let message = '词汇集保存成功!';
+                    if (missingWords > 0) {
+                        message += ` ${missingWords} 个新单词已提交AI查询。`;
+                    }
+                    showStatus(message, 'success');
+                    hideWordsetForm();
+                    loadWordsets(); // 刷新列表
+                    console.log(message) ;
+                })
+                .catch((error) => {
+                    console.error('保存词汇集错误:', error);
+                    showStatus('保存失败: ' + error.message, 'error');
+                });
         }
-        
-        processedWords++;
-        const progress = (processedWords / words.length) * 100;
-        progressBar.style.width = `${progress}%`;
-        
-        // 添加小延迟避免请求过于频繁
-        await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    console.log(`[WORDSAVE] 单词检查完成: 总计 ${words.length}, 新单词 ${missingWords}`);
-    
-    // 生成UUID
-    const wordsetId = generateUUID();
-    console.log(`[WORDSAVE] 生成的词汇集ID: ${wordsetId}`);
-    
-    // 创建词汇集对象
-    const wordset = {
-        "分类title": title,
-        "classification": scenarioId,
-        "words": words,
-        "createdAt": new Date().toISOString().split('T')[0] // YYYY-MM-DD格式
-    };
-    
-    console.log('[WORDSAVE] 准备保存的词汇集对象:', wordset);
-    
-    try {
-        console.log(`[WORDSAVE] 开始保存到Firebase路径: thaiWordList/${wordsetId}`);
-        
-        // 保存到Firebase
-        await database.ref(`thaiWordList/${wordsetId}`).set(wordset);
-        
-        console.log('[WORDSAVE] Firebase保存成功');
-        
-        let message = '词汇集保存成功!';
-        if (missingWords > 0) {
-            message += ` ${missingWords} 个新单词已提交AI查询。`;
-        }
-        
-        console.log(`[WORDSAVE] 显示成功消息: ${message}`);
-        showStatus(message, 'success');
-        
-        // 隐藏表单并刷新列表
-        hideWordsetForm();
-        console.log('[WORDSAVE] 隐藏表单，开始刷新词汇集列表...');
-        loadWordsets();
-        
-    } catch (error) {
-        console.error('[WORDSAVE] 保存词汇集错误:', error);
-        console.error('[WORDSAVE] 错误详情:', error.message, error.stack);
-        showStatus('保存失败: ' + error.message, 'error');
-    }
-}
-
 
         // 删除词汇集
         function deleteWordset(wordsetId) {
