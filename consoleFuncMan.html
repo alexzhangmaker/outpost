@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Functions 健康监控</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        warning: '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-heartbeat text-red-500 mr-3"></i>
+                Firebase Functions 健康监控
+            </h1>
+            <p class="text-gray-600 mt-2">监控和测试您的Firebase Functions API接口</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-cog text-blue-500 mr-2"></i>
+                        API 配置
+                    </h2>
+                    
+                    <form id="configForm" class="space-y-4">
+                        <div>
+                            <label for="apiName" class="block text-sm font-medium text-gray-700 mb-1">API 名称</label>
+                            <input type="text" id="apiName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        
+                        <div>
+                            <label for="apiUrl" class="block text-sm font-medium text-gray-700 mb-1">API URL</label>
+                            <input type="url" id="apiUrl" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://your-function.cloudfunctions.net/yourFunction" required>
+                        </div>
+                        
+                        <div>
+                            <label for="method" class="block text-sm font-medium text-gray-700 mb-1">请求方法</label>
+                            <select id="method" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="headers" class="block text-sm font-medium text-gray-700 mb-1">请求头 (JSON格式)</label>
+                            <textarea id="headers" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder='{"Content-Type": "application/json"}'></textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="body" class="block text-sm font-medium text-gray-700 mb-1">请求体 (JSON格式)</label>
+                            <textarea id="body" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder='{"key": "value"}'></textarea>
+                        </div>
+                        
+                        <!-- CORS代理选项 -->
+                        <div class="flex items-center">
+                            <input type="checkbox" id="useCorsProxy" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="useCorsProxy" class="ml-2 block text-sm text-gray-700">
+                                使用CORS代理（用于跨域请求）
+                            </label>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button type="submit" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200">
+                                <i class="fas fa-plus mr-2"></i>添加 API
+                            </button>
+                            <button type="button" id="clearConfig" class="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition duration-200">
+                                <i class="fas fa-trash-alt mr-2"></i>清空
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">已配置的 API</h3>
+                        <div id="apiList" class="space-y-2 max-h-60 overflow-y-auto">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 测试控制面板 -->
+                <div class="bg-white rounded-lg shadow p-6 mt-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-play-circle text-green-500 mr-2"></i>
+                        测试控制
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700">自动测试</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="autoTestToggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+                        
+                        <div id="autoTestConfig" class="hidden space-y-4">
+                            <div>
+                                <label for="testInterval" class="block text-sm font-medium text-gray-700 mb-1">测试间隔 (秒)</label>
+                                <input type="number" id="testInterval" min="5" value="30" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <button id="startAutoTest" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition duration-200">
+                                    <i class="fas fa-play mr-2"></i>开始自动测试
+                                </button>
+                                <button id="stopAutoTest" class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition duration-200">
+                                    <i class="fas fa-stop mr-2"></i>停止
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-gray-200">
+                            <button id="testAll" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200">
+                                <i class="fas fa-sync-alt mr-2"></i>手动测试所有 API
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-chart-bar text-purple-500 mr-2"></i>
+                        健康状态概览
+                    </h2>
+                    
+                    <div id="statusOverview" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">平均响应时间</h3>
+                        <div class="h-64">
+                            <canvas id="responseTimeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                            <i class="fas fa-history text-orange-500 mr-2"></i>
+                            测试日志
+                        </h2>
+                        <button id="clearLogs" class="text-sm bg-gray-200 text-gray-700 py-1 px-3 rounded-md hover:bg-gray-300 transition duration-200">
+                            <i class="fas fa-trash-alt mr-1"></i>清空日志
+                        </button>
+                    </div>
+                    
+                    <div id="logsContainer" class="h-80 overflow-y-auto border border-gray-200 rounded-md p-4 bg-gray-50">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let apiConfigs = [];
+        let testIntervalId = null;
+        let responseTimeChart = null;
+        let logEntries = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfigs();
+            renderApiList();
+            updateStatusOverview();
+            initializeChart();
+            loadLogs();
+            
+            document.getElementById('configForm').addEventListener('submit', addApiConfig);
+            document.getElementById('clearConfig').addEventListener('click', clearAllConfigs);
+            document.getElementById('testAll').addEventListener('click', testAllApis);
+            document.getElementById('autoTestToggle').addEventListener('change', toggleAutoTestConfig);
+            document.getElementById('startAutoTest').addEventListener('click', startAutoTest);
+            document.getElementById('stopAutoTest').addEventListener('click', stopAutoTest);
+            document.getElementById('clearLogs').addEventListener('click', clearLogs);
+        });
+
+        function loadConfigs() {
+            const storedConfigs = localStorage.getItem('firebaseApiConfigs');
+            if (storedConfigs) {
+                apiConfigs = JSON.parse(storedConfigs);
+            }
+        }
+
+        function saveConfigs() {
+            localStorage.setItem('firebaseApiConfigs', JSON.stringify(apiConfigs));
+        }
+
+        function loadLogs() {
+            const storedLogs = localStorage.getItem('firebaseApiLogs');
+            if (storedLogs) {
+                logEntries = JSON.parse(storedLogs);
+                renderLogs();
+            }
+        }
+
+        function saveLogs() {
+            localStorage.setItem('firebaseApiLogs', JSON.stringify(logEntries));
+        }
+
+        function addApiConfig(e) {
+            e.preventDefault();
+            
+            const apiName = document.getElementById('apiName').value;
+            let apiUrl = document.getElementById('apiUrl').value;
+            const method = document.getElementById('method').value;
+            const headers = document.getElementById('headers').value;
+            const body = document.getElementById('body').value;
+            const useCorsProxy = document.getElementById('useCorsProxy').checked;
+            
+            if (!apiName || !apiUrl) {
+                alert('请填写API名称和URL');
+                return;
+            }
+            
+            // 如果使用CORS代理，包装URL
+            if (useCorsProxy) {
+                apiUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+            }
+            
+            const config = {
+                id: Date.now().toString(),
+                name: apiName,
+                url: apiUrl,
+                method: method,
+                headers: headers ? JSON.parse(headers) : {},
+                body: body ? JSON.parse(body) : null,
+                useCorsProxy: useCorsProxy,
+                lastTested: null,
+                status: 'unknown',
+                responseTime: null,
+                testCount: 0,
+                successCount: 0
+            };
+            
+            apiConfigs.push(config);
+            saveConfigs();
+            renderApiList();
+            document.getElementById('configForm').reset();
+            addLogEntry('配置', `已添加API: ${apiName}${useCorsProxy ? ' (使用CORS代理)' : ''}`, 'info');
+        }
+
+        function renderApiList() {
+            const apiList = document.getElementById('apiList');
+            apiList.innerHTML = '';
+            
+            if (apiConfigs.length === 0) {
+                apiList.innerHTML = '<p class="text-gray-500 text-center py-4">暂无配置的API</p>';
+                return;
+            }
+            
+            apiConfigs.forEach(config => {
+                let statusColor, statusText;
+                if (config.status === 'healthy') {
+                    statusColor = 'bg-green-500';
+                    statusText = '健康';
+                } else if (config.status === 'unhealthy') {
+                    statusColor = 'bg-red-500';
+                    statusText = '不健康';
+                } else if (config.status === 'cors_error') {
+                    statusColor = 'bg-warning';
+                    statusText = 'CORS错误';
+                } else {
+                    statusColor = 'bg-gray-500';
+                    statusText = '未知';
+                }
+                
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-3 border border-gray-200 rounded-md';
+                item.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 ${statusColor} rounded-full mr-3" title="${statusText}"></span>
+                        <div>
+                            <h4 class="font-medium text-gray-800">${config.name}</h4>
+                            <p class="text-xs text-gray-500 truncate max-w-xs">${config.url}</p>
+                            ${config.useCorsProxy ? '<span class="text-xs text-blue-600">CORS代理</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="test-api text-blue-600 hover:text-blue-800" data-id="${config.id}" title="测试">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="delete-api text-red-600 hover:text-red-800" data-id="${config.id}" title="删除">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                apiList.appendChild(item);
+            });
+            
+            document.querySelectorAll('.test-api').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    testSingleApi(id);
+                });
+            });
+            
+            document.querySelectorAll('.delete-api').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    deleteApiConfig(id);
+                });
+            });
+        }
+
+        async function testSingleApi(id) {
+            const config = apiConfigs.find(c => c.id === id);
+            if (!config) return;
+            
+            const startTime = Date.now();
+            
+            try {
+                const options = {
+                    method: config.method,
+                    headers: config.headers,
+                    mode: config.useCorsProxy ? 'cors' : 'no-cors'
+                };
+                
+                if (config.body && (config.method === 'POST' || config.method === 'PUT')) {
+                    options.body = JSON.stringify(config.body);
+                }
+                
+                const response = await fetch(config.url, options);
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                config.lastTested = new Date().toISOString();
+                config.responseTime = responseTime;
+                config.testCount++;
+                
+                if (config.useCorsProxy) {
+                    // 使用代理时，可以正常检查响应状态
+                    if (response.ok) {
+                        config.status = 'healthy';
+                        config.successCount++;
+                        addLogEntry('测试', `${config.name}: 成功 (${responseTime}ms)`, 'success');
+                    } else {
+                        config.status = 'unhealthy';
+                        addLogEntry('测试', `${config.name}: HTTP ${response.status} (${responseTime}ms)`, 'error');
+                    }
+                } else {
+                    // 不使用代理时，no-cors模式下只能检查请求是否发送
+                    if (response.type === 'opaque') {
+                        config.status = 'healthy';
+                        config.successCount++;
+                        addLogEntry('测试', `${config.name}: 请求已发送 (可能成功) (${responseTime}ms)`, 'success');
+                    } else {
+                        config.status = 'unknown';
+                        addLogEntry('测试', `${config.name}: 状态未知 (${responseTime}ms)`, 'warning');
+                    }
+                }
+            } catch (error) {
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                config.lastTested = new Date().toISOString();
+                config.responseTime = responseTime;
+                config.testCount++;
+                
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    config.status = 'cors_error';
+                    addLogEntry('测试', `${config.name}: CORS错误 - 考虑启用CORS代理 (${responseTime}ms)`, 'warning');
+                } else {
+                    config.status = 'unhealthy';
+                    addLogEntry('测试', `${config.name}: 错误 - ${error.message} (${responseTime}ms)`, 'error');
+                }
+            }
+            
+            saveConfigs();
+            renderApiList();
+            updateStatusOverview();
+            updateChart();
+        }
+
+        // ... 其余函数保持不变（deleteApiConfig, clearAllConfigs, testAllApis等）
+        // 为节省空间，这里省略了其他函数的完整代码，您可以保留原始实现
+
+        function deleteApiConfig(id) {
+            const config = apiConfigs.find(c => c.id === id);
+            if (config) {
+                apiConfigs = apiConfigs.filter(c => c.id !== id);
+                saveConfigs();
+                renderApiList();
+                updateStatusOverview();
+                addLogEntry('配置', `已删除API: ${config.name}`, 'warning');
+            }
+        }
+
+        function clearAllConfigs() {
+            if (confirm('确定要清空所有API配置吗？')) {
+                apiConfigs = [];
+                saveConfigs();
+                renderApiList();
+                updateStatusOverview();
+                addLogEntry('配置', '已清空所有API配置', 'warning');
+            }
+        }
+
+        async function testAllApis() {
+            addLogEntry('测试', '开始测试所有API', 'info');
+            
+            for (const config of apiConfigs) {
+                await testSingleApi(config.id);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            addLogEntry('测试', '所有API测试完成', 'info');
+        }
+
+        function updateStatusOverview() {
+            const overview = document.getElementById('statusOverview');
+            
+            if (apiConfigs.length === 0) {
+                overview.innerHTML = `
+                    <div class="col-span-4 text-center py-8 text-gray-500">
+                        <i class="fas fa-exclamation-circle text-2xl mb-2"></i>
+                        <p>暂无API配置</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const healthyCount = apiConfigs.filter(c => c.status === 'healthy').length;
+            const unhealthyCount = apiConfigs.filter(c => c.status === 'unhealthy').length;
+            const corsErrorCount = apiConfigs.filter(c => c.status === 'cors_error').length;
+            const unknownCount = apiConfigs.filter(c => c.status === 'unknown').length;
+            
+            const totalResponseTime = apiConfigs
+                .filter(c => c.responseTime)
+                .reduce((sum, c) => sum + c.responseTime, 0);
+            const avgResponseTime = apiConfigs.filter(c => c.responseTime).length > 0 
+                ? Math.round(totalResponseTime / apiConfigs.filter(c => c.responseTime).length)
+                : 0;
+            
+            overview.innerHTML = `
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-green-600">${healthyCount}</div>
+                    <div class="text-green-700 font-medium">健康</div>
+                </div>
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-red-600">${unhealthyCount}</div>
+                    <div class="text-red-700 font-medium">不健康</div>
+                </div>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-yellow-600">${corsErrorCount}</div>
+                    <div class="text-yellow-700 font-medium">CORS错误</div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-blue-600">${avgResponseTime}ms</div>
+                    <div class="text-blue-700 font-medium">平均响应时间</div>
+                </div>
+            `;
+        }
+
+        function initializeChart() {
+            const ctx = document.getElementById('responseTimeChart').getContext('2d');
+            
+            responseTimeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '平均响应时间 (ms)',
+                        data: [],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '响应时间 (ms)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '测试时间'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            if (!responseTimeChart || apiConfigs.length === 0) return;
+            
+            const validConfigs = apiConfigs.filter(c => c.responseTime !== null);
+            if (validConfigs.length === 0) return;
+            
+            const avgResponseTime = Math.round(
+                validConfigs.reduce((sum, c) => sum + c.responseTime, 0) / validConfigs.length
+            );
+            
+            const now = new Date();
+            const timeLabel = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            responseTimeChart.data.labels.push(timeLabel);
+            responseTimeChart.data.datasets[0].data.push(avgResponseTime);
+            
+            if (responseTimeChart.data.labels.length > 10) {
+                responseTimeChart.data.labels.shift();
+                responseTimeChart.data.datasets[0].data.shift();
+            }
+            
+            responseTimeChart.update();
+        }
+
+        function toggleAutoTestConfig() {
+            const autoTestConfig = document.getElementById('autoTestConfig');
+            const toggle = document.getElementById('autoTestToggle');
+            
+            if (toggle.checked) {
+                autoTestConfig.classList.remove('hidden');
+            } else {
+                autoTestConfig.classList.add('hidden');
+                stopAutoTest();
+            }
+        }
+
+        function startAutoTest() {
+            const interval = parseInt(document.getElementById('testInterval').value) * 1000;
+            
+            if (isNaN(interval) || interval < 5000) {
+                alert('测试间隔必须至少为5秒');
+                return;
+            }
+            
+            if (apiConfigs.length === 0) {
+                alert('请先配置至少一个API');
+                return;
+            }
+            
+            stopAutoTest();
+            
+            testIntervalId = setInterval(testAllApis, interval);
+            addLogEntry('自动测试', `已启动自动测试，间隔: ${interval/1000}秒`, 'info');
+            
+            document.getElementById('startAutoTest').disabled = true;
+            document.getElementById('stopAutoTest').disabled = false;
+        }
+
+        function stopAutoTest() {
+            if (testIntervalId) {
+                clearInterval(testIntervalId);
+                testIntervalId = null;
+                addLogEntry('自动测试', '已停止自动测试', 'info');
+                
+                document.getElementById('startAutoTest').disabled = false;
+                document.getElementById('stopAutoTest').disabled = true;
+            }
+        }
+
+        function addLogEntry(type, message, level) {
+            const timestamp = new Date().toLocaleString();
+            const logEntry = {
+                timestamp,
+                type,
+                message,
+                level
+            };
+            
+            logEntries.unshift(logEntry);
+            
+            if (logEntries.length > 100) {
+                logEntries = logEntries.slice(0, 100);
+            }
+            
+            saveLogs();
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const logsContainer = document.getElementById('logsContainer');
+            
+            if (logEntries.length === 0) {
+                logsContainer.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fas fa-info-circle text-2xl mb-2"></i>
+                        <p>暂无测试日志</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            logsContainer.innerHTML = '';
+            
+            logEntries.forEach(entry => {
+                const levelColor = entry.level === 'success' ? 'text-green-600' :
+                                 entry.level === 'error' ? 'text-red-600' :
+                                 entry.level === 'warning' ? 'text-yellow-600' : 'text-blue-600';
+                
+                const levelIcon = entry.level === 'success' ? 'fa-check-circle' :
+                                 entry.level === 'error' ? 'fa-exclamation-circle' :
+                                 entry.level === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+                
+                const logItem = document.createElement('div');
+                logItem.className = 'border-b border-gray-200 py-2 last:border-0';
+                logItem.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="fas ${levelIcon} ${levelColor} mt-1 mr-2"></i>
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-800">${entry.type}</span>
+                                <span class="text-xs text-gray-500">${entry.timestamp}</span>
+                            </div>
+                            <p class="text-sm text-gray-700 mt-1">${entry.message}</p>
+                        </div>
+                    </div>
+                `;
+                
+                logsContainer.appendChild(logItem);
+            });
+        }
+
+        function clearLogs() {
+            if (confirm('确定要清空所有日志吗？')) {
+                logEntries = [];
+                saveLogs();
+                renderLogs();
+            }
+        }
+    </script>
+</body>
+</html>

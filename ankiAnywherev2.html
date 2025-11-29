@@ -857,6 +857,8 @@
                     console.log(`${word} not in DB,something wrong`) ;
                     continue ;
                 }
+
+                /*
                 let ankiWord={
                     thai:jsonWord.thai.word,
                     pronunciation:jsonWord.thai.pronunciation,
@@ -865,7 +867,50 @@
                     antonyms:jsonWord.antonyms,
                     common_phrases:jsonWord.common_phrases
                 };
-                wordList.push(ankiWord) ;
+                */
+                try {
+                    // 定义需要的字段路径（支持嵌套，如 'thai.word'）
+                    const requiredPaths = [
+                        'thai.word',
+                        'thai.pronunciation',
+                        'definitions',
+                        'synonyms',
+                        'antonyms',
+                        'common_phrases'
+                    ];
+
+                    // 辅助函数：安全获取嵌套属性并判断是否存在（非 null / undefined）
+                    function hasPath(obj, path) {
+                        return path.split('.').every(key => {
+                        if (obj == null) return false; // null 或 undefined 中断
+                        obj = obj[key];
+                        return obj != null; // 允许 0, '', false 等 falsy 但存在的值
+                        });
+                    }
+
+                    // 检查所有必需路径是否存在
+                    for (const path of requiredPaths) {
+                        if (!hasPath(jsonWord, path)) {
+                            throw new Error(`Missing required property: ${path}`);
+                        }
+                    }
+
+                    // 如果全部存在，构建对象
+                    let ankiWord = {
+                        thai: jsonWord.thai.word,
+                        pronunciation: jsonWord.thai.pronunciation,
+                        definitions: jsonWord.definitions,
+                        synonyms: jsonWord.synonyms,
+                        antonyms: jsonWord.antonyms,
+                        common_phrases: jsonWord.common_phrases
+                    };
+                    // ✅ 后续使用 ankiWord ...
+                     wordList.push(ankiWord) ;
+                } catch (error) {
+                    console.error('Data validation failed:', error.message);
+                    // 可在此处 fallback（如跳过、用默认值、提示用户等）
+                    console.log(jsonWord) ;
+                }
             }
         }
 
