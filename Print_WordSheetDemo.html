@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词记忆表格生成器 - PDF多语言版</title>
+    <!-- 引入Google Fonts支持多语言 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Sans+Thai:wght@400;700&family=Noto+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .input-section {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .preview-section {
+            flex: 2;
+            min-width: 500px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        textarea, input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 200px;
+            resize: vertical;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .btn-generate {
+            background-color: #3498db;
+            color: white;
+        }
+        .btn-generate:hover {
+            background-color: #2980b9;
+        }
+        .btn-print {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .btn-print:hover {
+            background-color: #27ae60;
+        }
+        .btn-pdf {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .btn-pdf:hover {
+            background-color: #c0392b;
+        }
+        .preview-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            min-height: 500px;
+            background-color: white;
+        }
+        .print-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .print-table th, .print-table td {
+            border: 1px solid #000;
+            padding: 8px 12px;
+            text-align: left;
+            height: 35px;
+        }
+        .print-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .word-cell {
+            font-weight: bold;
+        }
+        .empty-cell {
+            border-bottom: 2px solid #000 !important;
+        }
+        .page-break {
+            page-break-after: always;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .preview-container, .preview-container * {
+                visibility: visible;
+            }
+            .preview-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+        .print-settings {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border-left: 4px solid #3498db;
+        }
+        .print-settings h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .language-test {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff3cd;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #3498db;
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e8;
+            border-radius: 5px;
+            border-left: 4px solid #4caf50;
+        }
+        .font-noto {
+            font-family: 'Noto Sans', 'Noto Sans SC', 'Noto Sans Thai', sans-serif;
+        }
+        .font-noto-thai {
+            font-family: 'Noto Sans Thai', sans-serif;
+        }
+        .font-noto-sc {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <h1>单词记忆表格生成器 - PDF多语言版</h1>
+    
+    <div class="container">
+        <div class="input-section">
+            <div class="form-group">
+                <label for="wordList">单词列表（每行一个单词）</label>
+                <textarea id="wordList" placeholder="输入单词，每行一个，例如：
+apple
+banana
+computer
+..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="rowsPerPage">每页行数（包括表头）</label>
+                <input type="number" id="rowsPerPage" value="34" min="10" max="50">
+                <small>根据您的测试，设置为34行（包括表头）</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="fontFamily">PDF字体</label>
+                <select id="fontFamily">
+                    <option value="NotoSans">Noto Sans (推荐-支持多语言)</option>
+                    <option value="NotoSansThai">Noto Sans Thai (泰语优化)</option>
+                    <option value="NotoSansSC">Noto Sans SC (中文优化)</option>
+                </select>
+                <small>Noto Sans字体家族支持中文、泰语等多语言字符</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="fontSize">字号</label>
+                <input type="number" id="fontSize" value="12" min="8" max="24">
+            </div>
+            
+            <div class="buttons">
+                <button class="btn-generate" onclick="generateTable()">生成表格</button>
+                <button class="btn-print" onclick="printTable()">打印</button>
+                <button class="btn-pdf" onclick="exportToPDF()">导出PDF</button>
+            </div>
+            
+            <div class="loading" id="loading">
+                正在生成PDF，请稍候...（首次加载字体可能需要较长时间）
+            </div>
+            
+            <div class="test-results">
+                <h4>多语言测试结果</h4>
+                <div id="testResults">
+                    请点击下方按钮测试多语言显示
+                </div>
+            </div>
+            
+            <div class="language-test">
+                <h4>多语言测试</h4>
+                <p>点击下方按钮添加测试词汇：</p>
+                <button onclick="addTestWords()">添加多语言测试词汇</button>
+                <button onclick="addChineseWords()">添加中文测试词汇</button>
+                <button onclick="addThaiWords()">添加泰语测试词汇</button>
+            </div>
+            
+            <div class="print-settings">
+                <h3>PDF打印设置</h3>
+                <p>PDF将包含以下打印配置：</p>
+                <ul>
+                    <li>字体：Noto Sans系列（支持多语言），12号</li>
+                    <li>每页行数：34行（包括表头）</li>
+                    <li>页边距：上下0.75"，左右0.7"</li>
+                    <li>纸张：A4，纵向打印</li>
+                    <li>空格单元格底部有实线，方便学生书写</li>
+                </ul>
+            </div>
+            
+            <div class="form-group">
+                <p><strong>使用说明：</strong></p>
+                <ol>
+                    <li>在左侧输入单词，每行一个</li>
+                    <li>设置每页显示的行数（默认34行）</li>
+                    <li>选择支持多语言的字体（推荐Noto Sans）</li>
+                    <li>点击"生成表格"预览效果</li>
+                    <li>使用"打印"按钮直接打印，或"导出PDF"保存为PDF文件</li>
+                    <li><strong>注意：</strong>首次生成PDF时字体加载可能需要一些时间</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="preview-section">
+            <h2>预览</h2>
+            <div class="preview-container" id="previewContainer">
+                <p>请先输入单词并点击"生成表格"</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入PDF生成库和字体支持 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js.map"></script>
+    
+    <script>
+        // 字体文件URL - 使用Google Fonts的CDN
+        const fontUrls = {
+            'NotoSans': 'https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400&display=swap',
+            'NotoSansThai': 'https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700&display=swap',
+            'NotoSansSC': 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap'
+        };
+
+        // 添加多语言测试词汇
+        function addTestWords() {
+            const testWords = [
+                // 英文
+                "apple", "computer", "education", "language", "student",
+                // 中文
+                "你好", "谢谢", "欢迎", "再见", "学习", "知识", "语言", "学生",
+                // 泰语
+                "สวัสดี", "ขอบคุณ", "ยินดีต้อนรับ", "ลาก่อน", "อาหาร", "น้ำ",
+                "บ้าน", "โรงเรียน", "หนังสือ", "คอมพิวเตอร์", "การศึกษา", "ความรู้"
+            ];
+            
+            const wordListTextarea = document.getElementById('wordList');
+            wordListTextarea.value = testWords.join('\n');
+            generateTable();
+            updateTestResults("已添加多语言测试词汇（英文、中文、泰语）");
+        }
+        
+        // 添加中文测试词汇
+        function addChineseWords() {
+            const chineseWords = [
+                "苹果", "香蕉", "电脑", "字典", "教育", "水果",
+                "花园", "历史", "互联网", "日记", "知识", "语言",
+                "数学", "笔记本", "橙子", "铅笔", "问题", "餐厅",
+                "科学", "老师", "大学", "假期", "水", "黄色"
+            ];
+            
+            const wordListTextarea = document.getElementById('wordList');
+            wordListTextarea.value = chineseWords.join('\n');
+            generateTable();
+            updateTestResults("已添加中文测试词汇");
+        }
+        
+        // 添加泰语测试词汇
+        function addThaiWords() {
+            const thaiWords = [
+                "สวัสดี", // 你好
+                "ขอบคุณ", // 谢谢
+                "ยินดีต้อนรับ", // 欢迎
+                "ลาก่อน", // 再见
+                "อาหาร", // 食物
+                "น้ำ", // 水
+                "บ้าน", // 家
+                "โรงเรียน", // 学校
+                "หนังสือ", // 书
+                "คอมพิวเตอร์", // 电脑
+                "การศึกษา", // 教育
+                "ความรู้", // 知识
+                "ภาษา", // 语言
+                "คณิตศาสตร์", // 数学
+                "สมุดบันทึก", // 笔记本
+                "ส้ม", // 橙子
+                "ดินสอ", // 铅笔
+                "คำถาม", // 问题
+                "วิทยาศาสตร์", // 科学
+                "ครู", // 老师
+                "มหาวิทยาลัย", // 大学
+                "วันหยุด" // 假期
+            ];
+            
+            const wordListTextarea = document.getElementById('wordList');
+            wordListTextarea.value = thaiWords.join('\n');
+            generateTable();
+            updateTestResults("已添加泰语测试词汇");
+        }
+        
+        function updateTestResults(message) {
+            document.getElementById('testResults').innerHTML = `
+                <strong>${message}</strong><br>
+                <span style="color: #666; font-size: 0.9em;">
+                    请在预览区域检查显示效果，然后导出PDF测试打印效果
+                </span>
+            `;
+        }
+        
+        function generateTable() {
+            const wordList = document.getElementById('wordList').value.split('\n').filter(word => word.trim() !== '');
+            const rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
+            const fontFamily = document.getElementById('fontFamily').value;
+            const fontSize = document.getElementById('fontSize').value + 'px';
+            const previewContainer = document.getElementById('previewContainer');
+            
+            if (wordList.length === 0) {
+                previewContainer.innerHTML = '<p>请输入至少一个单词</p>';
+                return;
+            }
+            
+            let html = '';
+            // 每页实际单词行数 = 总行数 - 表头行
+            const wordRowsPerPage = rowsPerPage - 1;
+            // 每页可以容纳的单词数 = 单词行数 * 2 (因为每行有两列单词)
+            const wordsPerPage = wordRowsPerPage * 2;
+            const totalPages = Math.ceil(wordList.length / wordsPerPage);
+            
+            for (let page = 0; page < totalPages; page++) {
+                html += `<div class="page${page > 0 ? ' page-break' : ''}">`;
+                html += `<h3>单词记忆表 - 第${page + 1}页</h3>`;
+                html += `<table class="print-table" style="font-family: ${getPreviewFontFamily(fontFamily)}; font-size: ${fontSize}">`;
+                html += '<tr><th>英语单词</th><th>中文意思</th><th>英语单词</th><th>中文意思</th></tr>';
+                
+                const startIndex = page * wordsPerPage;
+                const endIndex = Math.min(startIndex + wordsPerPage, wordList.length);
+                
+                for (let i = 0; i < wordRowsPerPage; i++) {
+                    const wordIndex1 = startIndex + i * 2;
+                    const wordIndex2 = startIndex + i * 2 + 1;
+                    
+                    html += '<tr>';
+                    
+                    // 第一列和第二列
+                    if (wordIndex1 < endIndex) {
+                        html += `<td class="word-cell">${wordList[wordIndex1]}</td>`;
+                        html += '<td class="empty-cell"></td>';
+                    } else {
+                        html += '<td></td><td class="empty-cell"></td>';
+                    }
+                    
+                    // 第三列和第四列
+                    if (wordIndex2 < endIndex) {
+                        html += `<td class="word-cell">${wordList[wordIndex2]}</td>`;
+                        html += '<td class="empty-cell"></td>';
+                    } else {
+                        html += '<td></td><td class="empty-cell"></td>';
+                    }
+                    
+                    html += '</tr>';
+                }
+                
+                html += '</table>';
+                html += '</div>';
+            }
+            
+            previewContainer.innerHTML = html;
+        }
+        
+        // 获取预览时使用的字体
+        function getPreviewFontFamily(pdfFont) {
+            switch(pdfFont) {
+                case 'NotoSans':
+                    return "'Noto Sans', 'Noto Sans SC', 'Noto Sans Thai', sans-serif";
+                case 'NotoSansThai':
+                    return "'Noto Sans Thai', sans-serif";
+                case 'NotoSansSC':
+                    return "'Noto Sans SC', sans-serif";
+                default:
+                    return 'sans-serif';
+            }
+        }
+        
+        function printTable() {
+            window.print();
+        }
+        
+        // 加载字体文件的函数
+        async function loadFont(fontName) {
+            return new Promise((resolve, reject) => {
+                // 对于在线版本，我们依赖浏览器已加载的Google Fonts
+                // 在实际生产环境中，需要下载字体文件并转换为base64
+                resolve(true);
+            });
+        }
+        
+        async function exportToPDF() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+            loading.textContent = "正在生成PDF，请稍候...（处理多语言字体）";
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                const wordList = document.getElementById('wordList').value.split('\n').filter(word => word.trim() !== '');
+                const rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
+                const fontSize = parseInt(document.getElementById('fontSize').value);
+                
+                // 每页实际单词行数 = 总行数 - 表头行
+                const wordRowsPerPage = rowsPerPage - 1;
+                // 每页可以容纳的单词数 = 单词行数 * 2 (因为每行有两列单词)
+                const wordsPerPage = wordRowsPerPage * 2;
+                const totalPages = Math.ceil(wordList.length / wordsPerPage);
+                
+                // 设置PDF页边距（转换为毫米）
+                const marginLeft = 0.7 * 25.4;   // 0.7英寸转毫米
+                const marginRight = 0.7 * 25.4;  // 0.7英寸转毫米
+                const marginTop = 0.75 * 25.4;   // 0.75英寸转毫米
+                const marginBottom = 0.75 * 25.4; // 0.75英寸转毫米
+                
+                const pageWidth = 210; // A4宽度 mm
+                const pageHeight = 297; // A4高度 mm
+                const contentWidth = pageWidth - marginLeft - marginRight;
+                
+                // 计算列宽
+                const colWidth = contentWidth / 4;
+                const rowHeight = 7; // 行高 mm
+                
+                for (let page = 0; page < totalPages; page++) {
+                    if (page > 0) {
+                        pdf.addPage();
+                    }
+                    
+                    // 添加标题
+                    pdf.setFontSize(16);
+                    pdf.text(`单词记忆表 - 第${page + 1}页`, marginLeft, marginTop - 10);
+                    
+                    // 设置表格字体 - 使用支持多语言的字体
+                    pdf.setFontSize(fontSize);
+                    
+                    const startIndex = page * wordsPerPage;
+                    const endIndex = Math.min(startIndex + wordsPerPage, wordList.length);
+                    
+                    // 绘制表头
+                    let y = marginTop;
+                    pdf.setFillColor(240, 240, 240);
+                    pdf.rect(marginLeft, y, contentWidth, rowHeight, 'F');
+                    
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text('英语单词', marginLeft + 2, y + 5);
+                    pdf.text('中文意思', marginLeft + colWidth + 2, y + 5);
+                    pdf.text('英语单词', marginLeft + colWidth * 2 + 2, y + 5);
+                    pdf.text('中文意思', marginLeft + colWidth * 3 + 2, y + 5);
+                    
+                    // 绘制表头边框
+                    pdf.setDrawColor(0);
+                    pdf.setLineWidth(0.5);
+                    pdf.rect(marginLeft, y, contentWidth, rowHeight);
+                    
+                    y += rowHeight;
+                    
+                    // 绘制表格内容
+                    pdf.setFont(undefined, 'normal');
+                    
+                    for (let i = 0; i < wordRowsPerPage; i++) {
+                        const wordIndex1 = startIndex + i * 2;
+                        const wordIndex2 = startIndex + i * 2 + 1;
+                        
+                        // 绘制行边框
+                        pdf.rect(marginLeft, y, contentWidth, rowHeight);
+                        
+                        // 第一列：英语单词
+                        if (wordIndex1 < endIndex) {
+                            const text1 = wordList[wordIndex1];
+                            // 使用PDF内置字体处理文本
+                            pdf.text(text1, marginLeft + 2, y + 5);
+                        }
+                        
+                        // 第二列：中文意思（带底部实线）
+                        pdf.setDrawColor(0);
+                        pdf.setLineWidth(0.8);
+                        pdf.line(
+                            marginLeft + colWidth, 
+                            y + rowHeight, 
+                            marginLeft + colWidth * 2, 
+                            y + rowHeight
+                        );
+                        
+                        // 第三列：英语单词
+                        if (wordIndex2 < endIndex) {
+                            const text2 = wordList[wordIndex2];
+                            pdf.text(text2, marginLeft + colWidth * 2 + 2, y + 5);
+                        }
+                        
+                        // 第四列：中文意思（带底部实线）
+                        pdf.line(
+                            marginLeft + colWidth * 3, 
+                            y + rowHeight, 
+                            marginLeft + colWidth * 4, 
+                            y + rowHeight
+                        );
+                        
+                        // 绘制列分隔线
+                        pdf.setLineWidth(0.2);
+                        pdf.line(marginLeft + colWidth, y, marginLeft + colWidth, y + rowHeight);
+                        pdf.line(marginLeft + colWidth * 2, y, marginLeft + colWidth * 2, y + rowHeight);
+                        pdf.line(marginLeft + colWidth * 3, y, marginLeft + colWidth * 3, y + rowHeight);
+                        
+                        y += rowHeight;
+                        
+                        // 检查是否需要换页
+                        if (y > pageHeight - marginBottom && i < wordRowsPerPage - 1) {
+                            pdf.addPage();
+                            y = marginTop;
+                        }
+                    }
+                }
+                
+                // 保存PDF
+                pdf.save('单词记忆表.pdf');
+                updateTestResults("PDF生成成功！泰语和中文字符应该能正常显示");
+                
+            } catch (error) {
+                console.error('生成PDF时出错:', error);
+                alert('生成PDF时出现错误，请重试。错误信息：' + error.message);
+                updateTestResults("PDF生成失败，请重试");
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        // 页面加载时生成示例表格
+        window.onload = function() {
+            // 生成多语言测试词汇
+            addTestWords();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "nodeprint",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fontsource/noto-sans-sc": "^5.2.8",
+    "@fontsource/noto-sans-thai": "^5.2.8",
+    "fontkit": "^2.0.4",
+    "pdfkit": "^0.17.2"
+  }
+}
