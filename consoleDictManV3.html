@@ -1691,10 +1691,10 @@
                     console.log(`[API] 单词 "${word}" 查询成功，保存到Firebase`);
                     
                     // 将查询结果保存到Firebase字典中
-                    await database.ref(`thaiDictionary/${word}`).set(result.data);
+                    //await database.ref(`thaiDictionary/${word}`).set(result.data.dictionary_data);
                     
                     // 更新本地缓存
-                    dictionaryCache.set(word, result.data);
+                    //dictionaryCache.set(word, result.data.dictionary_data);
                     
                     // 更新本地存储
                     const todayKey = getTodayDateKey();
