@@ -816,52 +816,6 @@
             border-radius: 4px;
             border: 1px solid var(--border-color);
         }
-
-        /* 单词管理区域（添加单词用） */
-.word-management-section {
-    background-color: white;
-    padding: 16px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border-color);
-    margin-bottom: 20px;
-    box-shadow: var(--shadow);
-}
-
-.add-words-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.add-words-actions {
-    display: flex;
-    justify-content: flex-end;
-}
-
-/* 词汇卡片删除按钮 */
-.word-card-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.delete-word-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #ef4444; /* 红色 */
-    padding: 4px;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0.6;
-}
-
-.delete-word-btn:hover {
-    background-color: #fef2f2;
-    opacity: 1;
-}
     </style>
 </head>
 <body>
@@ -965,18 +919,6 @@
                     </div>
                 </div>
                 
-                <div class="word-management-section">
-                    <h3 style="margin-bottom: 12px; color: #1e293b;">管理词汇</h3>
-                    <div class="add-words-container">
-                        <textarea id="add-new-words-input" placeholder="在此输入要添加的新词汇 (支持批量，每行一个)" style="min-height: 80px;"></textarea>
-                        <div class="add-words-actions">
-                            <button id="submit-new-words-btn" style="padding: 8px 16px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
-                                <span id="add-btn-text">添加新词汇</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- 操作按钮组 -->
                 <div class="action-buttons">
                     <button class="action-btn primary" id="export-anki-btn">
@@ -1215,12 +1157,6 @@
         const excelExportModalBody = document.getElementById('excel-export-modal-body');
         const excelExportModalClose = document.getElementById('excel-export-modal-close');
 
-
-        // --- 新增 DOM 元素引用 ---
-        const addNewWordsInput = document.getElementById('add-new-words-input');
-        const submitNewWordsBtn = document.getElementById('submit-new-words-btn');
-
-
         // 当前选中的词汇集
         let currentWordsetId = null;
         let currentWordsetData = null;
@@ -1353,9 +1289,6 @@
                     closeExcelExportModal();
                 }
             });
-
-            // 新增：绑定添加单词事件
-            submitNewWordsBtn.addEventListener('click', addWordsToSet);
         });
 
         // 处理认证状态变化
@@ -1974,186 +1907,39 @@
                 });
         }
 
-
         // 渲染词汇卡片
-// 渲染词汇卡片 (已更新：包含删除按钮)
-function renderWordCards(wordset) {
-    wordCardsContainer.innerHTML = '';
-    
-    if (wordset.words && Array.isArray(wordset.words) && wordset.words.length > 0) {
-        wordset.words.forEach((word, index) => {
-            const wordCard = document.createElement('div');
-            wordCard.className = 'word-card';
+        function renderWordCards(wordset) {
+            wordCardsContainer.innerHTML = '';
             
-            wordCard.innerHTML = `
-                <div class="word-index">${index + 1}</div>
-                <div class="word-card-header">
-                    <div class="word-thai">${word}</div>
-                    <div class="word-card-actions">
-                        <button class="lookup-btn" title="查看释义" data-word="${word}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                        </button>
-                        <button class="delete-word-btn" title="从列表中移除" data-index="${index}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            // 绑定字典查询事件
-            wordCard.querySelector('.lookup-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                showDictionaryDefinition(word);
-            });
-
-            // 绑定删除单词事件
-            wordCard.querySelector('.delete-word-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                deleteWordFromSet(index, word);
-            });
-            
-            wordCardsContainer.appendChild(wordCard);
-        });
-    } else {
-        wordCardsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 40px;">暂无词汇，请在上方添加。</div>';
-    }
-}
-
-// 从当前词汇集中删除单词
-function deleteWordFromSet(index, word) {
-    if (!currentWordsetId || !currentWordsetData) return;
-
-    if (confirm(`确定要从列表中移除单词 "${word}" 吗？`)) {
-        // 创建新的单词数组副本
-        const updatedWords = [...currentWordsetData.words];
-        // 移除指定索引的单词
-        updatedWords.splice(index, 1);
-        
-        // 更新 Firebase
-        database.ref(`thaiWordList/${currentWordsetId}/words`).set(updatedWords)
-            .then(() => {
-                // 更新本地缓存
-                currentWordsetData.words = updatedWords;
-                if (allWordsets.has(currentWordsetId)) {
-                    allWordsets.get(currentWordsetId).words = updatedWords;
-                }
-                
-                showStatus(`已移除单词 "${word}"`, 'success');
-                // 重新渲染卡片
-                renderWordCards(currentWordsetData);
-            })
-            .catch((error) => {
-                console.error('删除单词失败:', error);
-                showStatus('删除失败: ' + error.message, 'error');
-            });
-    }
-}
-
-// 向当前词汇集添加新单词
-async function addWordsToSet() {
-    if (!currentWordsetId || !currentWordsetData) return;
-
-    const input = document.getElementById('add-new-words-input');
-    const btn = document.getElementById('submit-new-words-btn');
-    const btnText = document.getElementById('add-btn-text');
-    const wordsText = input.value;
-
-    // 处理输入
-    const newWordsRaw = wordsText.split('\n')
-        .map(word => word.trim())
-        .filter(word => word.length > 0);
-
-    if (newWordsRaw.length === 0) {
-        showStatus('请输入至少一个单词', 'error');
-        return;
-    }
-
-    // 过滤掉已经在集合中的单词
-    const existingWordsSet = new Set(currentWordsetData.words || []);
-    const uniqueNewWords = newWordsRaw.filter(word => !existingWordsSet.has(word));
-
-    if (uniqueNewWords.length === 0) {
-        showStatus('所有输入的单词已存在于当前列表中', 'info');
-        return;
-    }
-
-    // UI 进入加载状态
-    input.disabled = true;
-    btn.disabled = true;
-    const originalBtnText = btnText.textContent;
-    btnText.innerHTML = '<div class="loader" style="width: 14px; height: 14px; border-width: 2px;"></div> 处理中...';
-
-    // 显示进度条容器
-    showStatus(`正在处理 ${uniqueNewWords.length} 个新单词...`, 'info');
-    const progressContainer = document.createElement('div');
-    progressContainer.className = 'progress-container';
-    const progressBar = document.createElement('div');
-    progressBar.className = 'progress-bar';
-    progressContainer.appendChild(progressBar);
-    statusMessage.appendChild(progressContainer);
-
-    let missingWords = 0;
-    let processedWords = 0;
-
-    try {
-        // 1. 检查字典定义 (复用现有逻辑)
-        for (const word of uniqueNewWords) {
-            console.log(`[ADD] 检查单词: "${word}"`);
-            const result = await checkAndFetchWordDefinition(word);
-            
-            if (!result.exists && !result.error) {
-                missingWords++;
+            if (wordset.words && Array.isArray(wordset.words)) {
+                wordset.words.forEach((word, index) => {
+                    const wordCard = document.createElement('div');
+                    wordCard.className = 'word-card';
+                    
+                    wordCard.innerHTML = `
+                        <div class="word-index">${index + 1}</div>
+                        <div class="word-card-header">
+                            <div class="word-thai">${word}</div>
+                            <button class="lookup-btn" data-word="${word}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    
+                    // 绑定字典查询事件
+                    wordCard.querySelector('.lookup-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showDictionaryDefinition(word);
+                    });
+                    
+                    wordCardsContainer.appendChild(wordCard);
+                });
             }
-            
-            processedWords++;
-            const progress = (processedWords / uniqueNewWords.length) * 100;
-            progressBar.style.width = `${progress}%`;
-            
-            // 小延迟避免请求过载
-            await new Promise(resolve => setTimeout(resolve, 100));
         }
 
-        // 2. 合并旧单词和新单词
-        const currentWords = currentWordsetData.words || [];
-        const finalWords = [...currentWords, ...uniqueNewWords];
-
-        // 3. 更新 Firebase
-        await database.ref(`thaiWordList/${currentWordsetId}/words`).set(finalWords);
-
-        // 4. 更新本地数据
-        currentWordsetData.words = finalWords;
-        if (allWordsets.has(currentWordsetId)) {
-            allWordsets.get(currentWordsetId).words = finalWords;
-        }
-
-        // 5. 成功反馈
-        let msg = `成功添加 ${uniqueNewWords.length} 个单词！`;
-        if (missingWords > 0) {
-            msg += ` (${missingWords} 个新词已触发AI查询)`;
-        }
-        showStatus(msg, 'success');
-        
-        // 清空输入框并重新渲染
-        input.value = '';
-        renderWordCards(currentWordsetData);
-
-    } catch (error) {
-        console.error('添加单词失败:', error);
-        showStatus('添加失败: ' + error.message, 'error');
-    } finally {
-        // 恢复 UI 状态
-        input.disabled = false;
-        btn.disabled = false;
-        btnText.textContent = originalBtnText;
-    }
-}
-        
         // 显示字典定义
         function showDictionaryDefinition(word) {
             // 设置模态对话框标题
