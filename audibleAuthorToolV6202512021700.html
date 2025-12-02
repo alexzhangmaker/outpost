@@ -398,10 +398,6 @@
         const logoutBtn = document.getElementById('logout-btn');
         const loginStatus = document.getElementById('login-status');
 
-
-                    // 添加一个全局变量，用来防止 seek 造成的误暂停
-            let isSeekingToStart = false;
-            
         googleLoginBtn.addEventListener('click', () => {
             const provider = new GoogleAuthProvider();
             loginStatus.textContent = "Connecting to Google...";
@@ -618,65 +614,37 @@
                 playRegionOptimized(region);
             });
 
-
-
-            // 1. 修改 region-out 监听器
-wsRegions.on('region-out', (region) => {
-    // 如果正在执行“回跳到开头”的操作，直接无视 region-out 事件
-    if (isSeekingToStart) {
-        console.log('Ignored region-out due to seeking');
-        return; 
-    }
-
-    if (isRegionPlaying && activeRegionId === region.id) {
-        wavesurfer.pause();
-        isRegionPlaying = false;
-    }
-});
+            wsRegions.on('region-out', (region) => {
+                if (isRegionPlaying && activeRegionId === region.id) {
+                    wavesurfer.pause();
+                    isRegionPlaying = false;
+                }
+            });
         }
         
-        // --- 调试/修复代码：替换原有的 playRegionOptimized 函数 ---
-// 2. 修改播放函数
-async function playRegionOptimized(region) {
-    // 1. 唤醒 AudioContext (解决 iOS/Safari 偶发不播放)
-    // 简单粗暴地创建一个空 context 销毁，有时能激活浏览器的音频引擎
-    try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (Ctx && new Ctx().state === 'suspended') new Ctx().resume();
-    } catch(e){}
+        // --- CRITICAL FIX: Optimized Region Playback ---
+        async function playRegionOptimized(region) {
+            // 1. Wake up audio context first
+            checkAudioContext();
+            
+            isRegionPlaying = true;
+            activeRegionId = region.id;
 
-    // 2. 设置状态
-    isRegionPlaying = true;
-    activeRegionId = region.id;
-    
-    // 3. 上锁：告诉 region-out 监听器“别动，我现在是手动跳回开头，不是播放结束”
-    isSeekingToStart = true;
+            // 2. Play Audio IMMEDIATELY
+            // Use region.play() but catch errors
+            try {
+                await region.play();
+            } catch (err) {
+                console.warn("Playback interrupted", err);
+            }
+            
+            // 3. Defer UI heavy lifting (scrolling) to next animation frame
+            // This prevents the UI calculation from blocking the audio thread
+            requestAnimationFrame(() => {
+                highlightRow(region.id);
+            });
+        }
 
-    try {
-        // 4. 强制暂停并跳回开头
-        wavesurfer.pause();
-        wavesurfer.setTime(region.start);
-        
-        // 5. 稍微等一下（给浏览器 UI 线程一点时间更新光标位置）
-        // 这个 10ms 延时非常关键，它能解决“光标还在末尾就执行播放”的逻辑死锁
-        await new Promise(resolve => setTimeout(resolve, 10));
-
-        // 6. 解锁
-        isSeekingToStart = false;
-
-        // 7. 播放
-        await region.play();
-        
-    } catch (err) {
-        console.error("Play failed", err);
-        isSeekingToStart = false; // 出错也要解锁
-    }
-    
-    // UI Update
-    requestAnimationFrame(() => {
-        highlightRow(region.id);
-    });
-}
         // Helper to wake up AudioContext (Fixes "Suspended" state on iOS/Chrome)
         function checkAudioContext() {
             try {
