@@ -636,10 +636,9 @@ wsRegions.on('region-out', (region) => {
         }
         
         // --- 调试/修复代码：替换原有的 playRegionOptimized 函数 ---
-// 2. 修改播放函数
+// --- 修复版：更稳健的播放逻辑 ---
 async function playRegionOptimized(region) {
-    // 1. 唤醒 AudioContext (解决 iOS/Safari 偶发不播放)
-    // 简单粗暴地创建一个空 context 销毁，有时能激活浏览器的音频引擎
+    // 1. 尝试唤醒音频引擎
     try {
         const Ctx = window.AudioContext || window.webkitAudioContext;
         if (Ctx && new Ctx().state === 'suspended') new Ctx().resume();
@@ -649,30 +648,33 @@ async function playRegionOptimized(region) {
     isRegionPlaying = true;
     activeRegionId = region.id;
     
-    // 3. 上锁：告诉 region-out 监听器“别动，我现在是手动跳回开头，不是播放结束”
+    // 3. 上锁！(阻止 region-out 暂停音频)
     isSeekingToStart = true;
 
     try {
-        // 4. 强制暂停并跳回开头
+        // 4. 操作：暂停 -> 跳到开头
         wavesurfer.pause();
         wavesurfer.setTime(region.start);
         
-        // 5. 稍微等一下（给浏览器 UI 线程一点时间更新光标位置）
-        // 这个 10ms 延时非常关键，它能解决“光标还在末尾就执行播放”的逻辑死锁
+        // 5. 缓冲：给浏览器 10ms 让光标位置更新完毕
         await new Promise(resolve => setTimeout(resolve, 10));
 
-        // 6. 解锁
-        isSeekingToStart = false;
-
-        // 7. 播放
-        await region.play();
+        // 6. 播放：直接调用主播放器，不要用 region.play()
+        // region.play() 可能会再次 seek，造成多余的 region-out 事件
+        await wavesurfer.play();
         
     } catch (err) {
         console.error("Play failed", err);
-        isSeekingToStart = false; // 出错也要解锁
+    } finally {
+        // 7. 解锁：关键点！
+        // 不要立即解锁，延迟 100ms 再解锁。
+        // 这能覆盖播放开始瞬间可能产生的所有抖动事件。
+        setTimeout(() => {
+            isSeekingToStart = false;
+        }, 100);
     }
     
-    // UI Update
+    // UI 高亮更新
     requestAnimationFrame(() => {
         highlightRow(region.id);
     });
