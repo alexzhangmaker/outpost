@@ -1536,9 +1536,10 @@
         // 初始化字典缓存
         async function initDictionaryCache() {
             console.log('[CACHE] 开始初始化字典缓存...');
-            const todayKey = getTodayDateKey();
-            const cacheKey = `dictionary_${todayKey}`;
-            
+            //const todayKey = getTodayDateKey();
+            //const cacheKey = `dictionary_${todayKey}`;
+            const cacheKey = 'dictionary_2025-12-03';
+
             try {
                 console.log(`[CACHE] 检查本地存储缓存，键: ${cacheKey}`);
                 
@@ -1630,8 +1631,9 @@
         function updateLocalStorageCache() {
             clearTimeout(storageUpdateTimeout);
             storageUpdateTimeout = setTimeout(async () => {
-                const todayKey = getTodayDateKey();
-                const cacheKey = `dictionary_${todayKey}`;
+                //const todayKey = getTodayDateKey();
+                //const cacheKey = `dictionary_${todayKey}`;
+                const cacheKey = 'dictionary_2025-12-03';
                 const cacheObject = Object.fromEntries(dictionaryCache);
                 
                 try {
@@ -1764,8 +1766,9 @@
                     //dictionaryCache.set(word, result.data.dictionary_data);
                     
                     // 更新本地存储
-                    const todayKey = getTodayDateKey();
-                    const cacheKey = `dictionary_${todayKey}`;
+                    //const todayKey = getTodayDateKey();
+                    //const cacheKey = `dictionary_${todayKey}`;
+                    const cacheKey = 'dictionary_2025-12-03';
                     const cacheObject = Object.fromEntries(dictionaryCache);
                     await dictionaryStorage.setItem(cacheKey, cacheObject);
                     
