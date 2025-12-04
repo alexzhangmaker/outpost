@@ -678,7 +678,8 @@
                 let cacheDate = null;
                 
                 for (const date of recentDates) {
-                    const cacheKey = `dictionary_${date}`;
+                    //const cacheKey = `dictionary_${date}`;
+                    const cacheKey = 'dictionary_2025-12-03';
                     try {
                         dictionaryData = await readFromIndexedDB(cacheKey);
                         if (dictionaryData) {
