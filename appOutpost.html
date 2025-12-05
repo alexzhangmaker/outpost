@@ -130,7 +130,7 @@
 
         <!-- Bottom Navigation -->
         <nav class="absolute bottom-0 left-0 right-0 z-20 mx-auto max-w-lg border-t border-slate-200 bg-white/80 backdrop-blur-sm dark:border-slate-800 dark:bg-background-dark/80 pb-[env(safe-area-inset-bottom)]">
-            <div class="flex h-14 justify-around"> <!-- Reduced height from h-16 to h-14 -->
+            <div class="flex h-16 justify-around"> <!-- Reduced height from h-16 to h-14 -->
                 <a class="flex flex-1 flex-col items-center justify-center gap-0.5 text-primary" href="#">
                     <span class="material-symbols-outlined !text-xl">home</span>
                     <span class="text-[10px] font-medium">主页</span>
@@ -321,7 +321,7 @@
                             <span class="material-symbols-outlined !text-[20px]">${icon}</span>
                         </button>
                         <div class="flex-1 min-w-0" onclick="window.appActions.toggleStatus('${todo.id}', '${todo.status}')">
-                            <p class="font-medium text-sm leading-tight break-words ${textDecoration}">${todo.content}</p>
+                            <p class="font-medium text-base leading-tight break-words ${textDecoration}">${todo.content}</p>
                         </div>
                         <button onclick="window.appActions.deleteTodo('${todo.id}')" class="text-slate-300 hover:text-red-400 p-0.5 -mr-1">
                             <span class="material-symbols-outlined !text-[18px]">delete</span>
