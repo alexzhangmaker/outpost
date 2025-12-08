@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station InBox Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Console 风格滚动条 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .font-mono-nums { font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 h-screen overflow-hidden">
+
+    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 text-white transition-opacity duration-500">
+        <div class="text-center space-y-6 p-10 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 max-w-md w-full">
+            <h1 class="text-4xl font-bold tracking-wider text-green-400">STATION INBOX</h1>
+            <p class="text-slate-400">站内消息中心</p>
+            
+            <div id="url-param-info" class="text-xs font-mono bg-slate-900 p-2 rounded text-slate-500">
+                Checking URL parameters...
+            </div>
+
+            <button id="btn-login" class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                Sign in with Google
+            </button>
+            <p id="login-error" class="text-red-400 text-sm hidden"></p>
+        </div>
+    </div>
+
+    <div id="app-container" class="flex h-screen w-full hidden">
+        
+        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-700 flex-shrink-0">
+            <div class="h-16 flex items-center justify-center border-b border-slate-800">
+                <span class="text-xl font-bold text-white tracking-wider">INBOX<span class="text-green-500">_CLI</span></span>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-1">
+                    <li>
+                        <button onclick="router('inbox')" class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                            InBox
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="router('todo')" class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                            ToDo
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="p-4 border-t border-slate-800">
+                <div class="text-xs text-slate-500 mb-2">TARGET USER:</div>
+                <div id="target-user-display" class="text-xs font-mono text-green-400 truncate bg-slate-800 p-2 rounded mb-4">
+                    Wait...
+                </div>
+                <div class="flex items-center gap-3 mb-3">
+                    <img id="user-avatar" class="w-8 h-8 rounded-full bg-slate-600" src="" alt="Avatar">
+                    <div class="overflow-hidden">
+                        <p id="user-name" class="text-sm font-medium text-white truncate">Loading...</p>
+                    </div>
+                </div>
+                <button id="btn-logout" class="w-full py-2 text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded transition-colors">
+                    退出登录
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-slate-100 overflow-hidden">
+            <header class="h-16 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-8 shrink-0">
+                <div class="flex items-center gap-4">
+                    <h2 id="page-title" class="text-xl font-semibold text-slate-800">Dashboard</h2>
+                    <span id="data-count-badge" class="hidden px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">0</span>
+                </div>
+                <div class="text-sm text-slate-500 font-mono-nums" id="current-time"></div>
+            </header>
+
+            <div id="content-area" class="flex-1 overflow-auto p-8 relative">
+                <div id="loading-spinner" class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
+                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+                </div>
+                <div id="view-container"></div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // 4. 配置信息 (注意：使用了prompt中提供的特定 databaseURL)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-4ec53.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // UI 引用
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const viewContainer = document.getElementById('view-container');
+        const pageTitle = document.getElementById('page-title');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const paramInfo = document.getElementById('url-param-info');
+        const targetUserDisplay = document.getElementById('target-user-display');
+        const dataCountBadge = document.getElementById('data-count-badge');
+
+        // 5. 获取 URL 参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetUserEmail = urlParams.get('user');
+
+        // 启动检查参数
+        if (!targetUserEmail) {
+            paramInfo.textContent = "Warning: 'user' parameter is missing in URL.";
+            paramInfo.classList.add("text-yellow-400");
+        } else {
+            paramInfo.textContent = `Target User: ${targetUserEmail}`;
+            paramInfo.classList.add("text-green-400");
+        }
+        targetUserDisplay.textContent = targetUserEmail || "N/A";
+
+        // ================= 认证逻辑 =================
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginScreen.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => loginScreen.classList.add('hidden'), 500);
+                appContainer.classList.remove('hidden');
+                
+                document.getElementById('user-name').textContent = user.displayName;
+                document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
+
+                // 默认加载 InBox
+                router('inbox');
+            } else {
+                loginScreen.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                appContainer.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('btn-login').addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch((error) => {
+                document.getElementById('login-error').textContent = error.message;
+                document.getElementById('login-error').classList.remove('hidden');
+            });
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+        // ================= 路由逻辑 =================
+        window.router = (viewName) => {
+            // 样式切换
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-slate-800', 'text-white', 'border-green-500');
+                el.classList.add('border-transparent');
+            });
+            const activeBtn = document.querySelector(`button[onclick="router('${viewName}')"]`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-slate-800', 'text-white', 'border-green-500');
+                activeBtn.classList.remove('border-transparent');
+            }
+
+            if (viewName === 'inbox') {
+                pageTitle.textContent = 'Station InBox';
+                renderInbox();
+            } else if (viewName === 'todo') {
+                pageTitle.textContent = 'Task List';
+                dataCountBadge.classList.add('hidden');
+                viewContainer.innerHTML = `<div class="p-10 text-center text-slate-500">TODO 功能模块开发中...</div>`;
+            }
+        };
+
+        // ================= InBox 业务逻辑 =================
+        async function renderInbox() {
+            showLoading(true);
+            viewContainer.innerHTML = '';
+            dataCountBadge.classList.add('hidden');
+
+            if (!targetUserEmail) {
+                viewContainer.innerHTML = `
+                    <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 p-6 rounded-lg">
+                        <h3 class="font-bold">Missing Parameter</h3>
+                        <p>URL parameter <code>?user=email@example.com</code> is required to load inbox data.</p>
+                    </div>`;
+                showLoading(false);
+                return;
+            }
+
+            try {
+                // 7. 读取 userMessages 下所有数据
+                const dbRef = ref(db);
+                const snapshot = await get(child(dbRef, 'userMessages'));
+
+                if (snapshot.exists()) {
+                    const allMessages = snapshot.val();
+                    const now = new Date();
+                    // 将时间设为今天 00:00:00 用于比较 (或者精确比较，取决于 expireAt 的格式)
+                    // 假设 expireAt 是 "YYYY-MM-DD" 格式
+                    const todayStr = now.toISOString().split('T')[0];
+                    const todayDate = new Date(todayStr);
+
+                    const validMessages = [];
+
+                    // 遍历过滤
+                    Object.keys(allMessages).forEach(key => {
+                        const msg = allMessages[key];
+                        
+                        // 过滤条件 1: user 匹配 URL 参数
+                        if (msg.user !== targetUserEmail) return;
+
+                        // 过滤条件 2: expireAt 检查
+                        // 如果 expireAt 存在，且 早于 当前日期，则不显示
+                        if (msg.expireAt) {
+                            const expireDate = new Date(msg.expireAt);
+                            // 如果 expireDate < todayDate (例如 expire 是 12-07，今天是 12-08，则过期)
+                            // 注意：Date 比较包含时间，这里简单按日期比较
+                            if (expireDate < todayDate) {
+                                return; // Skip expired
+                            }
+                        }
+
+                        validMessages.push({ id: key, ...msg });
+                    });
+
+                    // 更新计数徽章
+                    dataCountBadge.textContent = validMessages.length;
+                    dataCountBadge.classList.remove('hidden');
+
+                    if (validMessages.length > 0) {
+                        renderTable(validMessages);
+                    } else {
+                        viewContainer.innerHTML = `<div class="bg-white p-10 rounded-lg shadow text-center text-gray-500">No active messages for ${targetUserEmail}</div>`;
+                    }
+
+                } else {
+                    viewContainer.innerHTML = `<div class="bg-white p-10 rounded-lg shadow text-center text-gray-500">No messages found in database.</div>`;
+                }
+            } catch (error) {
+                console.error(error);
+                viewContainer.innerHTML = `<div class="bg-red-50 p-4 rounded text-red-600">Error loading data: ${error.message}</div>`;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderTable(messages) {
+            let html = `
+                <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message Content</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Class</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Expires</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            messages.forEach(msg => {
+                // 样式化 Classification
+                let classBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">${msg.classification || 'Gen'}</span>`;
+                if(msg.classification === 'todo') classBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">TODO</span>`;
+                if(msg.classification === 'alert') classBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">ALERT</span>`;
+
+                // 处理 Action 按钮
+                let actionBtn = '-';
+                if (msg.attachment) {
+                    actionBtn = `
+                        <button onclick="window.open('${msg.attachment}', '_blank')" 
+                                class="text-slate-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors"
+                                title="Open Attachment">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </button>
+                    `;
+                }
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">${msg.createdAt || ''}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 font-medium">${msg.message}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${classBadge}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono">${msg.expireAt || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">${actionBtn}</td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table></div>`;
+            viewContainer.innerHTML = html;
+        }
+
+        function showLoading(show) {
+            loadingSpinner.classList.toggle('hidden', !show);
+        }
+
+        // 时钟
+        setInterval(() => {
+            document.getElementById('current-time').textContent = new Date().toLocaleString('zh-CN', { hour12: false });
+        }, 1000);
+
+    </script>
+</body>
+</html>

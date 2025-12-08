@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anki Console Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定义滚动条样式，使其更像Console风格 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .date-input-dark {
+            color-scheme: dark; 
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 h-screen overflow-hidden">
+
+    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 text-white transition-opacity duration-500">
+        <div class="text-center space-y-6 p-10 bg-slate-800 rounded-xl shadow-2xl border border-slate-700">
+            <h1 class="text-4xl font-bold tracking-wider text-blue-400">OUTPOST CONSOLE</h1>
+            <p class="text-slate-400">Anki Deck 数据管理系统</p>
+            <button id="btn-login" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 w-full">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                Sign in with Google
+            </button>
+            <p id="login-error" class="text-red-400 text-sm hidden"></p>
+        </div>
+    </div>
+
+    <div id="app-container" class="flex h-screen w-full hidden">
+        
+        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-700">
+            <div class="h-16 flex items-center justify-center border-b border-slate-800">
+                <span class="text-xl font-bold text-white tracking-wider">OUTPOST</span>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-1">
+                    <li>
+                        <button onclick="router('decks')" class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            Anki Deck 管理
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="router('schedule')" class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            每日复习安排
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="router('history')" class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                            复习记录查看
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="p-4 border-t border-slate-800">
+                <div class="flex items-center gap-3 mb-3">
+                    <img id="user-avatar" class="w-8 h-8 rounded-full bg-slate-600" src="" alt="Avatar">
+                    <div class="overflow-hidden">
+                        <p id="user-name" class="text-sm font-medium text-white truncate">Loading...</p>
+                        <p id="user-email" class="text-xs text-slate-500 truncate">...</p>
+                    </div>
+                </div>
+                <button id="btn-logout" class="w-full py-2 text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded transition-colors">
+                    退出登录
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-slate-100 overflow-hidden">
+            <header class="h-16 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-8">
+                <h2 id="page-title" class="text-xl font-semibold text-slate-800">Dashboard</h2>
+                <div class="text-sm text-slate-500" id="current-time"></div>
+            </header>
+
+            <div id="content-area" class="flex-1 overflow-auto p-8 relative">
+                <div id="loading-spinner" class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
+                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                </div>
+                <div id="view-container"></div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        // 导入 Firebase SDKs (注意：增加了 push 方法)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, get, child, update, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // 4. 配置信息 (主数据库)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // 目标消息数据库 URL (用于 assignDeck)
+        const MESSAGE_DB_URL = "https://outpost-8d74e-4ec53.asia-southeast1.firebasedatabase.app/";
+
+        // 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app); // 默认连接到 outpost-dictionary...
+
+        // DOM 元素引用
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const viewContainer = document.getElementById('view-container');
+        const pageTitle = document.getElementById('page-title');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const loginBtn = document.getElementById('btn-login');
+        const logoutBtn = document.getElementById('btn-logout');
+
+        // ================= 工具函数 =================
+
+        // 显示/隐藏 Loading
+        const showLoading = (show) => {
+            loadingSpinner.classList.toggle('hidden', !show);
+        };
+
+        // 格式化日期：将 JS Date 转为 "Wed, Dec 28, 2025" 格式 (用于显示)
+        const formatDateForDB = (dateObj) => {
+            const dateStr = dateObj.toDateString(); 
+            const parts = dateStr.split(' ');
+            return `${parts[0]}, ${parts[1]} ${parts[2]}, ${parts[3]}`;
+        };
+
+        // 解析日期：将 "Mon, Dec 08, 2025" 转为 "2025-12-08" (用于 input type="date")
+        const formatDateForInput = (dateStr) => {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            if (isNaN(d)) return '';
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // 获取 YYYY-MM-DD 格式 (用于 assignDeck 数据存储)
+        const getISODate = (dateObj) => {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // ================= 认证逻辑 =================
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginScreen.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => loginScreen.classList.add('hidden'), 500);
+                appContainer.classList.remove('hidden');
+                
+                document.getElementById('user-name').textContent = user.displayName;
+                document.getElementById('user-email').textContent = user.email;
+                document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
+
+                router('decks');
+            } else {
+                loginScreen.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                appContainer.classList.add('hidden');
+            }
+        });
+
+        loginBtn.addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch((error) => {
+                const errorEl = document.getElementById('login-error');
+                errorEl.textContent = `Login Failed: ${error.message}`;
+                errorEl.classList.remove('hidden');
+            });
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        // ================= 路由/视图逻辑 =================
+
+        window.router = (viewName) => {
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-slate-800', 'text-white', 'border-blue-500');
+                el.classList.add('border-transparent');
+            });
+            const activeBtn = document.querySelector(`button[onclick="router('${viewName}')"]`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-slate-800', 'text-white', 'border-blue-500');
+                activeBtn.classList.remove('border-transparent');
+            }
+
+            if (viewName === 'decks') {
+                pageTitle.textContent = 'Anki Deck Management';
+                renderDeckManagement();
+            } else if (viewName === 'schedule') {
+                pageTitle.textContent = 'Daily Review Schedule';
+                viewContainer.innerHTML = `<div class="p-10 text-center text-slate-500">功能 "每日复习安排" 开发中...</div>`;
+            } else if (viewName === 'history') {
+                pageTitle.textContent = 'Review History';
+                viewContainer.innerHTML = `<div class="p-10 text-center text-slate-500">功能 "复习记录查看" 开发中...</div>`;
+            }
+        };
+
+        // ================= 业务功能：Anki Deck 管理 =================
+
+        async function renderDeckManagement() {
+            showLoading(true);
+            viewContainer.innerHTML = '';
+
+            try {
+                const dbRef = ref(db);
+                const snapshot = await get(child(dbRef, 'thaiAnki/reviewSets'));
+
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    let html = `
+                        <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Review</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="deck-table-body">
+                    `;
+
+                    Object.keys(data).forEach(key => {
+                        const deck = data[key];
+                        const dateValue = formatDateForInput(deck.nextReview);
+
+                        html += `
+                            <tr id="row-${key}" class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">${deck.title || 'Untitled'}</div>
+                                    <div class="text-xs text-gray-400 font-mono">${deck.wordSetID || ''}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${deck.createdAt}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <input type="date" 
+                                           value="${dateValue}" 
+                                           onchange="updateNextReview('${key}', this.value)"
+                                           class="text-sm border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-md shadow-sm text-gray-700 bg-white border p-1"
+                                    />
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
+                                    <a href="${deck.wordSetURL}" target="_blank" class="hover:underline flex items-center gap-1">
+                                        JSON 
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                    </a>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                    <button onclick="assignDeck('${key}')" class="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-1 rounded transition-colors border border-blue-200">
+                                        Assign
+                                    </button>
+                                    <button onclick="deleteDeck('${key}')" class="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-1 rounded transition-colors border border-red-200">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `</tbody></table></div>`;
+                    viewContainer.innerHTML = html;
+                } else {
+                    viewContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow text-center text-gray-500">No decks found in database.</div>`;
+                }
+            } catch (error) {
+                console.error(error);
+                viewContainer.innerHTML = `<div class="bg-red-50 p-4 rounded text-red-600">Error loading data: ${error.message}</div>`;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ================= 数据操作逻辑 =================
+
+        window.updateNextReview = async (key, newDateValue) => {
+            if (!newDateValue) return;
+            const d = new Date(newDateValue);
+            const formattedDate = formatDateForDB(d);
+
+            try {
+                showLoading(true);
+                await update(ref(db, `thaiAnki/reviewSets/${key}`), {
+                    nextReview: formattedDate
+                });
+                console.log(`Updated ${key} to ${formattedDate}`);
+            } catch (error) {
+                alert("Update failed: " + error.message);
+            } finally {
+                showLoading(false);
+            }
+        };
+
+        window.deleteDeck = async (key) => {
+            if (!confirm('Are you sure you want to delete this deck? This action cannot be undone.')) return;
+
+            try {
+                showLoading(true);
+                await remove(ref(db, `thaiAnki/reviewSets/${key}`));
+                const row = document.getElementById(`row-${key}`);
+                if (row) row.remove();
+            } catch (error) {
+                alert("Delete failed: " + error.message);
+            } finally {
+                showLoading(false);
+            }
+        };
+
+        // 新增的 Assign Deck 功能
+        window.assignDeck = async (key) => {
+            // 确认操作
+            if(!confirm("确认将此 Deck 分配给 Ray (rayzhang20030603@gmail.com) 吗？")) return;
+
+            showLoading(true);
+            try {
+                // 1. 获取连接到第二个数据库的实例
+                // 在 Firebase Web SDK 中，可以通过传递 URL 给 getDatabase 来连接同一项目下的不同数据库实例
+                const messageDb = getDatabase(app, MESSAGE_DB_URL);
+
+                // 2. 准备日期
+                const now = new Date();
+                const expireDate = new Date();
+                expireDate.setDate(now.getDate() + 2); // 2天后过期
+
+                // 3. 构建消息体
+                const newMessage = {
+                    attachment: `https://alexzhangmaker.github.io/outpost/ankiAnywherev2.html?reviewSet=${key}`,
+                    classification: "anki",
+                    createdAt: getISODate(now), // YYYY-MM-DD
+                    expireAt: getISODate(expireDate), // YYYY-MM-DD
+                    message: "anki assignment",
+                    user: "rayzhang20030603@gmail.com"
+                };
+
+                // 4. Push 到 userMessages
+                // push 会自动生成唯一 ID (如 qHEcwa...)
+                await push(ref(messageDb, 'userMessages'), newMessage);
+
+                alert("任务分配成功！");
+            } catch (error) {
+                console.error("Assign failed:", error);
+                alert("分配失败: " + error.message);
+            } finally {
+                showLoading(false);
+            }
+        };
+
+        // 更新右上角时间
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleString('zh-CN', { hour12: false });
+        }, 1000);
+
+    </script>
+</body>
+</html>
