@@ -327,6 +327,7 @@
             }
         };
 
+        /*
         // 新增的 Assign Deck 功能
         window.assignDeck = async (key) => {
             // 确认操作
@@ -358,6 +359,52 @@
                 await push(ref(messageDb, 'userMessages'), newMessage);
 
                 alert("任务分配成功！");
+            } catch (error) {
+                console.error("Assign failed:", error);
+                alert("分配失败: " + error.message);
+            } finally {
+                showLoading(false);
+            }
+        };
+        */
+        // 新增的 Assign Deck 功能
+        window.assignDeck = async (key) => {
+            // 确认操作
+            if(!confirm("确认将此 Deck 分配给 Ray (rayzhang20030603@gmail.com) 吗？")) return;
+
+            showLoading(true);
+            try {
+                // --- 修改开始：先获取 Title ---
+                const dbRef = ref(db);
+                // 获取 title 节点快照
+                const titleSnapshot = await get(child(dbRef, `thaiAnki/reviewSets/${key}/title`));
+                
+                // 如果获取不到，给一个默认值 'assignment'，否则使用获取到的标题
+                const reviewSetTitle = titleSnapshot.exists() ? titleSnapshot.val() : 'assignment';
+                // --- 修改结束 ---
+
+                // 1. 获取连接到第二个数据库的实例
+                const messageDb = getDatabase(app, MESSAGE_DB_URL);
+
+                // 2. 准备日期
+                const now = new Date();
+                const expireDate = new Date();
+                expireDate.setDate(now.getDate() + 2); // 2天后过期
+
+                // 3. 构建消息体
+                const newMessage = {
+                    attachment: `https://alexzhangmaker.github.io/outpost/ankiAnywherev2.html?reviewSet=${key}`,
+                    classification: "anki",
+                    createdAt: getISODate(now), // YYYY-MM-DD
+                    expireAt: getISODate(expireDate), // YYYY-MM-DD
+                    message: `anki ${reviewSetTitle}`, // 这里使用了获取到的 Title
+                    user: "rayzhang20030603@gmail.com"
+                };
+
+                // 4. Push 到 userMessages
+                await push(ref(messageDb, 'userMessages'), newMessage);
+
+                alert(`任务 "anki ${reviewSetTitle}" 分配成功！`);
             } catch (error) {
                 console.error("Assign failed:", error);
                 alert("分配失败: " + error.message);

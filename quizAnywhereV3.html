@@ -706,7 +706,8 @@
 
         
     </script>
-    <script>
+    
+   <script>
 
         let globalQuizInProgress={
             quizPath:'',
@@ -716,6 +717,7 @@
             failed:[],
             finished:false
         } ;
+        
         function formatDateYYYYMMDD(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -750,11 +752,34 @@
             }
         }
 
+        // --- 修改后的 publishQuizResult 函数 ---
         async function publishQuizResult(jsonQuizProgress){
-            let cDate = new Date() ;
+            try {
+                // 1. 从 quizPath 中提取 quizSet 的 key
+                // 假设路径格式为 "quizSets/-Ofx7fNEug7-HDi_Zcnq/quizzes"
+                let quizSetID = 'unknown';
+                if (jsonQuizProgress.quizPath) {
+                    const parts = jsonQuizProgress.quizPath.split('/');
+                    const setIndex = parts.indexOf('quizSets');
+                    if (setIndex !== -1 && setIndex + 1 < parts.length) {
+                        quizSetID = parts[setIndex + 1];
+                    }
+                }
 
-            let refQuizLog = database.ref(`/Quiz_logs/${formatDateYYYYMMDD(cDate)}/${cDate.getTime()}`) ;
-            await refQuizLog.set(jsonQuizProgress) ;
+                // 2. 将 key 添加到对象中
+                jsonQuizProgress.quizSetID = quizSetID;
+
+                // 3. 增加 testedOn 字段 (当前日期)
+                jsonQuizProgress.testedOn = formatDateYYYYMMDD(new Date());
+
+                // 4. 将结果添加到数据库 quizSetLogs 路径下
+                console.log("Publishing result:", jsonQuizProgress);
+                await database.ref('quizSetLogs').push(jsonQuizProgress);
+                console.log("Result published successfully to quizSetLogs");
+
+            } catch (error) {
+                console.error("Error publishing quiz result:", error);
+            }
         }
 
         function chooseQuiz(Quizs){

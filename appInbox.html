@@ -93,6 +93,7 @@
     </div>
 
     <script type="module">
+        /*
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -315,6 +316,275 @@
         }
 
         // 时钟
+        setInterval(() => {
+            document.getElementById('current-time').textContent = new Date().toLocaleString('zh-CN', { hour12: false });
+        }, 1000);
+    */
+    </script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // 修改点 1: 引入 update 方法
+        import { getDatabase, ref, get, child, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-4ec53.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // UI 引用
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const viewContainer = document.getElementById('view-container');
+        const pageTitle = document.getElementById('page-title');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const paramInfo = document.getElementById('url-param-info');
+        const targetUserDisplay = document.getElementById('target-user-display');
+        const dataCountBadge = document.getElementById('data-count-badge');
+
+        // URL 参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetUserEmail = urlParams.get('user');
+
+        if (!targetUserEmail) {
+            paramInfo.textContent = "Warning: 'user' parameter is missing in URL.";
+            paramInfo.classList.add("text-yellow-400");
+        } else {
+            paramInfo.textContent = `Target User: ${targetUserEmail}`;
+            paramInfo.classList.add("text-green-400");
+        }
+        targetUserDisplay.textContent = targetUserEmail || "N/A";
+
+        // ================= 认证逻辑 =================
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginScreen.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => loginScreen.classList.add('hidden'), 500);
+                appContainer.classList.remove('hidden');
+                
+                document.getElementById('user-name').textContent = user.displayName;
+                document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
+
+                router('inbox');
+            } else {
+                loginScreen.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                appContainer.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('btn-login').addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch((error) => {
+                document.getElementById('login-error').textContent = error.message;
+                document.getElementById('login-error').classList.remove('hidden');
+            });
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+        // ================= 路由逻辑 =================
+        window.router = (viewName) => {
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-slate-800', 'text-white', 'border-green-500');
+                el.classList.add('border-transparent');
+            });
+            const activeBtn = document.querySelector(`button[onclick="router('${viewName}')"]`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-slate-800', 'text-white', 'border-green-500');
+                activeBtn.classList.remove('border-transparent');
+            }
+
+            if (viewName === 'inbox') {
+                pageTitle.textContent = 'Station InBox';
+                renderInbox();
+            } else if (viewName === 'todo') {
+                pageTitle.textContent = 'Task List';
+                dataCountBadge.classList.add('hidden');
+                viewContainer.innerHTML = `<div class="p-10 text-center text-slate-500">TODO 功能模块开发中...</div>`;
+            }
+        };
+
+        // ================= 业务逻辑：状态更新 =================
+        
+        // 修改点 3: 新增状态更新函数
+        window.updateMessageStatus = async (messageId, newStatus) => {
+            // 简单的防误触提示
+            const actionName = newStatus === 'finished' ? '完成' : '归档';
+            // if(!confirm(`确认将此消息标记为"${actionName}"吗？它将从 InBox 中移除。`)) return;
+
+            showLoading(true);
+            try {
+                const updates = {};
+                updates[`userMessages/${messageId}/status`] = newStatus;
+                
+                await update(ref(db), updates);
+                // 更新成功后重新加载列表
+                renderInbox();
+            } catch (error) {
+                console.error("Status update failed:", error);
+                alert("更新状态失败: " + error.message);
+                showLoading(false);
+            }
+        };
+
+        // ================= InBox 业务逻辑 =================
+        async function renderInbox() {
+            showLoading(true);
+            viewContainer.innerHTML = '';
+            dataCountBadge.classList.add('hidden');
+
+            if (!targetUserEmail) {
+                viewContainer.innerHTML = `
+                    <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 p-6 rounded-lg">
+                        <h3 class="font-bold">Missing Parameter</h3>
+                        <p>URL parameter <code>?user=email@example.com</code> is required to load inbox data.</p>
+                    </div>`;
+                showLoading(false);
+                return;
+            }
+
+            try {
+                const dbRef = ref(db);
+                const snapshot = await get(child(dbRef, 'userMessages'));
+
+                if (snapshot.exists()) {
+                    const allMessages = snapshot.val();
+                    const now = new Date();
+                    const todayStr = now.toISOString().split('T')[0];
+                    const todayDate = new Date(todayStr);
+
+                    const validMessages = [];
+
+                    Object.keys(allMessages).forEach(key => {
+                        const msg = allMessages[key];
+                        
+                        // 1. User Filter
+                        if (msg.user !== targetUserEmail) return;
+
+                        // 修改点 2: Status Filter (只显示 todo 或者没有 status 字段的消息)
+                        const status = msg.status || 'todo'; 
+                        if (status !== 'todo') return; 
+
+                        // 3. Expiry Filter
+                        if (msg.expireAt) {
+                            const expireDate = new Date(msg.expireAt);
+                            if (expireDate < todayDate) {
+                                return; // Skip expired
+                            }
+                        }
+
+                        validMessages.push({ id: key, ...msg });
+                    });
+
+                    dataCountBadge.textContent = validMessages.length;
+                    dataCountBadge.classList.remove('hidden');
+
+                    if (validMessages.length > 0) {
+                        // 按时间倒序排列（新的在上面）
+                        validMessages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        renderTable(validMessages);
+                    } else {
+                        viewContainer.innerHTML = `<div class="bg-white p-10 rounded-lg shadow text-center text-gray-500">No active messages for ${targetUserEmail}</div>`;
+                    }
+
+                } else {
+                    viewContainer.innerHTML = `<div class="bg-white p-10 rounded-lg shadow text-center text-gray-500">No messages found in database.</div>`;
+                }
+            } catch (error) {
+                console.error(error);
+                viewContainer.innerHTML = `<div class="bg-red-50 p-4 rounded text-red-600">Error loading data: ${error.message}</div>`;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderTable(messages) {
+            let html = `
+                <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message Content</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Class</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Expires</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            messages.forEach(msg => {
+                let classBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">${msg.classification || 'Gen'}</span>`;
+                if(msg.classification === 'todo') classBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">TODO</span>`;
+                if(msg.classification === 'alert') classBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">ALERT</span>`;
+
+                // 修改点 4: 构造 Actions 列
+                // 1. 链接/附件按钮
+                let linkBtn = '';
+                if (msg.attachment) {
+                    linkBtn = `
+                        <button onclick="window.open('${msg.attachment}', '_blank')" 
+                                class="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded transition-colors"
+                                title="Open Attachment">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </button>
+                    `;
+                }
+
+                // 2. Finished 按钮 (绿色勾选)
+                const finishedBtn = `
+                    <button onclick="updateMessageStatus('${msg.id}', 'finished')"
+                            class="text-slate-400 hover:text-green-600 hover:bg-green-50 p-1.5 rounded transition-colors"
+                            title="Mark as Finished">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </button>
+                `;
+
+                // 3. Archived 按钮 (灰色盒子)
+                const archivedBtn = `
+                    <button onclick="updateMessageStatus('${msg.id}', 'archived')"
+                            class="text-slate-400 hover:text-amber-600 hover:bg-amber-50 p-1.5 rounded transition-colors"
+                            title="Archive Message">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                    </button>
+                `;
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">${msg.createdAt || ''}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 font-medium">${msg.message}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${classBadge}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono">${msg.expireAt || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                ${linkBtn}
+                                ${finishedBtn}
+                                ${archivedBtn}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table></div>`;
+            viewContainer.innerHTML = html;
+        }
+
+        function showLoading(show) {
+            loadingSpinner.classList.toggle('hidden', !show);
+        }
+
         setInterval(() => {
             document.getElementById('current-time').textContent = new Date().toLocaleString('zh-CN', { hour12: false });
         }, 1000);

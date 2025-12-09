@@ -933,7 +933,10 @@
             
             <!-- 词汇集详情视图 -->
             <div id="wordset-detail-view" style="display: none;">
-                <h2 id="wordset-title" style="margin-bottom: 8px; color: #1e293b;"></h2>
+                <div style="display: flex;flex-direction: row;">
+                    <h2 id="wordset-title" style="margin-bottom: 8px; color: #1e293b;"></h2>
+                    <span id="idCopyWordSetKey">id...</span>
+                </div>
                 
                 <!-- 分类编辑区域 -->
                 <div class="classification-editor">
@@ -1902,7 +1905,8 @@
             
             // 更新UI
             document.getElementById('wordset-title').textContent = wordset.分类title || '未命名词汇集';
-            
+            document.getElementById('idCopyWordSetKey').textContent = wordsetId ;
+           
             // 更新分类编辑器
             updateClassificationEditor(wordset);
             

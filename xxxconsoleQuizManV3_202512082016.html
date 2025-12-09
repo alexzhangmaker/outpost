@@ -14,13 +14,9 @@
         .font-mono-nums { font-variant-numeric: tabular-nums; }
         /* 选中态样式 */
         .nav-active {
-            background-color: #334155; /* slate-700 */
+            background-color: #1e293b; /* slate-800 */
             color: white;
-            border-left-color: #a855f7; /* purple-500 */
-        }
-        /* Accordion 动画 */
-        .accordion-content {
-            transition: max-height 0.3s ease-in-out;
+            border-left-color: #3b82f6; /* blue-500 */
         }
     </style>
 </head>
@@ -116,33 +112,13 @@
                 <span class="text-xl font-bold text-white tracking-wider">QUIZ<span class="text-purple-500">_MGR</span></span>
             </div>
             
-            <div class="flex-1 overflow-y-auto">
-                
-                <div>
-                    <button onclick="toggleAccordion('courses-drawer')" class="w-full px-4 py-3 flex items-center justify-between bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors border-b border-slate-700">
-                        <span class="font-semibold text-xs uppercase tracking-wider">Course Management</span>
-                        <svg id="icon-courses-drawer" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </button>
-                    <div id="courses-drawer" class="accordion-content">
-                        <nav id="course-list" class="space-y-1 py-1">
-                            <div class="text-center text-sm text-slate-500 py-4">Loading courses...</div>
-                        </nav>
-                    </div>
-                </div>
-
-                <div>
-                    <button onclick="toggleAccordion('logs-drawer')" class="w-full px-4 py-3 flex items-center justify-between bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors border-b border-slate-700">
-                        <span class="font-semibold text-xs uppercase tracking-wider">Quiz Logs</span>
-                        <svg id="icon-logs-drawer" class="w-4 h-4 transform -rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </button>
-                    <div id="logs-drawer" class="accordion-content hidden">
-                        <nav id="logs-course-list" class="space-y-1 py-1">
-                            <div class="text-center text-sm text-slate-500 py-4">Click to load logs</div>
-                        </nav>
-                    </div>
-                </div>
-
+            <div class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Courses
             </div>
+
+            <nav class="flex-1 overflow-y-auto px-2 space-y-1" id="course-list">
+                <div class="text-center text-sm text-slate-500 py-4">Loading courses...</div>
+            </nav>
 
             <div class="p-4 border-t border-slate-800 mt-auto">
                 <button onclick="openCreateModal()" class="w-full mb-4 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded flex items-center justify-center gap-2 transition-colors">
@@ -179,7 +155,7 @@
                 <div id="view-container">
                     <div class="h-full flex flex-col items-center justify-center text-slate-400">
                         <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                        <p>Select a course or log to view details.</p>
+                        <p>Select a course from the sidebar to view quiz sets.</p>
                     </div>
                 </div>
             </div>
@@ -217,7 +193,6 @@
         const pageTitle = document.getElementById('page-title');
         const loadingSpinner = document.getElementById('loading-spinner');
         const courseListEl = document.getElementById('course-list');
-        const logsCourseListEl = document.getElementById('logs-course-list');
         const quizCountBadge = document.getElementById('quiz-count-badge');
         
         // Modal UI Refs
@@ -231,25 +206,7 @@
         const saveSpinner = document.getElementById('save-spinner');
 
         let currentCourseId = null;
-        let availableCourses = []; // 缓存课程列表
-
-        // ================= Accordion Logic =================
-        window.toggleAccordion = (drawerId) => {
-            const drawer = document.getElementById(drawerId);
-            const icon = document.getElementById(`icon-${drawerId}`);
-            
-            if (drawer.classList.contains('hidden')) {
-                drawer.classList.remove('hidden');
-                icon.classList.remove('-rotate-90'); // Arrow Down
-                // Load data specific to drawer if needed
-                if (drawerId === 'logs-drawer') {
-                    loadQuizLogsSidebar();
-                }
-            } else {
-                drawer.classList.add('hidden');
-                icon.classList.add('-rotate-90'); // Arrow Right
-            }
-        };
+        let availableCourses = []; // 缓存课程列表供下拉框使用
 
         // ================= 认证逻辑 =================
         onAuthStateChanged(auth, (user) => {
@@ -262,7 +219,7 @@
                 document.getElementById('user-email').textContent = user.email;
                 document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
 
-                loadCoursesSidebar(); // Initial load of courses drawer
+                loadCoursesSidebar();
             } else {
                 loginScreen.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
                 appContainer.classList.add('hidden');
@@ -280,18 +237,18 @@
 
         document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-        // ================= 1. Course Management Drawer (Existing) =================
+        // ================= 侧边栏逻辑 (Course Folders) =================
         async function loadCoursesSidebar() {
             try {
                 const snapshot = await get(ref(dbMain, 'courseFolders'));
                 if (snapshot.exists()) {
                     const courses = snapshot.val();
                     courseListEl.innerHTML = '';
-                    availableCourses = []; 
+                    availableCourses = []; // Reset cache
                     
                     Object.keys(courses).sort().forEach(key => {
                         const course = courses[key];
-                        // Cache for dropdown
+                        // 缓存到全局数组
                         availableCourses.push({
                             id: key,
                             code: course.courseCode,
@@ -299,13 +256,12 @@
                         });
 
                         const btn = document.createElement('button');
-                        btn.className = `w-full text-left px-8 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none block nav-item course-nav-item`;
+                        btn.className = `w-full text-left px-4 py-3 text-sm hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none block mb-1 nav-item`;
                         btn.dataset.id = key;
-                        btn.dataset.type = 'course'; // differentiate from logs
                         
                         btn.innerHTML = `
-                            <div class="font-bold">${course.courseCode}</div>
-                            <div class="text-xs truncate opacity-75">${course.course}</div>
+                            <div class="font-bold text-slate-200">${course.courseCode}</div>
+                            <div class="text-xs text-slate-500 truncate">${course.course}</div>
                         `;
                         
                         btn.onclick = () => loadCourseData(key, course);
@@ -320,165 +276,9 @@
             }
         }
 
-        // ================= 2. Quiz Logs Drawer (New) =================
-        async function loadQuizLogsSidebar() {
-            logsCourseListEl.innerHTML = '<div class="text-center text-sm text-slate-500 py-4"><div class="animate-spin inline-block w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full"></div> Loading Logs...</div>';
-
-            try {
-                // 1. Fetch all Logs
-                const logsSnap = await get(ref(dbMain, 'quizSetLogs'));
-                if (!logsSnap.exists()) {
-                    logsCourseListEl.innerHTML = '<div class="p-4 text-sm text-slate-500">No quiz logs found.</div>';
-                    return;
-                }
-                const allLogs = logsSnap.val();
-
-                // 2. Fetch all Quiz Sets (to lookup courseID)
-                // Note: In a huge DB, fetching all might be heavy, but efficient for now.
-                const quizSetsSnap = await get(ref(dbMain, 'quizSets'));
-                const allQuizSets = quizSetsSnap.exists() ? quizSetsSnap.val() : {};
-
-                // 3. Fetch Course Info (if not already cached, though loadCoursesSidebar runs first)
-                const courseFoldersSnap = await get(ref(dbMain, 'courseFolders'));
-                const allCourses = courseFoldersSnap.exists() ? courseFoldersSnap.val() : {};
-
-                // 4. Group Logs by Course
-                // Structure: { courseID: [log1, log2, ...] }
-                const groupedLogs = {};
-                
-                Object.entries(allLogs).forEach(([logId, logData]) => {
-                    const quizSetID = logData.quizSetID;
-                    if (quizSetID && allQuizSets[quizSetID]) {
-                        const courseID = allQuizSets[quizSetID].courseID; // Assuming field added in recent update
-                        // Fallback: If quizSet doesn't have courseID directly, try finding it via courseFolders (reverse lookup) - expensive, assume quizSets has it based on new creation logic
-                        
-                        if (courseID && allCourses[courseID]) {
-                            if (!groupedLogs[courseID]) {
-                                groupedLogs[courseID] = {
-                                    info: allCourses[courseID],
-                                    logs: []
-                                };
-                            }
-                            // Attach quiz title for convenience
-                            logData.quizTitleReal = allQuizSets[quizSetID].title || "Unknown Quiz";
-                            groupedLogs[courseID].logs.push(logData);
-                        }
-                    }
-                });
-
-                // 5. Render Sidebar Items
-                logsCourseListEl.innerHTML = '';
-                const sortedCourseIds = Object.keys(groupedLogs).sort();
-
-                if (sortedCourseIds.length === 0) {
-                    logsCourseListEl.innerHTML = '<div class="p-4 text-sm text-slate-500">No logs associated with courses found.</div>';
-                    return;
-                }
-
-                sortedCourseIds.forEach(cId => {
-                    const group = groupedLogs[cId];
-                    const btn = document.createElement('button');
-                    btn.className = `w-full text-left px-8 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none block nav-item log-nav-item`;
-                    btn.dataset.id = cId;
-                    btn.dataset.type = 'log';
-
-                    btn.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <div class="font-bold">${group.info.courseCode}</div>
-                            <span class="bg-slate-700 text-xs px-1.5 py-0.5 rounded text-slate-300">${group.logs.length}</span>
-                        </div>
-                        <div class="text-xs truncate opacity-75">${group.info.course}</div>
-                    `;
-
-                    btn.onclick = () => renderQuizLogTable(group.info, group.logs);
-                    logsCourseListEl.appendChild(btn);
-                });
-
-            } catch (error) {
-                console.error("Error loading logs sidebar:", error);
-                logsCourseListEl.innerHTML = '<div class="p-4 text-sm text-red-400">Error loading logs.</div>';
-            }
-        }
-
-        // ================= Content Area: Render Logs Table =================
-        function renderQuizLogTable(courseInfo, logs) {
-            // Update Active State
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('nav-active'));
-            document.querySelector(`.log-nav-item[data-id="${courseInfo.courseCode || Object.keys(availableCourses).find(k=>availableCourses[k].code===courseInfo.courseCode)}"]`)?.classList.add('nav-active');
-            // Hacky selector above due to key/code mix, usually button exists directly
-            // Better:
-            const activeBtn = document.querySelector(`.log-nav-item[onclick*="${courseInfo.courseCode}"]`) || document.event?.target; 
-            if(activeBtn && activeBtn.classList) activeBtn.classList.add('nav-active');
-
-            pageTitle.textContent = `Logs: ${courseInfo.courseCode} - ${courseInfo.course}`;
-            quizCountBadge.textContent = logs.length;
-            quizCountBadge.classList.remove('hidden');
-            
-            // Sort logs by date desc
-            logs.sort((a, b) => (b.testedOn || 0) - (a.testedOn || 0));
-
-            let html = `
-                <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz Title</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Result</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-            `;
-
-            logs.forEach(log => {
-                const total = log.questions || 0;
-                const fails = log.fails || 0;
-                const correct = total - fails;
-                const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
-                
-                // Format Date (20251208 -> 2025-12-08)
-                let dateStr = log.testedOn ? String(log.testedOn) : "-";
-                if (dateStr.length === 8) {
-                    dateStr = `${dateStr.substring(0,4)}-${dateStr.substring(4,6)}-${dateStr.substring(6,8)}`;
-                }
-
-                // Color code score
-                let scoreColor = "text-gray-900";
-                if (percentage >= 80) scoreColor = "text-green-600";
-                else if (percentage < 60) scoreColor = "text-red-600";
-
-                html += `
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">${dateStr}</td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm font-medium text-gray-900">${log.quizTitleReal || 'Unknown Quiz'}</div>
-                            <div class="text-xs text-gray-400 font-mono">${log.quizSetID}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-bold ${scoreColor}">
-                            ${correct} / ${total} <span class="text-xs font-normal text-gray-400">(${percentage}%)</span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${log.finished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                ${log.finished ? 'Finished' : 'Incomplete'}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button onclick="alert('Failed Questions Detail View TBD')" class="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-2 py-1 rounded transition-colors">
-                                View
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            html += `</tbody></table></div>`;
-            viewContainer.innerHTML = html;
-        }
-
         // ================= Modal Logic =================
         window.openCreateModal = () => {
+            // Populate Select Options
             newQuizCourse.innerHTML = '<option value="">-- Select a Course --</option>';
             availableCourses.forEach(c => {
                 const opt = document.createElement('option');
@@ -490,6 +290,7 @@
                 newQuizCourse.appendChild(opt);
             });
 
+            // Reset Inputs
             newQuizTitle.value = '';
             newQuizClass.value = 'wordset_Thai';
             newQuizTargetId.value = 'tbd';
@@ -523,10 +324,13 @@
                 return alert("Invalid JSON Format: " + e.message);
             }
 
+            // Process Tags
             const tagsArray = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t !== '') : [];
+
             saveSpinner.classList.remove('hidden');
             
             try {
+                // 1. Construct Quiz Set Object
                 const now = getISODate(new Date());
                 const newQuizData = {
                     createdAt: now,
@@ -536,24 +340,31 @@
                     targetID: targetId,
                     tags: tagsArray,
                     quizzes: quizzesArray,
-                    courseID: courseId // Ensure this is saved for linkage!
+                    courseID:courseId
                 };
 
+                // 2. Push to quizSets
                 const newQuizRef = await push(ref(dbMain, 'quizSets'), newQuizData);
                 const newQuizKey = newQuizRef.key;
 
+                // 3. Link to Course Folder
                 const courseRef = ref(dbMain, `courseFolders/${courseId}`);
                 const courseSnap = await get(courseRef);
                 
                 if (courseSnap.exists()) {
                     const courseData = courseSnap.val();
                     let currentSets = courseData.quizSets || [];
+                    
+                    // Add new key
                     currentSets.push(newQuizKey);
+                    
+                    // Update course folder
                     await update(courseRef, { quizSets: currentSets });
                     
                     alert("Quiz Set Created Successfully!");
                     closeCreateModal();
                     
+                    // Refresh if viewing that course
                     if (currentCourseId === courseId) {
                         const updatedSnap = await get(courseRef);
                         loadCourseData(courseId, updatedSnap.val());
@@ -576,11 +387,7 @@
             currentCourseId = courseId;
             
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('nav-active'));
-            // Use querySelectorAll and loop because course buttons are generated dynamically
-            const activeBtns = document.querySelectorAll(`.course-nav-item`);
-            activeBtns.forEach(btn => {
-                if(btn.dataset.id === courseId) btn.classList.add('nav-active');
-            });
+            document.querySelector(`button[data-id="${courseId}"]`)?.classList.add('nav-active');
 
             pageTitle.textContent = `${courseData.courseCode} - ${courseData.course}`;
             quizCountBadge.classList.add('hidden');
