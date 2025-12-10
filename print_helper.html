@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笔记打印视图</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    
+    <style>
+        /* 2. 核心：字体栈强制使用网络字体 */
+        :root {
+            /* 优先使用下载好的 Noto Sans SC (含中文), 然后是 Sarabun (泰语), 最后保底 */
+            --font-stack: "Noto Sans SC", "Sarabun", sans-serif;
+        }
+
+        body {
+            font-family: var(--font-stack) !important;
+            line-height: 1.6;
+            color: #000;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 40px;
+        }
+        
+        /* 强制所有元素继承字体 */
+        * {
+            font-family: inherit;
+        }
+
+        /* --- 打印专用样式 --- */
+        @media print {
+            body { padding: 0; margin: 0; }
+            @page { margin: 15mm; size: A4; }
+            /* 强制打印背景色 */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            /* 隐藏状态栏 */
+            #status-bar { display: none !important; }
+        }
+
+        /* --- Markdown 内容样式 --- */
+        h1 { 
+            border-bottom: 2px solid #000; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px; 
+            font-size: 24px; 
+            text-align: center;
+        }
+        h2 { 
+            margin-top: 25px; 
+            border-left: 5px solid #666; 
+            padding-left: 10px; 
+            font-size: 18px; 
+            background-color: #f0f0f0;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+        p { margin-bottom: 10px; text-align: justify; }
+        ul, ol { padding-left: 20px; margin-bottom: 10px; }
+        li { margin-bottom: 5px; }
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            margin-bottom: 15px; 
+            page-break-inside: avoid; 
+        }
+        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+        th { background-color: #e0e0e0; font-weight: bold; }
+        blockquote { border-left: 4px solid #ccc; padding-left: 15px; margin: 10px 0; font-style: italic; }
+        code { background-color: #eee; padding: 2px 4px; border-radius: 3px; font-family: "Menlo", monospace; }
+
+        /* 复习单线条 */
+        .review-line {
+            height: 30px;
+            border-bottom: 1px solid #999;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .review-block {
+            margin-top: 10px;
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+
+        /* 状态加载条 */
+        #status-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #e8f0fe;
+            color: #1a73e8;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <div id="status-bar">
+        <i class="fas fa-spinner fa-spin"></i> 正在下载打印字体资源，请稍候...
+    </div>
+    
+    <div id="content"></div>
+
+    <script>
+        window.onload = function() {
+            try {
+                // 1. 获取数据
+                const printDataRaw = sessionStorage.getItem('noteFlowPrintTask');
+                if (!printDataRaw) {
+                    document.getElementById('content').innerHTML = '<h2 style="color:red">错误：未找到打印数据。</h2>';
+                    document.getElementById('status-bar').style.display = 'none';
+                    return;
+                }
+
+                const printData = JSON.parse(printDataRaw);
+                const markdown = printData.content || '';
+                document.title = printData.title || '笔记打印';
+
+                // 2. 渲染内容
+                const htmlContent = marked.parse(markdown);
+                document.getElementById('content').innerHTML = htmlContent;
+
+                // 3. 关键：等待 Google Fonts 加载完成
+                // 如果没有网络，这里可能会卡住或超时，所以我们设置一个保底超时
+                let printTriggered = false;
+
+                function triggerPrint() {
+                    if (printTriggered) return;
+                    printTriggered = true;
+                    document.getElementById('status-bar').innerText = '资源加载完毕，正在调起打印...';
+                    
+                    setTimeout(() => {
+                        window.print();
+                        // 建议不要自动关闭，让用户确认
+                         document.getElementById('status-bar').style.display = 'none';
+                    }, 500);
+                }
+
+                // 监听字体加载
+                document.fonts.ready.then(function() {
+                    console.log('Fonts loaded successfully');
+                    triggerPrint();
+                });
+
+                // 3秒后强制打印（防止网络不通导致一直卡在加载中）
+                setTimeout(() => {
+                    if (!printTriggered) {
+                        console.warn('Font loading timed out, forcing print');
+                        triggerPrint();
+                    }
+                }, 3000);
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('content').innerText = '渲染错误: ' + e.message;
+            }
+        };
+    </script>
+</body>
+</html>
