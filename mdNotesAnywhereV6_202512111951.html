@@ -935,7 +935,8 @@
                 bodyContent = bodyContent.substring(0, exerciseIndex);
             }
 
-            // 4. (已移除局部清洗逻辑，统一由 print_helper.html 处理)
+            // 4. 清理内部元数据 (*类型：...*)
+            bodyContent = bodyContent.replace(/^\*类型：.*$/gm, '');
 
             const finalMarkdown = `${titleMd}\n\n${bodyContent}`;
             
@@ -997,8 +998,8 @@
                 const headerMatch = content.match(/^## .*练习.*/m);
                 const header = headerMatch ? headerMatch[0] : "## 练习与巩固";
                 
-                // (已移除局部清洗逻辑，统一由 print_helper.html 处理)
-                const cleanBody = match[1];
+                // 清理元数据
+                const cleanBody = match[1].replace(/^\*类型：.*$/gm, '');
 
                 const finalMarkdown = `# ${note.title} - 练习卷\n\n${header}\n${cleanBody}`;
                 launchPrintHelper(finalMarkdown, `练习卷-${note.title}`);

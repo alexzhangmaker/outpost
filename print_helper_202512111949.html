@@ -121,32 +121,10 @@
                 }
 
                 const printData = JSON.parse(printDataRaw);
-                let markdown = printData.content || ''; // 使用 let 以便修改
+                const markdown = printData.content || '';
                 document.title = printData.title || '笔记打印';
 
-                // ============================================================
-                // 核心修改：打印内容清洗逻辑
-                // ============================================================
-                if (markdown) {
-                    // 1. 移除粗体元数据行 (例如: **语法标签：** #时态)
-                    // 正则说明：以**开头，中间包含特定关键词，以冒号分隔，直到行尾
-                    markdown = markdown.replace(/^\*\*.*(标签|对象|场景|路径|评级|知识|难度).*[：:].*$/gm, '');
-
-                    // 2. 移除斜体元数据行 (例如: *类型：理论 | ...*)
-                    // 正则说明：以*开头，包含特定关键词，以*结尾
-                    markdown = markdown.replace(/^\*.*(类型|场景|重要性|用时|核心).*[：:].*\*$/gm, '');
-
-                    // 3. 合并过多的空行 (将连续3个以上的换行符替换为2个)
-                    // 这步很重要：它既去除了因删除标签留下的大片空白，又保留了Markdown分段所需的必要空行
-                    markdown = markdown.replace(/\n{3,}/g, '\n\n');
-                    
-                    // 【已删除】原先那句导致所有格式错乱的 replace(/^\s*[\r\n]/gm, '') 代码已被移除
-                }
-                // ============================================================
-
                 // 2. 渲染内容
-                // 启用 breaks: true 选项，这样单个换行符也会被渲染为 <br> (可选，取决于个人喜好，标准MD通常需要两个换行)
-                // 这里我们使用默认设置，依赖上面保留的 \n\n 来分段
                 const htmlContent = marked.parse(markdown);
                 document.getElementById('content').innerHTML = htmlContent;
 
