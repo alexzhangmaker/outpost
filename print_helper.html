@@ -145,10 +145,14 @@
                 // ============================================================
 
                 // 2. 渲染内容
-                // 启用 breaks: true 选项，这样单个换行符也会被渲染为 <br> (可选，取决于个人喜好，标准MD通常需要两个换行)
-                // 这里我们使用默认设置，依赖上面保留的 \n\n 来分段
-                const htmlContent = marked.parse(markdown);
-                document.getElementById('content').innerHTML = htmlContent;
+// 强制开启换行支持 (GFM breaks)
+marked.setOptions({
+    breaks: true,  // 【关键修改】开启这个，单个回车就会变成 <br>
+    gfm: true      // 确保 GitHub 风格 Markdown 开启
+});
+
+const htmlContent = marked.parse(markdown);
+document.getElementById('content').innerHTML = htmlContent;
 
                 // 3. 关键：等待 Google Fonts 加载完成
                 // 如果没有网络，这里可能会卡住或超时，所以我们设置一个保底超时
