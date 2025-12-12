@@ -210,7 +210,7 @@
                 viewContainer.innerHTML = `<div class="p-10 text-center text-slate-500">功能 "每日复习安排" 开发中...</div>`;
             } else if (viewName === 'history') {
                 pageTitle.textContent = 'Review History';
-                renderHistory(); // <--- 修改这里，调用新函数
+                viewContainer.innerHTML = `<div class="p-10 text-center text-slate-500">功能 "复习记录查看" 开发中...</div>`;
             }
         };
 
@@ -413,123 +413,6 @@
             }
         };
 
-        // ================= 业务功能：复习记录查看 (History) =================
-
-        async function renderHistory() {
-            showLoading(true);
-            viewContainer.innerHTML = '';
-
-            try {
-                const dbRef = ref(db);
-                // 获取 ankiLogs 数据
-                const snapshot = await get(child(dbRef, 'thaiAnki/ankiLogs'));
-
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    
-                    // 将对象转换为数组并按时间戳倒序排序（最新的在最前）
-                    const logs = Object.entries(data).map(([key, value]) => ({
-                        id: key,
-                        ...value
-                    })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-                    let html = `
-                        <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session Info</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stats</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hard Words</th>
-                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                    `;
-
-                    logs.forEach(log => {
-                        // 格式化时间
-                        const logDate = log.date ? new Date(log.date).toLocaleString('zh-CN', { hour12: false }) : 'Unknown Date';
-                        
-                        // 生成错误单词的标签
-                        let errorWordsHtml = '';
-                        if (log.errorWords && log.errorWords.length > 0) {
-                            errorWordsHtml = log.errorWords.map(word => 
-                                `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mr-1 mb-1">${word}</span>`
-                            ).join('');
-                        } else {
-                            errorWordsHtml = `<span class="text-xs text-green-500">None! Perfect.</span>`;
-                        }
-
-                        // 掌握程度颜色
-                        const mastery = parseInt(log.masteryRate) || 0;
-                        const masteryColor = mastery >= 80 ? 'text-green-600' : (mastery >= 50 ? 'text-yellow-600' : 'text-red-600');
-
-                        html += `
-                            <tr id="log-${log.id}" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    ${logDate}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">${log.title || 'Untitled Session'}</div>
-                                    <div class="text-xs text-gray-400 font-mono">Set: ${log.reviewSetId}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                    <div>Total: <span class="font-semibold">${log.totalWords}</span></div>
-                                    <div>Errors: <span class="font-semibold text-red-500">${log.errorCount}</span></div>
-                                    <div class="${masteryColor} font-bold mt-1">Mastery: ${log.masteryRate}</div>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs break-words">
-                                    <div class="flex flex-wrap">
-                                        ${errorWordsHtml}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onclick="deleteLog('${log.id}')" class="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-1 rounded transition-colors border border-transparent hover:border-red-200">
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-
-                    html += `</tbody></table></div>`;
-                    viewContainer.innerHTML = html;
-                } else {
-                    viewContainer.innerHTML = `<div class="bg-white p-10 rounded-lg shadow text-center text-gray-500 flex flex-col items-center gap-3">
-                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        <span>暂无复习记录</span>
-                    </div>`;
-                }
-            } catch (error) {
-                console.error(error);
-                viewContainer.innerHTML = `<div class="bg-red-50 p-4 rounded text-red-600">加载记录失败: ${error.message}</div>`;
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        // 删除日志功能
-        window.deleteLog = async (key) => {
-            if (!confirm('确定要删除这条复习记录吗？')) return;
-
-            try {
-                showLoading(true);
-                await remove(ref(db, `thaiAnki/ankiLogs/${key}`));
-                const row = document.getElementById(`log-${key}`);
-                if (row) row.remove();
-                
-                // 如果删除了最后一条，刷新一下页面显示空状态（可选）
-                if (document.querySelectorAll('tbody tr').length === 0) {
-                    renderHistory();
-                }
-            } catch (error) {
-                alert("Delete failed: " + error.message);
-            } finally {
-                showLoading(false);
-            }
-        };
         // 更新右上角时间
         setInterval(() => {
             const now = new Date();

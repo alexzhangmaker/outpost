@@ -521,7 +521,12 @@
     <script>
         let gWordSetKey = 'B1_Work_Social' ;
         //let tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${gWordSetKey}.json` ;
-
+        // 新增：用于存储本次Session的元数据，供Log使用
+        let gSessionInfo = {
+            reviewSetId: "",
+            title: "",
+            wordSetID: ""
+        };
 
         // 示例单词数据
         let wordList = [];
@@ -615,6 +620,8 @@
         }
 
         let bUploaded = false ;
+
+        /*
         async function uploadAnkiRecord(){
             if(bUploaded == true) return ;
 
@@ -662,6 +669,79 @@
                 console.log(jsonRecord) ;
                 await database.ref(`thaiAnki/SM2Records/${learnedWords[i].word}`).set(jsonRecord) ;
             }
+            bUploaded = true ;
+        }
+        */
+
+        async function uploadAnkiRecord(){
+            if(bUploaded == true) return ;
+
+            let cDate = new Date() ;
+            let nextDate = new Date() ;
+
+            console.log("正在上传单词进度...", learnedWords) ;
+            
+            // 1. 原有的 SM2 记录上传 (保持不变)
+            for(let i=0;i<learnedWords.length;i++){
+                let snapshot = await database.ref(`thaiAnki/SM2Records/${learnedWords[i].word}`).once('value');
+                let jsonResult = snapshot.val();
+
+                let jsonSM2 = {
+                    "efactor": 2.5,
+                    "interval": 0,
+                    "repetition": 0
+                };
+                let jsonRecord={
+                    "efactor": 2.5,
+                    "interval": 0,
+                    "repetition": 0,
+                    "id": learnedWords[i].word,
+                    "next_review": cDate.toDateString(),
+                };
+
+                if(jsonResult==null){
+                    jsonSM2= supermemo(jsonSM2,learnedWords[i].rating) ;
+                    nextDate.setDate(cDate.getDate()+jsonSM2.interval) ;
+                    jsonRecord.next_review = nextDate.toDateString() ;
+                    jsonRecord.efactor = jsonSM2.efactor ;
+                    jsonRecord.interval = jsonSM2.interval ;
+                    jsonRecord.repetition = jsonSM2.repetition ;
+                }else{
+                    jsonSM2= supermemo(jsonResult,learnedWords[i].rating) ;
+                    nextDate.setDate(cDate.getDate()+jsonSM2.interval) ;
+                    jsonRecord.next_review = nextDate.toDateString() ;
+                    jsonRecord.interval = jsonSM2.interval ;
+                    jsonRecord.repetition = jsonSM2.repetition ;
+                }
+                await database.ref(`thaiAnki/SM2Records/${learnedWords[i].word}`).set(jsonRecord) ;
+            }
+
+            // 2. 新增：上传本次复习的 Summary Log 到 ankiLogs
+            try {
+                // 筛选错误/困难单词 (Rating 1:不认识, 2:有点印象)
+                const errorItems = learnedWords.filter(w => w.rating <= 2);
+                const errorWordsArray = errorItems.map(w => w.word);
+
+                const logData = {
+                    reviewSetId: gSessionInfo.reviewSetId || "unknown_set",
+                    title: gSessionInfo.title || "Untitled Session",
+                    wordSetID: gSessionInfo.wordSetID || "unknown_wordset",
+                    date: cDate.toISOString(), // 可读日期字符串
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, // 用于排序的时间戳
+                    totalWords: learnedWords.length,
+                    errorCount: errorWordsArray.length,
+                    errorWords: errorWordsArray, // 记录错误的单词数组
+                    masteryRate: document.getElementById('final-mastery').innerText // 记录最终掌握度
+                };
+
+                console.log("Uploading Log:", logData);
+                await database.ref('thaiAnki/ankiLogs').push(logData);
+                console.log("Log uploaded successfully.");
+
+            } catch (e) {
+                console.error("Error uploading ankiLog:", e);
+            }
+
             bUploaded = true ;
         }
 
@@ -914,6 +994,7 @@
             }
         }
 
+        /*
         async function _loadAnkiSets(){
             const ankiSets = '/thaiAnki/reviewSets' ;
             let snapshot = await database.ref(ankiSets).once('value');
@@ -926,6 +1007,36 @@
                 let keyEncode = encodeURIComponent(selectedKey) ;
                 let snapshot = await database.ref(`thaiAnki/reviewSets/${keyEncode}`).once('value');
                 let jsonReviewSet = snapshot.val();
+                console.log(jsonReviewSet) ;
+                let refWordList = `thaiWordList/${jsonReviewSet.wordSetID}` ;
+                initApp(refWordList);
+
+            } else {
+                console.log('用户取消了选择');
+            }
+        }
+        */
+        async function _loadAnkiSets(){
+            const ankiSets = '/thaiAnki/reviewSets' ;
+            let snapshot = await database.ref(ankiSets).once('value');
+            let jsonAnkiSets = snapshot.val();
+            console.log(jsonAnkiSets) ;
+
+            const selectedKey = await doModalChooseAnkiSet(jsonAnkiSets);
+            if (selectedKey) {
+                console.log('用户选择了:', selectedKey);
+                let keyEncode = encodeURIComponent(selectedKey) ;
+                let snapshot = await database.ref(`thaiAnki/reviewSets/${keyEncode}`).once('value');
+                let jsonReviewSet = snapshot.val();
+                
+                // --- 新增：填充 Session Info ---
+                gSessionInfo = {
+                    reviewSetId: selectedKey,
+                    title: jsonReviewSet.title || selectedKey,
+                    wordSetID: jsonReviewSet.wordSetID
+                };
+                // -----------------------------
+
                 console.log(jsonReviewSet) ;
                 let refWordList = `thaiWordList/${jsonReviewSet.wordSetID}` ;
                 initApp(refWordList);
@@ -1013,16 +1124,39 @@
                 console.log(wordSetKey) ;
                 let keyEncode = encodeURIComponent(wordSetKey) ;
                 refWordList = `thaiWordList/${keyEncode}` ;
+
+                // --- 新增: 填充 Session Info (WordSet模式) ---
+                gSessionInfo = {
+                    reviewSetId: "custom_wordset",
+                    title: wordSetKey,
+                    wordSetID: wordSetKey
+                };
+
             }else if(reviewSetKey!=null){
                 let keyEncode = encodeURIComponent(reviewSetKey) ;
                 let snapshot = await database.ref(`thaiAnki/reviewSets/${keyEncode}`).once('value');
                 let jsonReviewSet = snapshot.val();
                 console.log(jsonReviewSet) ;
                 refWordList = `thaiWordList/${jsonReviewSet.wordSetID}` ;
+
+                // --- 新增: 填充 Session Info (URL ReviewSet模式) ---
+                gSessionInfo = {
+                    reviewSetId: reviewSetKey,
+                    title: jsonReviewSet.title || reviewSetKey,
+                    wordSetID: jsonReviewSet.wordSetID
+                };
+
             }else{
                 reviewSetKey = `${formatDateToYYYYMMDD(cDate)}` ;
                 let keyEncode = encodeURIComponent(reviewSetKey) ;
                 refWordList = `thaiAnki/DailyReview/${keyEncode}` ;
+
+                // --- 新增: 填充 Session Info (每日复习模式) ---
+                gSessionInfo = {
+                    reviewSetId: reviewSetKey,
+                    title: "Daily Review " + reviewSetKey,
+                    wordSetID: "daily_mixed"
+                };
             }
 
             initApp(refWordList);
