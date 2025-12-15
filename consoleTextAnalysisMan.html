@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语句子分析控制台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 自定义滚动条样式，适配控制台风格 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 h-screen overflow-hidden">
+
+    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 text-white transition-opacity duration-500">
+        <div class="text-center space-y-6 p-10 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 w-96">
+            <h1 class="text-3xl font-bold tracking-wider text-blue-400">THAI ANALYSIS</h1>
+            <p class="text-slate-400">句子分析管理系统</p>
+            <div id="login-loader" class="hidden flex justify-center"><div class="loader"></div></div>
+            <button id="btn-login" class="w-full px-6 py-3 bg-white text-slate-900 hover:bg-gray-200 rounded-lg font-bold transition-all flex items-center justify-center gap-3">
+                <i class="fab fa-google text-red-500"></i>
+                Sign in with Google
+            </button>
+            <p id="login-error" class="text-red-400 text-sm hidden"></p>
+        </div>
+    </div>
+
+    <div id="app-container" class="flex h-screen w-full hidden">
+        
+        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-700 shrink-0">
+            <div class="h-16 flex items-center justify-center border-b border-slate-800 bg-slate-900">
+                <span class="text-xl font-bold text-white tracking-wider"><i class="fas fa-terminal mr-2"></i>CONSOLE</span>
+            </div>
+            
+            <div class="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Courses
+            </div>
+
+            <nav id="sidebar-nav" class="flex-1 overflow-y-auto px-2 space-y-1">
+                <div class="text-center text-sm text-slate-500 mt-4">Loading courses...</div>
+            </nav>
+
+            <div class="p-4 border-t border-slate-800 bg-slate-900">
+                <div class="flex items-center gap-3 mb-3">
+                    <img id="user-avatar" class="w-8 h-8 rounded-full bg-slate-600" src="" alt="Avatar">
+                    <div class="overflow-hidden">
+                        <p id="user-name" class="text-sm font-medium text-white truncate">User</p>
+                        <p id="user-email" class="text-xs text-slate-500 truncate">email@example.com</p>
+                    </div>
+                </div>
+                <button id="btn-logout" class="w-full py-2 text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded transition-colors">
+                    <i class="fas fa-sign-out-alt mr-1"></i> 退出登录
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-gray-50 overflow-hidden">
+            <header class="h-16 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-6 shrink-0">
+                <div class="flex items-center gap-4">
+                    <h2 id="page-title" class="text-xl font-bold text-slate-800">请选择课程</h2>
+                    <span id="current-course-code" class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded hidden"></span>
+                </div>
+                
+                <div id="toolbar-actions" class="flex items-center gap-3 opacity-50 pointer-events-none transition-opacity">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <i class="fas fa-filter text-sm"></i>
+                        </span>
+                        <input type="text" id="input-tag-filter" placeholder="Filter by Tag..." class="pl-9 pr-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <button id="btn-add-new" class="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded shadow-sm transition-colors">
+                        <i class="fas fa-plus mr-1"></i> 新增构件
+                    </button>
+
+                    <button id="btn-assign" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded shadow-sm transition-colors">
+                        <i class="fas fa-tasks mr-1"></i> Assign Selected
+                    </button>
+
+                    <button id="btn-print" class="px-4 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded shadow-sm transition-colors">
+                        <i class="fas fa-print mr-1"></i> 打印练习
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-auto p-6 relative">
+                <div id="loading-spinner" class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
+                    <div class="loader border-t-blue-600"></div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left w-10">
+                                    <input type="checkbox" id="select-all" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/3">
+                                    Text Content
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Tags
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="4" class="px-6 py-10 text-center text-gray-400">
+                                    <i class="fas fa-inbox text-4xl mb-3 block"></i>
+                                    请从左侧选择一门课程以查看分析数据
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="record-count" class="mt-2 text-xs text-gray-500 text-right"></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="edit-modal" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 overflow-hidden transform transition-all">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-medium text-gray-900">编辑记录</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="edit-id">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Text Content</label>
+                    <textarea id="edit-text" rows="4" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tags (逗号分隔)</label>
+                    <input type="text" id="edit-tags" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="module1.1, hard">
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-200">
+                <button onclick="closeModal()" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 font-medium text-sm">取消</button>
+                <button id="btn-save" class="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 font-medium text-sm">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 导入 Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // 修改后 (增加了 push)
+        import { getDatabase, ref, get, child, update, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // 1. Firebase 配置 (来自你的要求)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-otes-86b07.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        // 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // DOM 元素引用
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const loginBtn = document.getElementById('btn-login');
+        const logoutBtn = document.getElementById('btn-logout');
+        const sidebarNav = document.getElementById('sidebar-nav');
+        const pageTitle = document.getElementById('page-title');
+        const currentCourseLabel = document.getElementById('current-course-code');
+        const tableBody = document.getElementById('table-body');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const toolbarActions = document.getElementById('toolbar-actions');
+        const filterInput = document.getElementById('input-tag-filter');
+        const assignBtn = document.getElementById('btn-assign');
+        const selectAllCheckbox = document.getElementById('select-all');
+        const recordCountLabel = document.getElementById('record-count');
+        
+        // Modal 元素
+        const editModal = document.getElementById('edit-modal');
+        const btnSave = document.getElementById('btn-save');
+        const editIdInput = document.getElementById('edit-id');
+        const editTextInput = document.getElementById('edit-text');
+        const editTagsInput = document.getElementById('edit-tags');
+
+        // 应用状态
+        let currentCourseCode = null;
+        let currentCourseName = null; // <--- 新增这行
+        let currentTableData = []; // 当前显示的完整数据
+        let filteredData = []; // 经过 tag 筛选的数据
+
+        // ================= 2. 认证逻辑 =================
+
+        // 监听认证状态
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // 已登录
+                console.log("Logged in as:", user.email);
+                showApp(user);
+            } else {
+                // 未登录
+                showLogin();
+            }
+        });
+
+        // 登录按钮
+        loginBtn.addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            document.getElementById('login-loader').classList.remove('hidden');
+            document.getElementById('login-error').classList.add('hidden');
+            
+            signInWithPopup(auth, provider)
+                .catch((error) => {
+                    console.error("Login failed", error);
+                    document.getElementById('login-loader').classList.add('hidden');
+                    const errEl = document.getElementById('login-error');
+                    errEl.textContent = `认证失败: ${error.message}`;
+                    errEl.classList.remove('hidden');
+                });
+        });
+
+        // 退出按钮
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                location.reload();
+            });
+        });
+
+        function showLogin() {
+            loginScreen.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+            appContainer.classList.add('hidden');
+        }
+
+        function showApp(user) {
+            loginScreen.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => loginScreen.classList.add('hidden'), 500);
+            appContainer.classList.remove('hidden');
+            
+            // 设置用户信息
+            document.getElementById('user-name').textContent = user.displayName || 'User';
+            document.getElementById('user-email').textContent = user.email;
+            document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
+
+            // 加载初始数据
+            loadCourses();
+        }
+
+        // ================= 3. 数据加载逻辑 =================
+
+        // 加载左侧导航栏的 Courses
+        async function loadCourses() {
+            try {
+                const dbRef = ref(db);
+                const snapshot = await get(child(dbRef, 'noteFolders'));
+                
+                sidebarNav.innerHTML = ''; // 清空 loading
+
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    // 将对象转为数组并排序 (可选)
+                    const courses = Object.entries(data).map(([key, val]) => ({
+                        id: key,
+                        ...val
+                    }));
+
+                    if (courses.length === 0) {
+                        sidebarNav.innerHTML = '<div class="text-center text-slate-500 mt-4 text-xs">No courses found.</div>';
+                        return;
+                    }
+
+                    courses.forEach(course => {
+                        const btn = document.createElement('button');
+                        btn.className = 'nav-item w-full text-left px-4 py-3 hover:bg-slate-800 hover:text-white text-slate-400 transition-colors border-l-4 border-transparent focus:outline-none flex flex-col gap-0.5 group';
+                        btn.innerHTML = `
+                            <span class="font-bold text-sm text-slate-300 group-hover:text-white">${course.course}</span>
+                            <span class="text-xs font-mono text-slate-500 group-hover:text-slate-400">${course.courseCode}</span>
+                        `;
+                        btn.onclick = () => selectCourse(course, btn);
+                        sidebarNav.appendChild(btn);
+                    });
+                } else {
+                    sidebarNav.innerHTML = '<div class="text-center text-slate-500 mt-4 text-xs">No data in noteFolders.</div>';
+                }
+            } catch (error) {
+                console.error("Error loading courses:", error);
+                sidebarNav.innerHTML = `<div class="text-center text-red-500 mt-4 text-xs">Error: ${error.message}</div>`;
+            }
+        }
+
+        // 选择课程
+        function selectCourse(course, btnElement) {
+            // 更新 UI 选中状态
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-slate-800', 'border-blue-500');
+                el.classList.add('border-transparent');
+            });
+            btnElement.classList.remove('border-transparent');
+            btnElement.classList.add('bg-slate-800', 'border-blue-500');
+
+            // 更新顶部信息
+            pageTitle.textContent = course.course;
+            currentCourseLabel.textContent = course.courseCode;
+            currentCourseLabel.classList.remove('hidden');
+            currentCourseCode = course.courseCode;
+            currentCourseName = course.course; // <--- 新增这行，保存课程名称
+
+            // 启用工具栏
+            toolbarActions.classList.remove('opacity-50', 'pointer-events-none');
+            
+            // 加载数据
+            loadAnalysisData(course.courseCode);
+        }
+
+        // 加载表格数据
+        async function loadAnalysisData(courseCode) {
+            showLoading(true);
+            selectAllCheckbox.checked = false;
+            filterInput.value = ''; // 重置过滤器
+
+            try {
+                const dbRef = ref(db);
+                // 获取所有 textAnalysis 数据
+                // 注意：在实际生产环境中，如果数据量巨大，建议使用 orderByChild 查询。
+                // 但为了确保在未配置索引的情况下也能运行，这里先获取数据然后在前端过滤。
+                const snapshot = await get(child(dbRef, 'textAnalysis'));
+                
+                currentTableData = [];
+                
+                if (snapshot.exists()) {
+                    const allData = snapshot.val();
+                    // 前端筛选匹配 courseCode 的数据
+                    Object.entries(allData).forEach(([key, val]) => {
+                        if (val.courseCode === courseCode) {
+                            currentTableData.push({
+                                id: key,
+                                ...val
+                            });
+                        }
+                    });
+                }
+
+                filterAndRenderTable();
+            } catch (error) {
+                console.error("Error loading data:", error);
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-4">Error loading data: ${error.message}</td></tr>`;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ================= 4. UI 渲染与交互逻辑 =================
+
+        // 筛选并渲染表格
+        function filterAndRenderTable() {
+            const filterText = filterInput.value.toLowerCase().trim();
+
+            if (!filterText) {
+                filteredData = [...currentTableData];
+            } else {
+                filteredData = currentTableData.filter(item => {
+                    const tags = item.tags ? item.tags.join(' ').toLowerCase() : '';
+                    return tags.includes(filterText);
+                });
+            }
+
+            renderTable(filteredData);
+            recordCountLabel.textContent = `Showing ${filteredData.length} records`;
+        }
+
+        // 渲染表格 HTML
+        function renderTable(data) {
+            tableBody.innerHTML = '';
+
+            if (data.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-6 py-10 text-center text-gray-500">
+                            无数据 (No records found for this course)
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50 transition-colors group';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="checkbox" class="row-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" value="${item.id}">
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900 font-thai leading-relaxed break-words max-w-xl">
+                        ${item.text || '<span class="text-gray-400 italic">No Text</span>'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex flex-wrap gap-1">
+                            ${(item.tags || []).map(tag => 
+                                `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">${tag}</span>`
+                            ).join('')}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="btn-edit text-indigo-600 hover:text-indigo-900 mr-3 p-1 rounded hover:bg-indigo-50" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-delete text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+
+                // 绑定事件 (避免使用全局函数污染)
+                tr.querySelector('.btn-edit').addEventListener('click', () => openEditModal(item));
+                tr.querySelector('.btn-delete').addEventListener('click', () => deleteRecord(item.id));
+
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function showLoading(isLoading) {
+            if (isLoading) {
+                loadingSpinner.classList.remove('hidden');
+            } else {
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        // Tag 筛选监听
+        filterInput.addEventListener('input', () => {
+            filterAndRenderTable();
+        });
+
+        // 全选逻辑
+        selectAllCheckbox.addEventListener('change', (e) => {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => cb.checked = e.target.checked);
+        });
+
+        // Assign 按钮逻辑 (Stub)
+        assignBtn.addEventListener('click', () => {
+            const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+            if (selectedIds.length === 0) {
+                alert("请先选择至少一条记录。");
+                return;
+            }
+            console.log("=== Action: Assign ===");
+            console.log("Selected Course:", currentCourseCode);
+            console.log("Selected Record IDs:", selectedIds);
+            alert(`已选择 ${selectedIds.length} 条记录进行 Assign 操作 (查看控制台详细信息)`);
+        });
+
+        // ================= 5. CRUD 操作 =================
+
+        // 删除记录
+        window.deleteRecord = async (id) => {
+            if (!confirm("确定要删除这条记录吗？此操作无法撤销。")) return;
+            
+            try {
+                showLoading(true);
+                await remove(ref(db, `textAnalysis/${id}`));
+                
+                // 从本地数据移除并重新渲染，不必重新请求网络
+                currentTableData = currentTableData.filter(item => item.id !== id);
+                filterAndRenderTable();
+                // alert("删除成功"); 
+            } catch (error) {
+                console.error("Delete failed", error);
+                alert("删除失败: " + error.message);
+            } finally {
+                showLoading(false);
+            }
+        };
+
+        // 打开编辑窗口
+        window.openEditModal = (item) => {
+            editIdInput.value = item.id;
+            editTextInput.value = item.text || '';
+            editTagsInput.value = (item.tags || []).join(', '); // 数组转逗号分隔字符串
+            
+            editModal.classList.remove('hidden');
+        };
+
+        // 关闭编辑窗口
+        window.closeModal = () => {
+            editModal.classList.add('hidden');
+        };
+
+        // 保存修改
+        btnSave.addEventListener('click', async () => {
+            const id = editIdInput.value;
+            const text = editTextInput.value.trim();
+            const tagsStr = editTagsInput.value;
+            
+            // 简单处理 tags 字符串转数组
+            const tags = tagsStr.split(',')
+                .map(t => t.trim())
+                .filter(t => t.length > 0);
+
+            const updates = {
+                text: text,
+                tags: tags
+            };
+
+            try {
+                btnSave.textContent = 'Saving...';
+                btnSave.disabled = true;
+
+                await update(ref(db, `textAnalysis/${id}`), updates);
+                
+                // 更新本地数据
+                const index = currentTableData.findIndex(i => i.id === id);
+                if (index !== -1) {
+                    currentTableData[index].text = text;
+                    currentTableData[index].tags = tags;
+                }
+                
+                closeModal();
+                filterAndRenderTable();
+            } catch (error) {
+                console.error("Update failed", error);
+                alert("保存失败: " + error.message);
+            } finally {
+                btnSave.textContent = '保存修改';
+                btnSave.disabled = false;
+            }
+        });
+
+        // 暴露给全局以便 HTML onclick 使用 (虽然这里尽量用了 addEventListener)
+        // 为了兼容 inline onclick="closeModal()"
+        window.closeModal = window.closeModal;
+
+        // ================= 6. 新增构件逻辑 (Batch Add) =================
+
+        const addModal = document.getElementById('add-modal');
+        const btnAddNew = document.getElementById('btn-add-new');
+        const btnConfirmAdd = document.getElementById('btn-confirm-add');
+        const addTagInput = document.getElementById('add-tag-input');
+        const addTextBatch = document.getElementById('add-text-batch');
+        const addModalCourseName = document.getElementById('add-modal-course-name');
+
+        // 打开新增窗口
+        btnAddNew.addEventListener('click', () => {
+            if (!currentCourseCode) return;
+            
+            addModalCourseName.textContent = `${currentCourseName} (${currentCourseCode})`;
+            addTagInput.value = '';
+            addTextBatch.value = '';
+            addModal.classList.remove('hidden');
+            // 自动聚焦
+            setTimeout(() => addTagInput.focus(), 100);
+        });
+
+        // 关闭新增窗口
+        window.closeAddModal = () => {
+            addModal.classList.add('hidden');
+        };
+
+        // 确认批量添加
+        btnConfirmAdd.addEventListener('click', async () => {
+            const tagStr = addTagInput.value.trim();
+            const textContent = addTextBatch.value;
+            
+            // 1. 处理 Tag (转为数组)
+            const tags = tagStr ? [tagStr] : [];
+
+            // 2. 处理文本 (按行分割并去空)
+            const lines = textContent.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+
+            if (lines.length === 0) {
+                alert("请输入至少一行泰语文本。");
+                return;
+            }
+
+            try {
+                btnConfirmAdd.textContent = 'Adding...';
+                btnConfirmAdd.disabled = true;
+
+                // 3. 构建 Promise 数组，并发写入 Firebase
+                const pushPromises = lines.map(line => {
+                    const newRecord = {
+                        course: currentCourseName,
+                        courseCode: currentCourseCode,
+                        tags: tags,
+                        text: line
+                    };
+                    // push 到 textAnalysis 节点
+                    return push(ref(db, 'textAnalysis'), newRecord);
+                });
+
+                await Promise.all(pushPromises);
+
+                // 4. 完成后刷新
+                // 我们可以重新调用 loadAnalysisData 从服务器拉取，
+                // 也可以手动将新数据 push 到 currentTableData 以避免网络延迟感，这里选择重新拉取保证数据一致性。
+                await loadAnalysisData(currentCourseCode);
+                
+                alert(`成功添加 ${lines.length} 条记录！`);
+                closeAddModal();
+
+            } catch (error) {
+                console.error("Batch add failed", error);
+                alert("添加失败: " + error.message);
+            } finally {
+                btnConfirmAdd.textContent = '确认添加';
+                btnConfirmAdd.disabled = false;
+            }
+        });
+
+        // ================= 7. 打印练习逻辑 (Print) =================
+
+        const btnPrint = document.getElementById('btn-print');
+
+        btnPrint.addEventListener('click', () => {
+            // 1. 获取选中的 ID
+            const selectedCheckbox = document.querySelectorAll('.row-checkbox:checked');
+            const selectedIds = Array.from(selectedCheckbox).map(cb => cb.value);
+
+            if (selectedIds.length === 0) {
+                alert("请先勾选需要打印的句子。");
+                return;
+            }
+
+            // 2. 从当前数据中筛选出完整对象
+            const selectedRecords = currentTableData.filter(item => selectedIds.includes(item.id));
+
+            // 3. 将数据保存到 sessionStorage (用于跨页面传值)
+            // 包含课程名称，以便打印页显示
+            const printPayload = {
+                courseName: currentCourseName || 'Thai Text Analysis',
+                courseCode: currentCourseCode || '',
+                records: selectedRecords
+            };
+            sessionStorage.setItem('thaiAnalysisPrintData', JSON.stringify(printPayload));
+
+            // 4. 打开新窗口
+            window.open('print_helper_thaiAnalysis.html', '_blank');
+        });
+
+    </script>
+
+    <div id="add-modal" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 overflow-hidden transform transition-all">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-green-50">
+                <h3 class="text-lg font-medium text-green-900">
+                    <i class="fas fa-plus-circle mr-2"></i>批量新增构件
+                </h3>
+                <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-blue-50 p-3 rounded text-sm text-blue-700 mb-4">
+                    <i class="fas fa-info-circle mr-1"></i> 
+                    当前课程: <span id="add-modal-course-name" class="font-bold"></span>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tag (应用于所有新增记录)</label>
+                    <input type="text" id="add-tag-input" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-green-500 focus:border-green-500" placeholder="例如: module1.1">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">泰语文本 (每行一条记录)</label>
+                    <textarea id="add-text-batch" rows="10" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-green-500 focus:border-green-500 font-thai" placeholder="在此输入泰语句子...&#10;这是第一句&#10;这是第二句&#10;(按回车换行自动分割)"></textarea>
+                    <p class="text-xs text-gray-500 mt-1 text-right">空行将被自动忽略</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-200">
+                <button onclick="closeAddModal()" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 font-medium text-sm">取消</button>
+                <button id="btn-confirm-add" class="px-6 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 font-medium text-sm">
+                    确认添加
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
