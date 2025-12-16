@@ -2,20 +2,26 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8"/>
+    <!-- Updated viewport for better mobile notch support -->
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
     <title>我的任务 - PWA</title>
     
+    <!-- PWA Theme Colors -->
     <meta name="theme-color" content="#f6f7f8" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#101922" media="(prefers-color-scheme: dark)">
 
+    <!-- iOS Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="我的任务">
+    <!-- Links for Manifest and Icon (will be populated by JS) -->
     <link rel="manifest" id="manifest-placeholder">
     <link rel="apple-touch-icon" id="apple-icon-placeholder">
     <link rel="icon" id="favicon-placeholder">
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     
@@ -70,10 +76,12 @@
 </head>
 <body class="font-display bg-background-light dark:bg-background-dark overflow-hidden select-none">
 
+    <!-- Loading Screen -->
     <div id="loading-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-background-dark">
         <div class="loader"></div>
     </div>
 
+    <!-- Login Screen (Hidden by default) -->
     <div id="login-screen" class="hidden fixed inset-0 z-40 flex flex-col items-center justify-center bg-white dark:bg-background-dark px-4">
         <div class="w-full max-w-sm space-y-8 text-center">
             <div>
@@ -94,8 +102,10 @@
         </div>
     </div>
 
+    <!-- Main App (Hidden by default) -->
     <div id="app-container" class="hidden relative flex h-screen w-full flex-col mx-auto max-w-lg shadow-2xl bg-background-light dark:bg-background-dark">
         
+        <!-- Header -->
         <header class="flex-shrink-0 flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 px-4 py-2 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm z-10">
             <div class="relative w-full flex items-center gap-2">
                 <div class="relative w-full">
@@ -110,14 +120,18 @@
             </div>
         </header>
 
+        <!-- Main List -->
         <main id="todo-list" class="flex-1 overflow-y-auto px-4 pt-3 pb-20 space-y-2 scrollbar-hide">
+            <!-- Todos will be injected here via JS -->
             <div class="text-center py-20 text-slate-400">
                 <p>加载中...</p>
             </div>
         </main>
 
+        <!-- Bottom Navigation -->
         <nav class="absolute bottom-0 left-0 right-0 z-20 mx-auto max-w-lg border-t border-slate-200 bg-white/80 backdrop-blur-sm dark:border-slate-800 dark:bg-background-dark/80 pb-[env(safe-area-inset-bottom)]">
-            <div class="flex h-16 justify-around"> <a class="flex flex-1 flex-col items-center justify-center gap-0.5 text-primary" href="#">
+            <div class="flex h-16 justify-around"> <!-- Reduced height from h-16 to h-14 -->
+                <a class="flex flex-1 flex-col items-center justify-center gap-0.5 text-primary" href="#">
                     <span class="material-symbols-outlined !text-xl">home</span>
                     <span class="text-[10px] font-medium">主页</span>
                 </a>
@@ -140,28 +154,9 @@
                 </a>
             </div>
         </nav>
-
-        <div id="share-modal" class="hidden fixed inset-0 z-30 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-300">
-            <div class="w-full max-w-md rounded-xl bg-white dark:bg-slate-800 p-6 shadow-2xl transform scale-95 transition-transform duration-300">
-                <h3 class="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">
-                    <span class="material-symbols-outlined text-primary !text-2xl">share</span>
-                    接收到共享内容
-                </h3>
-                <p class="text-sm text-slate-600 dark:text-slate-300 mb-3">共享标题:</p>
-                <p id="shared-title" class="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-800 dark:text-white font-medium mb-4 break-words">无</p>
-                
-                <p class="text-sm text-slate-600 dark:text-slate-300 mb-3">共享内容 (可编辑):</p>
-                <textarea id="shared-content-textarea" rows="4" class="w-full p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-800 dark:text-white text-sm focus:ring-primary focus:border-primary border-transparent resize-none mb-4"></textarea>
-                
-                <div class="flex justify-end gap-3">
-                    <button id="modal-close-btn" class="px-4 py-2 rounded-lg text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">取消</button>
-                    <button id="modal-add-btn" class="px-4 py-2 rounded-lg bg-primary text-white hover:bg-blue-700 transition-colors">添加到任务</button>
-                </div>
-            </div>
-        </div>
-        
     </div>
 
+    <!-- Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -194,18 +189,7 @@
                         "type": "image/svg+xml",
                         "purpose": "any maskable"
                     }
-                ],
-                // *** 新增的 SHARE_TARGET 配置 ***
-                "share_target": {
-                    "action": "./?share=true", // 使用查询参数标记为共享启动
-                    "method": "GET",
-                    "enctype": "application/x-www-form-urlencoded",
-                    "params": {
-                        "title": "share_title",
-                        "text": "share_text",
-                        "url": "share_url"
-                    }
-                }
+                ]
             };
             
             const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
@@ -242,15 +226,9 @@
             todoList: document.getElementById('todo-list'),
             input: document.getElementById('new-todo-input'),
             addBtn: document.getElementById('add-todo-btn'),
-            fab: document.getElementById('fab-add'),
-            // New Share Modal Elements
-            shareModal: document.getElementById('share-modal'),
-            sharedTitle: document.getElementById('shared-title'),
-            sharedContentTextarea: document.getElementById('shared-content-textarea'),
-            modalCloseBtn: document.getElementById('modal-close-btn'),
-            modalAddBtn: document.getElementById('modal-add-btn')
+            fab: document.getElementById('fab-add')
         };
-        
+
         // --- 3. Utilities ---
         const generateShortId = () => Math.random().toString(36).substring(2, 10);
         
@@ -384,39 +362,34 @@
                         await deleteDoc(doc(db, 'todos', id));
                     } catch (e) { console.error(e); }
                 }
-            },
-            // Helper function to add a todo from text
-            addTodoFromText: async (rawText) => {
-                 if (!rawText || !currentUser) return;
-
-                // PARSE TODO.TXT
-                const parsed = parseTodoTxt(rawText);
-                const shortId = generateShortId();
-
-                try {
-                    await setDoc(doc(db, 'todos', shortId), {
-                        content: parsed.content,
-                        owner: currentUser.uid,
-                        dueOn: parsed.dueOn,
-                        tags: parsed.tags,
-                        priority: parsed.priority,
-                        status: 'pending',
-                        createdAt: serverTimestamp(),
-                    });
-                    // Success feedback can be added here
-                    console.log("Todo added successfully:", rawText);
-                } catch (error) {
-                    console.error("Error adding:", error);
-                    alert("添加失败");
-                }
             }
         };
 
         const handleAddTodo = async () => {
             const rawText = els.input.value.trim();
+            if (!rawText || !currentUser) return;
+
             els.input.value = ''; // Clear early
             els.input.focus();
-            await window.appActions.addTodoFromText(rawText);
+
+            // PARSE TODO.TXT
+            const parsed = parseTodoTxt(rawText);
+            const shortId = generateShortId();
+
+            try {
+                await setDoc(doc(db, 'todos', shortId), {
+                    content: parsed.content,
+                    owner: currentUser.uid,
+                    dueOn: parsed.dueOn,
+                    tags: parsed.tags,
+                    priority: parsed.priority,
+                    status: 'pending',
+                    createdAt: serverTimestamp(),
+                });
+            } catch (error) {
+                console.error("Error adding:", error);
+                alert("添加失败");
+            }
         };
 
         // --- 6. Auth Flow ---
@@ -466,9 +439,6 @@
                         console.warn("Firestore index missing. Sorting handled in client now.");
                     }
                 });
-                
-                // Check for Shared Content immediately after successful auth
-                checkSharedContent();
 
             } else {
                 els.app.classList.add('hidden');
@@ -478,63 +448,7 @@
             }
         });
 
-        // --- 7. Share Target Logic (New) ---
-        let sharedContent = null;
-
-        const checkSharedContent = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            // 检查 URL 是否包含 share=true 标记，这是 PWA Share Target 启动的信号
-            if (urlParams.has('share') && urlParams.get('share') === 'true') {
-                const title = urlParams.get('share_title') || '';
-                const text = urlParams.get('share_text') || '';
-                const url = urlParams.get('share_url') || '';
-
-                if (title || text || url) {
-                    sharedContent = { title, text, url };
-                    
-                    // 构造任务内容：优先使用文本，然后是标题和URL
-                    let fullContent = text;
-                    if (url) {
-                        if (fullContent) fullContent += '\n';
-                        fullContent += url;
-                    }
-                    if (!fullContent && title) {
-                         fullContent = title;
-                    } else if (title && !fullContent.includes(title)) {
-                        // 如果内容和URL都没有包含标题，则将标题放在前面
-                         fullContent = title + (fullContent ? '\n' + fullContent : '');
-                    }
-
-                    // 填充 Modal 并显示
-                    els.sharedTitle.textContent = title || '无标题';
-                    els.sharedContentTextarea.value = fullContent.trim();
-                    els.shareModal.classList.remove('hidden');
-                }
-                
-                // 清理 URL，防止下次启动时再次触发 modal
-                // 但要确保在 Service Worker 注册成功后清理，这里简化处理
-                // history.replaceState({}, document.title, window.location.pathname);
-            }
-        };
-
-        const handleModalAdd = async () => {
-            const rawText = els.sharedContentTextarea.value.trim();
-            if (rawText) {
-                // 将 Modal 中的内容作为新任务添加
-                await window.appActions.addTodoFromText(rawText);
-                // 隐藏 Modal
-                els.shareModal.classList.add('hidden');
-            } else {
-                alert("任务内容不能为空");
-            }
-        };
-
-        const handleModalClose = () => {
-            els.shareModal.classList.add('hidden');
-        };
-
-        // --- 8. Event Listeners ---
+        // --- 7. Event Listeners ---
         els.loginBtn.addEventListener('click', handleLogin);
         els.logoutBtn.addEventListener('click', handleLogout);
         els.addBtn.addEventListener('click', handleAddTodo);
@@ -542,13 +456,8 @@
             if (e.key === 'Enter') handleAddTodo();
         });
         els.fab.addEventListener('click', () => els.input.focus());
-        
-        // New Modal Listeners
-        els.modalAddBtn.addEventListener('click', handleModalAdd);
-        els.modalCloseBtn.addEventListener('click', handleModalClose);
 
-
-        // --- 9. Service Worker Registration (Blob) ---
+        // --- 8. Service Worker Registration (Blob) ---
         if ('serviceWorker' in navigator) {
             const swCode = `
                 const CACHE_NAME = 'outpost-todo-native-v1';

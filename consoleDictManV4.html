@@ -1342,7 +1342,7 @@
             }
 
             // 查询泰语单词
-            async lookupThaiWord(word, service = 'deepseek', userId = 'anonymous') {
+            async lookupThaiWord(word, service = 'gemini', userId = 'anonymous') {
                 return this.request('/api/dictionary/lookup', {
                     method: 'POST',
                     body: { word, service, user_id: userId }
