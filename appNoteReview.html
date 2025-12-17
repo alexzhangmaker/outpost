@@ -84,8 +84,12 @@
 
         <header class="top-bar">
             <div id="noteTitleInfo" style="font-weight: 500; color: #333;">正在加载笔记...</div>
-            <div class="user-actions">
-                <i class="fas fa-print nav-icon" style="margin: 0 15px; font-size: 16px;" onclick="window.print()"></i>
+            <div class="user-actions" style="display: flex; align-items: center;">
+                <div class="print-actions">
+                    <button class="btn-print-tool" onclick="printNoteKnowledge()"><i class="fas fa-print"></i>知识点</button>
+                    <button class="btn-print-tool" onclick="printReviewSheet()"><i class="fas fa-pen-fancy"></i>复习单</button>
+                    <button class="btn-print-tool" onclick="printExercises()"><i class="fas fa-dumbbell"></i>练习卷</button>
+                </div>
                 <i class="fas fa-expand nav-icon" style="margin: 0; font-size: 16px;" onclick="toggleFullScreen()"></i>
             </div>
         </header>
@@ -204,6 +208,113 @@
                 document.exitFullscreen();
             }
         }
+
+        // 全局变量存储当前加载的笔记数据
+let currentNoteData = null;
+let currentMarkdownContent = "";
+
+// 修改原有的 initApp 逻辑以保存数据副本
+async function initApp() {
+    const params = new URLSearchParams(window.location.search);
+    const noteID = params.get('noteID');
+    if (!noteID) return;
+
+    showLoading(true);
+    try {
+        const snapshot = await database.ref(`mdNotes/${noteID}`).once('value');
+        if (!snapshot.exists()) throw new Error("笔记不存在");
+
+        currentNoteData = snapshot.val();
+        renderMeta(currentNoteData);
+
+        const response = await fetch(currentNoteData.mdNote);
+        currentMarkdownContent = await response.text();
+        
+        renderMarkdown(currentMarkdownContent);
+    } catch (err) {
+        console.error(err);
+        document.getElementById('noteTitleInfo').textContent = "加载失败";
+    } finally {
+        showLoading(false);
+    }
+}
+
+// --- 核心打印函数组 ---
+
+function launchPrintHelper(markdownContent, windowTitle) {
+    const printTask = {
+        title: windowTitle,
+        content: markdownContent,
+        timestamp: Date.now()
+    };
+    sessionStorage.setItem('noteFlowPrintTask', JSON.stringify(printTask));
+    window.open('print_helper.html', '_blank');
+}
+
+// 1. 打印知识点
+async function printNoteKnowledge() {
+    if (!currentMarkdownContent) return;
+    const content = currentMarkdownContent;
+    
+    const titleMatch = content.match(/^# .*/m);
+    const titleMd = titleMatch ? titleMatch[0] : `# ${currentNoteData.title}`;
+    
+    let bodyContent = content;
+    const h2Regex = /^## (?!.*练习)(.*)/gm;
+    const match = h2Regex.exec(content);
+    if (match) {
+        bodyContent = content.substring(match.index);
+    } else {
+        const parts = content.split('---');
+        if (parts.length > 2) bodyContent = parts.slice(2).join('---');
+    }
+
+    const exerciseIndex = bodyContent.search(/^## .*练习/m);
+    if (exerciseIndex !== -1) bodyContent = bodyContent.substring(0, exerciseIndex);
+
+    const finalMarkdown = `${titleMd}\n\n${bodyContent}`;
+    launchPrintHelper(finalMarkdown, `笔记-${currentNoteData.title}`);
+}
+
+// 2. 打印复习单 (带占位线)
+async function printReviewSheet() {
+    if (!currentMarkdownContent) return;
+    const content = currentMarkdownContent;
+
+    const titleMatch = content.match(/^# .*/m);
+    let finalMarkdown = titleMatch ? `${titleMatch[0]}\n\n` : `# ${currentNoteData.title}\n\n`;
+
+    const h2Regex = /^## (?!.*练习)(.*)/gm;
+    let match;
+    let hasContent = false;
+    const linesHtml = `\n<div class="review-block"><div class="review-line"></div><div class="review-line"></div><div class="review-line"></div><div class="review-line"></div><div class="review-line"></div></div>\n`;
+
+    while ((match = h2Regex.exec(content)) !== null) {
+        hasContent = true;
+        finalMarkdown += `## ${match[1]}\n${linesHtml}\n`;
+    }
+
+    if (!hasContent) finalMarkdown += "> 未检测到标准章节标题，无法生成复习单。";
+    launchPrintHelper(finalMarkdown, `复习单-${currentNoteData.title}`);
+}
+
+// 3. 打印练习
+async function printExercises() {
+    if (!currentMarkdownContent) return;
+    const content = currentMarkdownContent;
+
+    const exerciseRegex = /^## .*练习([\s\S]*)/m;
+    const match = content.match(exerciseRegex);
+
+    if (match) {
+        const headerMatch = content.match(/^## .*练习.*/m);
+        const header = headerMatch ? headerMatch[0] : "## 练习与巩固";
+        const finalMarkdown = `# ${currentNoteData.title} - 练习卷\n\n${header}\n${match[1]}`;
+        launchPrintHelper(finalMarkdown, `练习卷-${currentNoteData.title}`);
+    } else {
+        alert("该笔记未包含符合规范的练习内容");
+    }
+}
     </script>
 </body>
 </html>
