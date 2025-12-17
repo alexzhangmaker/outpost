@@ -470,6 +470,12 @@
             }
             .modal-title-input { width: 100px; }
         }
+
+        @media (max-width: 768px) {
+            #modalTagsInput {
+                width: 80px !important; /* 手机端缩小标签输入框宽度 */
+            }
+        }
     </style>
 </head>
 <body>
@@ -561,6 +567,12 @@
                         <i class="fas fa-check"></i> <span>已就绪</span>
                     </div>
                     
+                    <div class="tag-edit-container" style="display: flex; align-items: center; background: #f1f3f4; border-radius: 4px; padding: 2px 8px;">
+                        <i class="fas fa-tags" style="color: #5f6368; font-size: 12px; margin-right: 5px;"></i>
+                        <input type="text" id="modalTagsInput" placeholder="标签 (英文逗号分隔)" 
+                            style="border: none; background: transparent; font-size: 13px; outline: none; width: 150px; padding: 4px;">
+                    </div>
+
                     <select id="modalFolderSelect" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
                     </select>
 
@@ -1036,6 +1048,11 @@
 
             // 1. 填充模态框元数据
             modalNoteTitle.value = note.title;
+
+            // --- 新增：填充标签 ---
+            const modalTagsInput = document.getElementById('modalTagsInput');
+            modalTagsInput.value = note.tags ? note.tags.join(', ') : '';
+            // ----------------------
             
             // 填充下拉框
             modalFolderSelect.innerHTML = `<option value="000000">未分类</option>` + 
@@ -1120,6 +1137,13 @@
             const newContent = currentEditorInstance.getMarkdown();
             const courseCode = modalFolderSelect.value;
             
+            // --- 新增：处理标签数据 ---
+            const tagsValue = document.getElementById('modalTagsInput').value;
+            const newTags = tagsValue.split(',')
+                                    .map(t => t.trim())
+                                    .filter(t => t !== ''); // 过滤掉空标签
+            // -----------------------
+
             // 查找课程名
             let courseName = '未分类';
             const folder = folders.find(f => f.courseCode === courseCode);
@@ -1141,6 +1165,7 @@
                     title: newTitle,
                     updatedAt: new Date().toISOString(),
                     mdNote: downloadURL,
+                    tags: newTags, // 更新此处的标签数组
                     subject: {
                         course: courseName,
                         courseCode: courseCode
@@ -1175,6 +1200,11 @@
             searchQuery = e.target.value;
             renderTable();
         });
+
+        // 监听标题、文件夹和标签变化
+        modalNoteTitle.addEventListener('input', scheduleSave);
+        modalFolderSelect.addEventListener('change', scheduleSave);
+        document.getElementById('modalTagsInput').addEventListener('input', scheduleSave);
 
         // 新建笔记功能
         newNoteBtn.addEventListener('click', async () => {
