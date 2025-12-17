@@ -476,6 +476,8 @@
                 width: 80px !important; /* 手机端缩小标签输入框宽度 */
             }
         }
+
+        .action-btn.assignment:hover { color: #a50e0e; background-color: #fce8e6; }
     </style>
 </head>
 <body>
@@ -604,11 +606,38 @@
             measurementId: "G-QPHWRTH6BH"
         };
 
+
+
+        // --- 新增：初始化用于 Assignment 的辅助 Firebase 实例 ---
+        const assignmentConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-4ec53.asia-southeast1.firebasedatabase.app/", // 目标数据库
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
         // 初始化 Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const database = firebase.database();
         const storage = firebase.storage();
+
+
+        // 创建次要实例以访问不同的 Database URL
+        // 在脚本顶部初始化部分
+        const mainApp = firebase.app(); // 默认实例
+        //const assignmentApp = firebase.initializeApp(assignmentConfig, "assignmentApp");
+        //const assignmentDb = assignmentApp.database();
+        
+
+
+        // 2. 不要使用 initializeApp 第二次，直接获取第二个数据库的引用
+        // 这里的 URL 必须是你目标数据库的完整地址
+        const assignmentDb = firebase.app().database("https://outpost-8d74e-4ec53.asia-southeast1.firebasedatabase.app/");
 
         // DOM元素
         const authContainer = document.getElementById('authContainer');
@@ -841,6 +870,9 @@
                     <td>
                         <button class="action-btn edit" onclick="openEditModal('${note.id}')" title="编辑">
                             <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn assignment" onclick="createAssignment('${note.id}')" title="分配复习任务" style="color: #d93025;">
+                            <i class="fas fa-tasks"></i>
                         </button>
                         <button class="action-btn print" onclick="printNoteKnowledge('${note.id}')" title="打印笔记 (知识点)">
                             <i class="fas fa-print"></i>
@@ -1237,6 +1269,36 @@
             }
         });
 
+        // 创建复习任务
+async function createAssignment(noteId) {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        alert("请确认已登录！");
+        return;
+    }
+
+    const note = notes.find(n => n.id === noteId);
+    if (!note) return;
+
+    const assignmentData = {
+        "attachment": `https://alexzhangmaker.github.io/outpost/appNoteReview.html?noteID=${noteId}`,
+        "classification": "noteReview",
+        "createdAt": new Date().toISOString().split('T')[0],
+        "expireAt": new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        "message": "note Review assignment",
+        "status": "todo",
+        "user": user.email
+    };
+
+    try {
+        // 使用 .push().set() 明确操作
+        await assignmentDb.ref('userMessages').push().set(assignmentData);
+        alert('任务已成功分配！');
+    } catch (error) {
+        console.error("写入失败:", error);
+        alert("写入失败: " + error.message);
+    }
+}
     </script>
 </body>
 </html>

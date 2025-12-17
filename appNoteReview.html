@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoteReview - 沉浸式复习</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <style>
+        :root {
+            --sidebar-width: 60px;
+            --topbar-height: 50px;
+            --accent-color: #4285f4;
+            --bg-color: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #fdfdfd; overflow: hidden; }
+
+        /* --- 登录 Splash 窗口 --- */
+        #authSplash {
+            position: fixed; inset: 0; background: #fff; z-index: 2000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .login-card { text-align: center; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .btn-google { 
+            background: #4285f4; color: white; border: none; padding: 12px 24px; 
+            border-radius: 25px; cursor: pointer; font-size: 16px; transition: 0.3s;
+        }
+        .btn-google:hover { background: #3367d6; }
+
+        /* --- 极简布局 --- */
+        .app-shell { display: none; height: 100vh; grid-template-columns: var(--sidebar-width) 1fr; grid-template-rows: var(--topbar-height) 1fr; }
+        
+        .top-bar { 
+            grid-column: 2; border-bottom: 1px solid #eee; 
+            display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+        }
+        
+        .side-nav { 
+            grid-row: 1 / 3; border-right: 1px solid #eee; background: #f8f9fa;
+            display: flex; flex-direction: column; align-items: center; padding: 20px 0;
+        }
+
+        .content-main { 
+            overflow-y: auto; padding: 40px; display: flex; justify-content: center; 
+        }
+
+        .note-container { width: 100%; max-width: 800px; }
+
+        /* UI 元素微调 */
+        .nav-icon { color: #5f6368; font-size: 20px; margin-bottom: 30px; cursor: pointer; transition: 0.2s; }
+        .nav-icon:hover { color: var(--accent-color); }
+        .note-meta { font-size: 13px; color: #999; margin-bottom: 10px; }
+        .tag-pill { background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 4px; margin-right: 5px; }
+
+        #loadingOverlay { position: absolute; inset: 0; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; }
+    </style>
+</head>
+<body>
+
+    <div id="authSplash">
+        <div class="login-card">
+            <i class="fas fa-book-reader" style="font-size: 48px; color: #4285f4; margin-bottom: 20px;"></i>
+            <h2 style="margin-bottom: 20px;">NoteReview</h2>
+            <button class="btn-google" onclick="signInWithGoogle()">
+                <i class="fab fa-google"></i> 使用 Google 账号登录
+            </button>
+        </div>
+    </div>
+
+    <div class="app-shell" id="appShell">
+        <nav class="side-nav">
+            <i class="fas fa-home nav-icon" title="主页"></i>
+            <i class="fas fa-history nav-icon" title="复习历史"></i>
+            <i class="fas fa-bookmark nav-icon" title="收藏"></i>
+            <div style="flex-grow: 1;"></div>
+            <i class="fas fa-sign-out-alt nav-icon" onclick="signOut()" title="退出"></i>
+        </nav>
+
+        <header class="top-bar">
+            <div id="noteTitleInfo" style="font-weight: 500; color: #333;">正在加载笔记...</div>
+            <div class="user-actions">
+                <i class="fas fa-print nav-icon" style="margin: 0 15px; font-size: 16px;" onclick="window.print()"></i>
+                <i class="fas fa-expand nav-icon" style="margin: 0; font-size: 16px;" onclick="toggleFullScreen()"></i>
+            </div>
+        </header>
+
+        <main class="content-main">
+            <div id="loadingOverlay"><i class="fas fa-spinner fa-spin"></i></div>
+            <article class="note-container">
+                <div id="metaHeader" class="note-meta"></div>
+                <div id="markdownViewer"></div>
+            </article>
+        </main>
+    </div>
+
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+    <script>
+        // 1. Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-otes-86b07.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        let viewer;
+
+        // 2. 身份验证逻辑
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('authSplash').style.display = 'none';
+                document.getElementById('appShell').style.display = 'grid';
+                initApp();
+            } else {
+                document.getElementById('authSplash').style.display = 'flex';
+                document.getElementById('appShell').style.display = 'none';
+            }
+        });
+
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(err => alert(err.message));
+        }
+
+        function signOut() {
+            auth.signOut();
+        }
+
+        // 3. 应用初始化与数据解析
+        async function initApp() {
+            const params = new URLSearchParams(window.location.search);
+            const noteID = params.get('noteID');
+
+            if (!noteID) {
+                document.getElementById('noteTitleInfo').textContent = "未找到笔记 ID";
+                return;
+            }
+
+            showLoading(true);
+            try {
+                // 获取数据库元数据
+                const snapshot = await database.ref(`mdNotes/${noteID}`).once('value');
+                if (!snapshot.exists()) throw new Error("笔记不存在");
+
+                const noteData = snapshot.val();
+                renderMeta(noteData);
+
+                // 获取并渲染 Markdown 内容
+                const response = await fetch(noteData.mdNote);
+                const mdText = await response.text();
+                
+                renderMarkdown(mdText);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('noteTitleInfo').textContent = "加载失败";
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderMeta(data) {
+            document.getElementById('noteTitleInfo').textContent = data.title;
+            const tags = (data.tags || []).map(t => `<span class="tag-pill">${t}</span>`).join('');
+            document.getElementById('metaHeader').innerHTML = `
+                <div>${data.subject.course} (${data.subject.courseCode})</div>
+                <div style="margin-top:5px;">${tags} | 更新于: ${new Date(data.updatedAt).toLocaleDateString()}</div>
+            `;
+        }
+
+        function renderMarkdown(content) {
+            if (!viewer) {
+                viewer = new toastui.Editor.factory({
+                    el: document.querySelector('#markdownViewer'),
+                    viewer: true,
+                    initialValue: content
+                });
+            } else {
+                viewer.setMarkdown(content);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+    </script>
+</body>
+</html>
