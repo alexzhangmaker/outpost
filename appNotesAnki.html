@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语语法 Anki 智能测试助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: "Noto Serif Thai", serif; background-color: #f8fafc; }
+        .thai-text { font-family: 'Kanit', sans-serif; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .option-btn:disabled { cursor: not-allowed; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-10">
+        <div class="max-w-2xl mx-auto flex justify-between items-center">
+            <h1 class="font-bold text-indigo-600 text-lg">Thai Grammar Pro <span class="text-slate-300 font-light">| 自动评分版</span></h1>
+            <div id="stats" class="text-xs text-slate-500 space-x-3">
+                <span id="due-count" class="bg-orange-100 text-orange-700 px-2 py-1 rounded">待复习: 0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center p-4">
+        <div id="app-container" class="w-full max-w-2xl">
+            
+            <div id="view-summary" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
+                <h2 id="deck-title" class="text-2xl font-bold text-slate-800 mb-2 italic"></h2>
+                <p id="deck-desc" class="text-slate-500 mb-6 text-sm leading-relaxed"></p>
+                <div class="flex flex-col gap-3">
+                    <button onclick="startSession()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-8 rounded-2xl transition-all shadow-lg shadow-indigo-100">
+                        开始今日复习
+                    </button>
+                    <p class="text-[10px] text-slate-400">系统将根据测试准确率自动调整复习间隔</p>
+                </div>
+            </div>
+
+            <div id="view-review" class="hidden space-y-4 animate-fade-in">
+                <div class="flex justify-between items-center px-2">
+                    <span id="review-card-type" class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded uppercase tracking-widest"></span>
+                    <span class="text-xs text-indigo-500 font-medium">第一阶段：知识点回顾</span>
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-xl border border-slate-100 min-h-[450px] flex flex-col p-8 relative">
+                    <div id="review-front" class="flex-grow flex flex-col justify-center text-center">
+                        <h3 id="review-title" class="text-indigo-400 text-sm font-bold mb-6"></h3>
+                        <div id="review-main-content" class="text-2xl font-bold text-slate-800 leading-relaxed italic"></div>
+                    </div>
+
+                    <div id="review-back" class="hidden border-t border-slate-100 mt-6 pt-6 space-y-6">
+                        <section>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">详细解析</h4>
+                            <p id="back-explanation" class="text-slate-700 text-sm leading-relaxed"></p>
+                        </section>
+                        <section class="bg-indigo-50 rounded-2xl p-5">
+                            <h4 class="text-xs font-bold text-indigo-400 uppercase mb-3">典型例句</h4>
+                            <p id="back-thai" class="thai-text text-xl text-slate-800 mb-1"></p>
+                            <p id="back-rom" class="text-xs text-slate-400 italic mb-2"></p>
+                            <p id="back-trans" class="text-sm text-slate-600 font-medium"></p>
+                        </section>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button id="btn-toggle-back" onclick="showBack()" class="flex-1 bg-slate-800 text-white py-4 rounded-2xl font-bold shadow-lg">显示答案解析</button>
+                    <button id="btn-return-front" onclick="showFront()" class="hidden flex-1 bg-white border-2 border-slate-200 text-slate-600 py-4 rounded-2xl font-bold">返回正面记忆</button>
+                    <button id="btn-go-test" onclick="startTestUnit()" class="hidden flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100">进入自我测试</button>
+                </div>
+            </div>
+
+            <div id="view-test" class="hidden space-y-4 animate-fade-in">
+                <div class="flex justify-between items-center px-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                        <span class="text-xs font-bold text-slate-600">第二阶段：单元测试</span>
+                    </div>
+                    <span id="test-progress" class="text-xs text-slate-400 font-mono">1 / 5</span>
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 min-h-[400px] flex flex-col">
+                    <p id="test-question" class="text-lg font-bold text-slate-800 mb-8 leading-relaxed"></p>
+                    <div id="test-options" class="grid grid-cols-1 gap-3 flex-grow">
+                        </div>
+                    <div id="test-feedback" class="mt-6 text-center text-sm font-bold hidden"></div>
+                </div>
+                
+                <button id="btn-next-q" onclick="nextQuestion()" class="hidden w-full bg-slate-800 text-white py-4 rounded-2xl font-bold">下一题</button>
+            </div>
+
+            <div id="view-result" class="hidden text-center animate-fade-in">
+                <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-10">
+                    <div id="result-icon" class="text-6xl mb-4"></div>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">测试完成</h2>
+                    <p id="result-score" class="text-slate-500 mb-6"></p>
+                    <div id="result-sm2-info" class="bg-slate-50 rounded-2xl p-4 text-xs text-slate-400 mb-8"></div>
+                    <button onclick="finishCard()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg">进入下一张卡片</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // --- 核心数据配置 ---
+        const initialData = {
+  "deck_info": {
+    "deck_name": "泰语名词短语构成法：多类修饰成分",
+    "deck_description": "深入掌握泰语核心名词短语结构，包括所属关系、数量表达、顺序排列及介词短语修饰。",
+    "grammar_topic": "名词短语修饰结构 (Noun Phrase Modifiers)",
+    "difficulty_level": "中级 (Intermediate)",
+    "estimated_study_time": "45 分钟",
+    "tags": ["泰语语法", "名词短语", "词序", "Anki"],
+    "applicable_scenarios": ["泰语等级考试准备", "日常对话进阶", "翻译练习"]
+  },
+  "cards": [
+    {
+      "card_id": "TH_GRAM_NP_001",
+      "card_type": "rule_card",
+      "card_title": "结构一：名词 + ของ (khɔ̌ɔng) + 名词",
+      "front": {
+        "main_content": "如何表达“A的B”（所属关系、材料、类别）？",
+        "key_concepts": ["所属关系", "结构助词 ของ", "中心语在前"]
+      },
+      "back": {
+        "detailed_explanation": "在泰语中，当一个名词修饰另一个名词时，通常使用连接词 'ของ'。中心名词（被修饰者）放在前面，修饰名词放在后面。",
+        "usage_rules": "公式：中心名词 (N1) + ของ + 修饰名词 (N2)",
+        "formula_pattern": "N1 + ของ + N2"
+      },
+      "examples": [
+        {
+          "thai": "แผนก ของ บริษัท",
+          "romanization": "phaa-nɛ́k khɔ̌ɔng baaw-rí-sàt",
+          "translation": "公司的部门",
+          "explanation": "‘部门’是中心语，‘公司’是所属名词，通过 ของ 连接。"
+        }
+      ],
+      "common_mistakes": [
+        {
+          "mistake": "บริษัท แผนก",
+          "correction": "แผนก ของ บริษัท",
+          "reason": "受汉语影响将修饰语放在了中心语之前。"
+        }
+      ],
+      "multiple_choice_exercises": [
+        {
+          "exercise_id": "Q1_1",
+          "question": "如何正确翻译“老师的书”？",
+          "question_context": "基础所属关系表达",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "ครู ของ หนังสือ",
+              "is_correct": false,
+              "explanation_if_chosen": "这是“书的老师”，中心语和修饰语位置颠倒了。"
+            },
+            {
+              "option_id": "B",
+              "content": "หนังสือ ของ ครู",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。中心语‘书’在前，修饰语‘老师’在后，中间用 ของ 连接。"
+            },
+            {
+              "option_id": "C",
+              "content": "ครู หนังสือ",
+              "is_correct": false,
+              "explanation_if_chosen": "缺少结构助词 ของ，且词序错误。"
+            },
+            {
+              "option_id": "D",
+              "content": "ของ หนังสือ ครู",
+              "is_correct": false,
+              "explanation_if_chosen": "ของ 不能放在短语的最前面。"
+            }
+          ],
+          "correct_answer": "B",
+          "difficulty_level": "简单",
+          "knowledge_point": "N1 + ของ + N2 词序",
+          "general_explanation": "泰语必须“中心语在前”，所属关系需由 ของ 连接。"
+        },
+        {
+          "exercise_id": "Q1_2",
+          "question": "在短语 'ประตู ของ บ้าน' 中，中心语是什么？",
+          "question_context": "语法成分识别",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "ของ",
+              "is_correct": false,
+              "explanation_if_chosen": "这是结构助词，不是名词。"
+            },
+            {
+              "option_id": "B",
+              "content": "บ้าน (房子)",
+              "is_correct": false,
+              "explanation_if_chosen": "这是修饰语，说明门属于哪里。"
+            },
+            {
+              "option_id": "C",
+              "content": "ประตู (门)",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。放在前面的 N1 是被修饰的中心语。"
+            },
+            {
+              "option_id": "D",
+              "content": "整个短语没有中心语",
+              "is_correct": false,
+              "explanation_if_chosen": "名词短语必然有中心语。"
+            }
+          ],
+          "correct_answer": "C",
+          "difficulty_level": "中等",
+          "knowledge_point": "中心语识别",
+          "general_explanation": "泰语名词短语第一个词通常是核心意义所在。"
+        },
+        {
+          "exercise_id": "Q1_3",
+          "question": "找出语法错误的句子：",
+          "question_context": "错误辨析",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "แมว ของ ฉัน (我的猫)",
+              "is_correct": false,
+              "explanation_if_chosen": "表达完全正确。"
+            },
+            {
+              "option_id": "B",
+              "content": "รถ ของ คุณพ่อ (爸爸的车)",
+              "is_correct": false,
+              "explanation_if_chosen": "表达完全正确。"
+            },
+            {
+              "option_id": "C",
+              "content": "โรงเรียน ของ เขา (他的学校)",
+              "is_correct": false,
+              "explanation_if_chosen": "表达完全正确。"
+            },
+            {
+              "option_id": "D",
+              "content": "บริษัท แผนก (公司的部门)",
+              "is_correct": true,
+              "explanation_if_chosen": "错误。缺少连接词 ของ 且中心语位置错误，应为 แผนก ของ บริษัท。"
+            }
+          ],
+          "correct_answer": "D",
+          "difficulty_level": "简单",
+          "knowledge_point": "所属关系的完整结构",
+          "general_explanation": "名词修饰名词时，必须确保 N1 在前，并使用 ของ。"
+        },
+        {
+          "exercise_id": "Q1_4",
+          "question": "在正式公文中，描述“大学的政策”，以下哪项最标准？",
+          "question_context": "情景应用",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "นโยบาย มหาวิทยาลัย",
+              "is_correct": false,
+              "explanation_if_chosen": "口语中偶尔省略，但正式表达不推荐。"
+            },
+            {
+              "option_id": "B",
+              "content": "มหาวิทยาลัย นโยบาย",
+              "is_correct": false,
+              "explanation_if_chosen": "词序完全错误。"
+            },
+            {
+              "option_id": "C",
+              "content": "นโยบาย ของ มหาวิทยาลัย",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。符合 N1 + ของ + N2 的标准书面语法。"
+            },
+            {
+              "option_id": "D",
+              "content": "ของ นโยบาย มหาวิทยาลัย",
+              "is_correct": false,
+              "explanation_if_chosen": "结构助词位置错误。"
+            }
+          ],
+          "correct_answer": "C",
+          "difficulty_level": "中等",
+          "knowledge_point": "正式语法的应用",
+          "general_explanation": "正式场合必须严谨使用连接词。"
+        },
+        {
+          "exercise_id": "Q1_5",
+          "question": "“ของ” 在名词短语中的主要功能是什么？",
+          "question_context": "综合理解",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "连接数词和量词",
+              "is_correct": false,
+              "explanation_if_chosen": "那是数量结构的范畴，不用 ของ。"
+            },
+            {
+              "option_id": "B",
+              "content": "作为介词表示地点",
+              "is_correct": false,
+              "explanation_if_chosen": "ของ 在此处不是地点介词。"
+            },
+            {
+              "option_id": "C",
+              "content": "连接两个名词以表示所属或属性关系",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。它是“名词+名词”结构的桥梁。"
+            },
+            {
+              "option_id": "D",
+              "content": "引导动词短语修饰名词",
+              "is_correct": false,
+              "explanation_if_chosen": "那是 ที่ 的功能。"
+            }
+          ],
+          "correct_answer": "C",
+          "difficulty_level": "简单",
+          "knowledge_point": "ของ 的功能定义",
+          "general_explanation": "ของ 类似于汉语的“的”，专门负责连接名词性成分。"
+        }
+      ],
+      "metadata": {
+        "importance": "核心级",
+        "complexity": "低",
+        "practice_focus": "词序与连接词使用"
+      }
+    },
+    {
+      "card_id": "TH_GRAM_NP_002",
+      "card_type": "rule_card",
+      "card_title": "结构二：名词 + 数词 + 量词",
+      "front": {
+        "main_content": "泰语如何表达“数量”？（如：三本书）",
+        "key_concepts": ["数量短语", "量词的使用", "数词位置"]
+      },
+      "back": {
+        "detailed_explanation": "泰语表达数量时，逻辑是：先说是什么，再说有多少，最后给单位（量词）。",
+        "usage_rules": "公式：名词 + 数词 + 量词",
+        "formula_pattern": "N + Numeral + Classifier"
+      },
+      "examples": [
+        {
+          "thai": "หนังสือ สาม เล่ม",
+          "romanization": "nǎng-sʉ̌ʉ sǎam lêm",
+          "translation": "三本书",
+          "explanation": "หนังสือ(书) + สาม(三) + เล่ม(本)。"
+        }
+      ],
+      "common_mistakes": [
+        {
+          "mistake": "สาม หนังสือ",
+          "correction": "หนังสือ สาม เล่ม",
+          "reason": "汉语习惯将数量放在名词前，泰语必须放在后面且必须带量词。"
+        }
+      ],
+      "multiple_choice_exercises": [
+        {
+          "exercise_id": "Q2_1",
+          "question": "“五个学生”在泰语中如何排列？",
+          "question_context": "基础数量结构",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "ห้า นักเรียน คน",
+              "is_correct": false,
+              "explanation_if_chosen": "数词不能放在名词前面。"
+            },
+            {
+              "option_id": "B",
+              "content": "นักเรียน คน ห้า",
+              "is_correct": false,
+              "explanation_if_chosen": "数词应该在量词前面。"
+            },
+            {
+              "option_id": "C",
+              "content": "นักเรียน ห้า คน",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。名词(นักเรียน) + 数词(ห้า) + 量词(คน)。"
+            },
+            {
+              "option_id": "D",
+              "content": "คน ห้า นักเรียน",
+              "is_correct": false,
+              "explanation_if_chosen": "结构完全混乱。"
+            }
+          ],
+          "correct_answer": "C",
+          "difficulty_level": "简单",
+          "knowledge_point": "N+Num+Class 结构",
+          "general_explanation": "记住“名-数-量”的固定顺序。"
+        },
+        {
+          "exercise_id": "Q2_2",
+          "question": "翻译：'两只猫' (猫: แมว, 只: ตัว)",
+          "question_context": "词汇应用",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "แมว สอง ตัว",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。名词在前，后面紧跟数词和对应的量词。"
+            },
+            {
+              "option_id": "B",
+              "content": "สอง แมว ตัว",
+              "is_correct": false,
+              "explanation_if_chosen": "数词位置错误。"
+            },
+            {
+              "option_id": "C",
+              "content": "ตัว สอง แมว",
+              "is_correct": false,
+              "explanation_if_chosen": "量词位置错误。"
+            },
+            {
+              "option_id": "D",
+              "content": "แมว ตัว สอง",
+              "is_correct": false,
+              "explanation_if_chosen": "数词和量词位置颠倒。"
+            }
+          ],
+          "correct_answer": "A",
+          "difficulty_level": "简单",
+          "knowledge_point": "数量词序应用",
+          "general_explanation": "泰语数量修饰成分整体位于中心词之后。"
+        },
+        {
+          "exercise_id": "Q2_3",
+          "question": "找出干扰项：如果我想说“十个人”，以下哪个词是量词？",
+          "question_context": "词性辨析",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "คน (kon)",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。คน 既是“人”的意思，也是人的量词（名/个）。"
+            },
+            {
+              "option_id": "B",
+              "content": "สิบ (sìp)",
+              "is_correct": false,
+              "explanation_if_chosen": "这是数词“十”。"
+            },
+            {
+              "option_id": "C",
+              "content": "ของ (khɔ̌ɔng)",
+              "is_correct": false,
+              "explanation_if_chosen": "这是所属连接词。"
+            },
+            {
+              "option_id": "D",
+              "content": "ที่ (thîi)",
+              "is_correct": false,
+              "explanation_if_chosen": "这是顺序/关系词。"
+            }
+          ],
+          "correct_answer": "A",
+          "difficulty_level": "中等",
+          "knowledge_point": "量词识别",
+          "general_explanation": "在“นักเรียน สิบ คน”中，最后的 คน 是作为量词出现的。"
+        },
+        {
+          "exercise_id": "Q2_4",
+          "question": "情景：你去书店要买“4本练习册”，你应该说：",
+          "question_context": "情景模拟",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "สมุด สี่ เล่ม",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。名词(练习册) + 4 + 本。"
+            },
+            {
+              "option_id": "B",
+              "content": "สี่ เล่ม สมุด",
+              "is_correct": false,
+              "explanation_if_chosen": "不能按照汉语“四本练习册”直译。"
+            },
+            {
+              "option_id": "C",
+              "content": "เล่ม สี่ สมุด",
+              "is_correct": false,
+              "explanation_if_chosen": "词序不符合泰语习惯。"
+            },
+            {
+              "option_id": "D",
+              "content": "สมุด ของ สี่",
+              "is_correct": false,
+              "explanation_if_chosen": "数量表达不需要 ของ。"
+            }
+          ],
+          "correct_answer": "A",
+          "difficulty_level": "中等",
+          "knowledge_point": "生活场景应用",
+          "general_explanation": "购物等场景下数量表达最常用 N+Num+Class。"
+        },
+        {
+          "exercise_id": "Q2_5",
+          "question": "判断：泰语表达数量时，量词可以省略吗？",
+          "question_context": "规则深度理解",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "可以，只要有数词就行",
+              "is_correct": false,
+              "explanation_if_chosen": "不正确，泰语是非常依赖量词的语言。"
+            },
+            {
+              "option_id": "B",
+              "content": "不可以，数词后必须跟量词",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。数词和量词通常是绑定的整体修饰语。"
+            },
+            {
+              "option_id": "C",
+              "content": "只有数字是1的时候可以省",
+              "is_correct": false,
+              "explanation_if_chosen": "数字为1时有特殊变体，但量词位依然重要。"
+            },
+            {
+              "option_id": "D",
+              "content": "随便，没有硬性规定",
+              "is_correct": false,
+              "explanation_if_chosen": "泰语语法对量词有严格规定。"
+            }
+          ],
+          "correct_answer": "B",
+          "difficulty_level": "简单",
+          "knowledge_point": "量词的必要性",
+          "general_explanation": "数词和量词在泰语名词修饰结构中缺一不可。"
+        }
+      ],
+      "metadata": {
+        "importance": "极高",
+        "complexity": "低",
+        "practice_focus": "数量结构词序"
+      }
+    },
+    {
+      "card_id": "TH_GRAM_NP_003",
+      "card_type": "rule_card",
+      "card_title": "结构三：数量与顺序的综合排列",
+      "front": {
+        "main_content": "如何同时表达数量和特定顺序（如：这三本书，两个学生中的第一个）？",
+        "key_concepts": ["指示代词 นี้/นั้น", "序数词 ที่หนึ่ง", "多重修饰语排序"]
+      },
+      "back": {
+        "detailed_explanation": "当“数量短语”和“特指/顺序”同时出现时，遵循先整体、后局部的逻辑。",
+        "usage_rules": "公式：名词 + (数词 + 量词) + (ที่ + 顺序 / 指示代词)",
+        "formula_pattern": "N + (Num + Class) + (thîi + Ordinal / nǐi)"
+      },
+      "examples": [
+        {
+          "thai": "นักเรียน สอง คน ที่ หนึ่ง",
+          "romanization": "nák-rian sɔ̌ɔng kon thîi nʉ̀ng",
+          "translation": "两名学生中的第一个",
+          "explanation": "先确定‘两名学生’这个集合，再用 ที่หนึ่ง 指向其中之一。"
+        },
+        {
+          "thai": "หนังสือ สาม เล่ม นี้",
+          "romanization": "nǎng-sʉ̌ʉ sǎam lêm níi",
+          "translation": "这三本书",
+          "explanation": "นี้(这) 修饰的是前面‘三本书’这个整体。"
+        }
+      ],
+      "common_mistakes": [
+        {
+          "mistake": "นี้ หนังสือ สาม เล่ม",
+          "correction": "หนังสือ สาม เล่ม นี้",
+          "reason": "指示代词‘这’在泰语中永远放在被修饰内容的最后面。"
+        }
+      ],
+      "multiple_choice_exercises": [
+        {
+          "exercise_id": "Q3_1",
+          "question": "翻译“这五个人”：",
+          "question_context": "指示代词位置",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "นี้ คน ห้า",
+              "is_correct": false,
+              "explanation_if_chosen": "指示代词 นี้ 位置错误。"
+            },
+            {
+              "option_id": "B",
+              "content": "คน ห้า นี้",
+              "is_correct": false,
+              "explanation_if_chosen": "缺少量词。"
+            },
+            {
+              "option_id": "C",
+              "content": "คน ห้า คน นี้",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。名词+数词+量词+指示代词。"
+            },
+            {
+              "option_id": "D",
+              "content": "นี้ ห้า คน",
+              "is_correct": false,
+              "explanation_if_chosen": "完全按照汉语逻辑翻译是错误的。"
+            }
+          ],
+          "correct_answer": "C",
+          "difficulty_level": "中等",
+          "knowledge_point": "指示代词在数量结构后的位置",
+          "general_explanation": "指示代词 นี้/นั้น 通常位于整个名词短语的末尾。"
+        },
+        {
+          "exercise_id": "Q3_2",
+          "question": "短语 'นักเรียน สอง คน ที่ หนึ่ง' 的意思是：",
+          "question_context": "意义辨析",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "第一个学生（总共只有一个人）",
+              "is_correct": false,
+              "explanation_if_chosen": "短语中提到了 '两个学生'。"
+            },
+            {
+              "option_id": "B",
+              "content": "两名学生中的第一个",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。ที่ หนึ่ง 修饰前面由量词组成的数量短语。"
+            },
+            {
+              "option_id": "C",
+              "content": "两名第一名的学生",
+              "is_correct": false,
+              "explanation_if_chosen": "意义理解偏差。"
+            },
+            {
+              "option_id": "D",
+              "content": "一两个学生",
+              "is_correct": false,
+              "explanation_if_chosen": "结构理解错误。"
+            }
+          ],
+          "correct_answer": "B",
+          "difficulty_level": "中等",
+          "knowledge_point": "顺序词的作用范围",
+          "general_explanation": "顺序词 ที่... 修饰它之前紧邻的名词/数量整体。"
+        },
+        {
+          "exercise_id": "Q3_3",
+          "question": "在排列顺序时，'ที่' (thîi) 后面通常跟着什么？",
+          "question_context": "结构成分识别",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "名词",
+              "is_correct": false,
+              "explanation_if_chosen": "ที่ 接名词通常表示地点，不是顺序。"
+            },
+            {
+              "option_id": "B",
+              "content": "数词（如 1, 2, 3）",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。ที่ + 数词 构成序数词（第一、第二...）。"
+            },
+            {
+              "option_id": "C",
+              "content": "所属连接词 ของ",
+              "is_correct": false,
+              "explanation_if_chosen": "连接词不能这样堆叠。"
+            },
+            {
+              "option_id": "D",
+              "content": "量词",
+              "is_correct": false,
+              "explanation_if_chosen": "序数表达不直接接量词。"
+            }
+          ],
+          "correct_answer": "B",
+          "difficulty_level": "简单",
+          "knowledge_point": "序数词构成",
+          "general_explanation": "ที่ 是构成泰语“第几”的关键引导词。"
+        },
+        {
+          "exercise_id": "Q3_4",
+          "question": "如果要表达“那两辆车”，如何排序？(车: รถ, 辆: คัน, 那: นั้น)",
+          "question_context": "综合应用",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "รถ สอง คัน นั้น",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。名词+数量+指示代词。"
+            },
+            {
+              "option_id": "B",
+              "content": "นั้น รถ สอง คัน",
+              "is_correct": false,
+              "explanation_if_chosen": "นั้น 位置错误。"
+            },
+            {
+              "option_id": "C",
+              "content": "รถ นั้น สอง คัน",
+              "is_correct": false,
+              "explanation_if_chosen": "指示代词插入了数量结构中间，错误。"
+            },
+            {
+              "option_id": "D",
+              "content": "สอง คัน รถ นั้น",
+              "is_correct": false,
+              "explanation_if_chosen": "数量结构必须在中心名词后。"
+            }
+          ],
+          "correct_answer": "A",
+          "difficulty_level": "难",
+          "knowledge_point": "复杂多重修饰语词序",
+          "general_explanation": "指示代词的优先级通常最低，排在最后。"
+        },
+        {
+          "exercise_id": "Q3_5",
+          "question": "为什么不能说 'หนังสือ นี้ สาม เล่ม'？",
+          "question_context": "语法纠错",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "因为 นี้ 必须在量词后面",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。当有数量短语时，指示代词修饰整体，必须置于量词之后。"
+            },
+            {
+              "option_id": "B",
+              "content": "因为 นี้ 必须在数词前面",
+              "is_correct": false,
+              "explanation_if_chosen": "错误。"
+            },
+            {
+              "option_id": "C",
+              "content": "因为应该用 นั้น",
+              "is_correct": false,
+              "explanation_if_chosen": "这只是远近指称的区别。"
+            },
+            {
+              "option_id": "D",
+              "content": "泰语没有这种规定",
+              "is_correct": false,
+              "explanation_if_chosen": "泰语词序规定非常严格。"
+            }
+          ],
+          "correct_answer": "A",
+          "difficulty_level": "难",
+          "knowledge_point": "指示代词与数量短语的相对位置",
+          "general_explanation": "指示代词 นี้/นั้น 的位置取决于修饰的范围，通常放在短语最末端。"
+        }
+      ],
+      "metadata": {
+        "importance": "高",
+        "complexity": "高",
+        "practice_focus": "多重修饰语层级"
+      }
+    },
+    {
+      "card_id": "TH_GRAM_NP_004",
+      "card_type": "rule_card",
+      "card_title": "结构四：名词 + ที่ (thîi) + 介词短语",
+      "front": {
+        "main_content": "如何表达带有介词短语的名词？（如：房间里的男人）",
+        "key_concepts": ["引导词 ที่", "介词短语修饰", "定语结构"]
+      },
+      "back": {
+        "detailed_explanation": "当修饰成分是一个“短语”（如介词+名词）时，必须使用关系引导词 ที่ 来连接中心名词和修饰语。",
+        "usage_rules": "公式：名词 + ที่ + [介词 + 名词]",
+        "formula_pattern": "N + thîi + Prep Phrase"
+      },
+      "examples": [
+        {
+          "thai": "ผู้ชาย ที่ ใน ห้อง",
+          "romanization": "phûu-chaai thîi nai hɔ̂ɔng",
+          "translation": "在房间里的男人",
+          "explanation": "‘在房间里’(ในห้อง) 是介词短语，通过 ที่ 连接到‘男人’(ผู้ชาย)。"
+        }
+      ],
+      "common_mistakes": [
+        {
+          "mistake": "ผู้ชาย ใน ห้อง",
+          "correction": "ผู้ชาย ที่ ใน ห้อง",
+          "reason": "省略 ที่ 会使表达不严谨，甚至导致语义不明。"
+        }
+      ],
+      "multiple_choice_exercises": [
+        {
+          "exercise_id": "Q4_1",
+          "question": "翻译“桌子上的书”：(桌子: โต๊ะ, 上面: บน)",
+          "question_context": "介词短语应用",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "หนังสือ โต๊ะ บน",
+              "is_correct": false,
+              "explanation_if_chosen": "词序和引导词都缺失。"
+            },
+            {
+              "option_id": "B",
+              "content": "บน โต๊ะ หนังสือ",
+              "is_correct": false,
+              "explanation_if_chosen": "汉语式直译，错误。"
+            },
+            {
+              "option_id": "C",
+              "content": "หนังสือ ที่ บน โต๊ะ",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。名词 + ที่ + 介词短语。"
+            },
+            {
+              "option_id": "D",
+              "content": "หนังสือ ของ บน โต๊ะ",
+              "is_correct": false,
+              "explanation_if_chosen": "ของ 用于连接名词，而不是介词短语。"
+            }
+          ],
+          "correct_answer": "C",
+          "difficulty_level": "简单",
+          "knowledge_point": "ที่ 引导介词短语",
+          "general_explanation": "修饰名词的方位短语通常需要 ที่ 引导。"
+        },
+        {
+          "exercise_id": "Q4_2",
+          "question": "在 'การประชุม ที่ เกี่ยวกับ โครงการใหม่' 中，'ที่' 的作用是：",
+          "question_context": "功能分析",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "表示地点“在”",
+              "is_correct": false,
+              "explanation_if_chosen": "这里 ที่ 是引导词，不是地点介词。"
+            },
+            {
+              "option_id": "B",
+              "content": "引导修饰语说明会议内容",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。它连接了介词短语 เกี่ยวกับ...（关于...）。"
+            },
+            {
+              "option_id": "C",
+              "content": "表示所属关系“的”",
+              "is_correct": false,
+              "explanation_if_chosen": "所属关系常用 ของ。"
+            },
+            {
+              "option_id": "D",
+              "content": "没有实际意义，可以省略",
+              "is_correct": false,
+              "explanation_if_chosen": "ที่ 在修饰性结构中具有重要的结构功能。"
+            }
+          ],
+          "correct_answer": "B",
+          "difficulty_level": "中等",
+          "knowledge_point": "ที่ 的语法功能",
+          "general_explanation": "ที่ 作为关系引导词，赋予了后面短语定语的属性。"
+        },
+        {
+          "exercise_id": "Q4_3",
+          "question": "以下哪个泰语表达是错误的？",
+          "question_context": "对比辨析",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "ร้านอาหาร ที่ ใกล้ โรงเรียน (学校附近的餐厅)",
+              "is_correct": false,
+              "explanation_if_chosen": "正确结构。"
+            },
+            {
+              "option_id": "B",
+              "content": "บ้าน ที่ อยู่ เชียงใหม่ (在清迈的房子)",
+              "is_correct": false,
+              "explanation_if_chosen": "正确结构。"
+            },
+            {
+              "option_id": "C",
+              "content": "เพื่อน ที่ จาก ญี่ปุ่น (来自日本的朋友)",
+              "is_correct": false,
+              "explanation_if_chosen": "正确结构。"
+            },
+            {
+              "option_id": "D",
+              "content": "ที่ บน โต๊ะ หนังสือ (桌子上的书)",
+              "is_correct": true,
+              "explanation_if_chosen": "错误。中心词“书”必须放在最前面。"
+            }
+          ],
+          "correct_answer": "D",
+          "difficulty_level": "中等",
+          "knowledge_point": "中心语位置原则",
+          "general_explanation": "无论修饰语多复杂，中心名词永远第一位。"
+        },
+        {
+          "exercise_id": "Q4_4",
+          "question": "如果省略了 'ร้านอาหาร ที่ อยู่ ใกล้ โรงเรียน' 中的 'ที่'，会发生什么？",
+          "question_context": "深层语法理解",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "意思完全不变",
+              "is_correct": false,
+              "explanation_if_chosen": "语义重心会发生偏移。"
+            },
+            {
+              "option_id": "B",
+              "content": "它会变成一个完整的句子“餐厅在学校附近”",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。没有 ที่，'处于...'就成了谓语动词，而非定语。"
+            },
+            {
+              "option_id": "C",
+              "content": "句子会变得更正式",
+              "is_correct": false,
+              "explanation_if_chosen": "恰恰相反，省略引导词通常是非正式或错误的。"
+            },
+            {
+              "option_id": "D",
+              "content": "餐厅会变成修饰语",
+              "is_correct": false,
+              "explanation_if_chosen": "不符合语法逻辑。"
+            }
+          ],
+          "correct_answer": "B",
+          "difficulty_level": "难",
+          "knowledge_point": "名词短语 vs. 句子 的区别",
+          "general_explanation": "ที่ 是区分“定语从句/短语”和“主谓结构”的关键标志。"
+        },
+        {
+          "exercise_id": "Q4_5",
+          "question": "翻译：'关于项目的文档' (文档: เอกสาร, 关于: เกี่ยวกับ)",
+          "question_context": "情景模拟",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "เอกสาร ของ โครงการ",
+              "is_correct": false,
+              "explanation_if_chosen": "意为“项目的文档”，偏向所属，不是“关于”。"
+            },
+            {
+              "option_id": "B",
+              "content": "เกี่ยวกับ โครงการ เอกสาร",
+              "is_correct": false,
+              "explanation_if_chosen": "词序错误。"
+            },
+            {
+              "option_id": "C",
+              "content": "เอกสาร ที่ เกี่ยวกับ โครงการ",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。名词 + ที่ + 关于短语。"
+            },
+            {
+              "option_id": "D",
+              "content": "ที่ เอกสาร เกี่ยวกับ โครงการ",
+              "is_correct": false,
+              "explanation_if_chosen": "引导词不能放在最前面。"
+            }
+          ],
+          "correct_answer": "C",
+          "difficulty_level": "中等",
+          "knowledge_point": "介词短语修饰名词",
+          "general_explanation": "对于关于、来自、在等引导的修饰成分，使用 ที่ 是最标准的。"
+        }
+      ],
+      "metadata": {
+        "importance": "高",
+        "complexity": "中等",
+        "practice_focus": "引导词 ที่ 的应用"
+      }
+    },
+    {
+      "card_id": "TH_GRAM_NP_005",
+      "card_type": "contrast_card",
+      "card_title": "对比辨析：连接词 ของ vs ที่",
+      "front": {
+        "main_content": "什么时候用 ของ (khɔ̌ɔng)？什么时候用 ที่ (thîi)？",
+        "key_concepts": ["连接词选择", "名词修饰语类型", "语法粘合剂"]
+      },
+      "back": {
+        "detailed_explanation": "这是泰语学习者的常见难点。简单规则：看后面接的是什么词性。",
+        "usage_rules": "1. ของ + 单个名词 (N); 2. ที่ + 短语或句子 (Phrase/Clause); 3. 形容词通常由量词连接或直接放后面。",
+        "formula_pattern": "[N + ของ + N] vs [N + ที่ + Phrase]"
+      },
+      "examples": [
+        {
+          "thai": "ของ: รถ ของ ฉัน",
+          "romanization": "rót khɔ̌ɔng chǎn",
+          "translation": "我的车 (我的 = 词)",
+          "explanation": "后面是代词/名词，用 ของ。"
+        },
+        {
+          "thai": "ที่: รถ ที่ ฉัน ซื้อ",
+          "romanization": "rót thîi chǎn sʉ́ʉ",
+          "translation": "我买的车 (我买 = 句子/动作)",
+          "explanation": "后面是动词短语，用 ที่。"
+        }
+      ],
+      "common_mistakes": [
+        {
+          "mistake": "หนังสือ ที่ ครู",
+          "correction": "หนังสือ ของ ครู",
+          "reason": "修饰语是单一名词‘老师’，应用 ของ 而非 ที่。"
+        }
+      ],
+      "multiple_choice_exercises": [
+        {
+          "exercise_id": "Q5_1",
+          "question": "选词填空：กระเป๋า ____ คุณแม่ (妈妈的包)",
+          "question_context": "连接词选择",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "ที่",
+              "is_correct": false,
+              "explanation_if_chosen": "后面是名词母亲，不宜用 ที่。"
+            },
+            {
+              "option_id": "B",
+              "content": "ของ",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。名词+名词所属关系用 ของ。"
+            },
+            {
+              "option_id": "C",
+              "content": "เป็น",
+              "is_correct": false,
+              "explanation_if_chosen": "这是系动词“是”。"
+            },
+            {
+              "option_id": "D",
+              "content": "คน",
+              "is_correct": false,
+              "explanation_if_chosen": "这是量词，不用于此连接。"
+            }
+          ],
+          "correct_answer": "B",
+          "difficulty_level": "简单",
+          "knowledge_point": "所属关系连接词",
+          "general_explanation": "妈妈是一个名词，表示所属时使用 ของ。"
+        },
+        {
+          "exercise_id": "Q5_2",
+          "question": "选词填空：งาน ____ ฉัน ทำ (我做的工作)",
+          "question_context": "连接词选择",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "ของ",
+              "is_correct": false,
+              "explanation_if_chosen": "如果用 ของ，意思会变成“我的工作”，而非强调“我做的”。"
+            },
+            {
+              "option_id": "B",
+              "content": "ที่",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。后面接‘我做’(动词短语)，需用关系引导词 ที่。"
+            },
+            {
+              "option_id": "C",
+              "content": "และ",
+              "is_correct": false,
+              "explanation_if_chosen": "意为“和”。"
+            },
+            {
+              "option_id": "D",
+              "content": "เล่ม",
+              "is_correct": false,
+              "explanation_if_chosen": "这是量词，不适用。"
+            }
+          ],
+          "correct_answer": "B",
+          "difficulty_level": "中等",
+          "knowledge_point": "引导词与短语连接",
+          "general_explanation": "修饰成分含有动词时，必须用 ที่。"
+        },
+        {
+          "exercise_id": "Q5_3",
+          "question": "关于 ของ 和 ที่，以下描述正确的是：",
+          "question_context": "理论辨析",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "它们可以互相替换，没有区别",
+              "is_correct": false,
+              "explanation_if_chosen": "错误，它们的语法分工明确。"
+            },
+            {
+              "option_id": "B",
+              "content": "ของ 接名词，ที่ 接短语或句子",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。这是最基本的区分准则。"
+            },
+            {
+              "option_id": "C",
+              "content": "ของ 用于正式场合，ที่ 用于口语",
+              "is_correct": false,
+              "explanation_if_chosen": "错误。"
+            },
+            {
+              "option_id": "D",
+              "content": "ที่ 只用于表示地点",
+              "is_correct": false,
+              "explanation_if_chosen": "错误，ที่ 也可以引导各种性质的定语从句。"
+            }
+          ],
+          "correct_answer": "B",
+          "difficulty_level": "中等",
+          "knowledge_point": "连接词分工",
+          "general_explanation": "理解被修饰成分的词性是选对连接词的关键。"
+        },
+        {
+          "exercise_id": "Q5_4",
+          "question": "翻译“我喜欢的餐厅”：(喜欢: ชอบ)",
+          "question_context": "综合翻译",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "ร้านอาหาร ที่ ฉัน ชอบ",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。餐厅 + ที่ + 我喜欢。"
+            },
+            {
+              "option_id": "B",
+              "content": "ร้านอาหาร ของ ฉัน ชอบ",
+              "is_correct": false,
+              "explanation_if_chosen": "ของ 后面不能直接接动词短语。"
+            },
+            {
+              "option_id": "C",
+              "content": "ฉัน ชอบ ร้านอาหาร",
+              "is_correct": false,
+              "explanation_if_chosen": "这是句子“我喜欢餐厅”，不是名词短语。"
+            },
+            {
+              "option_id": "D",
+              "content": "ที่ ร้านอาหาร ฉัน ชอบ",
+              "is_correct": false,
+              "explanation_if_chosen": "引导词位置错误。"
+            }
+          ],
+          "correct_answer": "A",
+          "difficulty_level": "中等",
+          "knowledge_point": "关系引导词应用",
+          "general_explanation": "表示“...的（动作或特征）”时，ที่ 是首选。"
+        },
+        {
+          "exercise_id": "Q5_5",
+          "question": "在复杂短语中，连接词通常起到什么作用？",
+          "question_context": "综合总结",
+          "options": [
+            {
+              "option_id": "A",
+              "content": "它们是名词短语的“胶水”，决定了修饰语如何粘合到中心语上",
+              "is_correct": true,
+              "explanation_if_chosen": "正确。理解不同修饰语对应不同“胶水”是泰语语法的核心。"
+            },
+            {
+              "option_id": "B",
+              "content": "它们用来强调主语",
+              "is_correct": false,
+              "explanation_if_chosen": "这不是它们的主要功能。"
+            },
+            {
+              "option_id": "C",
+              "content": "它们可以放在句首引导整个句子",
+              "is_correct": false,
+              "explanation_if_chosen": "它们在名词短语中起内部连接作用。"
+            },
+            {
+              "option_id": "D",
+              "content": "它们用来表示过去时态",
+              "is_correct": false,
+              "explanation_if_chosen": "与时态无关。"
+            }
+          ],
+          "correct_answer": "A",
+          "difficulty_level": "中等",
+          "knowledge_point": "连接词的宏观功能",
+          "general_explanation": "泰语的逻辑性体现在其严密的修饰连接体系中。"
+        }
+      ],
+      "metadata": {
+        "importance": "核心",
+        "complexity": "高",
+        "practice_focus": "区分 ของ 与 ที่"
+      }
+    }
+  ],
+  "study_recommendations": {
+    "card_sequence": [
+      "TH_GRAM_NP_001",
+      "TH_GRAM_NP_002",
+      "TH_GRAM_NP_004",
+      "TH_GRAM_NP_003",
+      "TH_GRAM_NP_005"
+    ],
+    "practice_strategy": "建议先掌握最基本的‘名+名’和‘名+数+量’结构，再进阶到由‘ที่’引导的复杂短语。练习时可以尝试自己口头替换例句中的名词，以形成肌肉记忆。"
+  }
+};
+
+        // --- SM2 算法 ---
+        function calculateSM2(card, quality) {
+            let { repetitions: n, efactor: ef, interval: i } = card.sm2;
+            if (quality >= 3) {
+                if (n === 0) i = 1;
+                else if (n === 1) i = 6;
+                else i = Math.round(i * ef);
+                n++;
+            } else {
+                n = 0;
+                i = 1;
+            }
+            ef = ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+            if (ef < 1.3) ef = 1.3;
+            return { repetitions: n, efactor: ef, interval: i };
+        }
+
+        // --- 应用状态控制 ---
+        let deck = [];
+        let sessionQueue = [];
+        let currentCard = null;
+        let testState = {
+            currentIndex: 0,
+            correctCount: 0,
+            questions: []
+        };
+
+        function initApp() {
+            const saved = localStorage.getItem('thai_anki_v2');
+            deck = saved ? JSON.parse(saved) : initialData.cards.map(c => ({
+                ...c,
+                sm2: { repetitions: 0, efactor: 2.5, interval: 0, nextDate: Date.now() }
+            }));
+            saveDeck();
+            
+            document.getElementById('deck-title').innerText = initialData.deck_info.deck_name;
+            document.getElementById('deck-desc').innerText = initialData.deck_info.deck_description;
+            updateStats();
+        }
+
+        function saveDeck() { localStorage.setItem('thai_anki_v2', JSON.stringify(deck)); }
+
+        function updateStats() {
+            const due = deck.filter(c => c.sm2.nextDate <= Date.now()).length;
+            document.getElementById('due-count').innerText = `待复习: ${due}`;
+        }
+
+        // 视图切换辅助函数
+        function switchView(viewId) {
+            ['view-summary', 'view-review', 'view-test', 'view-result'].forEach(id => {
+                document.getElementById(id).classList.toggle('hidden', id !== viewId);
+            });
+        }
+
+        // --- 复习流程 ---
+        function startSession() {
+            sessionQueue = deck.filter(c => c.sm2.nextDate <= Date.now());
+            if (sessionQueue.length === 0) return alert("今日任务已完成！");
+            nextCard();
+        }
+
+        function nextCard() {
+            if (sessionQueue.length === 0) return location.reload();
+            currentCard = sessionQueue[0];
+            showFront();
+            switchView('view-review');
+        }
+
+        function showFront() {
+            document.getElementById('review-front').classList.remove('hidden');
+            document.getElementById('review-back').classList.add('hidden');
+            document.getElementById('btn-toggle-back').classList.remove('hidden');
+            document.getElementById('btn-return-front').classList.add('hidden');
+            document.getElementById('btn-go-test').classList.add('hidden');
+            
+            document.getElementById('review-card-type').innerText = currentCard.card_type.replace('_', ' ');
+            document.getElementById('review-title').innerText = currentCard.card_title;
+            document.getElementById('review-main-content').innerText = currentCard.front.main_content;
+        }
+
+        function showBack() {
+            document.getElementById('review-back').classList.remove('hidden');
+            document.getElementById('btn-toggle-back').classList.add('hidden');
+            document.getElementById('btn-return-front').classList.remove('hidden');
+            document.getElementById('btn-go-test').classList.remove('hidden');
+            
+            document.getElementById('back-explanation').innerText = currentCard.back.detailed_explanation;
+            const ex = currentCard.examples[0];
+            document.getElementById('back-thai').innerText = ex.thai;
+            document.getElementById('back-rom').innerText = ex.romanization;
+            document.getElementById('back-trans').innerText = ex.translation;
+        }
+
+        // --- 测试流程 ---
+        function startTestUnit() {
+            testState = {
+                currentIndex: 0,
+                correctCount: 0,
+                questions: currentCard.multiple_choice_exercises
+            };
+            switchView('view-test');
+            renderTestQuestion();
+        }
+
+        function renderTestQuestion() {
+            const q = testState.questions[testState.currentIndex];
+            document.getElementById('test-progress').innerText = `${testState.currentIndex + 1} / ${testState.questions.length}`;
+            document.getElementById('test-question').innerText = q.question;
+            document.getElementById('test-feedback').classList.add('hidden');
+            document.getElementById('btn-next-q').classList.add('hidden');
+
+            const optionsContainer = document.getElementById('test-options');
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn text-left p-4 border-2 border-slate-100 rounded-2xl hover:border-indigo-200 transition-all text-sm font-medium text-slate-700 bg-white";
+                btn.innerHTML = `<span class="text-slate-300 mr-3 font-mono">${String.fromCharCode(65+idx)}.</span> ${opt.content}`;
+                btn.onclick = () => handleAnswer(opt, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(option, btn) {
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            const feedback = document.getElementById('test-feedback');
+            feedback.classList.remove('hidden');
+
+            if (option.is_correct) {
+                testState.correctCount++;
+                btn.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+                feedback.innerHTML = `<span class="text-green-600">正确 ✨</span>`;
+            } else {
+                btn.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
+                feedback.innerHTML = `<span class="text-red-600">错误</span>`;
+                // 找出正确答案并高亮
+                allBtns.forEach((b, i) => {
+                    if(testState.questions[testState.currentIndex].options[i].is_correct) {
+                        b.classList.add('border-green-200', 'bg-green-50');
+                    }
+                });
+            }
+            document.getElementById('btn-next-q').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            testState.currentIndex++;
+            if (testState.currentIndex < testState.questions.length) {
+                renderTestQuestion();
+            } else {
+                showTestResult();
+            }
+        }
+
+        // --- 自动评分与 SM2 ---
+        function showTestResult() {
+            const score = testState.correctCount;
+            const total = testState.questions.length;
+            const percentage = (score / total) * 100;
+            
+            // 核心逻辑：准确率映射到 SM2 质量评分 (0-5)
+            // 5/5 -> 5 (Easy), 4/5 -> 4 (Good), 3/5 -> 3 (Hard), <3 -> 1 (Again)
+            let quality = 1;
+            if (percentage === 100) quality = 5;
+            else if (percentage >= 80) quality = 4;
+            else if (percentage >= 60) quality = 3;
+            else quality = 1;
+
+            const icon = quality >= 4 ? "🎉" : (quality === 3 ? "🤨" : "❌");
+            document.getElementById('result-icon').innerText = icon;
+            document.getElementById('result-score').innerText = `正确率: ${percentage}% (${score}/${total})`;
+            
+            // 应用 SM2
+            const cardInDeck = deck.find(c => c.card_id === currentCard.card_id);
+            const oldInterval = cardInDeck.sm2.interval;
+            const newStats = calculateSM2(cardInDeck, quality);
+            
+            cardInDeck.sm2 = {
+                ...newStats,
+                nextDate: Date.now() + (newStats.interval * 24 * 60 * 60 * 1000)
+            };
+            saveDeck();
+
+            document.getElementById('result-sm2-info').innerHTML = `
+                准确率评定: ${quality === 5 ? '极佳' : (quality === 4 ? '良好' : '需努力')}<br>
+                复习间隔: ${oldInterval}天 ➔ <span class="text-indigo-600 font-bold">${newStats.interval}天</span>
+            `;
+
+            switchView('view-result');
+        }
+
+        function finishCard() {
+            sessionQueue.shift();
+            nextCard();
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>

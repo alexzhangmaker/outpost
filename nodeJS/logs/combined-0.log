@@ -27,3 +27,67 @@
 2025-11-18T07:00:00: Found 2 overdue words for review.
 2025-11-18T07:00:00: Successfully created daily review for 20251118 with 2 words.
 2025-11-18T07:00:00: Daily review task completed successfully.
+2025-11-19T07:00:00: Starting daily review task...
+2025-11-19T07:00:00: Processing review for date: 20251119
+2025-11-19T07:00:00: Found 2 overdue words for review.
+2025-11-19T07:00:00: Successfully created daily review for 20251119 with 2 words.
+2025-11-19T07:00:00: Daily review task completed successfully.
+2025-11-19T20:26:04: [2025-11-19T13:26:04.916Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:26:05: [2025-11-19T13:26:05.848Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:26:06: [2025-11-19T13:26:06.493Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:26:07: [2025-11-19T13:26:07.355Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:26:08: [2025-11-19T13:26:08.366Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:26:10: [2025-11-19T13:26:10.808Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:26:11: [2025-11-19T13:26:11.816Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:26:14: [2025-11-19T13:26:14.280Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:26:22: [2025-11-19T13:26:22.098Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:26:32: [2025-11-19T13:26:32.656Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:26:38: [2025-11-19T13:26:38.934Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:26:42: [2025-11-19T13:26:42.710Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-19T20:27:03: [2025-11-19T13:27:03.728Z]  @firebase/database: FIREBASE WARNING: {"code":"app/invalid-credential","message":"Credential implementation provided to initializeApp() via the \"credential\" property failed to fetch a valid Google OAuth2 access token with the following error: \"request to https://www.googleapis.com/oauth2/v4/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com\"."} 
+2025-11-20T07:00:00: Starting daily review task...
+2025-11-20T07:00:00: Processing review for date: 20251120
+2025-11-20T07:00:00: Found 2 overdue words for review.
+2025-11-20T07:00:00: Successfully created daily review for 20251120 with 2 words.
+2025-11-20T07:00:00: Daily review task completed successfully.
+2025-11-21T07:00:00: Starting daily review task...
+2025-11-21T07:00:00: Processing review for date: 20251121
+2025-11-21T07:00:00: Found 2 overdue words for review.
+2025-11-21T07:00:00: Successfully created daily review for 20251121 with 2 words.
+2025-11-21T07:00:00: Daily review task completed successfully.
+2025-11-22T07:00:00: Starting daily review task...
+2025-11-22T07:00:00: Processing review for date: 20251122
+2025-11-22T07:00:00: Found 2 overdue words for review.
+2025-11-22T07:00:00: Successfully created daily review for 20251122 with 2 words.
+2025-11-22T07:00:00: Daily review task completed successfully.
+2025-11-23T07:08:25: Starting daily review task...
+2025-11-23T07:08:25: Processing review for date: 20251123
+2025-11-23T07:08:27: Found 2 overdue words for review.
+2025-11-23T07:08:27: Successfully created daily review for 20251123 with 2 words.
+2025-11-23T07:08:27: Daily review task completed successfully.
+2025-11-24T07:00:00: Starting daily review task...
+2025-11-24T07:00:00: Processing review for date: 20251124
+2025-11-24T07:00:00: Found 2 overdue words for review.
+2025-11-24T07:00:00: Successfully created daily review for 20251124 with 2 words.
+2025-11-24T07:00:00: Daily review task completed successfully.
+2025-11-25T07:00:00: Starting daily review task...
+2025-11-25T07:00:00: Processing review for date: 20251125
+2025-11-25T07:00:00: Found 2 overdue words for review.
+2025-11-25T07:00:00: Successfully created daily review for 20251125 with 2 words.
+2025-11-25T07:00:00: Daily review task completed successfully.
+2025-11-26T07:00:00: Starting daily review task...
+2025-11-26T07:00:00: Processing review for date: 20251126
+2025-11-26T07:00:00: Found 2 overdue words for review.
+2025-11-26T07:00:00: Successfully created daily review for 20251126 with 2 words.
+2025-11-26T07:00:00: Daily review task completed successfully.
+2025-11-27T07:00:00: Starting daily review task...
+2025-11-27T07:00:00: Processing review for date: 20251127
+2025-11-27T07:00:00: Found 2 overdue words for review.
+2025-11-27T07:00:00: Successfully created daily review for 20251127 with 2 words.
+2025-11-27T07:00:00: Daily review task completed successfully.
+2025-11-28T07:00:00: Starting daily review task...
+2025-11-28T07:00:00: Processing review for date: 20251128
+2025-11-28T07:00:00: Found 2 overdue words for review.
+2025-11-28T07:00:00: Successfully created daily review for 20251128 with 2 words.
+2025-11-28T07:00:00: Daily review task completed successfully.
+2025-11-28T09:18:45: Received SIGINT. Shutting down gracefully...
