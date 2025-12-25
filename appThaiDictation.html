@@ -323,9 +323,15 @@
         // TTS
         document.getElementById('btn-speak').onclick = () => {
             const word = state.currentList.words[state.currentWordIndex];
+
+            /*
             const msg = new SpeechSynthesisUtterance(word);
             msg.lang = 'th-TH';
             window.speechSynthesis.speak(msg);
+            */
+            const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${word}` ;
+            const audio = new Audio(urlGoogleTTSProxy);
+            audio.play();
         };
 
         // Keyboard Shortcuts
