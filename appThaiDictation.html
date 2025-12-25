@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Dictation Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Fira Code', monospace; }
+        .console-border { border: 1px solid #334155; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .card-shadow { box-shadow: 0 0 20px rgba(34, 197, 94, 0.1); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-300 h-screen flex flex-col overflow-hidden">
+
+    <div id="auth-splash" class="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center">
+        <div class="p-8 border-2 border-green-500 bg-slate-950 rounded-lg text-center max-w-sm w-full">
+            <h1 class="text-2xl text-green-500 mb-6 font-bold tracking-tighter">> SYSTEM_AUTH_REQUIRED</h1>
+            <p class="text-sm text-slate-400 mb-8">请使用 Gmail 账户登录以访问泰语词库系统</p>
+            <button id="btn-login" class="w-full py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-all active:scale-95">
+                Google 账户登录
+            </button>
+            <div id="login-status" class="mt-4 text-xs text-red-400"></div>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden flex flex-col h-full">
+        <header class="h-12 border-b border-slate-800 flex items-center justify-between px-4 bg-slate-900">
+            <div class="flex items-center space-x-4">
+                <span class="text-green-500 font-bold">TH-DICT v1.0</span>
+                <span id="user-display" class="text-xs text-slate-500"></span>
+            </div>
+            <button id="btn-logout" class="text-xs hover:text-red-400">[ LOGOUT ]</button>
+        </header>
+
+        <div class="flex flex-1 overflow-hidden">
+            <aside class="w-72 border-r border-slate-800 flex flex-col bg-slate-950">
+                <div class="p-4 space-y-3">
+                    <input id="search-list" type="text" placeholder="搜索清单标题..." 
+                        class="w-full bg-slate-900 border border-slate-700 px-3 py-2 text-sm rounded focus:outline-none focus:border-green-500">
+                    <div class="flex space-x-2">
+                        <select id="filter-tag" class="w-1/2 bg-slate-900 border border-slate-700 text-xs p-1 rounded">
+                            <option value="">所有标签</option>
+                        </select>
+                        <select id="filter-cat" class="w-1/2 bg-slate-900 border border-slate-700 text-xs p-1 rounded">
+                            <option value="">所有类别</option>
+                        </select>
+                    </div>
+                </div>
+                <nav id="list-container" class="flex-1 overflow-y-auto px-2 space-y-1 scrollbar-hide">
+                    </nav>
+            </aside>
+
+            <main id="main-content" class="flex-1 flex flex-col bg-slate-900 relative p-6 overflow-y-auto">
+                <div id="empty-state" class="m-auto text-slate-600 text-center">
+                    <p class="text-4xl mb-2">⌨️</p>
+                    <p>请从左侧选择一个单词清单开始听写</p>
+                </div>
+
+                <div id="dictation-ui" class="hidden max-w-2xl mx-auto w-full space-y-6">
+                    <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="bg-green-500 h-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-8 card-shadow min-h-[400px] flex flex-col">
+                        <div class="flex justify-between items-start mb-6">
+                            <span id="card-index" class="text-xs text-slate-600 font-mono">WORD: 0/0</span>
+                            <button id="btn-speak" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-full text-green-500">
+                                🔊 播放发音
+                            </button>
+                        </div>
+
+                        <div id="word-display" class="text-center mb-8">
+                            <h2 id="thai-word" class="text-5xl font-bold text-white mb-4 blur-md hover:blur-none transition-all cursor-pointer">泰语单词</h2>
+                            <p id="pronunciation" class="text-slate-400 italic">pronunciation</p>
+                        </div>
+
+                        <div id="definition-area" class="space-y-4 border-t border-slate-800 pt-6">
+                            <div>
+                                <span class="text-xs text-green-600 uppercase">释义:</span>
+                                <p id="word-definition" class="text-slate-200 mt-1"></p>
+                            </div>
+                            <div id="example-box">
+                                <span class="text-xs text-amber-600 uppercase">常用短语:</span>
+                                <ul id="phrase-list" class="list-disc list-inside text-sm text-slate-400 mt-1"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center bg-slate-950 p-4 border border-slate-800 rounded-lg">
+                        <div class="space-x-2">
+                            <button id="btn-prev" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm disabled:opacity-50">上一个</button>
+                            <button id="btn-next" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm disabled:opacity-50">下一个</button>
+                        </div>
+                        <div class="space-x-2">
+                            <button id="btn-wrong" class="px-6 py-2 bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900 rounded font-bold">错误 (W)</button>
+                            <button id="btn-right" class="px-6 py-2 bg-green-900/30 hover:bg-green-900/50 text-green-400 border border-green-900 rounded font-bold">正确 (R)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="result-ui" class="hidden m-auto text-center max-w-sm w-full p-8 border border-green-500 bg-slate-950 rounded-lg">
+                    <h2 class="text-2xl text-green-500 mb-4">Dictation Complete</h2>
+                    <div class="text-5xl font-bold mb-6" id="final-score">0%</div>
+                    <div class="flex justify-between text-sm mb-8">
+                        <span class="text-green-400" id="stat-correct">Correct: 0</span>
+                        <span class="text-red-400" id="stat-wrong">Wrong: 0</span>
+                    </div>
+                    <button onclick="location.reload()" class="w-full py-2 bg-green-600 text-white rounded">返回主页</button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // --- Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+
+        // --- App State ---
+        let state = {
+            allLists: [],
+            filteredLists: [],
+            currentList: null,
+            currentWordIndex: 0,
+            results: [], // {word: string, isCorrect: bool}
+            filters: { search: '', tag: '', cat: '' }
+        };
+
+        // --- DOM Elements ---
+        const els = {
+            splash: document.getElementById('auth-splash'),
+            app: document.getElementById('app-container'),
+            listContainer: document.getElementById('list-container'),
+            dictationUI: document.getElementById('dictation-ui'),
+            emptyState: document.getElementById('empty-state'),
+            resultUI: document.getElementById('result-ui'),
+            search: document.getElementById('search-list'),
+            filterTag: document.getElementById('filter-tag'),
+            filterCat: document.getElementById('filter-cat')
+        };
+
+        // --- Auth Logic ---
+        document.getElementById('btn-login').onclick = () => {
+            signInWithPopup(auth, provider).catch(err => {
+                document.getElementById('login-status').innerText = "登录失败: " + err.message;
+            });
+        };
+
+        document.getElementById('btn-logout').onclick = () => signOut(auth);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                els.splash.classList.add('hidden');
+                els.app.classList.remove('hidden');
+                document.getElementById('user-display').innerText = `USER: ${user.email}`;
+                loadData();
+            } else {
+                els.splash.classList.remove('hidden');
+                els.app.classList.add('hidden');
+            }
+        });
+
+        // --- Data Loading ---
+        async function loadData() {
+            const dbRef = ref(db);
+            try {
+                const snapshot = await get(child(dbRef, 'thaiWordList'));
+                if (snapshot.exists()) {
+                    state.allLists = Object.values(snapshot.val());
+                    populateFilters();
+                    renderSidebar();
+                }
+            } catch (error) {
+                console.error("加载列表失败", error);
+            }
+        }
+
+        function populateFilters() {
+            const tags = new Set();
+            const cats = new Set();
+            state.allLists.forEach(item => {
+                if (item.tags) item.tags.forEach(t => tags.add(t));
+                if (item.分类title) cats.add(item.分类title);
+            });
+
+            tags.forEach(t => els.filterTag.innerHTML += `<option value="${t}">${t}</option>`);
+            cats.forEach(c => els.filterCat.innerHTML += `<option value="${c}">${c}</option>`);
+        }
+
+        // --- Sidebar & Filtering ---
+        function renderSidebar() {
+            state.filteredLists = state.allLists.filter(item => {
+                const matchSearch = item.分类title?.toLowerCase().includes(state.filters.search.toLowerCase());
+                const matchTag = !state.filters.tag || item.tags?.includes(state.filters.tag);
+                const matchCat = !state.filters.cat || item.分类title === state.filters.cat;
+                return matchSearch && matchTag && matchCat;
+            });
+
+            els.listContainer.innerHTML = state.filteredLists.map((list, idx) => `
+                <div onclick="window.startDictation('${list.reviewSetID}')" 
+                    class="p-3 border border-slate-800 rounded cursor-pointer hover:bg-slate-900 hover:border-green-800 transition-all group">
+                    <div class="text-sm font-medium text-slate-200 group-hover:text-green-400">${list.分类title || '未命名'}</div>
+                    <div class="text-[10px] text-slate-500 mt-1 flex justify-between">
+                        <span>${list.words?.length || 0} 词汇</span>
+                        <span>${list.createdAt}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        els.search.oninput = (e) => { state.filters.search = e.target.value; renderSidebar(); };
+        els.filterTag.onchange = (e) => { state.filters.tag = e.target.value; renderSidebar(); };
+        els.filterCat.onchange = (e) => { state.filters.cat = e.target.value; renderSidebar(); };
+
+        // --- Dictation Engine ---
+        window.startDictation = async (setId) => {
+            const list = state.allLists.find(l => l.reviewSetID === setId);
+            if (!list) return;
+
+            state.currentList = list;
+            state.currentWordIndex = 0;
+            state.results = [];
+            
+            els.emptyState.classList.add('hidden');
+            els.resultUI.classList.add('hidden');
+            els.dictationUI.classList.remove('hidden');
+            
+            showWord();
+        };
+
+        async function showWord() {
+            const word = state.currentList.words[state.currentWordIndex];
+            document.getElementById('thai-word').innerText = word;
+            document.getElementById('card-index').innerText = `WORD: ${state.currentWordIndex + 1}/${state.currentList.words.length}`;
+            
+            // Update Progress
+            const prog = ((state.currentWordIndex) / state.currentList.words.length) * 100;
+            document.getElementById('progress-bar').style.width = `${prog}%`;
+
+            // Reset UI
+            document.getElementById('thai-word').classList.add('blur-md');
+            document.getElementById('word-definition').innerText = "Loading...";
+            document.getElementById('pronunciation').innerText = "";
+            document.getElementById('phrase-list').innerHTML = "";
+
+            // Fetch Detail
+            try {
+                const snap = await get(child(ref(db), `thaiDictionary/${word}`));
+                if (snap.exists()) {
+                    const data = snap.val();
+                    document.getElementById('word-definition').innerText = data.definitions?.[0]?.zh || "无定义";
+                    document.getElementById('pronunciation').innerText = data.thai?.pronunciation || "";
+                    if (data.common_phrases) {
+                        document.getElementById('phrase-list').innerHTML = data.common_phrases
+                            .map(p => `<li>${p.phrase} - <span class="text-xs">${p.translation}</span></li>`).join('');
+                    }
+                } else {
+                    document.getElementById('word-definition').innerText = "未在词典中找到定义";
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function handleAnswer(isCorrect) {
+            state.results[state.currentWordIndex] = isCorrect;
+            if (state.currentWordIndex < state.currentList.words.length - 1) {
+                state.currentWordIndex++;
+                showWord();
+            } else {
+                finishDictation();
+            }
+        }
+
+        function finishDictation() {
+            els.dictationUI.classList.add('hidden');
+            els.resultUI.classList.remove('hidden');
+            const correct = state.results.filter(r => r).length;
+            const total = state.results.length;
+            const percent = Math.round((correct / total) * 100);
+            
+            document.getElementById('final-score').innerText = `${percent}%`;
+            document.getElementById('stat-correct').innerText = `Correct: ${correct}`;
+            document.getElementById('stat-wrong').innerText = `Wrong: ${total - correct}`;
+        }
+
+        // --- Controls ---
+        document.getElementById('btn-right').onclick = () => handleAnswer(true);
+        document.getElementById('btn-wrong').onclick = () => handleAnswer(false);
+        document.getElementById('btn-next').onclick = () => {
+            if (state.currentWordIndex < state.currentList.words.length - 1) {
+                state.currentWordIndex++;
+                showWord();
+            }
+        };
+        document.getElementById('btn-prev').onclick = () => {
+            if (state.currentWordIndex > 0) {
+                state.currentWordIndex--;
+                showWord();
+            }
+        };
+
+        // TTS
+        document.getElementById('btn-speak').onclick = () => {
+            const word = state.currentList.words[state.currentWordIndex];
+            const msg = new SpeechSynthesisUtterance(word);
+            msg.lang = 'th-TH';
+            window.speechSynthesis.speak(msg);
+        };
+
+        // Keyboard Shortcuts
+        // --- 快捷键逻辑更新 ---
+        window.onkeydown = (e) => {
+            // 如果听写界面未显示，则不响应快捷键
+            if (els.dictationUI.classList.contains('hidden')) return;
+
+            const key = e.key.toLowerCase();
+
+            // 1. "R" -> 正确
+            if (key === 'r') handleAnswer(true);
+
+            // 2. "W" -> 错误
+            if (key === 'w') handleAnswer(false);
+
+            // 3. 方向键 -> 上一个/下一个
+            if (e.key === 'ArrowRight') document.getElementById('btn-next').click();
+            if (e.key === 'ArrowLeft') document.getElementById('btn-prev').click();
+
+            // 4. "A" -> 播放音频 (新增)
+            if (key === 'a') {
+                document.getElementById('btn-speak').click();
+            }
+
+            // 5. "Space" -> 切换单词显示/模糊 (新增)
+            if (e.key === ' ' || e.code === 'Space') {
+                e.preventDefault(); // 阻止空格键导致页面滚动
+                document.getElementById('thai-word').classList.toggle('blur-md');
+            }
+        };
+
+        // UI Interaction
+        document.getElementById('thai-word').onclick = (e) => e.target.classList.toggle('blur-md');
+    </script>
+</body>
+</html>
