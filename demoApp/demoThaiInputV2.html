@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>泰语智能输入 - 终极修复整合版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .suggestion-item.active { background-color: #eff6ff; border-left: 4px solid #2563eb; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .led-blink { animation: blink 1.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-10">
+
+    <div class="max-w-2xl mx-auto space-y-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <h2 class="text-lg font-semibold text-gray-700">配置管理</h2>
+                    <div id="mapping-status" class="flex items-center bg-green-50 px-3 py-1 rounded-full border border-green-100">
+                        <div class="w-2 h-2 rounded-full bg-green-500 mr-2 led-blink"></div>
+                        <span class="text-[10px] font-bold text-green-700 uppercase tracking-wider">Kedmanee Mode Active</span>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="toggleMapping()" id="mapping-btn" class="text-xs bg-gray-100 px-3 py-1 rounded-lg hover:bg-gray-200 transition">关闭映射</button>
+                    <button onclick="clearDatabase()" class="text-red-500 text-xs hover:underline">清空词库</button>
+                </div>
+            </div>
+            
+            <div class="flex flex-col space-y-4">
+                <div class="flex items-center space-x-3">
+                    <input type="file" id="csv-file" accept=".csv" class="hidden" multiple>
+                    <button onclick="document.getElementById('csv-file').click()" 
+                        class="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm shadow-md hover:bg-blue-700 transition">
+                        选择多个 CSV 导入
+                    </button>
+                    <span id="db-status" class="text-sm text-gray-400 italic font-mono">已加载: 0 词</span>
+                </div>
+                <div id="import-progress" class="hidden bg-blue-50 border border-blue-100 p-3 rounded-lg">
+                    <div id="progress-text" class="text-xs text-blue-700 font-medium mb-1">准备中...</div>
+                    <div class="w-full bg-blue-200 rounded-full h-1.5">
+                        <div id="progress-bar" class="bg-blue-600 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-10 rounded-[3rem] shadow-2xl border border-gray-100 relative">
+            <div class="relative">
+                <div id="ghost-text" class="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none z-0 text-2xl font-light italic"></div>
+                
+                <input type="text" id="thai-input" 
+                    class="w-full pl-6 pr-14 py-6 bg-gray-50/50 border-2 border-gray-100 rounded-3xl focus:border-blue-500 focus:bg-white focus:outline-none z-10 text-2xl transition-all shadow-inner"
+                    placeholder="无需切换输入法，直接打字..." autocomplete="off">
+                
+                <div class="absolute right-6 top-1/2 -translate-y-1/2">
+                    <kbd class="px-2 py-1 text-xs font-semibold text-gray-400 bg-white border border-gray-200 rounded-lg">Tab</kbd>
+                </div>
+            </div>
+            
+            <div id="suggestion-list" class="absolute left-10 right-10 mt-3 bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-gray-100 hidden z-20 max-h-80 overflow-y-auto no-scrollbar scroll-smooth"></div>
+        </div>
+
+        <p class="text-center text-xs text-gray-400 italic">
+            💡 按键盘物理键位输入：<span class="font-mono px-1 bg-gray-200 rounded text-gray-600">d</span>=ก, <span class="font-mono px-1 bg-gray-200 rounded text-gray-600">k</span>=า, <span class="font-mono px-1 bg-gray-200 rounded text-gray-600">ร</span>=i
+        </p>
+    </div>
+
+    <script>
+        // --- 1. 泰语物理键盘布局映射表 (Standard Kedmanee) ---
+        const KEDMANEE = {
+            'KeyQ':'ๆ','KeyW':'ไ','KeyE':'ำ','KeyR':'พ','KeyT':'ะ','KeyY':'ั','KeyU':'ี','KeyI':'ร','KeyO':'น','KeyP':'ย','BracketLeft':'บ','BracketRight':'ล','Backslash':'ฃ',
+            'KeyA':'ฟ','KeyS':'ห','KeyD':'ก','KeyF':'ด','KeyG':'เ','KeyH':'้','KeyJ':'่','KeyK':'า','KeyL':'ส','Semicolon':'ว','Quote':'ง',
+            'KeyZ':'ผ','KeyX':'ป','KeyC':'แ','KeyV':'อ','KeyB':'ิ','KeyN':'ื','KeyM':'ท','Comma':'ม','Period':'ใ','Slash':'ฝ'
+        };
+        const KEDMANEE_SHIFT = {
+            'KeyQ':'๐','KeyW':'"','KeyE':'ฎ','KeyR':'ฑ','KeyT':'ธ','KeyY':'ํ','KeyU':'ี','KeyI':'ณ','KeyO':'ฯ','KeyP':'ญ','BracketLeft':'ฐ','BracketRight':',','Backslash':'ฅ',
+            'KeyA':'ฤ','KeyS':'ฆ','KeyD':'ฏ','KeyF':'โ','KeyG':'ฌ','KeyH':'็','KeyJ':'๋','KeyK':'ษ','KeyL':'ศ','Semicolon':'ซ','Quote':'.',
+            'KeyZ':'(','KeyX':')','KeyC':'ฉ','KeyV':'ฮ','KeyB':'ฺ','KeyN':'์','KeyM':'?','Comma':'ฒ','Period':'ฬ','Slash':'ฦ'
+        };
+
+        // --- 2. 核心状态与初始化 ---
+        let db, isMappingEnabled = true, activeIndex = -1, currentMatches = [];
+        const inputEl = document.getElementById('thai-input');
+        const listEl = document.getElementById('suggestion-list');
+        const ghostEl = document.getElementById('ghost-text');
+
+        // 初始化 IndexedDB
+        const request = indexedDB.open('ThaiDictDB', 1);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            const store = db.createObjectStore('vocabulary', { keyPath: 'word' });
+            store.createIndex('rank', 'rank', { unique: false });
+            store.createIndex('consonants', 'consonants', { unique: false });
+        };
+        request.onsuccess = (e) => { db = e.target.result; updateDbStatus(); };
+
+        const getConsonants = (t) => t.replace(/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g, '');
+
+        function toggleMapping() {
+            isMappingEnabled = !isMappingEnabled;
+            document.getElementById('mapping-status').classList.toggle('hidden', !isMappingEnabled);
+            document.getElementById('mapping-btn').innerText = isMappingEnabled ? "关闭映射" : "开启映射";
+            inputEl.focus();
+        }
+
+        /**
+         * 3. 键盘导航与映射逻辑 (深度优化版)
+         */
+        inputEl.addEventListener('keydown', (e) => {
+            // A. 处理物理键盘映射
+            if (isMappingEnabled && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                const char = e.shiftKey ? KEDMANEE_SHIFT[e.code] : KEDMANEE[e.code];
+                if (char) {
+                    e.preventDefault();
+                    const start = inputEl.selectionStart, end = inputEl.selectionEnd;
+                    inputEl.value = inputEl.value.substring(0, start) + char + inputEl.value.substring(end);
+                    inputEl.selectionStart = inputEl.selectionEnd = start + 1;
+                    inputEl.dispatchEvent(new Event('input'));
+                    return;
+                }
+            }
+
+            // B. 处理 UI 列表导航
+            const items = listEl.querySelectorAll('.suggestion-item');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (items.length > 0) {
+                    activeIndex = (activeIndex + 1) % items.length;
+                    updateActiveUI(true); // 键盘触发滚动
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (items.length > 0) {
+                    activeIndex = (activeIndex - 1 + items.length) % items.length;
+                    updateActiveUI(true);
+                }
+            } else if (e.key === 'Tab') {
+                if (ghostEl.textContent) {
+                    e.preventDefault();
+                    selectWord(ghostEl.textContent, true); // 流式补全
+                }
+            } else if (e.key === 'Enter') {
+                // 只有手动通过箭头键选中了，Enter才生效
+                if (activeIndex >= 0 && currentMatches[activeIndex]) {
+                    selectWord(currentMatches[activeIndex].word, false);
+                } else {
+                    hideSuggestions();
+                }
+            } else if (e.key === 'Escape') {
+                hideSuggestions();
+            }
+        });
+
+        inputEl.addEventListener('input', async () => {
+            const q = inputEl.value.trim();
+            if (!q) return hideSuggestions();
+            activeIndex = -1;
+            currentMatches = await searchDatabase(q);
+            renderSuggestions(currentMatches, q);
+        });
+
+        /**
+         * 4. 数据库检索逻辑
+         */
+        async function searchDatabase(query) {
+            return new Promise((resolve) => {
+                const tx = db.transaction('vocabulary', 'readonly');
+                const store = tx.objectStore('vocabulary');
+                const qCons = getConsonants(query);
+                const matches = [];
+
+                store.openCursor().onsuccess = (e) => {
+                    const cursor = e.target.result;
+                    if (cursor) {
+                        const item = cursor.value;
+                        let score = 0;
+                        if (item.word === query) score = 200;
+                        else if (item.word.startsWith(query)) score = 100;
+                        else if (item.consonants.startsWith(queryCons)) score = 50;
+                        
+                        if (score > 0) matches.push({ ...item, score });
+                        if (matches.length < 40) cursor.continue(); else finalize();
+                    } else finalize();
+                };
+
+                function finalize() {
+                    matches.sort((a, b) => b.score - a.score || a.rank - b.rank);
+                    resolve(matches.slice(0, 15));
+                }
+            });
+        }
+
+        /**
+         * 5. UI 渲染与冲突处理逻辑
+         */
+        function renderSuggestions(ms, q) {
+            if (!ms.length) return hideSuggestions();
+            
+            listEl.innerHTML = ms.map((it, i) => `
+                <div class="suggestion-item px-6 py-4 cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0" data-index="${i}">
+                    <div class="flex flex-col">
+                        <span class="text-gray-800 font-bold text-xl">${it.word}</span>
+                        <span class="text-[9px] text-blue-500 font-bold tracking-widest">RANK #${it.rank}</span>
+                    </div>
+                    <span class="text-sm text-gray-500 italic max-w-[200px] truncate">${it.def}</span>
+                </div>
+            `).join('');
+
+            // 为每一项绑定鼠标事件，修复高亮乱跳
+            listEl.querySelectorAll('.suggestion-item').forEach(item => {
+                item.onclick = () => selectWord(ms[item.dataset.index].word, false);
+                // 使用 onmousemove 而非 mouseenter，防止自动滚动触发误选
+                item.onmousemove = () => {
+                    const idx = parseInt(item.dataset.index);
+                    if (activeIndex !== idx) {
+                        activeIndex = idx;
+                        updateActiveUI(false); // 鼠标移动不滚动
+                    }
+                };
+            });
+
+            listEl.classList.remove('hidden');
+            ghostEl.textContent = ms[0].word.startsWith(q) ? ms[0].word : '';
+        }
+
+        function updateActiveUI(fromKeyboard) {
+            const items = listEl.querySelectorAll('.suggestion-item');
+            items.forEach((item, i) => {
+                if (i === activeIndex) {
+                    item.classList.add('active');
+                    if (fromKeyboard) item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        function selectWord(word, stay) {
+            inputEl.value = word;
+            if (stay) {
+                // 流式补全：重新触发搜索
+                activeIndex = -1;
+                searchDatabase(word).then(ms => renderSuggestions(ms, word));
+            } else {
+                hideSuggestions();
+            }
+            inputEl.focus();
+        }
+
+        function hideSuggestions() { listEl.classList.add('hidden'); ghostEl.textContent = ''; activeIndex = -1; }
+
+        /**
+         * 6. 批量导入逻辑 (修复事务与正则)
+         */
+        document.getElementById('csv-file').addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+            if (!files.length || !db) return;
+
+            const progressArea = document.getElementById('import-progress');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            progressArea.classList.remove('hidden');
+
+            try {
+                let allItems = [];
+                const csvRegex = /(".*?"|[^",\s]+)(?=\s*,|\s*$)/g;
+
+                for (let file of files) {
+                    progressText.innerText = `正在解析: ${file.name}`;
+                    const text = await file.text();
+                    text.split(/\r?\n/).slice(1).forEach(line => {
+                        const m = line.match(csvRegex);
+                        if (m && m.length >= 2) {
+                            const clean = (s) => s.replace(/^"|"$/g, '').trim();
+                            const word = clean(m[1]);
+                            allItems.push({
+                                rank: parseInt(clean(m[0])) || 99,
+                                word: word,
+                                def: m[2] ? clean(m[2]) : "",
+                                consonants: getConsonants(word)
+                            });
+                        }
+                    });
+                }
+
+                const tx = db.transaction('vocabulary', 'readwrite');
+                const store = tx.objectStore('vocabulary');
+                allItems.forEach(item => store.put(item));
+                
+                tx.oncomplete = () => {
+                    updateDbStatus();
+                    progressText.innerText = `✅ 成功导入 ${allItems.length} 条记录`;
+                    setTimeout(() => progressArea.classList.add('hidden'), 3000);
+                };
+            } catch (err) {
+                alert("导入出错: " + err.message);
+                progressArea.classList.add('hidden');
+            }
+        });
+
+        function updateDbStatus() {
+            db.transaction('vocabulary', 'readonly').objectStore('vocabulary').count().onsuccess = (e) => {
+                document.getElementById('db-status').innerText = `已加载: ${e.target.result} 词`;
+            };
+        }
+
+        function clearDatabase() {
+            if (!confirm("确定清空本地所有词库数据吗？")) return;
+            db.transaction('vocabulary', 'readwrite').objectStore('vocabulary').clear().oncomplete = updateDbStatus;
+        }
+
+        document.addEventListener('click', (e) => { 
+            if (!e.target.closest('input') && !e.target.closest('#suggestion-list')) hideSuggestions(); 
+        });
+    </script>
+</body>
+</html>

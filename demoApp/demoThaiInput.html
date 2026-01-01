@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>泰语智能词典 - 彻底修复导入版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .suggestion-item.active { background-color: #eff6ff; border-left: 4px solid #2563eb; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-10">
+
+    <div class="max-w-2xl mx-auto space-y-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-700">数据管理</h2>
+                <button onclick="clearDatabase()" class="text-red-500 text-xs hover:underline">清空数据库</button>
+            </div>
+            <div class="flex flex-col space-y-4">
+                <div class="flex items-center space-x-3">
+                    <input type="file" id="csv-file" accept=".csv" class="hidden" multiple>
+                    <button onclick="document.getElementById('csv-file').click()" 
+                        class="bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 shadow-md transition">
+                        选择 CSV 文件导入
+                    </button>
+                    <span id="db-status" class="text-sm text-gray-400 italic">正在连接数据库...</span>
+                </div>
+                <div id="error-log" class="hidden bg-red-50 border border-red-200 p-3 rounded-lg text-red-600 text-xs"></div>
+                <div id="import-progress" class="hidden bg-blue-50 border border-blue-100 p-3 rounded-lg">
+                    <div id="progress-text" class="text-xs text-blue-700 font-medium mb-1">准备中...</div>
+                    <div class="w-full bg-blue-200 rounded-full h-1.5">
+                        <div id="progress-bar" class="bg-blue-600 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 relative">
+            <div class="relative">
+                <div id="ghost-text" class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none z-0 text-xl font-light"></div>
+                <input type="text" id="thai-input" 
+                    class="w-full pl-5 pr-12 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-blue-500 focus:bg-white focus:outline-none z-10 text-xl"
+                    placeholder="输入泰语单词或辅音..." autocomplete="off">
+            </div>
+            <div id="suggestion-list" class="absolute left-8 right-8 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 hidden z-20 max-h-80 overflow-y-auto no-scrollbar"></div>
+        </div>
+    </div>
+
+    <script>
+        const DB_NAME = 'ThaiDictDB';
+        const STORE_NAME = 'vocabulary';
+        const THAI_DIACRITICS = /[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g;
+        let db, currentMatches = [], activeIndex = -1;
+
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            const store = db.createObjectStore(STORE_NAME, { keyPath: 'word' });
+            store.createIndex('rank', 'rank', { unique: false });
+            store.createIndex('consonants', 'consonants', { unique: false });
+        };
+        request.onsuccess = (e) => { db = e.target.result; updateDbStatus(); };
+        request.onerror = () => showError("数据库初始化失败");
+
+        const getConsonants = (text) => text ? text.replace(THAI_DIACRITICS, '') : '';
+
+        // 强力 CSV 解析正则
+        function parseThaiCSV(text) {
+            const lines = text.split(/\r?\n/);
+            const data = [];
+            const csvRegex = /(".*?"|[^",\s]+)(?=\s*,|\s*$)/g;
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                const m = line.match(csvRegex);
+                if (m && m.length >= 2) {
+                    const clean = (s) => s.replace(/^"|"$/g, '').trim();
+                    const word = clean(m[1]);
+                    data.push({
+                        rank: parseInt(clean(m[0])) || 99,
+                        word: word,
+                        def: m[2] ? clean(m[2]) : "",
+                        pos: m[3] ? clean(m[3]) : "",
+                        consonants: getConsonants(word)
+                    });
+                }
+            }
+            return data;
+        }
+
+        // 修复：重新设计的批量导入逻辑
+        document.getElementById('csv-file').addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+            if (!files.length || !db) return;
+
+            showError("");
+            const progressArea = document.getElementById('import-progress');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            progressArea.classList.remove('hidden');
+
+            try {
+                let allItems = [];
+                // 1. 先异步读取所有文件内容
+                for (let i = 0; i < files.length; i++) {
+                    progressText.innerText = `正在读取: ${files[i].name}...`;
+                    const text = await files[i].text();
+                    allItems = allItems.concat(parseThaiCSV(text));
+                    progressBar.style.width = `${((i + 1) / files.length) * 50}%`; // 读取阶段占50%进度
+                }
+
+                if (allItems.length === 0) throw new Error("未在文件中找到有效数据");
+
+                // 2. 开启一个事务进行批量写入
+                progressText.innerText = `正在写入数据库 (${allItems.length} 条数据)...`;
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+
+                allItems.forEach((item, index) => {
+                    store.put(item);
+                    // 每处理100条更新一次 UI 进度（可选）
+                    if (index % 100 === 0) {
+                        const writeProgress = 50 + (index / allItems.length) * 50;
+                        progressBar.style.width = `${writeProgress}%`;
+                    }
+                });
+
+                tx.oncomplete = () => {
+                    progressBar.style.width = `100%`;
+                    progressText.innerText = `✅ 导入成功！共计 ${allItems.length} 条数据。`;
+                    updateDbStatus();
+                    setTimeout(() => progressArea.classList.add('hidden'), 3000);
+                };
+                tx.onerror = () => showError("事务写入失败");
+
+            } catch (err) {
+                showError("导入失败: " + err.message);
+                progressArea.classList.add('hidden');
+            }
+        });
+
+        // 搜索逻辑
+        const inputEl = document.getElementById('thai-input');
+        const listEl = document.getElementById('suggestion-list');
+        const ghostEl = document.getElementById('ghost-text');
+
+        inputEl.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            if (!query) return hideSuggestions();
+            activeIndex = -1;
+            currentMatches = await searchDatabase(query);
+            renderSuggestions(currentMatches, query);
+        });
+
+        async function searchDatabase(query) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const queryCons = getConsonants(query);
+                const matches = [];
+
+                store.openCursor().onsuccess = (e) => {
+                    const cursor = e.target.result;
+                    if (cursor) {
+                        const item = cursor.value;
+                        let score = 0;
+                        if (item.word === query) score = 200;
+                        else if (item.word.startsWith(query)) score = 100;
+                        else if (item.consonants.startsWith(queryCons)) score = 50;
+                        if (score > 0) matches.push({ ...item, score });
+                        if (matches.length < 40) cursor.continue(); else finalize();
+                    } else finalize();
+                };
+                function finalize() {
+                    matches.sort((a, b) => (b.score - a.score) || (a.rank - b.rank));
+                    resolve(matches.slice(0, 15));
+                }
+            });
+        }
+
+        function renderSuggestions(matches, query) {
+            if (!matches.length) return hideSuggestions();
+            listEl.innerHTML = matches.map((item, i) => `
+                <div class="suggestion-item px-5 py-3 cursor-pointer flex justify-between items-center border-b border-gray-50 transition-all" 
+                     onclick="selectWord('${item.word}', false)" onmouseenter="activeIndex=${i};updateActiveUI()">
+                    <div class="flex flex-col">
+                        <span class="text-gray-800 font-bold">${item.word}</span>
+                        <span class="text-[9px] text-blue-500 font-bold">RANK #${item.rank}</span>
+                    </div>
+                    <span class="text-sm text-gray-500">${item.def}</span>
+                </div>
+            `).join('');
+            listEl.classList.remove('hidden');
+            if (matches[0].word.startsWith(query)) ghostEl.textContent = matches[0].word;
+            else ghostEl.textContent = '';
+        }
+
+        function selectWord(word, stay) {
+            inputEl.value = word;
+            if (stay) { 
+                activeIndex = -1;
+                searchDatabase(word).then(ms => renderSuggestions(ms, word));
+            } else { 
+                hideSuggestions(); 
+            }
+            inputEl.focus();
+        }
+
+        function updateActiveUI() {
+            const items = listEl.querySelectorAll('.suggestion-item');
+            items.forEach((item, i) => i === activeIndex ? item.classList.add('active') : item.classList.remove('active'));
+        }
+
+        inputEl.addEventListener('keydown', (e) => {
+            const items = listEl.querySelectorAll('.suggestion-item');
+            if (e.key === 'ArrowDown') { e.preventDefault(); activeIndex = (activeIndex + 1) % items.length; updateActiveUI(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndex = (activeIndex - 1 + items.length) % items.length; updateActiveUI(); }
+            else if (e.key === 'Tab' && ghostEl.textContent) { e.preventDefault(); selectWord(ghostEl.textContent, true); }
+            else if (e.key === 'Enter') {
+                if (activeIndex >= 0) selectWord(currentMatches[activeIndex].word, false);
+                else if (ghostEl.textContent) selectWord(ghostEl.textContent, true);
+            }
+            else if (e.key === 'Escape') hideSuggestions();
+        });
+
+        function hideSuggestions() { listEl.classList.add('hidden'); ghostEl.textContent = ''; activeIndex = -1; }
+        
+        function updateDbStatus() {
+            if (!db) return;
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            tx.objectStore(STORE_NAME).count().onsuccess = (e) => {
+                document.getElementById('db-status').innerText = `已加载: ${e.target.result} 词`;
+            };
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error-log');
+            if (msg) { el.innerText = msg; el.classList.remove('hidden'); }
+            else { el.classList.add('hidden'); }
+        }
+
+        function clearDatabase() {
+            if (!confirm("确定清空吗？")) return;
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).clear();
+            tx.oncomplete = () => updateDbStatus();
+        }
+
+        document.addEventListener('click', (e) => { if (!e.target.closest('input') && !e.target.closest('#suggestion-list')) hideSuggestions(); });
+    </script>
+</body>
+</html>

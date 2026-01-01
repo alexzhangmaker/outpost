@@ -1,0 +1,13 @@
+﻿Rank,Word,Frequency,POS
+"2","อดีต","past",""
+"2","ปัจจุบัน","present",""
+"2","อนาคต","future",""
+"2","ประจำวัน","daily",""
+"4","ประจำเดือน","monthly",""
+"3","ประจำปี","annual",""
+"1","วันที่","date",""
+"2","เร็ว","early (before appointed time)",""
+"2","สาย","late (after appointed time)",""
+"2","เช้า","early (in the morning)",""
+"4","ดึก","late (at night)",""
+"4","มืด","dark",""
