@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>泰语词汇集管理工具</title>
+    <title>泰语词汇集管理工具 V5</title>
     <!-- 引入LocalForage -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <!-- 引入ExcelJS -->
@@ -887,7 +887,7 @@
 <body>
     <!-- 顶部工具条 -->
     <div class="toolbar">
-        <div class="toolbar-title">泰语词汇集管理工具</div>
+        <div class="toolbar-title">泰语词汇集管理工具 V5 (Acron 集成版)</div>
         <div class="auth-section">
             <span id="user-info"></span>
             <button id="signin-btn">登录</button>
@@ -1344,8 +1344,8 @@
                 });
             }
 
-            // 查询泰语单词 V2 (针对 acron 服务)
-            async lookupThaiWordV2(word, service = 'gemini', userId = 'anonymous') {
+            // 查询泰语单词 V2 (针对 acron 服务，仅支持 Gemini)
+            async lookupThaiWordV2(word, userId = 'anonymous') {
                 const url = 'http://localhost:3334/api/dictionary/batch';
                 try {
                     const response = await fetch(url, {
@@ -1836,9 +1836,9 @@
             }
         }
 
-        // 检查单词是否在字典中
+        // 检查单词是否在字典中 (V5: 对接 acron 服务)
         async function checkAndFetchWordDefinition(word) {
-            console.log(`[WORD CHECK] 开始检查单词 "${word}"`);
+            console.log(`[WORD CHECK] 开始检查单词 "${word}" (V5 - acron service)`);
 
             // 首先检查本地缓存
             if (dictionaryCache.has(word)) {
@@ -1846,39 +1846,37 @@
                 return { exists: true, data: dictionaryCache.get(word) };
             }
 
-            // 如果不在缓存中，通过API查询
-            console.log(`[WORD CHECK] 单词 "${word}" 不在字典中，通过API查询...`);
+            // 如果不在缓存中，通过 API V2 查询 (触发 acron 服务)
+            console.log(`[WORD CHECK] 单词 "${word}" 不在字典中，通过 acron 服务查询...`);
             try {
                 const currentUser = auth.currentUser;
                 const userId = currentUser ? currentUser.uid : 'anonymous';
 
-                console.log(`[API] 调用字典查询API，单词: "${word}", 用户: ${userId}`);
-                const result = await apiClient.lookupThaiWord(word, 'deepseek', userId);
+                console.log(`[API] 调用 acron 字典查询接口，单词: "${word}", 用户: ${userId}`);
+                const result = await apiClient.lookupThaiWordV2(word, userId);
 
-                if (result && result.success) {
-                    console.log(`[API] 单词 "${word}" 查询成功，保存到Firebase`);
+                // acron 服务的返回格式: { results: { "单词": { ... } }, stats: { ... } }
+                if (result && result.results) {
+                    console.log(`[API] 单词 "${word}" 已提交给 acron 服务`);
 
-                    // 将查询结果保存到Firebase字典中
-                    //await database.ref(`thaiDictionary/${word}`).set(result.data.dictionary_data);
+                    // acron 会异步或同步写入 Firebase，前端通过 setupDictionaryListener 自动同步。
+                    // 这里我们提取 definition 如果它已经即时返回了。
+                    const definition = result.results[word];
 
-                    // 更新本地缓存
-                    //dictionaryCache.set(word, result.data.dictionary_data);
+                    // 这里不再需要手动调用 database.ref(...).set(...) 或 dictionaryCache.set(...)
+                    // 因为 setupDictionaryListener 会处理 Firebase 的实时推送。
 
-                    // 更新本地存储
-                    //const todayKey = getTodayDateKey();
-                    //const cacheKey = `dictionary_${todayKey}`;
-                    const cacheKey = 'dictionary_2025-12-03';
-                    const cacheObject = Object.fromEntries(dictionaryCache);
-                    await dictionaryStorage.setItem(cacheKey, cacheObject);
-
-                    console.log(`[WORD CHECK] 单词 "${word}" 已添加到字典和缓存`);
-                    return { exists: false, data: result.data, newlyAdded: true };
+                    return {
+                        exists: !!definition,
+                        data: definition || null,
+                        newlyAdded: true
+                    };
                 } else {
-                    console.warn(`[WORD CHECK] 单词 "${word}" 查询失败:`, result?.error);
-                    return { exists: false, data: null, error: result?.error };
+                    console.warn(`[WORD CHECK] 单词 "${word}" acron 查询响应异常:`, result);
+                    return { exists: false, data: null, error: 'acron 响应异常' };
                 }
             } catch (error) {
-                console.error(`[WORD CHECK] 单词 "${word}" API查询错误:`, error);
+                console.error(`[WORD CHECK] 单词 "${word}" acron 查询错误:`, error);
                 return { exists: false, data: null, error: error.message };
             }
         }
