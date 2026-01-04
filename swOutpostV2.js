@@ -3,7 +3,7 @@ import { getFirestore, collection, query, where, onSnapshot, doc, setDoc, update
 
 const CACHE_NAME = 'outpost-v2-cache-v1';
 const DB_NAME = 'OutpostDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'todos';
 
 let db;
@@ -19,6 +19,9 @@ const initDB = () => {
             const db = event.target.result;
             if (!db.objectStoreNames.contains(STORE_NAME)) {
                 db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('settings')) {
+                db.createObjectStore('settings', { keyPath: 'id' });
             }
         };
         request.onsuccess = (event) => {

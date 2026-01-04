@@ -151,34 +151,68 @@
 
         <nav
             class="absolute bottom-0 left-0 right-0 z-20 mx-auto max-w-lg border-t border-slate-200 bg-white/80 backdrop-blur-sm dark:border-slate-800 dark:bg-background-dark/80 pb-[env(safe-area-inset-bottom)]">
-            <div class="flex h-16 justify-around"> <a
-                    class="flex flex-1 flex-col items-center justify-center gap-0.5 text-primary" href="#">
-                    <span class="material-symbols-outlined !text-xl">home</span>
-                    <span class="text-[10px] font-medium">主页</span>
+            <div class="flex h-20 items-stretch justify-around">
+                <a class="nav-item flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#"
+                    data-view="home">
+                    <span class="material-symbols-outlined !text-3xl">home</span>
+                    <span class="text-[11px] font-semibold">主页</span>
                 </a>
-                <a class="flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary"
-                    href="#">
-                    <span class="material-symbols-outlined !text-xl">calendar_month</span>
-                    <span class="text-[10px] font-medium">日历</span>
+                <a class="nav-item flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary"
+                    href="#" data-view="calendar">
+                    <span class="material-symbols-outlined !text-3xl">calendar_month</span>
+                    <span class="text-[11px] font-semibold">日历</span>
                 </a>
                 <div class="flex flex-1 flex-col items-center justify-center" id="fab-add">
                     <div
-                        class="flex h-10 w-10 -translate-y-3 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform active:scale-95 cursor-pointer">
-                        <span class="material-symbols-outlined !text-2xl">add</span>
+                        class="flex h-14 w-14 -translate-y-5 items-center justify-center rounded-full bg-primary text-white shadow-xl transition-transform active:scale-90 cursor-pointer">
+                        <span class="material-symbols-outlined !text-3xl">add</span>
                     </div>
                 </div>
-                <a class="flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary"
-                    href="#">
-                    <span class="material-symbols-outlined !text-xl">analytics</span>
-                    <span class="text-[10px] font-medium">统计</span>
+                <a class="nav-item flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary"
+                    href="#" data-view="analytics">
+                    <span class="material-symbols-outlined !text-3xl">analytics</span>
+                    <span class="text-[11px] font-semibold">统计</span>
                 </a>
-                <a class="flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary"
-                    href="#">
-                    <span class="material-symbols-outlined !text-xl">settings</span>
-                    <span class="text-[10px] font-medium">设置</span>
+                <a class="nav-item flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary"
+                    href="#" data-view="settings">
+                    <span class="material-symbols-outlined !text-3xl">settings</span>
+                    <span class="text-[11px] font-semibold">设置</span>
                 </a>
             </div>
         </nav>
+
+        <!-- Settings View -->
+        <div id="settings-view"
+            class="hidden absolute inset-0 z-20 bg-background-light dark:bg-background-dark px-4 pt-4 pb-24 overflow-y-auto overflow-x-hidden">
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">设置</h2>
+            <div class="space-y-6">
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4 px-1">显示设置</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-700 dark:text-slate-200 font-medium">字体大小</span>
+                            <select id="setting-font-size"
+                                class="rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:ring-primary">
+                                <option value="small">较小</option>
+                                <option value="medium">默认</option>
+                                <option value="large">较大</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4 px-1">账户</h3>
+                    <button id="settings-logout-btn"
+                        class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-900/30 transition-colors">
+                        <span class="material-symbols-outlined !text-xl">logout</span>
+                        <span class="font-medium">退出登录</span>
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <div id="share-modal"
             class="hidden fixed inset-0 z-30 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-300">
@@ -278,17 +312,25 @@
             sharedTitle: document.getElementById('shared-title'),
             sharedContentTextarea: document.getElementById('shared-content-textarea'),
             modalCloseBtn: document.getElementById('modal-close-btn'),
-            modalAddBtn: document.getElementById('modal-add-btn')
+            modalAddBtn: document.getElementById('modal-add-btn'),
+            settingsView: document.getElementById('settings-view'),
+            todoListContainer: document.getElementById('todo-list'),
+            navItems: document.querySelectorAll('.nav-item'),
+            settingFontSize: document.getElementById('setting-font-size'),
+            settingsLogoutBtn: document.getElementById('settings-logout-btn')
         };
 
         // --- 3. IndexedDB Layer ---
         const initDB = () => {
             return new Promise((resolve, reject) => {
-                const request = indexedDB.open('OutpostDB', 1);
+                const request = indexedDB.open('OutpostDB', 2);
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains('todos')) {
+                        db.createObjectStore('todos', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('settings')) {
+                        db.createObjectStore('settings', { keyPath: 'id' });
                     }
                 };
                 request.onsuccess = (event) => {
@@ -511,6 +553,7 @@
                 els.app.classList.remove('hidden');
 
                 sendToSW('SET_USER', { userId: user.uid });
+                await loadSettings();
                 renderTodos();
                 checkSharedContent();
             } else {
@@ -519,8 +562,8 @@
                 sendToSW('SET_USER', { userId: null });
                 // Clear local data if needed or just show empty
                 if (db) {
-                    const tx = db.transaction(STORE_NAME, 'readwrite');
-                    tx.objectStore(STORE_NAME).clear();
+                    const tx = db.transaction('todos', 'readwrite');
+                    tx.objectStore('todos').clear();
                 }
                 renderTodos();
             }
@@ -546,11 +589,57 @@
             }
         };
 
-        els.modalAddBtn.addEventListener('click', () => {
-            window.appActions.addTodoFromText(els.sharedContentTextarea.value.trim());
-            els.shareModal.classList.add('hidden');
-        });
-        els.modalCloseBtn.addEventListener('click', () => els.shareModal.classList.add('hidden'));
+        // --- 8. Settings & UI Logic ---
+        const applySettings = (settings) => {
+            if (!settings) return;
+            const sizeMap = { 'small': '0.875rem', 'medium': '1rem', 'large': '1.125rem' };
+            document.documentElement.style.fontSize = sizeMap[settings.fontSize] || '1rem';
+            if (els.settingFontSize) els.settingFontSize.value = settings.fontSize || 'medium';
+        };
+
+        const saveSetting = async (key, value) => {
+            if (!db) await initDB();
+            const tx = db.transaction('settings', 'readwrite');
+            const store = tx.objectStore('settings');
+            const settings = await new Promise(r => {
+                const req = store.get('current');
+                req.onsuccess = () => r(req.result || { id: 'current' });
+            });
+            settings[key] = value;
+            store.put(settings);
+            applySettings(settings);
+        };
+
+        const loadSettings = async () => {
+            if (!db) await initDB();
+            const tx = db.transaction('settings', 'readonly');
+            const store = tx.objectStore('settings');
+            const req = store.get('current');
+            req.onsuccess = () => {
+                if (req.result) applySettings(req.result);
+            };
+        };
+
+        const switchView = (viewName) => {
+            els.navItems.forEach(item => {
+                if (item.dataset.view === viewName) {
+                    item.classList.add('text-primary');
+                    item.classList.remove('text-slate-500', 'dark:text-slate-400');
+                } else {
+                    item.classList.remove('text-primary');
+                    item.classList.add('text-slate-500', 'dark:text-slate-400');
+                }
+            });
+
+            if (viewName === 'settings') {
+                els.settingsView.classList.remove('hidden');
+                els.todoListContainer.classList.add('hidden');
+            } else if (viewName === 'home') {
+                els.settingsView.classList.add('hidden');
+                els.todoListContainer.classList.remove('hidden');
+                renderTodos();
+            }
+        };
 
         // --- 9. Event Listeners ---
         els.loginBtn.addEventListener('click', handleLogin);
@@ -558,6 +647,19 @@
         els.addBtn.addEventListener('click', handleAddTodo);
         els.input.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleAddTodo(); });
         els.fab.addEventListener('click', () => els.input.focus());
+        els.navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchView(item.dataset.view);
+            });
+        });
+        els.settingFontSize.addEventListener('change', (e) => saveSetting('fontSize', e.target.value));
+        els.settingsLogoutBtn.addEventListener('click', handleLogout);
+        els.modalAddBtn.addEventListener('click', () => {
+            window.appActions.addTodoFromText(els.sharedContentTextarea.value.trim());
+            els.shareModal.classList.add('hidden');
+        });
+        els.modalCloseBtn.addEventListener('click', () => els.shareModal.classList.add('hidden'));
 
         // --- 10. SW & DB Initialization ---
         if ('serviceWorker' in navigator) {
