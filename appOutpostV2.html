@@ -298,6 +298,10 @@
 
         const getAllTodos = () => {
             return new Promise((resolve, reject) => {
+                if (!db) {
+                    resolve([]);
+                    return;
+                }
                 const tx = db.transaction(STORE_NAME, 'readonly');
                 const store = tx.objectStore(STORE_NAME);
                 const request = store.getAll();
@@ -495,6 +499,7 @@
         const handleLogout = () => signOut(auth);
 
         onAuthStateChanged(auth, async (user) => {
+            if (!db) await initDB();
             currentUser = user;
             els.loading.classList.add('hidden');
 
@@ -510,8 +515,10 @@
                 els.login.classList.remove('hidden');
                 sendToSW('SET_USER', { userId: null });
                 // Clear local data if needed or just show empty
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                tx.objectStore(STORE_NAME).clear();
+                if (db) {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    tx.objectStore(STORE_NAME).clear();
+                }
                 renderTodos();
             }
         });
@@ -671,7 +678,7 @@
                                 break;
                         }
                     } catch (error) {
-                        console.error("Error handling message ${type}:", error);
+                        console.error('Error handling message:', type, error);
                     }
                 });
 
