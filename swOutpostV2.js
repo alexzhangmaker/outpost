@@ -55,11 +55,12 @@ self.addEventListener('install', (event) => {
             // 1. Cache core local assets (blocking)
             await cache.addAll(coreAssets);
 
-            // 2. Cache external assets (non-blocking, mode: cors)
+            // 2. Cache external assets (non-blocking, mode: no-cors for CDNs)
             externalAssets.forEach(url => {
-                fetch(url, { mode: 'cors' })
+                fetch(url, { mode: 'no-cors' })
                     .then(response => {
-                        if (response.ok) cache.put(url, response);
+                        // For no-cors, response.ok is false, but we can still cache it (opaque response)
+                        cache.put(url, response);
                     })
                     .catch(err => console.warn('Failed to cache external asset:', url, err));
             });
