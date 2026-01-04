@@ -37,17 +37,33 @@ const initFirebase = (config) => {
 };
 
 self.addEventListener('install', (event) => {
+    const coreAssets = [
+        './appOutpostV2.html',
+        './'
+    ];
+    const externalAssets = [
+        'https://cdn.tailwindcss.com?plugins=forms,container-queries',
+        'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+        'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
+    ];
+
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll([
-                './',
-                'https://cdn.tailwindcss.com?plugins=forms,container-queries',
-                'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-                'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
-            ]);
+        caches.open(CACHE_NAME).then(async (cache) => {
+            // 1. Cache core local assets (blocking)
+            await cache.addAll(coreAssets);
+
+            // 2. Cache external assets (non-blocking, mode: cors)
+            externalAssets.forEach(url => {
+                fetch(url, { mode: 'cors' })
+                    .then(response => {
+                        if (response.ok) cache.put(url, response);
+                    })
+                    .catch(err => console.warn('Failed to cache external asset:', url, err));
+            });
+
+            return self.skipWaiting();
         })
     );
-    self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {

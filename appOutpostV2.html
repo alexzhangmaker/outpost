@@ -221,16 +221,19 @@
             document.getElementById('apple-icon-placeholder').href = iconUrl;
             document.getElementById('favicon-placeholder').href = iconUrl;
 
+            // Use absolute URLs for manifest start_url and share_target to work with Blob URLs on GitHub Pages
+            const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+
             const manifest = {
                 "name": "我的任务 V2",
                 "short_name": "任务 V2",
-                "start_url": ".",
+                "start_url": baseUrl + "appOutpostV2.html",
                 "display": "standalone",
                 "background_color": "#f6f7f8",
                 "theme_color": "#2b8cee",
                 "icons": [{ "src": iconUrl, "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }],
                 "share_target": {
-                    "action": "./?share=true",
+                    "action": baseUrl + "appOutpostV2.html?share=true",
                     "method": "GET",
                     "enctype": "application/x-www-form-urlencoded",
                     "params": { "title": "share_title", "text": "share_text", "url": "share_url" }
