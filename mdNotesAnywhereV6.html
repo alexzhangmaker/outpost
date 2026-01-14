@@ -916,7 +916,7 @@
 
                 // 渲染操作按钮：编辑、打印笔记、打印复习单、打印练习、归档、复制Key
                 tr.innerHTML = `
-                    <td style="font-weight: 500;">${note.title}</td>
+                    <td style="font-weight: 500; cursor: pointer;" onclick="startEditNoteTitle('${note.id}', this)" class="note-title-cell">${note.title}</td>
                     <td>${note.subject ? note.subject.course : '未分类'}</td>
                     <td>${tagsHtml || '<span style="color:#ccc">无标签</span>'}</td>
                     <td style="font-size: 13px; color: #666;">${dateStr}</td>
@@ -1294,6 +1294,70 @@
             searchInput.value = searchQuery;
             renderTable();
         });
+
+        // --- 行内编辑标题 ---
+        window.startEditNoteTitle = function (noteId, el) {
+            if (el.querySelector('input')) return; // 已经在编辑中
+
+            const originalTitle = el.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = originalTitle;
+            input.className = 'inline-edit-input';
+            input.style.width = '100%';
+            input.style.padding = '4px 8px';
+            input.style.border = '1px solid #4285f4';
+            input.style.borderRadius = '4px';
+            input.style.outline = 'none';
+            input.style.fontSize = 'inherit';
+            input.style.fontWeight = 'inherit';
+
+            // 阻止点击输入框触发单元格点击
+            input.onclick = (e) => e.stopPropagation();
+
+            const handleFinish = async (save) => {
+                const newTitle = input.value.trim();
+                if (save && newTitle && newTitle !== originalTitle) {
+                    try {
+                        // 局部 loading 状态或全局
+                        el.style.opacity = '0.5';
+                        await database.ref(`mdNotes/${noteId}`).update({
+                            title: newTitle,
+                            updatedAt: new Date().toISOString()
+                        });
+
+                        // 更新本地缓存
+                        const note = notes.find(n => n.id === noteId);
+                        if (note) {
+                            note.title = newTitle;
+                            note.updatedAt = new Date().toISOString();
+                        }
+
+                        el.textContent = newTitle;
+                    } catch (error) {
+                        console.error('Update failed:', error);
+                        alert('更新失败: ' + error.message);
+                        el.textContent = originalTitle;
+                    } finally {
+                        el.style.opacity = '1';
+                    }
+                } else {
+                    el.textContent = originalTitle;
+                }
+            };
+
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') handleFinish(true);
+                if (e.key === 'Escape') handleFinish(false);
+            };
+
+            input.onblur = () => handleFinish(false);
+
+            el.innerHTML = '';
+            el.appendChild(input);
+            input.focus();
+            input.select();
+        };
 
         // 监听标题、文件夹和标签变化
         modalNoteTitle.addEventListener('input', scheduleSave);
