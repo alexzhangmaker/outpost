@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +18,7 @@
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
-        
+
         body {
             background-color: #f8f9fa;
             color: #333;
@@ -26,7 +27,7 @@
             height: 100vh;
             overflow: hidden;
         }
-        
+
         /* --- 登录界面样式 --- */
         .auth-container {
             position: fixed;
@@ -40,7 +41,7 @@
             align-items: center;
             z-index: 1000;
         }
-        
+
         .auth-box {
             background: white;
             padding: 40px;
@@ -50,7 +51,7 @@
             max-width: 400px;
             text-align: center;
         }
-        
+
         .auth-logo {
             font-size: 32px;
             font-weight: 700;
@@ -60,16 +61,16 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .auth-logo i {
             margin-right: 10px;
         }
-        
+
         .auth-subtitle {
             color: #5f6368;
             margin-bottom: 30px;
         }
-        
+
         .auth-btn {
             width: 100%;
             padding: 12px;
@@ -85,30 +86,30 @@
             gap: 10px;
             transition: background-color 0.2s;
         }
-        
+
         .auth-btn:hover {
             background-color: #2b6cdb;
         }
-        
+
         .auth-loading {
             display: none;
             margin-top: 20px;
         }
-        
+
         .auth-error {
             color: #ea4335;
             margin-top: 15px;
             font-size: 14px;
             display: none;
         }
-        
+
         /* --- 主应用容器 --- */
         .app-container {
             display: none;
             flex-direction: column;
             height: 100vh;
         }
-        
+
         /* --- 顶部导航栏 --- */
         .navbar {
             background-color: #fff;
@@ -117,10 +118,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             z-index: 100;
         }
-        
+
         .navbar-brand {
             font-size: 20px;
             font-weight: 600;
@@ -128,18 +129,18 @@
             display: flex;
             align-items: center;
         }
-        
+
         .navbar-brand i {
             margin-right: 10px;
             color: #4285f4;
         }
-        
+
         .navbar-user {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        
+
         .user-avatar {
             width: 32px;
             height: 32px;
@@ -151,12 +152,12 @@
             justify-content: center;
             font-weight: bold;
         }
-        
+
         .navbar-actions {
             display: flex;
             gap: 15px;
         }
-        
+
         .btn {
             background: none;
             border: none;
@@ -167,16 +168,16 @@
             transition: background-color 0.2s;
             color: #5f6368;
         }
-        
+
         .btn:hover {
             background-color: #f1f3f4;
         }
-        
+
         .btn-primary {
             background-color: #4285f4;
             color: white;
         }
-        
+
         .btn-primary:hover {
             background-color: #2b6cdb;
         }
@@ -187,7 +188,7 @@
             flex: 1;
             overflow: hidden;
         }
-        
+
         /* --- 侧边栏 --- */
         .sidebar {
             width: 280px;
@@ -198,12 +199,12 @@
             overflow: hidden;
             flex-shrink: 0;
         }
-        
+
         .sidebar-header {
             padding: 15px 20px;
             border-bottom: 1px solid #e0e0e0;
         }
-        
+
         .search-box {
             width: 100%;
             padding: 10px 12px;
@@ -218,7 +219,7 @@
             overflow-y: auto;
             padding: 10px 0;
         }
-        
+
         .course-item {
             padding: 12px 20px;
             display: flex;
@@ -228,11 +229,11 @@
             transition: all 0.2s;
             border-left: 3px solid transparent;
         }
-        
+
         .course-item:hover {
             background-color: #f8f9fa;
         }
-        
+
         .course-item.active {
             background-color: #e8f0fe;
             color: #1967d2;
@@ -252,7 +253,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
+
         .badge {
             background-color: #f1f3f4;
             color: #5f6368;
@@ -260,7 +261,7 @@
             border-radius: 10px;
             font-size: 12px;
         }
-        
+
         .course-item.active .badge {
             background-color: #fff;
             color: #1967d2;
@@ -342,12 +343,31 @@
             background-color: #f1f3f4;
         }
 
-        .action-btn.edit:hover { color: #1a73e8; }
-        .action-btn.print:hover { color: #5f6368; }
-        .action-btn.review:hover { color: #188038; }
-        .action-btn.exercise:hover { color: #fbbc04; }
-        .action-btn.archive:hover { color: #f9ab00; }
-        .action-btn.copy-key:hover { color: #673ab7; } /* 深紫色 */
+        .action-btn.edit:hover {
+            color: #1a73e8;
+        }
+
+        .action-btn.print:hover {
+            color: #5f6368;
+        }
+
+        .action-btn.review:hover {
+            color: #188038;
+        }
+
+        .action-btn.exercise:hover {
+            color: #fbbc04;
+        }
+
+        .action-btn.archive:hover {
+            color: #f9ab00;
+        }
+
+        .action-btn.copy-key:hover {
+            color: #673ab7;
+        }
+
+        /* 深紫色 */
 
         /* --- Modal (模态框) --- */
         .modal-overlay {
@@ -374,7 +394,7 @@
             width: 90%;
             height: 90%;
             border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -435,10 +455,18 @@
             align-items: center;
             gap: 5px;
         }
-        
-        .save-indicator.saving { color: #fbbc04; }
-        .save-indicator.saved { color: #34a853; }
-        .save-indicator.error { color: #ea4335; }
+
+        .save-indicator.saving {
+            color: #fbbc04;
+        }
+
+        .save-indicator.saved {
+            color: #34a853;
+        }
+
+        .save-indicator.error {
+            color: #ea4335;
+        }
 
         /* Loading & Empty States */
         .table-state {
@@ -457,8 +485,16 @@
             margin: 0 auto 15px;
         }
 
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
         /* 隐藏不可见的渲染容器 */
         #hiddenRenderContainer {
             display: none;
@@ -468,18 +504,26 @@
             .sidebar {
                 display: none;
             }
-            .modal-title-input { width: 100px; }
+
+            .modal-title-input {
+                width: 100px;
+            }
         }
 
         @media (max-width: 768px) {
             #modalTagsInput {
-                width: 80px !important; /* 手机端缩小标签输入框宽度 */
+                width: 80px !important;
+                /* 手机端缩小标签输入框宽度 */
             }
         }
 
-        .action-btn.assignment:hover { color: #a50e0e; background-color: #fce8e6; }
+        .action-btn.assignment:hover {
+            color: #a50e0e;
+            background-color: #fce8e6;
+        }
     </style>
 </head>
+
 <body>
     <div class="auth-container" id="authContainer">
         <div class="auth-box">
@@ -531,7 +575,15 @@
             </div>
 
             <div class="content-area">
-                <h2 id="currentViewTitle" style="margin-bottom: 20px; font-weight: 500; color: #202124;">所有笔记</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 id="currentViewTitle" style="font-weight: 500; color: #202124; margin-bottom: 0;">所有笔记</h2>
+                    <div style="position: relative; width: 300px;">
+                        <i class="fas fa-search"
+                            style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #5f6368;"></i>
+                        <input type="text" id="tableSearchInput" placeholder="在此分类中搜索标题..."
+                            style="width: 100%; padding: 8px 12px 8px 36px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; outline: none; transition: border-color 0.2s;">
+                    </div>
+                </div>
                 <div class="notes-table-container">
                     <table class="notes-table" id="notesTable">
                         <thead>
@@ -563,15 +615,16 @@
         <div class="modal-window">
             <div class="modal-header">
                 <input type="text" class="modal-title-input" id="modalNoteTitle" placeholder="笔记标题">
-                
+
                 <div class="modal-controls">
                     <div class="save-indicator" id="modalSaveStatus">
                         <i class="fas fa-check"></i> <span>已就绪</span>
                     </div>
-                    
-                    <div class="tag-edit-container" style="display: flex; align-items: center; background: #f1f3f4; border-radius: 4px; padding: 2px 8px;">
+
+                    <div class="tag-edit-container"
+                        style="display: flex; align-items: center; background: #f1f3f4; border-radius: 4px; padding: 2px 8px;">
                         <i class="fas fa-tags" style="color: #5f6368; font-size: 12px; margin-right: 5px;"></i>
-                        <input type="text" id="modalTagsInput" placeholder="标签 (英文逗号分隔)" 
+                        <input type="text" id="modalTagsInput" placeholder="标签 (英文逗号分隔)"
                             style="border: none; background: transparent; font-size: 13px; outline: none; width: 150px; padding: 4px;">
                     </div>
 
@@ -588,11 +641,11 @@
             </div>
         </div>
     </div>
-    
+
     <div id="hiddenRenderContainer"></div>
 
     <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
-    
+
     <script>
         // Firebase 配置
         const firebaseConfig = {
@@ -632,7 +685,7 @@
         const mainApp = firebase.app(); // 默认实例
         //const assignmentApp = firebase.initializeApp(assignmentConfig, "assignmentApp");
         //const assignmentDb = assignmentApp.database();
-        
+
 
 
         // 2. 不要使用 initializeApp 第二次，直接获取第二个数据库的引用
@@ -649,7 +702,7 @@
         const userName = document.getElementById('userName');
         const signOutBtn = document.getElementById('signOutBtn');
         const newNoteBtn = document.getElementById('newNoteBtn');
-        
+
         // 导航与表格元素
         const courseNavList = document.getElementById('courseNavList');
         const currentViewTitle = document.getElementById('currentViewTitle');
@@ -663,7 +716,7 @@
         const modalNoteTitle = document.getElementById('modalNoteTitle');
         const modalFolderSelect = document.getElementById('modalFolderSelect');
         const modalSaveStatus = document.getElementById('modalSaveStatus');
-        
+
         // 隐藏的渲染器
         const hiddenRenderContainer = document.getElementById('hiddenRenderContainer');
 
@@ -747,7 +800,7 @@
                             notes.push({ ...child.val(), id: child.key });
                         });
                     }
-                    
+
                     renderSidebar();
                     renderTable();
                     tableLoading.style.display = 'none';
@@ -775,12 +828,12 @@
             // 文件夹列表
             folders.forEach(folder => {
                 // 仅统计未归档的笔记
-                const count = notes.filter(n => 
-                    n.subject && 
-                    n.subject.courseCode === folder.courseCode && 
+                const count = notes.filter(n =>
+                    n.subject &&
+                    n.subject.courseCode === folder.courseCode &&
                     !n.isArchived
                 ).length;
-                
+
                 const item = document.createElement('div');
                 item.className = `course-item ${activeFolderCode === folder.courseCode ? 'active' : ''}`;
                 item.innerHTML = `
@@ -792,11 +845,11 @@
             });
 
             // "未分类"
-            const unclassifiedCount = notes.filter(n => 
-                (!n.subject || n.subject.courseCode === '000000') && 
+            const unclassifiedCount = notes.filter(n =>
+                (!n.subject || n.subject.courseCode === '000000') &&
                 !n.isArchived
             ).length;
-            
+
             if (unclassifiedCount > 0) {
                 const uncItem = document.createElement('div');
                 uncItem.className = `course-item ${activeFolderCode === '000000' ? 'active' : ''}`;
@@ -813,7 +866,7 @@
             activeFolderCode = code;
             renderSidebar(); // 更新高亮
             renderTable();   // 更新表格
-            
+
             // 更新标题
             if (code === 'ALL') currentViewTitle.textContent = "所有笔记";
             else if (code === '000000') currentViewTitle.textContent = "未分类笔记";
@@ -826,19 +879,19 @@
         // --- 渲染右侧表格 ---
         function renderTable() {
             notesTableBody.innerHTML = '';
-            
+
             // 筛选逻辑：增加 !note.isArchived 条件，排除归档笔记
             const filteredNotes = notes.filter(note => {
-                const matchFolder = activeFolderCode === 'ALL' || 
-                                    (note.subject && note.subject.courseCode === activeFolderCode) ||
-                                    (activeFolderCode === '000000' && (!note.subject || note.subject.courseCode === '000000'));
-                
-                const matchSearch = searchQuery === '' || 
-                                    note.title.toLowerCase().includes(searchQuery.toLowerCase());
-                
+                const matchFolder = activeFolderCode === 'ALL' ||
+                    (note.subject && note.subject.courseCode === activeFolderCode) ||
+                    (activeFolderCode === '000000' && (!note.subject || note.subject.courseCode === '000000'));
+
+                const matchSearch = searchQuery === '' ||
+                    note.title.toLowerCase().includes(searchQuery.toLowerCase());
+
                 // 仅显示未归档的笔记
                 const isNotArchived = !note.isArchived;
-                
+
                 return matchFolder && matchSearch && isNotArchived;
             });
 
@@ -854,10 +907,10 @@
 
             filteredNotes.forEach(note => {
                 const tr = document.createElement('tr');
-                
+
                 // 标签HTML
                 const tagsHtml = (note.tags || []).map(t => `<span class="tag-pill">${t}</span>`).join('');
-                
+
                 // 日期格式化
                 const dateStr = note.createdAt ? note.createdAt.split('T')[0] : '-';
 
@@ -897,12 +950,12 @@
 
         // --- 复制笔记 Key ---
         function copyNoteKey(noteId) {
-             navigator.clipboard.writeText(noteId).then(() => {
-                 alert('笔记ID已复制: ' + noteId);
-             }).catch(err => {
-                 console.error('复制失败:', err);
-                 alert('复制失败，请手动复制');
-             });
+            navigator.clipboard.writeText(noteId).then(() => {
+                alert('笔记ID已复制: ' + noteId);
+            }).catch(err => {
+                console.error('复制失败:', err);
+                alert('复制失败，请手动复制');
+            });
         }
 
         // --- 归档逻辑 ---
@@ -930,7 +983,7 @@
         }
 
         // --- 打印逻辑实现 ---
-        
+
         // 统一的数据传递与跳转函数
         function launchPrintHelper(markdownContent, windowTitle) {
             // 构造传递给 Helper 的数据对象
@@ -952,13 +1005,13 @@
             const note = notes.find(n => n.id === noteId);
             if (!note) return;
             const content = await loadMarkdownContent(note);
-            
+
             // --- 数据清洗逻辑 ---
-            
+
             // 1. 提取标题
             const titleMatch = content.match(/^# .*/m);
             const titleMd = titleMatch ? titleMatch[0] : `# ${note.title}`;
-            
+
             // 2. 截取主体：从第一个非练习的 H2 开始，或者去除顶部元数据
             let bodyContent = content;
             const h2Regex = /^## (?!.*练习)(.*)/gm;
@@ -982,7 +1035,7 @@
             // 4. (已移除局部清洗逻辑，统一由 print_helper.html 处理)
 
             const finalMarkdown = `${titleMd}\n\n${bodyContent}`;
-            
+
             launchPrintHelper(finalMarkdown, `笔记-${note.title}`);
         }
 
@@ -1022,7 +1075,7 @@
             if (!hasContent) {
                 finalMarkdown += "> 未检测到标准章节标题，无法生成复习单。";
             }
-            
+
             launchPrintHelper(finalMarkdown, `复习单-${note.title}`);
         }
 
@@ -1040,7 +1093,7 @@
                 // 构造标题
                 const headerMatch = content.match(/^## .*练习.*/m);
                 const header = headerMatch ? headerMatch[0] : "## 练习与巩固";
-                
+
                 // (已移除局部清洗逻辑，统一由 print_helper.html 处理)
                 const cleanBody = match[1];
 
@@ -1056,7 +1109,7 @@
         // 初始化编辑器 (单例模式)
         function initEditor() {
             if (currentEditorInstance) return;
-            
+
             currentEditorInstance = new toastui.Editor({
                 el: document.querySelector('#modalEditorContainer'),
                 height: '100%',
@@ -1072,7 +1125,7 @@
         }
 
         // 打开编辑窗口
-        window.openEditModal = async function(noteId) {
+        window.openEditModal = async function (noteId) {
             const note = notes.find(n => n.id === noteId);
             if (!note) return;
 
@@ -1085,16 +1138,16 @@
             const modalTagsInput = document.getElementById('modalTagsInput');
             modalTagsInput.value = note.tags ? note.tags.join(', ') : '';
             // ----------------------
-            
+
             // 填充下拉框
-            modalFolderSelect.innerHTML = `<option value="000000">未分类</option>` + 
+            modalFolderSelect.innerHTML = `<option value="000000">未分类</option>` +
                 folders.map(f => `<option value="${f.courseCode}">${f.course}</option>`).join('');
             if (note.subject) modalFolderSelect.value = note.subject.courseCode;
 
             // 2. 显示模态框
             editorModal.style.display = 'flex';
             setTimeout(() => editorModal.classList.add('active'), 10);
-            
+
             // 3. 初始化或重置编辑器
             initEditor();
             currentEditorInstance.setMarkdown('加载中...');
@@ -1112,7 +1165,7 @@
         };
 
         // 关闭模态框
-        window.closeEditModal = function() {
+        window.closeEditModal = function () {
             // 立即执行最后一次保存
             if (saveTimeout) {
                 clearTimeout(saveTimeout);
@@ -1147,7 +1200,7 @@
             } catch (error) {
                 console.warn("直接Fetch失败，尝试Storage REF", error);
                 // 简单的回退逻辑，实际项目中可能需要更复杂的Storage SDK处理
-                return `无法预览内容，请检查网络或权限。`; 
+                return `无法预览内容，请检查网络或权限。`;
             }
         }
 
@@ -1155,7 +1208,7 @@
         function scheduleSave() {
             modalSaveStatus.innerHTML = '<i class="fas fa-sync fa-spin"></i> <span>保存中...</span>';
             modalSaveStatus.className = 'save-indicator saving';
-            
+
             if (saveTimeout) clearTimeout(saveTimeout);
             saveTimeout = setTimeout(performSave, 1500);
         }
@@ -1163,17 +1216,17 @@
         // 执行保存
         async function performSave() {
             if (!currentEditingNoteId) return;
-            
+
             const noteId = currentEditingNoteId;
             const newTitle = modalNoteTitle.value;
             const newContent = currentEditorInstance.getMarkdown();
             const courseCode = modalFolderSelect.value;
-            
+
             // --- 新增：处理标签数据 ---
             const tagsValue = document.getElementById('modalTagsInput').value;
             const newTags = tagsValue.split(',')
-                                    .map(t => t.trim())
-                                    .filter(t => t !== ''); // 过滤掉空标签
+                .map(t => t.trim())
+                .filter(t => t !== ''); // 过滤掉空标签
             // -----------------------
 
             // 查找课程名
@@ -1186,7 +1239,7 @@
                 const user = auth.currentUser;
                 const storageRef = storage.ref();
                 const fileRef = storageRef.child(`markdown/${user.uid}/${noteId}.md`);
-                
+
                 // 将字符串转为 Blob
                 const blob = new Blob([newContent], { type: 'text/markdown' });
                 const snapshot = await fileRef.put(blob);
@@ -1227,9 +1280,18 @@
         modalNoteTitle.addEventListener('input', scheduleSave);
         modalFolderSelect.addEventListener('change', scheduleSave);
 
-        // 搜索功能
+        // 搜索功能 (同步侧边栏和表格搜索)
+        const tableSearchInput = document.getElementById('tableSearchInput');
+
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
+            tableSearchInput.value = searchQuery;
+            renderTable();
+        });
+
+        tableSearchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            searchInput.value = searchQuery;
             renderTable();
         });
 
@@ -1242,7 +1304,7 @@
         newNoteBtn.addEventListener('click', async () => {
             const user = auth.currentUser;
             if (!user) return;
-            
+
             const newId = `note-${Date.now()}`;
             const newNote = {
                 id: newId,
@@ -1257,7 +1319,7 @@
             // 乐观更新
             notes.unshift(newNote);
             renderTable();
-            
+
             // 存入数据库
             try {
                 await database.ref(`mdNotes/${newId}`).set(newNote);
@@ -1270,35 +1332,36 @@
         });
 
         // 创建复习任务
-async function createAssignment(noteId) {
-    const user = firebase.auth().currentUser;
-    if (!user) {
-        alert("请确认已登录！");
-        return;
-    }
+        async function createAssignment(noteId) {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                alert("请确认已登录！");
+                return;
+            }
 
-    const note = notes.find(n => n.id === noteId);
-    if (!note) return;
+            const note = notes.find(n => n.id === noteId);
+            if (!note) return;
 
-    const assignmentData = {
-        "attachment": `https://alexzhangmaker.github.io/outpost/appNoteReview.html?noteID=${noteId}`,
-        "classification": "noteReview",
-        "createdAt": new Date().toISOString().split('T')[0],
-        "expireAt": new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        "message": "note Review assignment",
-        "status": "todo",
-        "user": "rayzhang20030603@gmail.com"
-    };
+            const assignmentData = {
+                "attachment": `https://alexzhangmaker.github.io/outpost/appNoteReview.html?noteID=${noteId}`,
+                "classification": "noteReview",
+                "createdAt": new Date().toISOString().split('T')[0],
+                "expireAt": new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                "message": "note Review assignment",
+                "status": "todo",
+                "user": "rayzhang20030603@gmail.com"
+            };
 
-    try {
-        // 使用 .push().set() 明确操作
-        await assignmentDb.ref('userMessages').push().set(assignmentData);
-        alert('任务已成功分配！');
-    } catch (error) {
-        console.error("写入失败:", error);
-        alert("写入失败: " + error.message);
-    }
-}
+            try {
+                // 使用 .push().set() 明确操作
+                await assignmentDb.ref('userMessages').push().set(assignmentData);
+                alert('任务已成功分配！');
+            } catch (error) {
+                console.error("写入失败:", error);
+                alert("写入失败: " + error.message);
+            }
+        }
     </script>
 </body>
+
 </html>
