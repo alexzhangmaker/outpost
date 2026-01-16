@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,17 +8,31 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .sidebar-active { background-color: rgba(99, 102, 241, 0.1); border-right: 4px solid #6366f1; color: #6366f1; }
-        .accordion-content { transition: max-height 0.3s ease-out; overflow: hidden; }
-        .modal-bg { background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
+        .sidebar-active {
+            background-color: rgba(99, 102, 241, 0.1);
+            border-right: 4px solid #6366f1;
+            color: #6366f1;
+        }
+
+        .accordion-content {
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        .modal-bg {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
     </style>
 </head>
+
 <body class="bg-slate-50 min-h-screen flex flex-col">
 
     <div id="login-splash" class="fixed inset-0 z-[100] flex items-center justify-center bg-indigo-600 text-white">
         <div class="text-center">
             <h1 class="text-4xl font-bold mb-8 italic tracking-tighter">ANIK CONSOLE</h1>
-            <button id="btn-login" class="bg-white text-indigo-600 font-bold py-3 px-10 rounded-xl shadow-2xl hover:bg-slate-50 transition-all">
+            <button id="btn-login"
+                class="bg-white text-indigo-600 font-bold py-3 px-10 rounded-xl shadow-2xl hover:bg-slate-50 transition-all">
                 使用 Google 账号登录
             </button>
         </div>
@@ -28,10 +43,11 @@
             <div class="p-6 border-b border-slate-100">
                 <span class="text-xl font-bold text-indigo-600">管理后台</span>
             </div>
-            
+
             <nav class="flex-grow overflow-y-auto py-4">
                 <div class="mb-2">
-                    <button onclick="toggleAccordion('acc-data')" class="w-full flex items-center justify-between px-6 py-3 text-slate-600 hover:bg-slate-50">
+                    <button onclick="toggleAccordion('acc-data')"
+                        class="w-full flex items-center justify-between px-6 py-3 text-slate-600 hover:bg-slate-50">
                         <span class="font-semibold"><i class="fa-solid fa-database mr-3"></i>数据管理</span>
                         <i class="fa-solid fa-chevron-down text-xs"></i>
                     </button>
@@ -41,7 +57,8 @@
                 </div>
 
                 <div class="mb-2">
-                    <button onclick="toggleAccordion('acc-review')" class="w-full flex items-center justify-between px-6 py-3 text-slate-600 hover:bg-slate-50">
+                    <button onclick="toggleAccordion('acc-review')"
+                        class="w-full flex items-center justify-between px-6 py-3 text-slate-600 hover:bg-slate-50">
                         <span class="font-semibold"><i class="fa-solid fa-chart-line mr-3"></i>复习记录</span>
                         <i class="fa-solid fa-chevron-down text-xs"></i>
                     </button>
@@ -58,10 +75,12 @@
         </aside>
 
         <main class="flex-grow flex flex-col overflow-hidden">
-            <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between flex-shrink-0">
+            <header
+                class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between flex-shrink-0">
                 <div id="content-title" class="text-slate-700 font-bold">请选择左侧科目以开始</div>
                 <div id="toolbar" class="hidden flex gap-3">
-                    <button onclick="openModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-all">
+                    <button onclick="openModal()"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-all">
                         <i class="fa-solid fa-plus mr-2"></i>新建 Anki
                     </button>
                 </div>
@@ -81,25 +100,31 @@
         <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-slate-800">新建 Anki 牌组数据</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i
+                        class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-6 space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase mb-1">所属科目</label>
-                    <input id="modal-course" type="text" readonly class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-600 outline-none">
+                    <input id="modal-course" type="text" readonly
+                        class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-600 outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase mb-1">牌组 ID (NoteID)</label>
-                    <input id="modal-noteid" type="text" placeholder="例如: note-1765..." class="w-full border border-slate-200 p-3 rounded-xl outline-none focus:border-indigo-500">
+                    <input id="modal-noteid" type="text" placeholder="例如: note-1765..."
+                        class="w-full border border-slate-200 p-3 rounded-xl outline-none focus:border-indigo-500">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase mb-1">数据 JSON (Paste String)</label>
-                    <textarea id="modal-json" rows="8" placeholder='粘贴 ankiJSON 字符串...' class="w-full border border-slate-200 p-3 rounded-xl outline-none focus:border-indigo-500 font-mono text-xs"></textarea>
+                    <textarea id="modal-json" rows="8" placeholder='粘贴 ankiJSON 字符串...'
+                        class="w-full border border-slate-200 p-3 rounded-xl outline-none focus:border-indigo-500 font-mono text-xs"></textarea>
                 </div>
             </div>
             <div class="p-6 bg-slate-50 flex justify-end gap-3">
-                <button onclick="closeModal()" class="px-6 py-2 text-slate-500 font-semibold hover:bg-slate-100 rounded-xl">取消</button>
-                <button id="btn-save-anki" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 shadow-lg">确认保存</button>
+                <button onclick="closeModal()"
+                    class="px-6 py-2 text-slate-500 font-semibold hover:bg-slate-100 rounded-xl">取消</button>
+                <button id="btn-save-anki"
+                    class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 shadow-lg">确认保存</button>
             </div>
         </div>
     </div>
@@ -108,7 +133,7 @@
         // 1. 导入 push
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getDatabase, ref, get, set, child, push, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, get, set, child, push, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
@@ -201,7 +226,7 @@
 
         // 4. 实现 assignDeck 功能
         window.assignDeck = async (deckID, deckName) => {
-            if(!confirm(`确认将牌组 "${deckName}" 分配给 Ray (rayzhang20030603@gmail.com) 吗？`)) return;
+            if (!confirm(`确认将牌组 "${deckName}" 分配给 Ray (rayzhang20030603@gmail.com) 吗？`)) return;
 
             try {
                 // 连接到消息数据库
@@ -243,11 +268,11 @@
         async function renderDecksTable(courseName) {
             const snapshot = await get(ref(db, 'ankiNotes'));
             const tableContainer = document.getElementById('table-container');
-            
+
             if (snapshot.exists()) {
                 const decks = Object.entries(snapshot.val())
-                             .filter(([id, data]) => data.course === courseName);
-                
+                    .filter(([id, data]) => data.course === courseName);
+
                 let html = `
                     <table class="w-full bg-white rounded-xl overflow-hidden shadow-sm border border-slate-100">
                         <thead class="bg-slate-50 text-slate-400 text-xs uppercase font-bold">
@@ -265,7 +290,9 @@
                     const deckName = deck.ankiJSON.deck_info.deck_name;
                     html += `
                         <tr class="hover:bg-slate-50/50 transition-all">
-                            <td class="px-6 py-4 font-semibold text-indigo-600">${deckName}</td>
+                            <td class="px-6 py-4 font-semibold text-indigo-600 cursor-pointer" 
+                                onclick="startEditDeckName('${id}', this)" 
+                                data-current-name="${deckName.replace(/"/g, '&quot;')}">${deckName}</td>
                             <td class="px-6 py-4 font-mono text-xs">${deck.noteID}</td>
                             <td class="px-6 py-4"><span class="bg-slate-100 px-2 py-1 rounded-md text-xs font-bold">${deck.ankiJSON.cards.length}</span></td>
                             <td class="px-6 py-4 text-center space-x-2">
@@ -288,6 +315,51 @@
             }
         }
 
+
+        window.startEditDeckName = (id, cell) => {
+            const currentName = cell.getAttribute('data-current-name');
+            if (cell.querySelector('input')) return; // Prevent multiple inputs
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentName;
+            input.className = 'w-full px-2 py-1 border border-indigo-300 rounded outline-none focus:ring-2 focus:ring-indigo-200';
+
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            input.focus();
+
+            let isFinished = false;
+            const finishEdit = async (isSave) => {
+                if (isFinished) return;
+                isFinished = true;
+                const newName = input.value.trim();
+                if (isSave && newName && newName !== currentName) {
+                    try {
+                        const dbRef = ref(db, `ankiNotes/${id}/ankiJSON/deck_info`);
+                        await update(dbRef, { deck_name: newName });
+                        // Re-render table to show updated name
+                        renderDecksTable(currentCourse);
+                    } catch (err) {
+                        alert("修改失败: " + err.message);
+                        cell.innerText = currentName;
+                    }
+                } else {
+                    cell.innerText = currentName;
+                }
+            };
+
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    finishEdit(true);
+                } else if (e.key === 'Escape') {
+                    finishEdit(false);
+                }
+            };
+
+            input.onblur = () => finishEdit(false);
+        }
+
         async function renderReviewsList(courseName) {
             const container = document.getElementById('table-container');
             container.innerHTML = '<div class="text-center py-20 text-slate-400 animate-pulse">正在获取复习记录数据...</div>';
@@ -299,8 +371,8 @@
                 const decks = decksSnapshot.val();
                 const reviews = reviewSnapshot.val();
                 const courseDeckIDs = Object.entries(decks)
-                                      .filter(([id, data]) => data.course === courseName)
-                                      .map(([id, _]) => id);
+                    .filter(([id, data]) => data.course === courseName)
+                    .map(([id, _]) => id);
                 let html = '<div class="space-y-6">';
                 courseDeckIDs.forEach(deckID => {
                     if (reviews[deckID]) {
@@ -368,4 +440,5 @@
         };
     </script>
 </body>
+
 </html>
