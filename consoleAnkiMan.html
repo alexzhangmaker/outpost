@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,23 +8,43 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 自定义滚动条样式，使其更像Console风格 */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
         .date-input-dark {
-            color-scheme: dark; 
+            color-scheme: dark;
         }
     </style>
 </head>
+
 <body class="bg-gray-100 font-sans text-gray-800 h-screen overflow-hidden">
 
-    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 text-white transition-opacity duration-500">
+    <div id="login-screen"
+        class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 text-white transition-opacity duration-500">
         <div class="text-center space-y-6 p-10 bg-slate-800 rounded-xl shadow-2xl border border-slate-700">
             <h1 class="text-4xl font-bold tracking-wider text-blue-400">OUTPOST CONSOLE</h1>
             <p class="text-slate-400">Anki Deck 数据管理系统</p>
-            <button id="btn-login" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 w-full">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+            <button id="btn-login"
+                class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 w-full">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
+                </svg>
                 Sign in with Google
             </button>
             <p id="login-error" class="text-red-400 text-sm hidden"></p>
@@ -31,29 +52,44 @@
     </div>
 
     <div id="app-container" class="flex h-screen w-full hidden">
-        
+
         <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-700">
             <div class="h-16 flex items-center justify-center border-b border-slate-800">
                 <span class="text-xl font-bold text-white tracking-wider">OUTPOST</span>
             </div>
-            
+
             <nav class="flex-1 overflow-y-auto py-4">
                 <ul class="space-y-1">
                     <li>
-                        <button onclick="router('decks')" class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        <button onclick="router('decks')"
+                            class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                </path>
+                            </svg>
                             Anki Deck 管理
                         </button>
                     </li>
                     <li>
-                        <button onclick="router('schedule')" class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <button onclick="router('schedule')"
+                            class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
                             每日复习安排
                         </button>
                     </li>
                     <li>
-                        <button onclick="router('history')" class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        <button onclick="router('history')"
+                            class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                                </path>
+                            </svg>
                             复习记录查看
                         </button>
                     </li>
@@ -68,7 +104,8 @@
                         <p id="user-email" class="text-xs text-slate-500 truncate">...</p>
                     </div>
                 </div>
-                <button id="btn-logout" class="w-full py-2 text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded transition-colors">
+                <button id="btn-logout"
+                    class="w-full py-2 text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded transition-colors">
                     退出登录
                 </button>
             </div>
@@ -81,7 +118,8 @@
             </header>
 
             <div id="content-area" class="flex-1 overflow-auto p-8 relative">
-                <div id="loading-spinner" class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
+                <div id="loading-spinner"
+                    class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
                     <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
                 </div>
                 <div id="view-container"></div>
@@ -133,7 +171,7 @@
 
         // 格式化日期：将 JS Date 转为 "Wed, Dec 28, 2025" 格式 (用于显示)
         const formatDateForDB = (dateObj) => {
-            const dateStr = dateObj.toDateString(); 
+            const dateStr = dateObj.toDateString();
             const parts = dateStr.split(' ');
             return `${parts[0]}, ${parts[1]} ${parts[2]}, ${parts[3]}`;
         };
@@ -164,7 +202,7 @@
                 loginScreen.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => loginScreen.classList.add('hidden'), 500);
                 appContainer.classList.remove('hidden');
-                
+
                 document.getElementById('user-name').textContent = user.displayName;
                 document.getElementById('user-email').textContent = user.email;
                 document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
@@ -197,7 +235,7 @@
                 el.classList.add('border-transparent');
             });
             const activeBtn = document.querySelector(`button[onclick="router('${viewName}')"]`);
-            if(activeBtn) {
+            if (activeBtn) {
                 activeBtn.classList.add('bg-slate-800', 'text-white', 'border-blue-500');
                 activeBtn.classList.remove('border-transparent');
             }
@@ -303,7 +341,7 @@
 
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    
+
                     // 1. 构建 HTML，在表格上方增加搜索框
                     let html = `
                         <div class="flex flex-col gap-4">
@@ -339,7 +377,9 @@
 
                         html += `
                             <tr id="row-${key}" data-title="${titleText}" class="hover:bg-gray-50 transition-colors deck-row">
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap cursor-pointer" 
+                                    onclick="startEditDeckTitle('${key}', this)" 
+                                    data-current-title="${(deck.title || 'Untitled').replace(/"/g, '&quot;')}">
                                     <div class="text-sm font-medium text-gray-900">${deck.title || 'Untitled'}</div>
                                     <div class="text-xs text-gray-400 font-mono">${deck.wordSetID || ''}</div>
                                 </td>
@@ -433,6 +473,65 @@
             }
         };
 
+        window.startEditDeckTitle = (key, cell) => {
+            const currentTitle = cell.getAttribute('data-current-title');
+            const wordSetId = cell.querySelector('.font-mono').innerText;
+            if (cell.querySelector('input')) return;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTitle;
+            input.className = 'w-full px-2 py-1 border border-blue-300 rounded outline-none focus:ring-2 focus:ring-blue-200 text-sm font-medium text-gray-900';
+
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            input.focus();
+
+            let isFinished = false;
+            const finishEdit = async (isSave) => {
+                if (isFinished) return;
+                isFinished = true;
+                const newTitle = input.value.trim();
+
+                if (isSave && newTitle && newTitle !== currentTitle) {
+                    try {
+                        showLoading(true);
+                        await update(ref(db, `thaiAnki/reviewSets/${key}`), { title: newTitle });
+
+                        // Update UI state
+                        cell.setAttribute('data-current-title', newTitle.replace(/"/g, '&quot;'));
+                        document.getElementById(`row-${key}`).setAttribute('data-title', newTitle.toLowerCase());
+
+                        cell.innerHTML = `
+                            <div class="text-sm font-medium text-gray-900">${newTitle}</div>
+                            <div class="text-xs text-gray-400 font-mono">${wordSetId}</div>
+                        `;
+                    } catch (err) {
+                        alert("修改失败: " + err.message);
+                        restore();
+                    } finally {
+                        showLoading(false);
+                    }
+                } else {
+                    restore();
+                }
+            };
+
+            const restore = () => {
+                cell.innerHTML = `
+                    <div class="text-sm font-medium text-gray-900">${currentTitle}</div>
+                    <div class="text-xs text-gray-400 font-mono">${wordSetId}</div>
+                `;
+            };
+
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') finishEdit(true);
+                else if (e.key === 'Escape') finishEdit(false);
+            };
+
+            input.onblur = () => finishEdit(false);
+        };
+
         window.deleteDeck = async (key) => {
             if (!confirm('Are you sure you want to delete this deck? This action cannot be undone.')) return;
 
@@ -491,7 +590,7 @@
         // 新增的 Assign Deck 功能
         window.assignDeck = async (key) => {
             // 确认操作
-            if(!confirm("确认将此 Deck 分配给 Ray (rayzhang20030603@gmail.com) 吗？")) return;
+            if (!confirm("确认将此 Deck 分配给 Ray (rayzhang20030603@gmail.com) 吗？")) return;
 
             showLoading(true);
             try {
@@ -499,7 +598,7 @@
                 const dbRef = ref(db);
                 // 获取 title 节点快照
                 const titleSnapshot = await get(child(dbRef, `thaiAnki/reviewSets/${key}/title`));
-                
+
                 // 如果获取不到，给一个默认值 'assignment'，否则使用获取到的标题
                 const reviewSetTitle = titleSnapshot.exists() ? titleSnapshot.val() : 'assignment';
                 // --- 修改结束 ---
@@ -547,7 +646,7 @@
 
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    
+
                     // 将对象转换为数组并按时间戳倒序排序（最新的在最前）
                     const logs = Object.entries(data).map(([key, value]) => ({
                         id: key,
@@ -572,11 +671,11 @@
                     logs.forEach(log => {
                         // 格式化时间
                         const logDate = log.date ? new Date(log.date).toLocaleString('zh-CN', { hour12: false }) : 'Unknown Date';
-                        
+
                         // 生成错误单词的标签
                         let errorWordsHtml = '';
                         if (log.errorWords && log.errorWords.length > 0) {
-                            errorWordsHtml = log.errorWords.map(word => 
+                            errorWordsHtml = log.errorWords.map(word =>
                                 `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mr-1 mb-1">${word}</span>`
                             ).join('');
                         } else {
@@ -640,7 +739,7 @@
                 await remove(ref(db, `thaiAnki/ankiLogs/${key}`));
                 const row = document.getElementById(`log-${key}`);
                 if (row) row.remove();
-                
+
                 // 如果删除了最后一条，刷新一下页面显示空状态（可选）
                 if (document.querySelectorAll('tbody tr').length === 0) {
                     renderHistory();
@@ -659,4 +758,5 @@
 
     </script>
 </body>
+
 </html>
