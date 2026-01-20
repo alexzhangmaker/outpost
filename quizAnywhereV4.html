@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Word Quiz - แบบทดสอบคำศัพท์ภาษาไทย</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script src="./js/modalFactoryV2.js"></script>
+
+    <style>
+        /* Base styles from original file */
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f3f4f6;
+            /* bg-gray-100 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            /*padding: 1rem; */
+            /* p-4 */
+            overflow-y: hidden;
+        }
+
+        #app-container {
+            width: 100%;
+            /* w-full */
+            max-width: 1200px;
+            /* arbitrary max-width for better centering */
+            margin-left: auto;
+            margin-right: auto;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Quiz Card & Results Card General Styles */
+        #quiz-card,
+        #results-card {
+            background-color: #ffffff;
+            /* bg-white */
+            border-radius: 0.75rem;
+            /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            /* shadow-lg */
+            padding: 1.5rem;
+            /* p-6 */
+            width: 80%;
+            /* style="width:80% !important;" */
+            /*max-width: 80%;*/
+            /*800px; */
+            /* Add a max-width for better centering on large screens */
+        }
+
+        @media (min-width: 768px) {
+
+            #quiz-card,
+            #results-card {
+                padding: 2rem;
+                /* md:p-8 */
+            }
+        }
+
+        /* Quiz Content */
+        #question-counter {
+            font-size: 0.875rem;
+            /* text-sm */
+            color: #6b7280;
+            /* text-gray-500 */
+            margin-bottom: 0.5rem;
+            /* mb-2 */
+        }
+
+        #question-text {
+            font-size: 1.5rem;
+            /* text-2xl */
+            font-weight: 700;
+            /* font-bold */
+            color: #1f2937;
+            /* text-gray-800 */
+            margin-bottom: 1rem;
+            /* mb-6 */
+        }
+
+        #options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            /* space-y-3 */
+        }
+
+        /* Option Button */
+        #options-container button {
+            width: 100%;
+            /* w-full */
+            display: flex;
+            align-items: center;
+            text-align: left;
+            /* text-left */
+            padding: 0.75rem;
+            /* p-3 */
+            background-color: #f9fafb;
+            /* bg-gray-50 */
+            border-radius: 0.5rem;
+            /* rounded-lg */
+            border: 1px solid #e5e7eb;
+            /* border border-gray-200 */
+            transition: all 200ms ease-in-out;
+            /* transition-all duration-200 */
+            cursor: pointer;
+        }
+
+        #options-container button:hover {
+            background-color: #eff6ff;
+            /* hover:bg-blue-100 */
+            border-color: #93c5fd;
+            /* hover:border-blue-300 */
+        }
+
+        #options-container button span:first-child {
+            background-color: #e5e7eb;
+            /* bg-gray-200 */
+            color: #374151;
+            /* text-gray-700 */
+            font-weight: 700;
+            /* font-bold */
+            width: 2rem;
+            /* w-8 */
+            height: 2rem;
+            /* h-8 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            /* rounded-md */
+            margin-right: 1rem;
+            /* mr-4 */
+        }
+
+        #options-container button span:last-child {
+            flex: 1;
+            /* flex-1 */
+        }
+
+        /* Feedback */
+        #feedback-container {
+            margin-top: 1rem;
+            /* mt-4 */
+            text-align: center;
+            /* text-center */
+        }
+
+        #feedback-container .text-green-600 {
+            color: #059669;
+            font-weight: 700;
+        }
+
+        #feedback-container .text-red-600 {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
+        /* Selected/Correct/Incorrect Styles */
+        .bg-green-500 {
+            background-color: #10b981 !important;
+        }
+
+        .bg-red-500 {
+            background-color: #ef4444 !important;
+        }
+
+        .bg-green-200 {
+            background-color: #d1fae5 !important;
+        }
+
+        .border-green-600 {
+            border-color: #059669 !important;
+        }
+
+        .border-red-600 {
+            border-color: #dc2626 !important;
+        }
+
+        .border-green-400 {
+            border-color: #34d399 !important;
+        }
+
+        .text-white {
+            color: #fff !important;
+        }
+
+        .cursor-not-allowed {
+            cursor: not-allowed !important;
+        }
+
+        .hover\:bg-blue-100:hover,
+        .hover\:border-blue-300:hover {
+            /* Override hover for disabled state */
+            background-color: inherit !important;
+            border-color: inherit !important;
+        }
+
+        /* Next Button */
+        #next-button,
+        #restart-button {
+            margin-top: 1.5rem;
+            /* mt-6 */
+            width: 100%;
+            /* w-full */
+            font-weight: 700;
+            /* font-bold */
+            padding: 0.75rem 1rem;
+            /* py-3 px-4 */
+            border-radius: 0.5rem;
+            /* rounded-lg */
+            transition: background-color 150ms ease-in-out;
+            /* transition-colors */
+            border: none;
+            cursor: pointer;
+        }
+
+        #next-button {
+            background-color: #2563eb;
+            /* bg-blue-600 */
+            color: #fff;
+            /* text-white */
+        }
+
+        #next-button:hover {
+            background-color: #1d4ed8;
+            /* hover:bg-blue-700 */
+        }
+
+        #next-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+            /* focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 */
+        }
+
+        /* Results Card */
+        #results-card {
+            text-align: center;
+        }
+
+        #results-card h2 {
+            font-size: 1.875rem;
+            /* text-3xl */
+            font-weight: 700;
+            /* font-bold */
+            color: #1f2937;
+            /* text-gray-800 */
+            margin-bottom: 0.5rem;
+            /* mb-2 */
+        }
+
+        #results-card p.text-gray-600 {
+            color: #4b5563;
+            /* text-gray-600 */
+            margin-bottom: 1.5rem;
+            /* mb-6 */
+        }
+
+        .bg-blue-50 {
+            background-color: #eff6ff;
+            /* bg-blue-50 */
+            padding: 1.5rem;
+            /* p-6 */
+            border-radius: 0.5rem;
+            /* rounded-lg */
+            margin-bottom: 1.5rem;
+            /* mb-6 */
+        }
+
+        .bg-blue-50 p.text-lg {
+            font-size: 1.125rem;
+            /* text-lg */
+            color: #374151;
+            /* text-gray-700 */
+        }
+
+        #final-score {
+            font-size: 3rem;
+            /* text-5xl */
+            font-weight: 700;
+            /* font-bold */
+            color: #2563eb;
+            /* text-blue-600 */
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            /* my-2 */
+            line-height: 1;
+            /* Adjust line height */
+        }
+
+        #final-percentage {
+            font-size: 1.25rem;
+            /* text-xl */
+            font-weight: 600;
+            /* font-semibold */
+            color: #3b82f6;
+            /* text-blue-500 */
+        }
+
+        /* Previous Score Container */
+        #previous-score-container {
+            text-align: left;
+            /* text-left */
+            margin-bottom: 1.5rem;
+            /* mb-6 */
+            padding: 1rem;
+            /* p-4 */
+            border: 1px solid #e5e7eb;
+            /* border */
+            border-radius: 0.5rem;
+            /* rounded-lg */
+            background-color: #f9fafb;
+            /* bg-gray-50 */
+        }
+
+        #previous-score-container h3 {
+            font-weight: 700;
+            /* font-bold */
+            color: #374151;
+            /* text-gray-700 */
+            margin-bottom: 0.5rem;
+            /* mb-2 */
+        }
+
+        #previous-score-container p {
+            color: #4b5563;
+            /* text-gray-600 */
+        }
+
+        /* Restart Button */
+        #restart-button {
+            background-color: #16a34a;
+            /* bg-green-600 */
+            color: #fff;
+            /* text-white */
+        }
+
+        #restart-button:hover {
+            background-color: #15803d;
+            /* hover:bg-green-700 */
+        }
+
+        #restart-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.5);
+            /* focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 */
+        }
+
+        /* Utility for hiding elements */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Roboto+Flex:opsz,wght@8..144,100..1000&display=swap');
+
+        #question-text {
+            font-family: "Oswald", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400 !important;
+            font-style: normal;
+        }
+
+        .optionText {
+            font-family: "Roboto Flex", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+
+            text-align: left;
+            flex: 1;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div id="app-container">
+        <div id="quiz-card">
+            <div id="quiz-content">
+                <p id="question-counter">คำถาม 1 / 10</p>
+                <h2 id="question-text"></h2>
+                <div id="options-container">
+                </div>
+                <div id="feedback-container">
+                </div>
+            </div>
+            <button id="next-button" class="hidden">
+                คำถามถัดไป
+            </button>
+        </div>
+
+        <div id="results-card" class="hidden">
+            <h2>เสร็จสิ้น!</h2>
+            <p class="text-gray-600">นี่คือผลลัพธ์ของคุณ:</p>
+            <div class="bg-blue-50">
+                <p class="text-lg">คุณตอบถูก</p>
+                <p id="final-score">0/0</p>
+                <p id="final-percentage">0%</p>
+            </div>
+            <div id="previous-score-container" class="hidden">
+                <h3>ผลลัพธ์ครั้งก่อน:</h3>
+                <p id="previous-score-text"></p>
+            </div>
+
+            <!-- AI Smart Review Section -->
+            <div id="ai-review-container" class="mt-6 border-t pt-6 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
+                        </svg>
+                        AI Smart Review
+                    </h3>
+                    <span id="ai-status" class="text-xs text-slate-400">Analysis ready</span>
+                </div>
+                <p class="text-xs text-slate-500 mb-4 text-left">Gemini can analyze your mistakes and create a custom
+                    practice quiz based on your source notes.</p>
+                <div id="ai-loading" class="hidden flex flex-col items-center py-4">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-2"></div>
+                    <p class="text-xs text-purple-600">Generating personalized quiz...</p>
+                </div>
+                <button id="ai-generate-btn"
+                    class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Generate Smart Review Quiz
+                </button>
+            </div>
+
+            <button id="restart-button">
+                ทำแบบทดสอบอีกครั้ง
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function createStickyToolbar(config) {
+            // Helper to inject script or stylesheet
+            function injectResource(type, url) {
+                return new Promise((resolve, reject) => {
+                    let el;
+                    if (type === 'script') {
+                        el = document.createElement('script');
+                        el.src = url;
+                        el.async = true;
+                    } else if (type === 'style') {
+                        el = document.createElement('link');
+                        el.href = url;
+                        el.rel = 'stylesheet';
+                    }
+                    el.onload = () => resolve();
+                    el.onerror = () => reject(`Failed to load ${url}`);
+                    document.head.appendChild(el);
+                });
+            }
+
+            // Check if dependencies exist
+            const hasTippy = typeof window.tippy === 'function';
+            const hasPopper = typeof window.Popper === 'function';
+
+            const loadDependencies = async () => {
+                const promises = [];
+
+                if (!hasPopper) {
+                    // Check if the script is already in the head (should be, but just in case)
+                    if (!document.querySelector('script[src*="@popperjs/core"]')) {
+                        promises.push(injectResource('script', 'https://unpkg.com/@popperjs/core@2'));
+                    }
+                }
+                if (!hasTippy) {
+                    // Check if the script is already in the head (should be, but just in case)
+                    if (!document.querySelector('script[src*="tippy.js"]')) {
+                        promises.push(injectResource('script', 'https://unpkg.com/tippy.js@6'));
+                    }
+                    // Check if the stylesheet is already in the head
+                    if (!document.querySelector('link[href*="tippy.css"]')) {
+                        promises.push(injectResource('style', 'https://unpkg.com/tippy.js@6/dist/tippy.css'));
+                    }
+                }
+
+                await Promise.all(promises);
+            };
+
+            // Main toolbar logic
+            const initToolbar = () => {
+                const toolbar = document.createElement('div');
+                toolbar.style.position = 'fixed';
+                toolbar.style.bottom = '20px';
+                toolbar.style.right = '20px';
+                toolbar.style.display = 'flex';
+                toolbar.style.alignItems = 'center'; // 👈 Aligns icons vertically
+                toolbar.style.gap = '12px';
+                toolbar.style.background = '#fff';
+                toolbar.style.border = '1px solid #ccc';
+                toolbar.style.borderRadius = '8px';
+                toolbar.style.padding = '10px';
+                toolbar.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+                toolbar.style.zIndex = '9999';
+
+                config.buttons.forEach((btn) => {
+                    const button = document.createElement('button');
+                    button.style.border = 'none';
+                    button.style.background = 'transparent';
+                    button.style.cursor = 'pointer';
+                    button.style.padding = '0';
+                    button.style.width = '32px';
+                    button.style.height = '32px';
+
+                    if (btn.hasOwnProperty("svg")) {
+                        button.innerHTML = btn.svg;
+                    } else {
+                        const img = document.createElement('img');
+                        img.src = btn.iconUrl;
+                        img.alt = btn.tip;
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        button.appendChild(img);
+                    }
+
+
+                    button.onclick = btn.onClick;
+
+                    toolbar.appendChild(button);
+
+                    // Initialize tooltip
+                    window.tippy(button, {
+                        content: btn.tip,
+                        placement: 'top',
+                        animation: 'scale',
+                    });
+                });
+
+                document.body.appendChild(toolbar);
+            };
+
+            // Load dependencies and initialize
+            loadDependencies().then(initToolbar).catch((err) => console.error('Toolbar setup failed:', err));
+        }
+    </script>
+    <script>
+        // Firebase配置（实际使用时替换为你的配置）
+        // 在实际应用中，您可以使用以下代码从Firebase获取数据
+        // 模拟Firebase配置 - 在实际应用中替换为您的配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-uiz-d289c.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        const path025233 = "025233";
+        // 初始化Firebase
+        // Correct v8 code
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        function fetchDataFromFirebase(path) {
+            return new Promise((resolve, reject) => {
+                const ref = database.ref(path);
+                ref.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    //resolve(data ? Object.values(data) : []);
+                    resolve(data);
+                }, (error) => {
+                    reject(error);
+                });
+            });
+        }
+
+    </script>
+    <script>
+        /*
+        const btnUserLogin = document.querySelector('#idBTNSignIn') ;
+        btnUserLogin.addEventListener('click',(event)=>{
+            signInWithGoogle() ;
+        }) ;
+        */
+        // 登录函数
+        // The correct way to call the function in V8
+
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
+    </script>
+    <script>
+        let quizData = [
+            { "question": "คำว่า 'ตรงข้าม' หมายความว่าอย่างไร?", "options": [{ "id": "A", "text": "สิ่งที่อยู่คนละด้านหรือมีลักษณะตรงกันข้าม" }, { "id": "B", "text": "สิ่งที่เหมือนกันทุกประการ" }, { "id": "C", "text": "สิ่งที่อยู่ใกล้กันและช่วยเหลือกัน" }, { "id": "D", "text": "สิ่งที่ซับซ้อนและเข้าใจยาก" }], "correct_answer": "A" },
+            { "question": "คำว่า 'วิจารณ์' มีความหมายตรงกับข้อใด?", "options": [{ "id": "A", "text": "การชื่นชมยินดี" }, { "id": "B", "text": "การให้คำติชมหรือข้อคิดเห็น" }, { "id": "C", "text": "การเลียนแบบพฤติกรรม" }, { "id": "D", "text": "การเพิกเฉยไม่สนใจ" }], "correct_answer": "B" },
+            { "question": "'นวัตกรรม' หมายถึงอะไร?", "options": [{ "id": "A", "text": "สิ่งของโบราณที่มีค่า" }, { "id": "B", "text": "ประเพณีที่สืบทอดกันมานาน" }, { "id": "C", "text": "การกระทำหรือสิ่งที่ทำขึ้นใหม่หรือแปลกจากเดิม" }, { "id": "D", "text": "กฎหมายและข้อบังคับ" }], "correct_answer": "C" },
+            { "question": "ข้อใดคือความหมายของคำว่า 'อุปสรรค'?", "options": [{ "id": "A", "text": "ความสำเร็จที่ยิ่งใหญ่" }, { "id": "B", "text": "เครื่องกีดขวาง, ความขัดข้อง" }, { "id": "C", "text": "เพื่อนสนิทหรือผู้ช่วยเหลือ" }, { "id": "D", "text": "โอกาสที่ดีในการเริ่มต้น" }], "correct_answer": "B" },
+            { "question": "คำว่า 'มัธยัสถ์' สัมพันธ์กับข้อใดมากที่สุด?", "options": [{ "id": "A", "text": "การใช้จ่ายอย่างฟุ่มเฟือย" }, { "id": "B", "text": "การเดินทางไปต่างประเทศ" }, { "id": "C", "text": "การเก็บออมและใช้จ่ายเท่าที่จำเป็น" }, { "id": "D", "text": "การลงทุนที่มีความเสี่ยงสูง" }], "correct_answer": "C" },
+            { "question": "'เจรจา' หมายความว่าอะไร?", "options": [{ "id": "A", "text": "การต่อสู้โดยใช้กำลัง" }, { "id": "B", "text": "การพูดคุยหรือหารือกันเพื่อตกลงกัน" }, { "id": "C", "text": "การเขียนจดหมายเพื่อร้องเรียน" }, { "id": "D", "text": "การเดินทางคนเดียว" }], "correct_answer": "B" },
+            { "question": "คำว่า 'ประสิทธิภาพ' หมายถึงข้อใด?", "options": [{ "id": "A", "text": "ความสามารถที่ทำให้เกิดผลในงาน" }, { "id": "B", "text": "ความรู้สึกท้อแท้สิ้นหวัง" }, { "id": "C", "text": "ความสวยงามภายนอก" }, { "id": "D", "text": "ความแข็งแรงของร่างกาย" }], "correct_answer": "A" },
+            { "question": "ข้อใดคือความหมายของ 'เอกฉันท์'?", "options": [{ "id": "A", "text": "ความคิดเห็นที่แตกต่างกันอย่างมาก" }, { "id": "B", "text": "การตัดสินใจโดยคนเพียงคนเดียว" }, { "id": "C", "text": "ความลับที่ไม่สามารถเปิดเผยได้" }, { "id": "D", "text": "มีความเห็นเป็นอย่างเดียวกันทั้งหมด" }], "correct_answer": "D" }
+        ];
+
+        // DOM Elements
+        const quizCard = document.getElementById('quiz-card');
+        const resultsCard = document.getElementById('results-card');
+        const questionCounter = document.getElementById('question-counter');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackContainer = document.getElementById('feedback-container');
+        const nextButton = document.getElementById('next-button');
+        const restartButton = document.getElementById('restart-button');
+
+        // Quiz State
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answerSelected = false;
+
+        // CSS class helpers (Replaces Tailwind classes)
+        const cssClasses = {
+            correctButton: 'bg-green-500 text-white border-green-600',
+            incorrectButton: 'bg-red-500 text-white border-red-600',
+            correctHighlight: 'bg-green-200 border-green-400',
+            defaultButton: 'bg-gray-50 border-gray-200 hover:bg-blue-100 hover:border-blue-300',
+            disabled: 'cursor-not-allowed',
+            hidden: 'hidden'
+        };
+
+        function addClasses(element, classString) {
+            classString.split(' ').forEach(cls => {
+                if (cls) element.classList.add(cls);
+            });
+        }
+
+        function removeClasses(element, classString) {
+            classString.split(' ').forEach(cls => {
+                if (cls) element.classList.remove(cls);
+            });
+        }
+
+        // --- Core Functions ---
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            answerSelected = false;
+            addClasses(resultsCard, cssClasses.hidden);
+            removeClasses(quizCard, cssClasses.hidden);
+
+            // Clear in-progress data
+            globalQuizInProgress.fails = 0;
+            globalQuizInProgress.failed = [];
+            globalQuizInProgress.finished = false;
+
+            loadQuestion();
+            checkPreviousScores();
+        }
+
+        function loadQuestion() {
+            answerSelected = false;
+            feedbackContainer.innerHTML = '';
+            addClasses(nextButton, cssClasses.hidden);
+            optionsContainer.innerHTML = '';
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionCounter.textContent = `คำถาม ${currentQuestionIndex + 1} / ${quizData.length}`;
+            questionText.textContent = currentQuestion.question;
+
+            // Shuffle options for variety
+            const shuffledOptions = [...currentQuestion.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                // Use innerHTML for structure matching original template
+                button.innerHTML = `<span style="background-color: #e5e7eb; color: #374151; font-weight: 700; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; border-radius: 0.375rem; margin-right: 1rem;">${option.id}</span> <span class="optionText">${option.text}</span>`;
+
+                // Apply default CSS class from the style block
+                button.className = 'default-option-button'; // A helper class for the custom CSS block
+                button.classList.add('w-full', 'flex', 'items-center', 'text-left', 'p-3', 'bg-gray-50', 'rounded-lg', 'border', 'border-gray-200', 'hover:bg-blue-100', 'hover:border-blue-300', 'transition-all', 'duration-200'); // Dummy classes to be removed after CSS is applied
+                button.className = ''; // Reset, and apply the correct default class
+                addClasses(button, 'w-full flex items-center text-left p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200');
+
+
+                button.onclick = () => selectAnswer(option.id, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectAnswer(selectedId, buttonElement) {
+            if (answerSelected) return; // Prevent changing answer
+            answerSelected = true;
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            const isCorrect = selectedId === currentQuestion.correct_answer;
+
+            // Remove hover classes for proper state display
+            removeClasses(buttonElement, 'hover:bg-blue-100 hover:border-blue-300');
+
+
+            // Update score
+            if (isCorrect) {
+                score++;
+                removeClasses(buttonElement, cssClasses.defaultButton);
+                addClasses(buttonElement, cssClasses.correctButton);
+                feedbackContainer.innerHTML = `<p class="text-green-600 font-bold">ถูกต้อง!</p>`;
+            } else {
+                removeClasses(buttonElement, cssClasses.defaultButton);
+                addClasses(buttonElement, cssClasses.incorrectButton);
+                feedbackContainer.innerHTML = `<p class="text-red-600 font-bold">ผิด! คำตอบที่ถูกต้องคือ: ${currentQuestion.correct_answer}</p>`;
+
+                // Highlight the correct answer
+                const correctButton = Array.from(optionsContainer.children).find(btn => {
+                    // Find the button whose first inner span text starts with the correct answer ID
+                    const optionIdSpan = btn.querySelector('span:first-child');
+                    return optionIdSpan && optionIdSpan.textContent.trim() === currentQuestion.correct_answer;
+                });
+
+                if (correctButton) {
+                    removeClasses(correctButton, cssClasses.defaultButton);
+                    addClasses(correctButton, cssClasses.correctHighlight);
+                }
+
+                globalQuizInProgress.failed.push(currentQuestion);
+                globalQuizInProgress.fails++;
+
+            }
+
+            // Disable all option buttons
+            Array.from(optionsContainer.children).forEach(btn => {
+                btn.disabled = true;
+                addClasses(btn, cssClasses.disabled);
+                removeClasses(btn, 'hover:bg-blue-100 hover:border-blue-300'); // Ensure hover styles are gone
+            });
+
+            removeClasses(nextButton, cssClasses.hidden);
+        }
+
+        async function showResults() {
+            addClasses(quizCard, cssClasses.hidden);
+            removeClasses(resultsCard, cssClasses.hidden);
+
+            const percentage = ((score / quizData.length) * 100).toFixed(0);
+            document.getElementById('final-score').textContent = `${score}/${quizData.length}`;
+            document.getElementById('final-percentage').textContent = `${percentage}%`;
+
+            // Display AI review section if there were errors
+            const aiContainer = document.getElementById('ai-review-container');
+            if (globalQuizInProgress.fails > 0) {
+                removeClasses(aiContainer, cssClasses.hidden);
+            } else {
+                addClasses(aiContainer, cssClasses.hidden);
+            }
+
+            // Save results to LocalForage
+            localforage.setItem('outpostQuizLastResult', {
+                score: score,
+                total: quizData.length,
+                percentage: percentage,
+                timestamp: new Date().toLocaleString('th-TH')
+            }).catch(err => {
+                console.error("Error saving to LocalForage:", err);
+            });
+
+            globalQuizInProgress.finished = true;
+            await publishQuizResult(globalQuizInProgress);
+        }
+
+        async function checkPreviousScores() {
+            const previousScoreContainer = document.getElementById('previous-score-container');
+            try {
+                const lastResult = await localforage.getItem('outpostQuizLastResult');
+                if (lastResult) {
+                    document.getElementById('previous-score-text').textContent =
+                        `คะแนน: ${lastResult.score}/${lastResult.total} (${lastResult.percentage}%) - เมื่อ: ${lastResult.timestamp}`;
+                    removeClasses(previousScoreContainer, cssClasses.hidden);
+                } else {
+                    addClasses(previousScoreContainer, cssClasses.hidden);
+                }
+            } catch (err) {
+                console.error("Error reading from LocalForage:", err);
+                addClasses(previousScoreContainer, cssClasses.hidden);
+            }
+        }
+
+
+        // --- Event Listeners ---
+
+        nextButton.addEventListener('click', () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        restartButton.addEventListener('click', startQuiz);
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', async (event) => {
+            console.log('DOMContentLoaded');
+            const queryString = window.location.search; // ?quiz=001223/Unit4/Quiz_Vocabulary4_1
+            const urlParams = new URLSearchParams(queryString);
+            let quizPath = urlParams.get('quiz'); // "purple"
+            if (quizPath) {
+                loadQuizData(quizPath);
+                return;
+            }
+
+            const svgBTNSize = 18;
+            createStickyToolbar({
+                buttons: [
+                    {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/home.svg',
+                        svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 16 16"><path fill="#000000" d="M8 1.4L6 2.7V1H4v3L0 6.6l.6.8L8 2.6l7.4 4.8l.6-.8z"/><path fill="#000000" d="M8 4L2 8v7h5v-3h2v3h5V8z"/></svg>`,
+                        tip: 'Home',
+                        onClick: () => alert('Home clicked'),
+                    },
+                    {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 512 512"><path fill="#000000" d="M379.087 75.202c18.168 40.684 25.533 83.89 32.421 127.21c-1.265.358-2.528.72-3.794 1.082c-.91-2.534-1.984-5.021-2.707-7.61c-5.218-18.653-10.48-37.296-15.474-56.011c-1.797-6.733-6.035-10.084-12.096-13.381c-8.901-4.842-17.313-11.084-24.69-18.046c-4.707-4.44-8.735-7.149-15.413-7.078c-44.46.47-88.925.515-133.384.924c-2.963.03-6.63 1.124-8.728 3.065c-8.089 7.484-15.671 15.514-25.642 25.556c26.3 64.04 39.522 133.84 33.845 208.044c-12.626-8.084-22.4-14.48-22.981-31.418c-2.904-84.661-29.02-161.225-83.58-227.108c-1.228-1.482-1.838-3.476-2.738-5.23h284.96ZM48.73 107.847c12.663 0 25.332-.2 37.984.172c2.51.072 6.022 1.668 7.277 3.68c37.836 60.79 67.334 124.635 71.155 197.682c.018.29-.282.594-1.362 2.716c-22.612-77.293-63.404-142.735-115.872-201.39c.274-.952.545-1.906.819-2.86zM8 161.029c18.09-.658 33.39-1.318 48.692-1.602c1.541-.03 3.36 2.009 4.65 3.443c29.848 33.202 56.936 68.281 73.633 110.235c3.177 7.98 5.351 16.36 7.989 24.555C108.379 243.235 60.254 202.538 8 161.028Zm194.474 275.77c-31.481-50.066-61.803-98.29-92.128-146.513l1.112-1.428c2.542 2.047 56.622 45.412 80.91 65.302c6.766 5.541 11.878 5.441 18.915-.274c82.584-67.085 174.737-117.862 272.583-158.809c5.223-2.185 10.64-3.916 15.983-5.816c1.186-.42 2.44-.654 4.151-.222c-113.623 65.987-222.022 138.239-301.526 247.76Z"/></svg>`,
+                        tip: 'Quiz',
+                        onClick: async () => {
+                            await loadQuizData("");
+                        },
+                    }, {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 48 48"><g fill="none" stroke-linejoin="round" stroke-width="4"><path fill="#2F88FF" stroke="#000" d="M21 38C30.3888 38 38 30.3888 38 21C38 11.6112 30.3888 4 21 4C11.6112 4 4 11.6112 4 21C4 30.3888 11.6112 38 21 38Z"/><path stroke="#fff" stroke-linecap="round" d="M26.657 14.3431C25.2093 12.8954 23.2093 12 21.0001 12C18.791 12 16.791 12.8954 15.3433 14.3431"/><path stroke="#000" stroke-linecap="round" d="M33.2216 33.2217L41.7069 41.707"/></g></svg>`,
+                        tip: 'Search',
+                        onClick: () => alert('Search clicked'),
+                    }, {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 24 24"><path fill="#000000" d="M8 15h8v-.55q0-1.125-1.1-1.788T12 12q-1.8 0-2.9.663T8 14.45V15Zm4-4q.825 0 1.413-.588T14 9q0-.825-.588-1.413T12 7q-.825 0-1.413.588T10 9q0 .825.588 1.413T12 11ZM8 21v-2H4q-.825 0-1.413-.588T2 17V5q0-.825.588-1.413T4 3h16q.825 0 1.413.588T22 5v12q0 .825-.588 1.413T20 19h-4v2H8Z"/></svg>`,
+                        tip: 'SignIn',
+                        onClick: () => signInWithGoogle(),
+                    }
+                ],
+            });
+
+            // Init Gemini
+            initGeminiWorker();
+            document.getElementById('ai-generate-btn').onclick = startSmartReview;
+        });
+
+
+    </script>
+
+    <script>
+
+        let globalQuizInProgress = {
+            quizPath: '',
+            quizTitle: "",
+            questions: 0,
+            fails: 0,
+            failed: [],
+            finished: false
+        };
+
+        // --- Gemini AI Integration ---
+        const GEMINI_API_KEY = "AIzaSy" + "D..."; // Placeholder, will attempt to find or ask
+        let geminiWorker = null;
+
+        function initGeminiWorker() {
+            if (typeof SharedWorker !== 'undefined') {
+                try {
+                    geminiWorker = new SharedWorker('workerGemini.js');
+                    geminiWorker.port.onmessage = function (e) {
+                        const { type, success, data, error } = e.data;
+                        if (type === 'response') {
+                            if (success) {
+                                handleGeminiResponse(data);
+                            } else {
+                                console.error('Gemini Error:', error);
+                                updateAIStatus('Failed: ' + error, 'error');
+                            }
+                        }
+                    };
+                    geminiWorker.port.start();
+                    console.log('Gemini SharedWorker initialized');
+                } catch (e) {
+                    console.error('Failed to init Gemini Worker:', e);
+                }
+            }
+        }
+
+        async function fetchSourceContent(quizPath) {
+            try {
+                // 1. Get quiz context from the path
+                const parts = quizPath.split('/');
+                const setIndex = parts.indexOf('quizSets');
+                if (setIndex === -1 || setIndex + 1 >= parts.length) return null;
+                const quizSetID = parts[setIndex + 1];
+
+                // 2. Fetch the quiz set to find targetID
+                const qsSnapshot = await database.ref(`quizSets/${quizSetID}`).once('value');
+                const qsData = qsSnapshot.val();
+                if (!qsData || !qsData.targetID) return null;
+
+                // 3. Fetch the note content (assuming ankiNotes path)
+                const noteSnapshot = await database.ref(`ankiNotes/${qsData.targetID}`).once('value');
+                const noteData = noteSnapshot.val();
+                if (!noteData) return null;
+
+                return {
+                    title: qsData.title,
+                    targetID: qsData.targetID,
+                    ankiJSON: noteData.ankiJSON
+                };
+            } catch (e) {
+                console.error('Error fetching source content:', e);
+                return null;
+            }
+        }
+
+        async function startSmartReview() {
+            if (!globalQuizInProgress.failed || globalQuizInProgress.failed.length === 0) {
+                alert("Great job! No mistakes to review.");
+                return;
+            }
+
+            updateAIStatus('Analyzing mistakes...', 'loading');
+
+            const sourceContent = await fetchSourceContent(globalQuizInProgress.quizPath);
+            if (!sourceContent) {
+                updateAIStatus('Could not find source notes.', 'error');
+                return;
+            }
+
+            const prompt = `
+# Role
+Evaluation specialist focus on Thai language learning.
+
+# Objective
+Analyze user's failed quiz questions and generate a NEW targeted review quiz (JSON array) based on the provided source note context.
+
+# Input Data
+- Failed Questions: ${JSON.stringify(globalQuizInProgress.failed)}
+- Source Note Title: ${sourceContent.title}
+- Source Content (Context): ${JSON.stringify(sourceContent.ankiJSON)}
+
+# Requirements
+1. Identify the knowledge gaps revealed by the failed questions.
+2. Create 5-10 NEW multiple-choice questions that specifically target those gaps using the Source Content.
+3. Ensure question variety (grammar, usage, meaning).
+4. Output ONLY a raw JSON array of question objects.
+
+# Output Format
+[
+  {
+    "question": "text",
+    "correct_answer": "ID",
+    "options": [
+      {"id": "A", "text": "choice"},
+      ...
+    ]
+  }
+]
+`;
+
+            if (geminiWorker) {
+                geminiWorker.port.postMessage({
+                    type: 'callGemini',
+                    apiKey: GEMINI_API_KEY, // User should configure this 
+                    model: 'gemini-1.5-flash',
+                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                    generationConfig: { temperature: 0.4, maxOutputTokens: 2000 }
+                });
+            } else {
+                updateAIStatus('AI Worker unavailable.', 'error');
+            }
+        }
+
+        function handleGeminiResponse(aiText) {
+            try {
+                // Extract JSON from response
+                const jsonMatch = aiText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+                const quizArray = JSON.parse(jsonMatch ? jsonMatch[0] : aiText);
+
+                if (Array.isArray(quizArray)) {
+                    quizData = quizArray;
+                    updateAIStatus('Personalized quiz ready!', 'success');
+                    alert("Gemini has created a custom review quiz for you!");
+                    startQuiz();
+                } else {
+                    throw new Error("Invalid output format");
+                }
+            } catch (e) {
+                console.error('Failed to parse AI quiz:', e);
+                updateAIStatus('AI rendering failed.', 'error');
+            }
+        }
+
+        function updateAIStatus(msg, type) {
+            const statusEl = document.getElementById('ai-status');
+            const loadingEl = document.getElementById('ai-loading');
+            const btnEl = document.getElementById('ai-generate-btn');
+
+            statusEl.textContent = msg;
+            if (type === 'loading') {
+                loadingEl.classList.remove('hidden');
+                btnEl.disabled = true;
+                btnEl.classList.add('opacity-50');
+            } else {
+                loadingEl.classList.add('hidden');
+                btnEl.disabled = false;
+                btnEl.classList.remove('opacity-50');
+            }
+
+            if (type === 'error') statusEl.classList.add('text-red-500');
+            else statusEl.classList.remove('text-red-500');
+        }
+
+        function formatDateYYYYMMDD(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+
+        async function loadQuizData(quizPath) {
+            let quizRef = '';
+            if (quizPath == null || quizPath == "") {
+                let cDate = new Date();
+                quizRef = `Quiz_todo/${formatDateYYYYMMDD(cDate)}`;
+                let snapshot = await database.ref(quizRef).once('value');
+                const jsonQuizToday = snapshot.val();
+                console.log('jsonQuizToday:', jsonQuizToday);
+                chooseQuiz(jsonQuizToday);
+            } else {
+
+                snapshot = await database.ref(quizPath).once('value');
+                let jsonQuizData = snapshot.val();
+                console.log(jsonQuizData);
+                quizData = jsonQuizData;
+                startQuiz();
+
+                globalQuizInProgress.quizPath = quizPath;
+                globalQuizInProgress.quizTitle = quizPath;
+                globalQuizInProgress.questions = quizData.length;
+                globalQuizInProgress.finished = false;
+                globalQuizInProgress.fails = 0;
+                globalQuizInProgress.failed = [];
+
+            }
+        }
+
+        // --- 修改后的 publishQuizResult 函数 ---
+        async function publishQuizResult(jsonQuizProgress) {
+            try {
+                // 1. 从 quizPath 中提取 quizSet 的 key
+                // 假设路径格式为 "quizSets/-Ofx7fNEug7-HDi_Zcnq/quizzes"
+                let quizSetID = 'unknown';
+                if (jsonQuizProgress.quizPath) {
+                    const parts = jsonQuizProgress.quizPath.split('/');
+                    const setIndex = parts.indexOf('quizSets');
+                    if (setIndex !== -1 && setIndex + 1 < parts.length) {
+                        quizSetID = parts[setIndex + 1];
+                    }
+                }
+
+                // 2. 将 key 添加到对象中
+                jsonQuizProgress.quizSetID = quizSetID;
+
+                // 3. 增加 testedOn 字段 (当前日期)
+                jsonQuizProgress.testedOn = formatDateYYYYMMDD(new Date());
+
+                // 4. 将结果添加到数据库 quizSetLogs 路径下
+                console.log("Publishing result:", jsonQuizProgress);
+                await database.ref('quizSetLogs').push(jsonQuizProgress);
+                console.log("Result published successfully to quizSetLogs");
+
+            } catch (error) {
+                console.error("Error publishing quiz result:", error);
+            }
+        }
+
+        function chooseQuiz(Quizs) {
+            console.log(Quizs);
+            const modalSchema = [
+                { name: "Quiz", type: "select", option: [] }
+            ];
+
+            for (let i = 0; i < Quizs.length; i++) {
+                modalSchema[0].option.push(Quizs[i].title);
+            }
+
+            const modalCallbacks = {
+                onConfirm: async (data) => {
+                    console.log(Quizs);
+                    console.log('Confirmed:', data);
+                    for (let i = 0; i < Quizs.length; i++) {
+                        if (Quizs[i].title == data.Quiz) {
+                            let quizPath = Quizs[i].path;
+                            snapshot = await database.ref(quizPath).once('value');
+                            let jsonQuizData = snapshot.val();
+                            console.log(jsonQuizData);
+                            quizData = jsonQuizData;
+                            startQuiz();
+
+                            globalQuizInProgress.quizPath = quizPath;
+                            globalQuizInProgress.quizTitle = quizPath;
+                            globalQuizInProgress.questions = quizData.length;
+                            globalQuizInProgress.finished = false;
+                            globalQuizInProgress.fails = 0;
+                            globalQuizInProgress.failed = [];
+                        }
+                    }
+                },
+                onCancel: () => console.log('Cancelled')
+            };
+
+            createSchemaModal(modalSchema, modalCallbacks);
+        }
+
+    </script>
+    <script>
+        function createSchemaModal(schema, callbacks) {
+            // Remove existing modal if present
+            const existing = document.getElementById('schema-modal');
+            if (existing) existing.remove();
+
+            // Create modal container
+            const modal = document.createElement('div');
+            modal.id = 'schema-modal';
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100vw';
+            modal.style.height = '100vh';
+            modal.style.background = 'rgba(0,0,0,0.5)';
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            modal.style.zIndex = '10000';
+
+            // Create modal content box
+            const box = document.createElement('div');
+            box.style.background = '#fff';
+            box.style.padding = '20px';
+            box.style.borderRadius = '8px';
+            box.style.minWidth = '300px';
+            box.style.maxWidth = '400px';
+            box.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+            box.style.display = 'flex';
+            box.style.flexDirection = 'column';
+            box.style.gap = '12px';
+
+            const formData = {};
+
+            schema.forEach(field => {
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'flex';
+                wrapper.style.flexDirection = 'column';
+
+                const label = document.createElement('label');
+                label.textContent = field.name;
+                label.style.marginBottom = '4px';
+                label.style.fontWeight = 'bold';
+
+                let input;
+
+                if (field.type === 'string') {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.placeholder = field.placeholder || '';
+                } else if (field.type === 'select') {
+                    input = document.createElement('select');
+                    field.option.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt;
+                        option.textContent = opt;
+                        input.appendChild(option);
+                    });
+                } else if (field.type === 'checkbox') {
+                    input = document.createElement('input');
+                    input.type = 'checkbox';
+                    wrapper.style.flexDirection = 'row';
+                    wrapper.style.alignItems = 'center';
+                    label.style.marginRight = '8px';
+                }
+
+                input.name = field.name;
+                input.style.padding = '6px';
+                input.style.border = '1px solid #ccc';
+                input.style.borderRadius = '4px';
+
+                wrapper.appendChild(label);
+                wrapper.appendChild(input);
+                box.appendChild(wrapper);
+            });
+
+            // Buttons
+            const buttonRow = document.createElement('div');
+            buttonRow.style.display = 'flex';
+            buttonRow.style.justifyContent = 'flex-end';
+            buttonRow.style.gap = '10px';
+            buttonRow.style.marginTop = '16px';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.style.padding = '6px 12px';
+            cancelBtn.style.background = '#e5e7eb'; /* bg-gray-200 equivalent */
+            cancelBtn.style.color = '#1f2937'; /* text-gray-800 equivalent */
+            cancelBtn.style.border = '1px solid #d1d5db'; /* border-gray-300 equivalent */
+            cancelBtn.style.borderRadius = '4px';
+            cancelBtn.style.cursor = 'pointer';
+            cancelBtn.onclick = () => {
+                callbacks.onCancel?.();
+                modal.remove();
+            };
+
+            const confirmBtn = document.createElement('button');
+            confirmBtn.textContent = 'Confirm';
+            confirmBtn.style.padding = '6px 12px';
+            confirmBtn.style.background = '#2563eb'; /* bg-blue-600 equivalent */
+            confirmBtn.style.color = '#fff';
+            confirmBtn.style.border = 'none';
+            confirmBtn.style.borderRadius = '4px';
+            confirmBtn.style.cursor = 'pointer';
+            confirmBtn.onclick = () => {
+                schema.forEach(field => {
+                    const el = box.querySelector(`[name="${field.name}"]`);
+                    if (field.type === 'checkbox') {
+                        formData[field.name] = el.checked;
+                    } else {
+                        formData[field.name] = el.value;
+                    }
+                });
+                callbacks.onConfirm?.(formData);
+                modal.remove();
+            };
+
+            buttonRow.appendChild(cancelBtn);
+            buttonRow.appendChild(confirmBtn);
+            box.appendChild(buttonRow);
+            modal.appendChild(box);
+            document.body.appendChild(modal);
+        }
+    </script>
+
+</body>
+
+</html>

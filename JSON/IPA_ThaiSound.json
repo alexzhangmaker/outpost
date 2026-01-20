@@ -1,0 +1,316 @@
+{
+  "final_consonants": [
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pcf-m/pcf-m.mp3",
+      "description": "ม",
+      "symbol": "",
+      "thai": "[m]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pcf-n/pcf-n.mp3",
+      "description": "น",
+      "symbol": "",
+      "thai": "[n]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pcf-ng/pcf-ng.mp3",
+      "description": "ง",
+      "symbol": "",
+      "thai": "[ŋ]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pcf-p/pcf-p.mp3",
+      "description": "พ",
+      "symbol": "",
+      "thai": "[p]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pcf-k/pcf-k.mp3",
+      "description": "ค",
+      "symbol": "",
+      "thai": "[k]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pcf-t/pcf-t.mp3",
+      "description": "ท",
+      "symbol": "",
+      "thai": "[t]"
+    }
+  ],
+  "initial_consonants": [
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-b/pc-b.mp3",
+      "description": "บ",
+      "symbol": "",
+      "thai": "[b]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-p/pc-p.mp3",
+      "description": "พ",
+      "symbol": "",
+      "thai": "[pʰ]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-bp/pc-bp.mp3",
+      "description": "ป",
+      "symbol": "",
+      "thai": "[p]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-d/pc-d.mp3",
+      "description": "ด",
+      "symbol": "",
+      "thai": "[d]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-t/pc-t.mp3",
+      "description": "ท",
+      "symbol": "",
+      "thai": "[tʰ]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-dt/pc-dt.mp3",
+      "description": "ต",
+      "symbol": "",
+      "thai": "[t]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-g/pc-g.mp3",
+      "description": "ก",
+      "symbol": "",
+      "thai": "[k]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-k/pc-k.mp3",
+      "description": "ค",
+      "symbol": "",
+      "thai": "[kʰ]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-j/pc-j.mp3",
+      "description": "จ",
+      "symbol": "",
+      "thai": "[tɕ]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-ch/pc-ch.mp3",
+      "description": "ช",
+      "symbol": "",
+      "thai": "[tɕʰ]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-f/pc-f.mp3",
+      "description": "ฟ",
+      "symbol": "",
+      "thai": "[f]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-h/pc-h.mp3",
+      "description": "ฮ",
+      "symbol": "",
+      "thai": "[h]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-l/pc-l.mp3",
+      "description": "ล",
+      "symbol": "",
+      "thai": "[l]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-r/pc-r.mp3",
+      "description": "ร",
+      "symbol": "",
+      "thai": "[r]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-m/pc-m.mp3",
+      "description": "ม",
+      "symbol": "",
+      "thai": "[m]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-n/pc-n.mp3",
+      "description": "น",
+      "symbol": "",
+      "thai": "[n]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-ng/pc-ng.mp3",
+      "description": "ง",
+      "symbol": "",
+      "thai": "[ŋ]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-s/pc-s.mp3",
+      "description": "ซ",
+      "symbol": "",
+      "thai": "[s]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-w/pc-w.mp3",
+      "description": "ว",
+      "symbol": "",
+      "thai": "[w]"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/pc-y/pc-y.mp3",
+      "description": "ย",
+      "symbol": "",
+      "thai": "[j]"
+    }
+  ],
+  "tones": [
+    {
+      "audioUrl": "https://slice-of-thai.com/s/tone-mid/tone-mid.mp3",
+      "description": "[ˈpaː]",
+      "name": "",
+      "phonetic": "mid tone"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/tone-low/tone-low.mp3",
+      "description": "[ˈpàː]",
+      "name": "",
+      "phonetic": "low tone"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/tone-falling/tone-falling.mp3",
+      "description": "[ˈpâː]",
+      "name": "",
+      "phonetic": "falling tone"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/tone-high/tone-high.mp3",
+      "description": "[ˈpáː]",
+      "name": "",
+      "phonetic": "high tone"
+    },
+    {
+      "audioUrl": "https://slice-of-thai.com/s/tone-rising/tone-rising.mp3",
+      "description": "[ˈpǎː]",
+      "name": "",
+      "phonetic": "rising tone"
+    }
+  ],
+  "vowels": [
+    {
+      "audioUrl": "",
+      "description": "lie, how, Boston Haavard",
+      "symbol": "make_audio_player(ei('sp1643'), '../s/pv-a/pv-a.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "Thai, sky",
+      "symbol": "make_audio_player(ei('sp1655'), '../s/pv-ai/pv-ai.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "chow, powder",
+      "symbol": "make_audio_player(ei('sp1670'), '../s/pv-ao/pv-ao.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "pale/pet",
+      "symbol": "make_audio_player(ei('sp1679'), '../s/_e40__e1b__e4a__e30_/_e40__e1b__e4a__e30_.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "Beowulf, stay over",
+      "symbol": "make_audio_player(ei('sp1687'), '../s/pv-eo/pv-eo.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "cat",
+      "symbol": "make_audio_player(ei('sp1692'), '../s/pv-_25b_/pv-_25b_.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "baby waeh waeh",
+      "symbol": "make_audio_player(ei('sp1699'), '../s/pv-_25b_o/pv-_25b_o.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "sofa, about, duuh!",
+      "symbol": "make_audio_player(ei('sp1704'), '../s/pv-_259_/pv-_259_.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "sofa yawn",
+      "symbol": "make_audio_player(ei('sp1709'), '../s/pv-_259_i/pv-_259_i.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "beet/bit",
+      "symbol": "make_audio_player(ei('sp1719'), '../s/_e2b__e34__e21__e30_/_e2b__e34__e21__e30_.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "Mama Mia",
+      "symbol": "make_audio_player(ei('sp1736'), '../s/pv-ia/pv-ia.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "go (US English)",
+      "symbol": "make_audio_player(ei('sp1743'), '../s/pv-o/pv-o.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "law (US), lot (UK)",
+      "symbol": "make_audio_player(ei('sp1752'), '../s/pv-_254_/pv-_254_.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "lawyer (US English)",
+      "symbol": "make_audio_player(ei('sp1757'), '../s/pv-_254_i/pv-_254_i.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "boot",
+      "symbol": "make_audio_player(ei('sp1762'), '../s/pv-u/pv-u.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "Louie, Louie",
+      "symbol": "make_audio_player(ei('sp1767'), '../s/pv-ui/pv-ui.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "too alone (roughly)",
+      "symbol": "make_audio_player(ei('sp1773'), '../s/pv-ua/pv-ua.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "too why (roughly)",
+      "symbol": "make_audio_player(ei('sp1778'), '../s/pv-uai/pv-uai.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "boot, with a smile",
+      "symbol": "make_audio_player(ei('sp1783'), '../s/pv-_289_/pv-_289_.mp3', 'play'); (short)",
+      "thai": ""
+    },
+    {
+      "audioUrl": "",
+      "description": "too alone, with a smile",
+      "symbol": "make_audio_player(ei('sp1791'), '../s/pv-_289_a/pv-_289_a.mp3', 'play'); (short)",
+      "thai": ""
+    }
+  ]
+}

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Sounds IPA - Interactive Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(90deg, #3b82f633, transparent);
+            border-left: 4px solid #3b82f6;
+        }
+
+        .sound-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            background: rgba(51, 65, 85, 0.8);
+        }
+
+        .animate-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+
+<body class="h-screen overflow-hidden flex">
+
+    <!-- Sidebar -->
+    <aside class="w-72 h-full glass border-r border-slate-700 flex flex-col">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
+                Thai Sounds
+            </h1>
+            <p class="text-slate-400 text-sm mt-1">IPA Interactive Guide</p>
+        </div>
+
+        <nav id="sidebar-nav" class="flex-1 px-3 space-y-1 overflow-y-auto">
+            <!-- Navigation items will be injected here -->
+            <div class="p-4 flex items-center justify-center">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            </div>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-500 text-center">
+            Data from IPA_ThaiSound.json
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 h-full overflow-y-auto bg-slate-900/50 relative">
+        <div id="content-header" class="sticky top-0 z-10 p-8 pb-4 bg-slate-900/80 backdrop-blur-md">
+            <h2 id="category-title" class="text-3xl font-bold text-white mb-2">Welcome</h2>
+            <div class="h-1 w-20 bg-blue-500 rounded-full"></div>
+        </div>
+
+        <div id="content-grid" class="p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <!-- Sound items will be injected here -->
+            <div class="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
+                <p>Loading sounds...</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let thaiData = {};
+        const audio = new Audio();
+        const BASE_ASSET_URL = "https://slice-of-thai.com/";
+
+        // Alphabet Data from thai-alphabet.com
+        const ALPHABET_DATA = [
+            { thai: "ก", name: "Ko Kai", meaning: "Chicken", class: "Middle", initial: "k", final: "k" },
+            { thai: "ข", name: "Kho Khai", meaning: "Egg", class: "High", initial: "kh", final: "k" },
+            { thai: "ค", name: "Kho Khwai", meaning: "Buffalo", class: "Low", initial: "kh", final: "k" },
+            { thai: "ฆ", name: "Kho Ra-khang", meaning: "Bell", class: "Low", initial: "kh", final: "k" },
+            { thai: "ง", name: "Ngo Ngu", meaning: "Snake", class: "Low", initial: "ng", final: "ng" },
+            { thai: "จ", name: "Cho Chan", meaning: "Plate", class: "Middle", initial: "j", final: "t" },
+            { thai: "ฉ", name: "Cho Ching", meaning: "Cymbals", class: "High", initial: "ch", final: "-" },
+            { thai: "ช", name: "Cho Chang", meaning: "Elephant", class: "Low", initial: "ch", final: "t" },
+            { thai: "ซ", name: "So So", meaning: "Chain", class: "Low", initial: "s", final: "t" },
+            { thai: "ฌ", name: "Cho Cho", meaning: "Tree", class: "Low", initial: "ch", final: "-" },
+            { thai: "ญ", name: "Yo Ying", meaning: "Woman", class: "Low", initial: "y", final: "n" },
+            { thai: "ฎ", name: "Do Cha-da", meaning: "Headdress", class: "Middle", initial: "d", final: "t" },
+            { thai: "ฏ", name: "To Pa-tak", meaning: "Goad", class: "Middle", initial: "t", final: "t" },
+            { thai: "ฐ", name: "Tho Than", meaning: "Base", class: "High", initial: "th", final: "t" },
+            { thai: "ฑ", name: "Tho Mon-tho", meaning: "Montho", class: "Low", initial: "th", final: "t" },
+            { thai: "ฒ", name: "Tho Phu-thao", meaning: "Elder", class: "Low", initial: "th", final: "t" },
+            { thai: "ณ", name: "No Nen", meaning: "Novice", class: "Low", initial: "n", final: "n" },
+            { thai: "ด", name: "Do Dek", meaning: "Child", class: "Middle", initial: "d", final: "t" },
+            { thai: "ต", name: "To Tao", meaning: "Turtle", class: "Middle", initial: "t", final: "t" },
+            { thai: "ถ", name: "Tho Thung", meaning: "Sack", class: "High", initial: "th", final: "t" },
+            { thai: "ท", name: "Tho Tha-han", meaning: "Soldier", class: "Low", initial: "th", final: "t" },
+            { thai: "ธ", name: "Tho Thong", meaning: "Flag", class: "Low", initial: "th", final: "t" },
+            { thai: "น", name: "No Nu", meaning: "Mouse", class: "Low", initial: "n", final: "n" },
+            { thai: "บ", name: "Bo Bai-mai", meaning: "Leaf", class: "Middle", initial: "b", final: "p" },
+            { thai: "ป", name: "Po Pla", meaning: "Fish", class: "Middle", initial: "p", final: "p" },
+            { thai: "ผ", name: "Pho Phung", meaning: "Bee", class: "High", initial: "ph", final: "-" },
+            { thai: "ฝ", name: "Fo Fa", meaning: "Lid", class: "High", initial: "f", final: "-" },
+            { thai: "พ", name: "Pho Phan", meaning: "Tray", class: "Low", initial: "ph", final: "p" },
+            { thai: "ฟ", name: "Fo Fan", meaning: "Teeth", class: "Low", initial: "f", final: "p" },
+            { thai: "ภ", name: "Pho Sam-phao", meaning: "Junk", class: "Low", initial: "ph", final: "p" },
+            { thai: "ม", name: "Mo Ma", meaning: "Horse", class: "Low", initial: "m", final: "m" },
+            { thai: "ย", name: "Yo Yak", meaning: "Giant", class: "Low", initial: "y", final: "y" },
+            { thai: "ร", name: "Ro Rua", meaning: "Boat", class: "Low", initial: "r", final: "n" },
+            { thai: "ล", name: "Lo Ling", meaning: "Monkey", class: "Low", initial: "l", final: "n" },
+            { thai: "ว", name: "Wo Waen", meaning: "Ring", class: "Low", initial: "w", final: "u" },
+            { thai: "ศ", name: "So Sala", meaning: "Pavilion", class: "High", initial: "s", final: "t" },
+            { thai: "ษ", name: "So Ru-si", meaning: "Hermit", class: "High", initial: "s", final: "t" },
+            { thai: "ส", name: "So Sua", meaning: "Tiger", class: "High", initial: "s", final: "t" },
+            { thai: "ห", name: "Ho Hip", meaning: "Chest", class: "High", initial: "h", final: "-" },
+            { thai: "ฬ", name: "Lo Chu-la", meaning: "Kite", class: "Low", initial: "l", final: "n" },
+            { thai: "อ", name: "O Ang", meaning: "Basin", class: "Middle", initial: "-", final: "-" },
+            { thai: "ฮ", name: "Ho Nok-hu", meaning: "Owl", class: "Low", initial: "h", final: "-" }
+        ];
+
+        let alphabetAudio = {};
+
+        async function init() {
+            try {
+                // Load IPA data
+                const ipaResponse = await fetch('./JSON/IPA_ThaiSound.json');
+                thaiData = await ipaResponse.json();
+
+                // Load Alphabet Audio data (Base64)
+                try {
+                    const audioResponse = await fetch('./JSON/alphabet_audio.json');
+                    alphabetAudio = await audioResponse.json();
+                } catch (e) {
+                    console.warn('Alphabet audio file not found, some sounds may not play.');
+                }
+
+                renderSidebar();
+                // Select first category by default
+                selectCategory('alphabet');
+            } catch (error) {
+                console.error('Error loading JSON:', error);
+                document.getElementById('content-grid').innerHTML = `
+                    <div class="col-span-full text-red-400 p-8 glass rounded-xl">
+                        Failed to load data. Please ensure the JSON file exists.
+                    </div>
+                `;
+            }
+        }
+
+        function formatCategoryName(key) {
+            return key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+
+        function renderSidebar() {
+            const nav = document.getElementById('sidebar-nav');
+            nav.innerHTML = `
+                <button class="sidebar-item w-full flex items-center px-4 py-3 text-slate-300 hover:text-white transition-all rounded-lg text-left group" data-key="alphabet" onclick="selectCategory('alphabet')">
+                    <span class="flex-1 font-medium">泰语字母发音</span>
+                    <svg class="w-4 h-4 text-slate-500 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+                <div class="h-px bg-slate-800 my-2 mx-4"></div>
+            `;
+
+            Object.keys(thaiData).forEach(key => {
+                const button = document.createElement('button');
+                button.className = 'sidebar-item w-full flex items-center px-4 py-3 text-slate-300 hover:text-white transition-all rounded-lg text-left group';
+                button.dataset.key = key;
+                button.onclick = () => selectCategory(key);
+
+                button.innerHTML = `
+                    <span class="flex-1 font-medium">${formatCategoryName(key)}</span>
+                    <svg class="w-4 h-4 text-slate-500 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                `;
+                nav.appendChild(button);
+            });
+        }
+
+        function selectCategory(key) {
+            // Update UI Active State
+            document.querySelectorAll('.sidebar-item').forEach(el => {
+                el.classList.remove('active', 'text-white', 'text-blue-400');
+                if (el.dataset.key === key) {
+                    el.classList.add('active', 'text-white');
+                }
+            });
+
+            if (key === 'alphabet') {
+                document.getElementById('category-title').textContent = "泰语字母发音";
+                renderAlphabet();
+            } else {
+                document.getElementById('category-title').textContent = formatCategoryName(key);
+                renderContent(key);
+            }
+        }
+
+        function extractAudioUrl(item) {
+            if (item.audioUrl && item.audioUrl.length > 0) return item.audioUrl;
+
+            // Handle vowel symbol extraction
+            if (item.symbol && item.symbol.includes("make_audio_player")) {
+                const match = item.symbol.match(/'(\.\.\/s\/.*?)'/);
+                if (match && match[1]) {
+                    // Convert ../s/ to s/ and prepend base
+                    return BASE_ASSET_URL + match[1].replace('../', '');
+                }
+            }
+            return null;
+        }
+
+        function renderAlphabet() {
+            const grid = document.getElementById('content-grid');
+            grid.innerHTML = '';
+
+            // Group by class
+            const groups = {
+                'Middle': ALPHABET_DATA.filter(d => d.class === 'Middle'),
+                'High': ALPHABET_DATA.filter(d => d.class === 'High'),
+                'Low': ALPHABET_DATA.filter(d => d.class === 'Low')
+            };
+
+            Object.entries(groups).forEach(([className, items]) => {
+                const header = document.createElement('div');
+                header.className = 'col-span-full mt-6 mb-2 text-sm font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-4';
+                header.innerHTML = `<span>${className} Class</span><div class="h-px flex-1 bg-slate-800"></div>`;
+                grid.appendChild(header);
+
+                items.forEach((item, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'sound-card glass p-5 rounded-2xl flex flex-col justify-between animate-in';
+                    card.style.animationDelay = `${index * 30}ms`;
+
+                    // IMPROVED audio key mapping logic
+                    const nameLower = item.name.toLowerCase();
+                    const firstSpaceIndex = nameLower.indexOf(' ');
+                    let audioKey;
+                    if (firstSpaceIndex !== -1) {
+                        const firstPart = nameLower.substring(0, firstSpaceIndex);
+                        const restPart = nameLower.substring(firstSpaceIndex + 1).replace(/[ -]/g, '');
+                        audioKey = `consonant-${firstPart}-${restPart}`;
+                    } else {
+                        audioKey = `consonant-${nameLower}`;
+                    }
+
+                    const audioData = alphabetAudio[audioKey];
+
+                    card.innerHTML = `
+                        <div class="flex flex-col gap-1">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-4xl font-bold font-serif text-blue-400">${item.thai}</span>
+                                    ${audioData ? `
+                                    <button onclick="playMedia('${audioData}', this)" class="p-2 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white rounded-full transition-all group active:scale-95">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8 5v14l11-7z"></path>
+                                        </svg>
+                                    </button>
+                                    ` : ''}
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded uppercase font-bold">${item.class}</span>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <p class="text-white font-semibold">${item.name}</p>
+                                <p class="text-slate-400 text-sm italic">"${item.meaning}"</p>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-slate-800/50 grid grid-cols-2 gap-2 text-center">
+                                <div>
+                                    <p class="text-[10px] text-slate-500 uppercase">Initial</p>
+                                    <p class="text-blue-300 font-mono font-bold">${item.initial}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-slate-500 uppercase">Final</p>
+                                    <p class="text-indigo-300 font-mono font-bold">${item.final}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            });
+        }
+
+        function renderContent(key) {
+            const grid = document.getElementById('content-grid');
+            grid.innerHTML = '';
+
+            const items = thaiData[key] || [];
+
+            items.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'sound-card glass p-6 rounded-2xl flex flex-col justify-between animate-in';
+                card.style.animationDelay = `${index * 50}ms`;
+
+                const url = extractAudioUrl(item);
+                const displayThai = item.thai || item.phonetic || item.name || '';
+                const displayDesc = item.description || '';
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="space-y-1">
+                            <span class="text-3xl font-bold font-serif text-blue-400">${displayThai}</span>
+                            <p class="text-slate-400 text-sm leading-relaxed">${displayDesc}</p>
+                        </div>
+                        ${url ? `
+                        <button onclick="playMedia('${url}', this)" class="p-3 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white rounded-full transition-all group active:scale-95 shadow-lg shadow-blue-500/10">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"></path>
+                            </svg>
+                        </button>
+                        ` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function playMedia(url, btn) {
+            // Visual feedback
+            const originalColor = btn.classList.contains('bg-blue-600') ? 'bg-blue-600' : 'bg-blue-600/20';
+            btn.classList.add('ring-4', 'ring-blue-500/30');
+
+            audio.src = url;
+            audio.play().catch(e => {
+                console.error('Playback error:', e);
+                alert('Could not play audio. Check console for details.');
+            });
+
+            audio.onended = () => {
+                btn.classList.remove('ring-4', 'ring-blue-500/30');
+            };
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
