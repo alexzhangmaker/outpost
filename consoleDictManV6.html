@@ -117,6 +117,12 @@
         .filter-section {
             margin-bottom: 20px;
             display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .filter-row {
+            display: flex;
             align-items: flex-end;
             gap: 12px;
             flex-wrap: nowrap;
@@ -185,7 +191,8 @@
         }
 
         .wordsets-container {
-            max-height: 400px;
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
@@ -262,8 +269,22 @@
         .content {
             flex: 1;
             padding: 24px;
-            overflow-y: auto;
+            overflow: hidden;
             background-color: var(--content-bg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #wordset-detail-view,
+        #wordset-form-view {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        #wordset-form-view {
+            overflow-y: auto;
         }
 
         /* 分类编辑区域 */
@@ -301,6 +322,9 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 12px;
             margin-top: 12px;
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 8px;
         }
 
         .word-card {
@@ -912,44 +936,45 @@
                 <h3>词汇集管理</h3>
             </div>
 
-            <button id="new-wordset-btn"
-                style="width: 100%; padding: 12px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: background-color 0.2s ease;">新建词汇集</button>
-
             <!-- 过滤和搜索区域 -->
             <div class="filter-section">
-                <div class="filter-group">
-                    <label for="search-title">搜索标题</label>
-                    <input type="text" id="search-title" class="filter-input" placeholder="关键词...">
-                </div>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="search-title">搜索标题</label>
+                        <input type="text" id="search-title" class="filter-input" placeholder="关键词...">
+                    </div>
 
-                <div class="filter-group">
-                    <label for="filter-level">按级别过滤</label>
-                    <select id="filter-level" class="filter-select">
-                        <option value="">所有级别</option>
-                        <option value="A1">A1</option>
-                        <option value="A2">A2</option>
-                        <option value="B1">B1</option>
-                        <option value="B2">B2</option>
-                        <option value="C1">C1</option>
-                        <option value="C2">C2</option>
-                    </select>
-                </div>
+                    <div class="filter-group">
+                        <label for="filter-level">按级别过滤</label>
+                        <select id="filter-level" class="filter-select">
+                            <option value="">所有级别</option>
+                            <option value="A1">A1</option>
+                            <option value="A2">A2</option>
+                            <option value="B1">B1</option>
+                            <option value="B2">B2</option>
+                            <option value="C1">C1</option>
+                            <option value="C2">C2</option>
+                        </select>
+                    </div>
 
-                <div class="filter-group">
-                    <label for="filter-scenario">按厂家过滤</label>
-                    <select id="filter-scenario" class="filter-select">
-                        <option value="">所有厂家</option>
-                    </select>
-                </div>
+                    <div class="filter-group">
+                        <label for="filter-scenario">按厂家过滤</label>
+                        <select id="filter-scenario" class="filter-select">
+                            <option value="">所有厂家</option>
+                        </select>
+                    </div>
 
-                <div class="filter-group">
-                    <label for="filter-tag">按标签过滤</label>
-                    <select id="filter-tag" class="filter-select">
-                        <option value="">所有标签</option>
-                    </select>
+                    <div class="filter-group">
+                        <label for="filter-tag">按标签过滤</label>
+                        <select id="filter-tag" class="filter-select">
+                            <option value="">所有标签</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="filter-actions">
+                    <button id="new-wordset-btn"
+                        style="padding: 10px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: background-color 0.2s ease;">新建词汇集</button>
                     <button id="apply-filters" class="active">应用过滤</button>
                     <button id="clear-filters">清除过滤</button>
                 </div>
@@ -2039,7 +2064,7 @@
             // 显示详情视图
             hideWordsetForm();
             initialMessage.style.display = 'none';
-            wordsetDetailView.style.display = 'block';
+            wordsetDetailView.style.display = 'flex';
 
             // 高亮选中的词汇集
             document.querySelectorAll('.wordset-item').forEach(item => {
@@ -2499,7 +2524,7 @@
         function showWordsetForm() {
             hideWordsetDetail();
             initialMessage.style.display = 'none';
-            wordsetFormView.style.display = 'block';
+            wordsetFormView.style.display = 'flex';
             wordsetForm.reset();
             // 确保标签输入框也被重置（虽然reset()通常会处理，但为了保险）
             if (document.getElementById('wordset-tags-input')) {
