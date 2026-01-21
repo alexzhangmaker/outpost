@@ -21,7 +21,7 @@
             --border-color: #e2e8f0;
             --hover-color: #f1f5f9;
             --toolbar-height: 60px;
-            --sidebar-width: 320px;
+            --sidebar-width: 640px;
             --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --radius: 8px;
@@ -116,10 +116,16 @@
 
         .filter-section {
             margin-bottom: 20px;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            flex-wrap: nowrap;
         }
 
         .filter-group {
-            margin-bottom: 12px;
+            margin-bottom: 0px;
+            flex: 1;
+            min-width: 0;
         }
 
         .filter-group label {
@@ -186,43 +192,46 @@
         }
 
         .wordset-item {
-            padding: 12px;
+            padding: 8px 12px;
             cursor: pointer;
             border-left: 4px solid transparent;
             border-bottom: 1px solid var(--border-color);
             transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
         }
 
-        .wordset-item:hover {
-            background-color: var(--hover-color);
-        }
-
-        .wordset-item.active {
-            border-left-color: var(--accent-color);
-            background-color: var(--hover-color);
-        }
-
-        .wordset-item:last-child {
-            border-bottom: none;
+        .wordset-item-main {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            min-width: 0;
         }
 
         .wordset-name {
             font-weight: 600;
-            margin-bottom: 4px;
             color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 300px;
         }
 
         .wordset-meta {
             font-size: 13px;
             color: var(--text-light);
             display: flex;
-            justify-content: space-between;
+            gap: 12px;
+            white-space: nowrap;
         }
 
         .wordset-actions {
             display: flex;
             gap: 8px;
-            margin-top: 8px;
+            flex-shrink: 0;
         }
 
         .wordset-actions button {
@@ -910,7 +919,7 @@
             <div class="filter-section">
                 <div class="filter-group">
                     <label for="search-title">搜索标题</label>
-                    <input type="text" id="search-title" class="filter-input" placeholder="输入标题关键词...">
+                    <input type="text" id="search-title" class="filter-input" placeholder="关键词...">
                 </div>
 
                 <div class="filter-group">
@@ -927,9 +936,9 @@
                 </div>
 
                 <div class="filter-group">
-                    <label for="filter-scenario">按场景过滤</label>
+                    <label for="filter-scenario">按厂家过滤</label>
                     <select id="filter-scenario" class="filter-select">
-                        <option value="">所有场景</option>
+                        <option value="">所有厂家</option>
                     </select>
                 </div>
 
@@ -957,9 +966,12 @@
 
             <!-- 词汇集详情视图 -->
             <div id="wordset-detail-view" style="display: none;">
-                <div style="display: flex;flex-direction: row;">
-                    <h2 id="wordset-title" style="margin-bottom: 8px; color: #1e293b;"></h2>
-                    <span id="idCopyWordSetKey">id...</span>
+                <div style="display: flex; flex-direction: row; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <h2 id="wordset-title" style="color: #1e293b; cursor: pointer;" title="点击修改标题"></h2>
+                    <input type="text" id="wordset-title-edit-input"
+                        style="display: none; font-size: 1.5em; font-weight: bold; padding: 4px 8px; border: 2px solid var(--accent-color); border-radius: var(--radius); flex: 1; outline: none;">
+                    <span id="idCopyWordSetKey" style="color: var(--text-light); font-size: 14px; cursor: pointer;"
+                        title="点击查看ID">id...</span>
                 </div>
 
                 <!-- 分类与标签编辑区域 -->
@@ -1216,6 +1228,8 @@
         const wordsetForm = document.getElementById('wordset-form');
         const cancelFormBtn = document.getElementById('cancel-form-btn');
         const statusMessage = document.getElementById('status-message');
+        const wordsetTitle = document.getElementById('wordset-title');
+        const wordsetTitleEditInput = document.getElementById('wordset-title-edit-input');
         const wordCardsContainer = document.getElementById('word-cards-container');
 
         // 分类编辑元素
@@ -1435,6 +1449,14 @@
                 if (e.target === excelExportModal) {
                     closeExcelExportModal();
                 }
+            });
+
+            // 标题编辑事件
+            wordsetTitle.addEventListener('click', enterTitleEditMode);
+            wordsetTitleEditInput.addEventListener('keydown', handleTitleEditKeydown);
+            wordsetTitleEditInput.addEventListener('blur', function () {
+                // 使用 setTimeout 延迟以允许 Enter 键保存先触发
+                setTimeout(cancelTitleEdit, 200);
             });
 
             // 新增：绑定添加单词事件
@@ -1968,10 +1990,12 @@
             const classificationInfo = getClassificationInfo(wordset.classification);
 
             wordsetItem.innerHTML = `
-                <div class="wordset-name">${wordset.分类title || '未命名词汇集'}</div>
-                <div class="wordset-meta">
-                    <span>${classificationInfo.level}</span>
-                    <span>${classificationInfo.scenario}</span>
+                <div class="wordset-item-main">
+                    <div class="wordset-name">${wordset.分类title || '未命名词汇集'}</div>
+                    <div class="wordset-meta">
+                        <span>${classificationInfo.level}</span>
+                        <span>${classificationInfo.scenario}</span>
+                    </div>
                 </div>
                 <div class="wordset-actions">
                     <button class="view">查看</button>
@@ -2263,6 +2287,61 @@
         }
 
         // 显示字典定义
+        // 标题编辑相关函数
+        function enterTitleEditMode() {
+            if (!currentWordsetId) return;
+            wordsetTitle.style.display = 'none';
+            wordsetTitleEditInput.style.display = 'block';
+            wordsetTitleEditInput.value = wordsetTitle.textContent;
+            wordsetTitleEditInput.focus();
+            wordsetTitleEditInput.select();
+        }
+
+        function cancelTitleEdit() {
+            wordsetTitle.style.display = 'block';
+            wordsetTitleEditInput.style.display = 'none';
+        }
+
+        function handleTitleEditKeydown(e) {
+            if (e.key === 'Enter') {
+                saveTitleUpdate();
+            } else if (e.key === 'Escape') {
+                cancelTitleEdit();
+            }
+        }
+
+        function saveTitleUpdate() {
+            const newTitle = wordsetTitleEditInput.value.trim();
+            if (!newTitle) {
+                showStatus('标题不能为空', 'error');
+                return;
+            }
+
+            if (newTitle === wordsetTitle.textContent) {
+                cancelTitleEdit();
+                return;
+            }
+
+            database.ref(`thaiWordList/${currentWordsetId}/分类title`).set(newTitle)
+                .then(() => {
+                    wordsetTitle.textContent = newTitle;
+                    if (allWordsets.has(currentWordsetId)) {
+                        allWordsets.get(currentWordsetId).分类title = newTitle;
+                    }
+                    // 更新左侧列表中的标题
+                    const wordsetItemContent = document.querySelector(`.wordset-item[data-id="${currentWordsetId}"] .wordset-name`);
+                    if (wordsetItemContent) {
+                        wordsetItemContent.textContent = newTitle;
+                    }
+                    cancelTitleEdit();
+                    showStatus('标题更新成功', 'success');
+                })
+                .catch((error) => {
+                    console.error('更新标题错误:', error);
+                    showStatus('更新标题失败', 'error');
+                });
+        }
+
         function showDictionaryDefinition(word) {
             // 设置模态对话框标题
             dictionaryModalTitle.textContent = `"${word}" 的释义`;
