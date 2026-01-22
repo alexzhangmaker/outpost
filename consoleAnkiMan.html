@@ -369,8 +369,14 @@
                                     <tbody class="bg-white divide-y divide-gray-200" id="deck-table-body">
                     `;
 
-                    Object.keys(data).forEach(key => {
-                        const deck = data[key];
+                    // --- 修改：将对象转换为数组并按照 Title 排序 ---
+                    const sortedDecks = Object.entries(data).sort((a, b) => {
+                        const titleA = a[1].title || 'Untitled';
+                        const titleB = b[1].title || 'Untitled';
+                        return titleA.localeCompare(titleB, 'zh-CN', { numeric: true });
+                    });
+
+                    sortedDecks.forEach(([key, deck]) => {
                         const dateValue = formatDateForInput(deck.nextReview);
                         // 注意：我们在 tr 上添加了 data-title 属性，方便搜索逻辑快速读取
                         const titleText = (deck.title || 'Untitled').toLowerCase();
