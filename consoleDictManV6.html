@@ -1878,7 +1878,14 @@
                 return;
             }
 
-            for (const [wordsetId, wordset] of filteredWordsets) {
+            // --- 修改：按照标题进行字母序排序 ---
+            const sortedEntries = Array.from(filteredWordsets.entries()).sort((a, b) => {
+                const titleA = a[1].分类title || '';
+                const titleB = b[1].分类title || '';
+                return titleA.localeCompare(titleB, 'zh-CN', { numeric: true });
+            });
+
+            for (const [wordsetId, wordset] of sortedEntries) {
                 addWordsetToList(wordsetId, wordset);
             }
         }
@@ -2353,11 +2360,13 @@
                     if (allWordsets.has(currentWordsetId)) {
                         allWordsets.get(currentWordsetId).分类title = newTitle;
                     }
-                    // 更新左侧列表中的标题
-                    const wordsetItemContent = document.querySelector(`.wordset-item[data-id="${currentWordsetId}"] .wordset-name`);
-                    if (wordsetItemContent) {
-                        wordsetItemContent.textContent = newTitle;
+                    if (filteredWordsets.has(currentWordsetId)) {
+                        filteredWordsets.get(currentWordsetId).分类title = newTitle;
                     }
+
+                    // 修改：重新渲染列表以保持排序
+                    renderFilteredWordsets();
+
                     cancelTitleEdit();
                     showStatus('标题更新成功', 'success');
                 })

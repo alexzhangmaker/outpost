@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Writing Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sidebar-item-active {
+            background-color: #eff6ff;
+            color: #2563eb;
+            border-right-width: 4px;
+            border-color: #2563eb;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .ai-feedback-modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(15, 23, 42, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .ai-feedback-modal.hidden {
+            display: none;
+        }
+
+        .scroll-custom::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scroll-custom::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .scroll-custom::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .scroll-custom::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
+    <!-- Toolbar -->
+    <header
+        class="h-16 bg-white border-bottom border-slate-200 shadow-sm flex items-center justify-between px-6 shrink-0">
+        <div class="flex items-center gap-4">
+            <h1 class="text-xl font-bold text-slate-900">English Writing Console</h1>
+        </div>
+        <div id="auth-section" class="flex items-center gap-4">
+            <span id="user-info" class="text-sm text-slate-500"></span>
+            <button id="auth-btn"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm">
+                Login with Google
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
+            <nav class="flex-1 py-4">
+                <div class="px-4 mb-2">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Navigation</p>
+                </div>
+                <div id="nav-tree">
+                    <!-- Folder: English Writing -->
+                    <div class="mb-2">
+                        <button
+                            class="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                            onclick="toggleFolder('writing-folder')">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z">
+                                    </path>
+                                </svg>
+                                <span>English Writing</span>
+                            </div>
+                            <svg id="folder-icon" class="w-4 h-4 transition-transform transform" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="writing-folder" class="pl-6 mt-1 space-y-1">
+                            <button id="nav-practice" onclick="switchView('practice')"
+                                class="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-l-lg transition-colors flex items-center gap-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                                    </path>
+                                </svg>
+                                <span>Practice</span>
+                            </button>
+                            <button id="nav-assignment" onclick="switchView('assignment')"
+                                class="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-l-lg transition-colors flex items-center gap-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                                    </path>
+                                </svg>
+                                <span>Assignment</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Content Area -->
+        <section class="flex-1 flex flex-col overflow-hidden bg-slate-50">
+            <!-- Header for current view -->
+            <div class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+                <h2 id="view-title" class="text-lg font-semibold text-slate-800">Practice</h2>
+                <div class="flex items-center gap-3" id="view-actions">
+                    <button id="btn-add"
+                        class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                        <span>Add New</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="flex-1 p-8 overflow-hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
+                    <div class="overflow-x-auto overflow-y-auto flex-1 scroll-custom">
+                        <table class="w-full text-left border-collapse min-w-[1000px]">
+                            <thead id="table-head" class="bg-slate-50 sticky top-0 z-10">
+                                <!-- Headers dynamically rendered -->
+                            </thead>
+                            <tbody id="table-body" class="divide-y divide-slate-100">
+                                <!-- Data dynamically rendered -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal for Practice Add/Edit -->
+    <div id="practice-modal" class="modal hidden">
+        <div class="bg-white rounded-2xl w-[600px] max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="p-modal-title" class="text-xl font-bold text-slate-800">Add Practice</h3>
+                <button onclick="closeModal('practice-modal')" class="text-slate-400 hover:text-slate-600"><svg
+                        class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg></button>
+            </div>
+            <div class="p-6 overflow-y-auto scroll-custom space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Objective</label>
+                    <input type="text" id="p-objective"
+                        class="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Task Type</label>
+                    <select id="p-task-type"
+                        class="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="Opinion Essay Outline">Opinion Essay Outline</option>
+                        <option value="Argumentative Paragraph">Argumentative Paragraph</option>
+                        <option value="Descriptive Letter">Descriptive Letter</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Prompt</label>
+                    <textarea id="p-prompt" rows="5"
+                        class="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Word Limit</label>
+                    <input type="text" id="p-word-limit"
+                        class="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Status</label>
+                    <select id="p-status"
+                        class="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="ready">Ready</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-100 flex justify-end gap-3">
+                <button onclick="closeModal('practice-modal')"
+                    class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors">Cancel</button>
+                <button id="p-save-btn"
+                    class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm transition-all">Save
+                    Practice</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Assignment Add/Edit -->
+    <div id="assignment-modal" class="modal hidden">
+        <div class="bg-white rounded-2xl w-[600px] max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="a-modal-title" class="text-xl font-bold text-slate-800">Add Assignment</h3>
+                <button onclick="closeModal('assignment-modal')" class="text-slate-400 hover:text-slate-600"><svg
+                        class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg></button>
+            </div>
+            <div class="p-6 overflow-y-auto scroll-custom space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Practice</label>
+                    <select id="a-practice-id"
+                        class="w-full border border-slate-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        <!-- Options filled by JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Assigned To (Student Email)</label>
+                    <input type="email" id="a-assigned-to"
+                        class="w-full border border-slate-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Due Date</label>
+                    <input type="date" id="a-due"
+                        class="w-full border border-slate-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Submission (Optional)</label>
+                    <textarea id="a-submission" rows="4"
+                        class="w-full border border-slate-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-100 flex justify-end gap-3">
+                <button onclick="closeModal('assignment-modal')"
+                    class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors">Cancel</button>
+                <button id="a-save-btn"
+                    class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm transition-all">Save
+                    Assignment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for viewing AI Feedback -->
+    <div id="feedback-modal" class="ai-feedback-modal hidden"
+        onclick="if(event.target === this) closeModal('feedback-modal')">
+        <div class="bg-white rounded-2xl w-[800px] max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-indigo-600">
+                <h3 class="text-xl font-bold text-white">AI Writing Feedback</h3>
+                <button onclick="closeModal('feedback-modal')" class="text-white hover:text-indigo-100"><svg
+                        class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg></button>
+            </div>
+            <div id="feedback-content" class="p-8 overflow-y-auto scroll-custom prose prose-slate max-w-none">
+                <!-- Feedback results -->
+            </div>
+            <div class="p-6 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('feedback-modal')"
+                    class="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script>
+        // Firebase Config (Using User's specified information)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-uiz-d289c.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        // State
+        let currentUser = null;
+        let currentView = 'practice'; // 'practice' or 'assignment'
+        let practices = {};
+        let assignments = {};
+        let editingId = null;
+
+        // --- Auth Implementation ---
+        const authBtn = document.getElementById('auth-btn');
+        const userInfoStr = document.getElementById('user-info');
+
+        auth.onAuthStateChanged(user => {
+            currentUser = user;
+            if (user) {
+                authBtn.innerText = 'Logout';
+                userInfoStr.innerText = user.email;
+                loadData();
+            } else {
+                authBtn.innerText = 'Login with Google';
+                userInfoStr.innerText = '';
+                practices = {};
+                assignments = {};
+                renderTable();
+            }
+        });
+
+        authBtn.addEventListener('click', () => {
+            if (currentUser) {
+                auth.signOut();
+            } else {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                auth.signInWithPopup(provider);
+            }
+        });
+
+        // --- Navigation ---
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('view-title').innerText = view.charAt(0).toUpperCase() + view.slice(1);
+
+            // UI classes
+            document.getElementById('nav-practice').classList.remove('sidebar-item-active');
+            document.getElementById('nav-assignment').classList.remove('sidebar-item-active');
+            document.getElementById('nav-' + view).classList.add('sidebar-item-active');
+
+            renderTable();
+        }
+
+        function toggleFolder(id) {
+            const el = document.getElementById(id);
+            const icon = document.getElementById('folder-icon');
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                icon.classList.remove('-rotate-90');
+            } else {
+                el.classList.add('hidden');
+                icon.classList.add('-rotate-90');
+            }
+        }
+
+        // --- Data Handling ---
+        function loadData() {
+            db.ref('writingPractice/PracticeTbl').on('value', snapshot => {
+                practices = snapshot.val() || {};
+                if (currentView === 'practice') renderTable();
+            });
+            db.ref('writingPractice/AssignmentTbl').on('value', snapshot => {
+                assignments = snapshot.val() || {};
+                if (currentView === 'assignment') renderTable();
+            });
+        }
+
+        // --- UI Rendering ---
+        const tableHead = document.getElementById('table-head');
+        const tableBody = document.getElementById('table-body');
+
+        function renderTable() {
+            tableHead.innerHTML = '';
+            tableBody.innerHTML = '';
+
+            if (currentView === 'practice') {
+                tableHead.innerHTML = `
+                    <tr class="text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4">Task Type</th>
+                        <th class="px-6 py-4">Objective</th>
+                        <th class="px-6 py-4">Prompt Preview</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                `;
+                Object.keys(practices).forEach(id => {
+                    const p = practices[id];
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50 transition-colors text-sm';
+                    row.innerHTML = `
+                        <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${p.status === 'ready' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-600'}">${p.status}</span></td>
+                        <td class="px-6 py-4 font-medium text-slate-900">${p.task_type}</td>
+                        <td class="px-6 py-4 text-slate-600">${p.objective}</td>
+                        <td class="px-6 py-4 text-slate-500 truncate max-w-[300px]">${p.prompt}</td>
+                        <td class="px-6 py-4 text-right space-x-2">
+                            <button onclick="editPractice('${id}')" class="text-blue-600 hover:text-blue-800 font-medium">Edit</button>
+                            <button onclick="deletePractice('${id}')" class="text-red-500 hover:text-red-700 font-medium">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                tableHead.innerHTML = `
+                    <tr class="text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                        <th class="px-6 py-4">Practice</th>
+                        <th class="px-6 py-4">Assigned To</th>
+                        <th class="px-6 py-4">Due Date</th>
+                        <th class="px-6 py-4">Submission</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                `;
+                Object.keys(assignments).forEach(id => {
+                    const a = assignments[id];
+                    const p = practices[a.practiceID] || { objective: 'Unknown' };
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50 transition-colors text-sm';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 font-medium text-slate-900">${p.objective}</td>
+                        <td class="px-6 py-4 text-slate-600">${a.assignedTo}</td>
+                        <td class="px-6 py-4 text-slate-600">${a.due}</td>
+                        <td class="px-6 py-4 text-slate-500 underline cursor-pointer" onclick="viewSubmission('${id}')">${a.submission ? 'View' : 'None'}</td>
+                        <td class="px-6 py-4 text-right shrink-0">
+                            <div class="flex items-center justify-end gap-2">
+                                <button onclick="getAIFeedback('${id}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-md text-xs font-bold transition-all border border-indigo-200">AI Feedback</button>
+                                <button onclick="editAssignment('${id}')" class="text-blue-600 hover:text-blue-800 font-medium">Edit</button>
+                                <button onclick="deleteAssignment('${id}')" class="text-red-500 hover:text-red-700 font-medium">Delete</button>
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+        }
+
+        // --- Modals & CRUD ---
+        document.getElementById('btn-add').addEventListener('click', () => {
+            editingId = null;
+            if (currentView === 'practice') {
+                document.getElementById('p-modal-title').innerText = 'Add Practice';
+                openModal('practice-modal');
+            } else {
+                document.getElementById('a-modal-title').innerText = 'Add Assignment';
+                fillPracticeDropdown();
+                openModal('assignment-modal');
+            }
+        });
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // Practice CRUD
+        document.getElementById('p-save-btn').addEventListener('click', () => {
+            const data = {
+                objective: document.getElementById('p-objective').value,
+                task_type: document.getElementById('p-task-type').value,
+                prompt: document.getElementById('p-prompt').value,
+                word_limit: document.getElementById('p-word-limit').value,
+                status: document.getElementById('p-status').value,
+                createdAt: editingId ? (practices[editingId].createdAt || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0]
+            };
+            const id = editingId || generateUUID();
+            db.ref('writingPractice/PracticeTbl/' + id).set(data).then(() => closeModal('practice-modal'));
+        });
+
+        function editPractice(id) {
+            editingId = id;
+            const p = practices[id];
+            document.getElementById('p-objective').value = p.objective;
+            document.getElementById('p-task-type').value = p.task_type;
+            document.getElementById('p-prompt').value = p.prompt;
+            document.getElementById('p-word-limit').value = p.word_limit;
+            document.getElementById('p-status').value = p.status;
+            document.getElementById('p-modal-title').innerText = 'Edit Practice';
+            openModal('practice-modal');
+        }
+
+        function deletePractice(id) {
+            if (confirm('Delete this practice?')) db.ref('writingPractice/PracticeTbl/' + id).remove();
+        }
+
+        // Assignment CRUD
+        document.getElementById('a-save-btn').addEventListener('click', () => {
+            const data = {
+                practiceID: document.getElementById('a-practice-id').value,
+                assignedTo: document.getElementById('a-assigned-to').value,
+                assignedOn: editingId ? assignments[editingId].assignedOn : new Date().toISOString().split('T')[0],
+                due: document.getElementById('a-due').value,
+                submission: document.getElementById('a-submission').value,
+                submissionOn: document.getElementById('a-submission').value ? (editingId && assignments[editingId].submissionOn !== 'NA' ? assignments[editingId].submissionOn : new Date().toISOString().split('T')[0]) : 'NA',
+                AIFeedback: editingId ? (assignments[editingId].AIFeedback || "") : ""
+            };
+            const id = editingId || generateUUID();
+            db.ref('writingPractice/AssignmentTbl/' + id).set(data).then(() => closeModal('assignment-modal'));
+        });
+
+        function editAssignment(id) {
+            editingId = id;
+            const a = assignments[id];
+            fillPracticeDropdown(a.practiceID);
+            document.getElementById('a-assigned-to').value = a.assignedTo;
+            document.getElementById('a-due').value = a.due;
+            document.getElementById('a-submission').value = a.submission || '';
+            document.getElementById('a-modal-title').innerText = 'Edit Assignment';
+            openModal('assignment-modal');
+        }
+
+        function deleteAssignment(id) {
+            if (confirm('Delete this assignment?')) db.ref('writingPractice/AssignmentTbl/' + id).remove();
+        }
+
+        function fillPracticeDropdown(selectedID = null) {
+            const select = document.getElementById('a-practice-id');
+            select.innerHTML = '<option value="">Select a practice...</option>';
+            Object.keys(practices).forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = practices[id].objective;
+                if (id === selectedID) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        // --- AI Integration ---
+        async function getAIFeedback(assignmentID) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = 'Analyzing...';
+
+            try {
+                const assignment = assignments[assignmentID];
+                const practice = practices[assignment.practiceID];
+                if (!assignment.submission) {
+                    alert('No submission to analyze.');
+                    return;
+                }
+
+                // Templates
+                const templates = {
+                    "Opinion Essay Outline": "You are an IELTS writing tutor. Analyze this Opinion Essay Outline objective: \"{objective}\", prompt: \"{prompt}\". Submission: \"{submission}\". Provide feedback in JSON format with fields: score (0-10), feedback_points (array of strings), and suggestion. Focus on whether the topic sentences are clear, relevant, and grammatically correct.",
+                    "Argumentative Paragraph": "You are an English writing coach. Evaluate this argumentative paragraph. Objective: \"{objective}\", Prompt: \"{prompt}\". Submission: \"{submission}\". Response should be JSON with: score, feedback_points (array), and suggestion. Focus on logical flow and evidence.",
+                    "default": "Analyze the following writing assignment. Objective: \"{objective}\", Prompt: \"{prompt}\". Submission: \"{submission}\". Provide professional feedback in JSON format with fields: score, feedback_points (array), and suggestion."
+                };
+
+                // Find best matching template
+                let template = templates.default;
+                for (let key in templates) {
+                    if (practice.task_type.includes(key)) {
+                        template = templates[key];
+                        break;
+                    }
+                }
+                const promptText = template
+                    .replace('{objective}', practice.objective)
+                    .replace('{prompt}', practice.prompt)
+                    .replace('{submission}', assignment.submission);
+
+                // Gemini API Call (Assuming a local proxy or backend endpoint as mentioned in user's env)
+                const response = await fetch('http://localhost:3200/api/dictionary/lookup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        word: promptText,
+                        service: 'gemini',
+                        user_id: currentUser.email
+                    })
+                });
+
+                const result = await response.json();
+
+                // Try to parse the result if it's a string containing JSON
+                let feedbackData = result;
+                if (typeof result === 'string') {
+                    try {
+                        const jsonMatch = result.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) feedbackData = JSON.parse(jsonMatch[0]);
+                    } catch (e) { console.warn('Could not parse feedback as JSON', e); }
+                }
+
+                // Update Firebase
+                await db.ref(`writingPractice/AssignmentTbl/${assignmentID}/AIFeedback`).set(JSON.stringify(feedbackData));
+
+                // Force local update
+                assignments[assignmentID].AIFeedback = JSON.stringify(feedbackData);
+
+                displayFeedback(feedbackData);
+            } catch (error) {
+                console.error('AI Error:', error);
+                alert('Failed to get AI feedback: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
+
+        function displayFeedback(data) {
+            const container = document.getElementById('feedback-content');
+            let html = '';
+
+            if (typeof data === 'string') {
+                html = `<div class="bg-slate-50 p-6 rounded-xl border border-slate-200 whitespace-pre-wrap text-slate-700 leading-relaxed">${data}</div>`;
+            } else {
+                html = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100 flex flex-col items-center justify-center">
+                            <span class="text-xs font-bold text-blue-500 uppercase tracking-wider mb-2">Overall Score</span>
+                            <div class="text-5xl font-black text-blue-600">${data.score || data.coherence_score || 'N/A'}</div>
+                        </div>
+                        <div class="md:col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                            <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Key Feedback</h4>
+                            <ul class="space-y-2">
+                                ${(data.feedback_points || data.grammar_feedback || []).map(p => `
+                                    <li class="flex items-start gap-3">
+                                        <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <span class="text-slate-700">${p}</span>
+                                    </li>
+                                `).join('') || '<li class="text-slate-400 italic">No specific points provided</li>'}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-indigo-50 p-8 rounded-2xl border border-indigo-100">
+                        <h4 class="text-sm font-bold text-indigo-400 uppercase tracking-wider mb-4">Improvement Suggestions</h4>
+                        <div class="text-indigo-900 leading-relaxed text-lg">${data.suggestion || data.overall_advice || 'Keep up the good work!'}</div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+            openModal('feedback-modal');
+        }
+
+        function viewSubmission(id) {
+            const a = assignments[id];
+            if (a.AIFeedback) {
+                try {
+                    displayFeedback(JSON.parse(a.AIFeedback));
+                } catch (e) {
+                    displayFeedback(a.AIFeedback);
+                }
+            } else {
+                alert(`--- Student Submission ---\n\n${a.submission || 'No submission yet'}`);
+            }
+        }
+
+        // Utils
+        function generateUUID() {
+            // Short random ID
+            return Math.random().toString(36).substring(2, 10).toUpperCase();
+        }
+
+        // Init
+        document.getElementById('nav-practice').classList.add('sidebar-item-active');
+    </script>
+</body>
+
+</html>
