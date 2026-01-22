@@ -670,6 +670,13 @@
                 const results = await Promise.all(promises);
                 const validQuizSets = results.filter(item => item !== null);
 
+                // --- 修改：按照 Title 排序 ---
+                validQuizSets.sort((a, b) => {
+                    const titleA = a.title || 'Untitled';
+                    const titleB = b.title || 'Untitled';
+                    return titleA.localeCompare(titleB, 'zh-CN', { numeric: true });
+                });
+
                 quizCountBadge.textContent = validQuizSets.length;
                 quizCountBadge.classList.remove('hidden');
 
@@ -759,7 +766,16 @@
                     try {
                         showLoading(true);
                         await update(ref(dbMain, `quizSets/${key}`), { title: newTitle });
-                        el.textContent = newTitle;
+
+                        // 修改：更新成功后重新拉取课程数据，以触发重新渲染和排序
+                        if (currentCourseId) {
+                            const courseSnap = await get(ref(dbMain, `courseFolders/${currentCourseId}`));
+                            if (courseSnap.exists()) {
+                                loadCourseData(currentCourseId, courseSnap.val());
+                            }
+                        } else {
+                            el.textContent = newTitle;
+                        }
                     } catch (err) {
                         alert('Update failed: ' + err.message);
                         el.textContent = originalTitle;
