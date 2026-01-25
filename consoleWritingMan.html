@@ -132,6 +132,15 @@
                                 </svg>
                                 <span>Assignment</span>
                             </button>
+                            <button id="nav-feedback" onclick="switchView('feedback')"
+                                class="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-l-lg transition-colors flex items-center gap-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.989-2.386l-.548-.547z">
+                                    </path>
+                                </svg>
+                                <span>AI Feedback Management</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -143,7 +152,7 @@
             <!-- Header for current view -->
             <div class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
                 <h2 id="view-title" class="text-lg font-semibold text-slate-800">Practice</h2>
-                <div class="flex items-center gap-3" id="view-actions">
+                <div class="flex items-center gap-3" id="view-actions-container">
                     <button id="btn-add"
                         class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,6 +206,7 @@
                         <option value="Opinion Essay Outline">Opinion Essay Outline</option>
                         <option value="Argumentative Paragraph">Argumentative Paragraph</option>
                         <option value="Descriptive Letter">Descriptive Letter</option>
+                        <option value="基础写作单元">基础写作单元</option>
                     </select>
                 </div>
                 <div>
@@ -316,7 +326,9 @@
         let currentView = 'practice'; // 'practice' or 'assignment'
         let practices = {};
         let assignments = {};
+        let aiFeedbacks = [];
         let editingId = null;
+        let currentViewingAssignmentID = null;
 
         // --- Auth Implementation ---
         const authBtn = document.getElementById('auth-btn');
@@ -349,12 +361,27 @@
         // --- Navigation ---
         function switchView(view) {
             currentView = view;
-            document.getElementById('view-title').innerText = view.charAt(0).toUpperCase() + view.slice(1);
+            const titles = {
+                'practice': 'Practice',
+                'assignment': 'Assignment',
+                'feedback': 'AI Feedback Management'
+            };
+            document.getElementById('view-title').innerText = titles[view] || view;
 
             // UI classes
             document.getElementById('nav-practice').classList.remove('sidebar-item-active');
             document.getElementById('nav-assignment').classList.remove('sidebar-item-active');
+            document.getElementById('nav-feedback').classList.remove('sidebar-item-active');
             document.getElementById('nav-' + view).classList.add('sidebar-item-active');
+
+            // Hide/Show Add New button
+            const actionContainer = document.getElementById('view-actions-container');
+            if (view === 'feedback') {
+                actionContainer.classList.add('hidden');
+                loadAIFeedbacks();
+            } else {
+                actionContainer.classList.remove('hidden');
+            }
 
             renderTable();
         }
@@ -381,6 +408,18 @@
                 assignments = snapshot.val() || {};
                 if (currentView === 'assignment') renderTable();
             });
+        }
+
+        async function loadAIFeedbacks() {
+            try {
+                const response = await fetch('http://localhost:3334/api/writing/grades');
+                if (!response.ok) throw new Error('Failed to fetch AI feedbacks');
+                aiFeedbacks = await response.json();
+                if (currentView === 'feedback') renderTable();
+            } catch (error) {
+                console.error('Error loading AI feedbacks:', error);
+                // alert('Error loading AI feedbacks: ' + error.message);
+            }
         }
 
         // --- UI Rendering ---
@@ -417,7 +456,7 @@
                     `;
                     tableBody.appendChild(row);
                 });
-            } else {
+            } else if (currentView === 'assignment') {
                 tableHead.innerHTML = `
                     <tr class="text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
                         <th class="px-6 py-4">Practice</th>
@@ -447,7 +486,40 @@
                     `;
                     tableBody.appendChild(row);
                 });
+            } else if (currentView === 'feedback') {
+                tableHead.innerHTML = `
+                    <tr class="text-xs uppercase text-slate-500 font-semibold border-b border-slate-200">
+                        <th class="px-6 py-4">Time</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4">Assignment ID</th>
+                        <th class="px-6 py-4">Score</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                `;
+                aiFeedbacks.forEach((f, idx) => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50 transition-colors text-sm';
+                    const score = f.resultJSON?.overall_feedback?.assigned_band_score || 'N/A';
+                    const statusClass = f.status === 'toAudit' ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-slate-600">${f.time}</td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${statusClass}">${f.status}</span></td>
+                        <td class="px-6 py-4 text-slate-600">${f.assignmentID}</td>
+                        <td class="px-6 py-4 font-bold text-slate-900">${score}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="viewAIFeedbackItem(${idx})" class="text-indigo-600 hover:text-indigo-800 font-medium">View Feedback</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
             }
+        }
+
+        function viewAIFeedbackItem(idx) {
+            const item = aiFeedbacks[idx];
+            currentViewingAssignmentID = item.assignmentID;
+            const data = item.resultJSON;
+            displayFeedback(data);
         }
 
         // --- Modals & CRUD ---
@@ -540,6 +612,7 @@
 
         // --- AI Integration ---
         async function getAIFeedback(assignmentID) {
+            currentViewingAssignmentID = assignmentID;
             const btn = event.target;
             const originalText = btn.innerText;
             btn.disabled = true;
@@ -553,47 +626,29 @@
                     return;
                 }
 
-                // Templates
-                const templates = {
-                    "Opinion Essay Outline": "You are an IELTS writing tutor. Analyze this Opinion Essay Outline objective: \"{objective}\", prompt: \"{prompt}\". Submission: \"{submission}\". Provide feedback in JSON format with fields: score (0-10), feedback_points (array of strings), and suggestion. Focus on whether the topic sentences are clear, relevant, and grammatically correct.",
-                    "Argumentative Paragraph": "You are an English writing coach. Evaluate this argumentative paragraph. Objective: \"{objective}\", Prompt: \"{prompt}\". Submission: \"{submission}\". Response should be JSON with: score, feedback_points (array), and suggestion. Focus on logical flow and evidence.",
-                    "default": "Analyze the following writing assignment. Objective: \"{objective}\", Prompt: \"{prompt}\". Submission: \"{submission}\". Provide professional feedback in JSON format with fields: score, feedback_points (array), and suggestion."
+                // Construct payload as required by http://localhost:3334/api/writing/gradeWritingPart
+                const payload = {
+                    assignmentID: assignmentID,
+                    assignedOn: assignment.assignedOn,
+                    assignedTo: assignment.assignedTo,
+                    due: assignment.due,
+                    prompt: practice.prompt,
+                    submission: assignment.submission,
+                    submissionOn: assignment.submissionOn === 'NA' ? new Date().toISOString().split('T')[0] : assignment.submissionOn
                 };
 
-                // Find best matching template
-                let template = templates.default;
-                for (let key in templates) {
-                    if (practice.task_type.includes(key)) {
-                        template = templates[key];
-                        break;
-                    }
-                }
-                const promptText = template
-                    .replace('{objective}', practice.objective)
-                    .replace('{prompt}', practice.prompt)
-                    .replace('{submission}', assignment.submission);
-
-                // Gemini API Call (Assuming a local proxy or backend endpoint as mentioned in user's env)
-                const response = await fetch('http://localhost:3200/api/dictionary/lookup', {
+                // API Call to the new structured grading service
+                const response = await fetch('http://localhost:3334/api/writing/gradeWritingPart', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        word: promptText,
-                        service: 'gemini',
-                        user_id: currentUser.email
-                    })
+                    body: JSON.stringify(payload)
                 });
 
-                const result = await response.json();
-
-                // Try to parse the result if it's a string containing JSON
-                let feedbackData = result;
-                if (typeof result === 'string') {
-                    try {
-                        const jsonMatch = result.match(/\{[\s\S]*\}/);
-                        if (jsonMatch) feedbackData = JSON.parse(jsonMatch[0]);
-                    } catch (e) { console.warn('Could not parse feedback as JSON', e); }
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}: ${await response.text()}`);
                 }
+
+                const feedbackData = await response.json();
 
                 // Update Firebase
                 await db.ref(`writingPractice/AssignmentTbl/${assignmentID}/AIFeedback`).set(JSON.stringify(feedbackData));
@@ -617,7 +672,160 @@
 
             if (typeof data === 'string') {
                 html = `<div class="bg-slate-50 p-6 rounded-xl border border-slate-200 whitespace-pre-wrap text-slate-700 leading-relaxed">${data}</div>`;
+            } else if (data.overall_feedback) {
+                // --- New Detailed IELTS Structure ---
+                const { overall_feedback, criterion_analysis, revision_suggestions, follow_up_assignments } = data;
+
+                html = `
+                    <div class="space-y-8">
+                        <!-- Overall Feedback -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div class="bg-indigo-600 p-6 rounded-2xl flex flex-col items-center justify-center text-white shadow-lg shadow-indigo-100">
+                                <span class="text-xs font-bold uppercase tracking-widest opacity-80 mb-2">Band Score</span>
+                                <div class="text-5xl font-black">${overall_feedback.assigned_band_score || 'N/A'}</div>
+                            </div>
+                            <div class="md:col-span-3 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Overall Summary</h4>
+                                <p class="text-slate-700 leading-relaxed">${overall_feedback.summary}</p>
+                            </div>
+                        </div>
+
+                        <!-- Criterion Analysis -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            ${Object.entries(criterion_analysis).map(([key, analysis]) => {
+                    const labels = {
+                        task_response: "Task Response",
+                        coherence_cohesion: "Coherence & Cohesion",
+                        lexical_resource: "Lexical Resource",
+                        grammatical_range_accuracy: "Grammatical Range & Accuracy"
+                    };
+                    return `
+                                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                                        <h4 class="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-4 pb-2 border-b border-indigo-50">${labels[key] || key}</h4>
+                                        
+                                        <div class="flex-1 space-y-4">
+                                            <div>
+                                                <h5 class="text-xs font-bold text-green-600 uppercase mb-2">Strengths</h5>
+                                                <ul class="space-y-1">
+                                                    ${analysis.strengths.map(s => `
+                                                        <li class="text-sm text-slate-600 flex gap-2">
+                                                            <span class="text-green-500">✓</span> ${s}
+                                                        </li>
+                                                    `).join('')}
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <h5 class="text-xs font-bold text-red-600 uppercase mb-2">Weaknesses</h5>
+                                                <ul class="space-y-1">
+                                                    ${analysis.weaknesses.map(w => `
+                                                        <li class="text-sm text-slate-600 flex gap-2">
+                                                            <span class="text-red-500">✗</span> ${w}
+                                                        </li>
+                                                    `).join('')}
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        ${analysis.improved_example ? `
+                                            <div class="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                                <h5 class="text-[10px] font-bold text-slate-400 uppercase mb-2">Improved Example</h5>
+                                                <p class="text-sm text-slate-700 italic leading-relaxed">"${analysis.improved_example}"</p>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `;
+                }).join('')}
+                        </div>
+
+                        <!-- Revision Suggestions -->
+                        <div class="bg-indigo-50 p-8 rounded-2xl border border-indigo-100">
+                            <h4 class="text-sm font-bold text-indigo-400 uppercase tracking-wider mb-4">Revision Suggestions</h4>
+                            <ul class="space-y-3">
+                                ${revision_suggestions.map(s => `
+                                    <li class="flex items-start gap-3 text-indigo-900">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 shrink-0"></div>
+                                        <span class="text-lg">${s}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+
+                        <!-- Follow-up Assignments -->
+                        <div class="space-y-4">
+                            <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider px-2">Recommended Follow-up Assignments</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                ${follow_up_assignments.map((task, idx) => `
+                                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-colors group">
+                                        <div class="flex justify-between items-start mb-4">
+                                            <span class="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wider">${task.task_type}</span>
+                                            <button onclick="addFollowUpAssignment(${idx})" class="p-2 text-slate-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                <span class="text-[10px] font-bold">Add Assignment</span>
+                                            </button>
+                                        </div>
+                                        <h5 class="font-bold text-slate-800 mb-2">${task.objective}</h5>
+                                        <p class="text-sm text-slate-500 mb-4 line-clamp-3">${task.prompt}</p>
+                                        <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400">
+                                            <span>LIMIT: ${task.word_limit}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Add helper for adding suggested follow-up assignment
+                window.lastAIResponse = data;
+                window.addFollowUpAssignment = (idx) => {
+                    const task = window.lastAIResponse.follow_up_assignments[idx];
+                    const currentAssignment = currentViewingAssignmentID ? assignments[currentViewingAssignmentID] : null;
+
+                    if (!currentAssignment && currentView !== 'feedback') {
+                        alert('Could not determine current assignment context.');
+                        return;
+                    }
+
+                    // If viewing from feedback management, try to find the assignment context from the list
+                    const assignedTo = currentAssignment ? currentAssignment.assignedTo : 'unknown@student.com';
+
+                    const newPracticeId = generateUUID();
+                    const newAssignmentId = generateUUID();
+                    const today = new Date().toISOString().split('T')[0];
+
+                    const newPractice = {
+                        objective: task.objective,
+                        task_type: task.task_type,
+                        prompt: task.prompt,
+                        word_limit: task.word_limit,
+                        status: 'ready',
+                        createdAt: today
+                    };
+
+                    const newAssignment = {
+                        practiceID: newPracticeId,
+                        assignedTo: assignedTo,
+                        assignedOn: today,
+                        due: today,
+                        submission: "",
+                        submissionOn: "NA",
+                        AIFeedback: ""
+                    };
+
+                    const updates = {};
+                    updates['writingPractice/PracticeTbl/' + newPracticeId] = newPractice;
+                    updates['writingPractice/AssignmentTbl/' + newAssignmentId] = newAssignment;
+
+                    db.ref().update(updates).then(() => {
+                        alert('Follow-up Practice and Assignment added successfully!');
+                    }).catch(error => {
+                        console.error('Error adding follow-up:', error);
+                        alert('Failed to add follow-up: ' + error.message);
+                    });
+                };
+
             } else {
+                // --- Old Structure Fallback ---
                 html = `
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100 flex flex-col items-center justify-center">
@@ -648,6 +856,7 @@
         }
 
         function viewSubmission(id) {
+            currentViewingAssignmentID = id;
             const a = assignments[id];
             if (a.AIFeedback) {
                 try {

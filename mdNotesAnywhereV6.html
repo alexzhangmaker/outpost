@@ -577,11 +577,17 @@
             <div class="content-area">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 id="currentViewTitle" style="font-weight: 500; color: #202124; margin-bottom: 0;">所有笔记</h2>
-                    <div style="position: relative; width: 300px;">
-                        <i class="fas fa-search"
-                            style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #5f6368;"></i>
-                        <input type="text" id="tableSearchInput" placeholder="在此分类中搜索标题..."
-                            style="width: 100%; padding: 8px 12px 8px 36px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; outline: none; transition: border-color 0.2s;">
+                    <div style="display: flex; align-items: center; gap: 10px; width: 450px;">
+                        <select id="tableTagFilter"
+                            style="padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; outline: none; background-color: #fff; cursor: pointer;">
+                            <option value="ALL">所有标签</option>
+                        </select>
+                        <div style="position: relative; flex: 1;">
+                            <i class="fas fa-search"
+                                style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #5f6368;"></i>
+                            <input type="text" id="tableSearchInput" placeholder="在此分类中搜索标题..."
+                                style="width: 100%; padding: 8px 12px 8px 36px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; outline: none; transition: border-color 0.2s;">
+                        </div>
                     </div>
                 </div>
                 <div class="notes-table-container">
@@ -725,6 +731,7 @@
         let notes = [];
         let activeFolderCode = 'ALL'; // 默认显示所有
         let searchQuery = '';
+        let selectedTag = 'ALL'; // 默认所有标签
         let currentEditorInstance = null; // TUI Editor 实例
         let currentEditingNoteId = null;
         let saveTimeout = null;
@@ -802,10 +809,35 @@
                     }
 
                     renderSidebar();
+                    updateTagFilterOptions(); // 更新标签过滤选项
                     renderTable();
                     tableLoading.style.display = 'none';
                 })
                 .catch(err => console.error(err));
+        }
+
+        // --- 新增：更新标签过滤下拉框 ---
+        function updateTagFilterOptions() {
+            const tableTagFilter = document.getElementById('tableTagFilter');
+            const allTags = new Set();
+            notes.forEach(note => {
+                if (note.tags && Array.isArray(note.tags)) {
+                    note.tags.forEach(tag => allTags.add(tag));
+                }
+            });
+
+            const sortedTags = Array.from(allTags).sort();
+
+            // 保留 "所有标签" 选项
+            tableTagFilter.innerHTML = '<option value="ALL">所有标签</option>';
+
+            sortedTags.forEach(tag => {
+                const option = document.createElement('option');
+                option.value = tag;
+                option.textContent = tag;
+                if (tag === selectedTag) option.selected = true;
+                tableTagFilter.appendChild(option);
+            });
         }
 
         // --- 渲染左侧导航 (仅课程) ---
@@ -892,7 +924,9 @@
                 // 仅显示未归档的笔记
                 const isNotArchived = !note.isArchived;
 
-                return matchFolder && matchSearch && isNotArchived;
+                const matchTag = selectedTag === 'ALL' || (note.tags && note.tags.includes(selectedTag));
+
+                return matchFolder && matchSearch && isNotArchived && matchTag;
             });
 
             if (filteredNotes.length === 0) {
@@ -1264,6 +1298,8 @@
                 if (localNote) {
                     Object.assign(localNote, updates);
                 }
+                renderSidebar(); // 更新计数
+                updateTagFilterOptions(); // 更新标签下拉框
                 renderTable(); // 刷新表格以显示新标题/时间
 
                 modalSaveStatus.innerHTML = '<i class="fas fa-check"></i> <span>已保存</span>';
@@ -1292,6 +1328,12 @@
         tableSearchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
             searchInput.value = searchQuery;
+            renderTable();
+        });
+
+        // 标签过滤事件监听
+        document.getElementById('tableTagFilter').addEventListener('change', (e) => {
+            selectedTag = e.target.value;
             renderTable();
         });
 
@@ -1382,6 +1424,7 @@
 
             // 乐观更新
             notes.unshift(newNote);
+            updateTagFilterOptions();
             renderTable();
 
             // 存入数据库
