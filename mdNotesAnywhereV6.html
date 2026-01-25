@@ -820,13 +820,33 @@
         function updateTagFilterOptions() {
             const tableTagFilter = document.getElementById('tableTagFilter');
             const allTags = new Set();
-            notes.forEach(note => {
+
+            // 筛选出当前文件夹和搜索关键词匹配的笔记（并排除归档）
+            const contextualNotes = notes.filter(note => {
+                const matchFolder = activeFolderCode === 'ALL' ||
+                    (note.subject && note.subject.courseCode === activeFolderCode) ||
+                    (activeFolderCode === '000000' && (!note.subject || note.subject.courseCode === '000000'));
+
+                const matchSearch = searchQuery === '' ||
+                    note.title.toLowerCase().includes(searchQuery.toLowerCase());
+
+                const isNotArchived = !note.isArchived;
+
+                return matchFolder && matchSearch && isNotArchived;
+            });
+
+            contextualNotes.forEach(note => {
                 if (note.tags && Array.isArray(note.tags)) {
                     note.tags.forEach(tag => allTags.add(tag));
                 }
             });
 
             const sortedTags = Array.from(allTags).sort();
+
+            // 如果之前选择的标签在当前上下文中不再存在，则重置为所有
+            if (selectedTag !== 'ALL' && !allTags.has(selectedTag)) {
+                selectedTag = 'ALL';
+            }
 
             // 保留 "所有标签" 选项
             tableTagFilter.innerHTML = '<option value="ALL">所有标签</option>';
@@ -897,6 +917,7 @@
         function setActiveFolder(code) {
             activeFolderCode = code;
             renderSidebar(); // 更新高亮
+            updateTagFilterOptions(); // 同步更新标签过滤选项
             renderTable();   // 更新表格
 
             // 更新标题
@@ -1322,12 +1343,14 @@
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
             tableSearchInput.value = searchQuery;
+            updateTagFilterOptions();
             renderTable();
         });
 
         tableSearchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
             searchInput.value = searchQuery;
+            updateTagFilterOptions();
             renderTable();
         });
 
