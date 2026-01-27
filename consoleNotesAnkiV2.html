@@ -435,7 +435,8 @@
                 closeModal();
                 renderDecksTable(currentCourse);
             } catch (err) {
-                alert("JSON 解析失败，请检查格式是否正确");
+                console.error("JSON Error:", err);
+                alert("JSON 解析失败: " + err.message + "\n请检查格式是否正确。");
             }
         };
     </script>
