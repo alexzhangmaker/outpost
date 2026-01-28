@@ -131,8 +131,13 @@
                 resultArea.innerText = '正在转录...';
 
                 //const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
+                //const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                //https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=AIzaSyD2l2Nwpz8AVDhAwWJ9wZAgD7hegHZ6xhM
+                
+                // 建议使用 gemini-2.0-flash-lite 以获得极致响应速度
+                const modelName = "gemini-2.0-flash-lite"; 
+                const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
+                
                 const payload = {
                     contents: [{
                         parts: [
