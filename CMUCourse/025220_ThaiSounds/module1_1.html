@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลักษณะเสียงพูดและการผลิตเสียงพูด (1)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Importing Noto Serif Thai from Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@400;700&family=Kanit:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* 1. SETUP & CORE DESIGN PRINCIPLES */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Noto Serif Thai', serif;
+        }
+
+        .slide-container {
+            background-color: #ffffff;
+            border-radius: 0px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            height: 720px;
+            overflow: hidden;
+            padding: 60px;
+            position: relative;
+            width: 1280px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slide-container.active {
+            display: flex;
+        }
+
+        /* LIGHT ACADEMIC THEME */
+        .slide-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, #003366, #0066cc);
+            z-index: 10;
+        }
+
+        /* ABSTRACT BACKGROUND DECORATION */
+        .bg-accent {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 51, 102, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .bg-accent.top-right {
+            top: -200px;
+            right: -200px;
+        }
+
+        .bg-accent.bottom-left {
+            bottom: -200px;
+            left: -200px;
+        }
+
+        .slide-container>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* TYPOGRAPHY */
+        h1,
+        h2,
+        h3 {
+            color: #003366;
+            font-family: 'Noto Serif Thai', serif;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 64px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .slide-title {
+            font-size: 42px;
+            margin-bottom: 40px;
+            text-align: left;
+            width: 100%;
+            border-left: 8px solid #003366;
+            padding-left: 20px;
+        }
+
+        p,
+        li,
+        td,
+        th {
+            font-size: 24px;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .subtitle {
+            font-size: 28px;
+            color: #64748b;
+            margin-top: 20px;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* LAYOUT COMPONENTS */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .tiled-content {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+        }
+
+        .tile {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 30px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .tile .icon {
+            font-size: 48px;
+            color: #0066cc;
+            margin-bottom: 20px;
+        }
+
+        .tile h3 {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .bullet-list li {
+            position: relative;
+            padding-left: 45px;
+            margin-bottom: 25px;
+        }
+
+        .bullet-list li::before {
+            content: '\f058';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            color: #0066cc;
+            font-size: 22px;
+        }
+
+        .image-wrapper {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            height: 400px;
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .contain-img img {
+            object-fit: contain;
+            background: #fff;
+        }
+
+        .table-layout table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .table-layout th,
+        .table-layout td {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        .table-layout th {
+            background-color: #003366;
+            color: white;
+            font-weight: 700;
+        }
+
+        .section-title-layout {
+            text-align: center;
+        }
+
+        .section-title-layout hr {
+            width: 100px;
+            height: 6px;
+            background: #0066cc;
+            border: none;
+            margin: 30px auto;
+        }
+
+        /* COLOR UTILS */
+        .highlight {
+            color: #0066cc;
+            font-weight: 700;
+        }
+
+        /* English specific override if needed, but Noto Serif Thai handles Latin well */
+        .en {
+            font-family: 'Sarabun', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Slide 1: Title_Slide -->
+    <div class="slide-container" id="slide1">
+        <div class="bg-accent top-right"></div>
+        <div class="bg-accent bottom-left"></div>
+        <div class="content-area" style="align-items: center;">
+            <p class="highlight" style="margin-bottom: 10px;">ม.ทปท. 220 ลักษณะเสียงและการออกเสียงภาษาไทย (ภาคทฤษฎี)</p>
+            <h1>ลักษณะเสียงพูด<br>และการผลิตเสียงพูด (1)</h1>
+            <div style="width: 150px; height: 4px; background: #003366; margin: 40px 0;"></div>
+            <p class="subtitle">Academic Presentation on Speech Acoustics and Production</p>
+        </div>
+    </div>
+
+    <!-- Slide 2: What is sound? -->
+    <div class="slide-container" id="slide2">
+        <h2 class="slide-title">เสียงคืออะไร? (What is Sound?)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <ul class="bullet-list">
+                    <li>เป็นพลังงานชนิดหนึ่ง</li>
+                    <li>เกิดจากการสั่นสะเทือนของวัตถุ</li>
+                    <li>อาศัยตัวกลาง (<span class="highlight">อากาศ น้ำ หรือของแข็ง</span>)</li>
+                    <li>ส่งผ่านพลังงานในรูปแบบของคลื่นเสียง</li>
+                </ul>
+                <div class="image-wrapper">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/16286724719057716824"
+                        alt="ภาพประกอบคลื่นเสียง">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: Discussion -->
+    <div class="slide-container" id="slide3">
+        <div class="section-title-layout">
+            <h2 style="font-size: 80px;">ชวนคุย!</h2>
+            <p class="subtitle" style="font-size: 40px;">Let's discuss!</p>
+            <hr>
+            <p style="font-size: 32px;">ตัวอย่างเสียงในธรรมชาติมีอะไรบ้าง?</p>
+        </div>
+    </div>
+
+    <!-- Slide 4: Properties -->
+    <div class="slide-container" id="slide4">
+        <h2 class="slide-title">คุณสมบัติของเสียง (Properties of Sound)</h2>
+        <div class="content-area">
+            <div class="tiled-content">
+                <div class="tile">
+                    <div class="icon"><i class="fa-solid fa-arrows-up-down"></i></div>
+                    <h3>ระดับเสียง</h3>
+                    <p class="highlight">Pitch</p>
+                    <p>สูงหรือต่ำ</p>
+                </div>
+                <div class="tile">
+                    <div class="icon"><i class="fa-solid fa-clock"></i></div>
+                    <h3>ช่วงเวลา</h3>
+                    <p class="highlight">Duration</p>
+                    <p>ยาวหรือสั้น</p>
+                </div>
+                <div class="tile">
+                    <div class="icon"><i class="fa-solid fa-volume-high"></i></div>
+                    <h3>ความเข้ม</h3>
+                    <p class="highlight">Intensity</p>
+                    <p>ดังหรือเบา</p>
+                </div>
+                <div class="tile">
+                    <div class="icon"><i class="fa-solid fa-wave-square"></i></div>
+                    <h3>คุณภาพ</h3>
+                    <p class="highlight">Timbre</p>
+                    <p>เอกลักษณ์ของเสียง</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Pitch & Duration -->
+    <div class="slide-container" id="slide5">
+        <h2 class="slide-title">ระดับเสียงและช่วงเวลา</h2>
+        <div class="content-area">
+            <div class="two-column tiled-content" style="gap: 40px;">
+                <div class="tile" style="text-align: left; padding: 40px;">
+                    <h3 style="color: #0066cc;">ระดับเสียง (Pitch)</h3>
+                    <p>สัมพันธ์กับความถี่ (<span class="highlight">Frequency</span>)</p>
+                    <div style="margin-top: 20px; padding: 15px; background: #eef2ff; border-radius: 8px;">
+                        <p style="margin: 0;">หน่วยวัด: <span class="highlight">เฮิร์ต (Hertz หรือ Hz)</span></p>
+                    </div>
+                </div>
+                <div class="tile" style="text-align: left; padding: 40px;">
+                    <h3 style="color: #0066cc;">ช่วงเวลา (Duration)</h3>
+                    <p>สัมพันธ์กับจุดเริ่มและจุดสิ้นสุดของคลื่นเสียง</p>
+                    <div style="margin-top: 20px; padding: 15px; background: #eef2ff; border-radius: 8px;">
+                        <p style="margin: 0;">หน่วยวัด: <span class="highlight">มิลลิวินาที (ms)</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Intensity & Timbre -->
+    <div class="slide-container" id="slide6">
+        <h2 class="slide-title">ความดังและคุณภาพเสียง</h2>
+        <div class="content-area">
+            <div class="two-column tiled-content" style="gap: 40px;">
+                <div class="tile" style="text-align: left; padding: 40px;">
+                    <h3 style="color: #0066cc;">ความดัง (Intensity)</h3>
+                    <p>สัมพันธ์กับแอมพลิจูด (<span class="highlight">Amplitude</span>) ของคลื่นเสียง</p>
+                    <div style="margin-top: 20px; padding: 15px; background: #eef2ff; border-radius: 8px;">
+                        <p style="margin: 0;">หน่วยวัด: <span class="highlight">เดซิเบล (decibel หรือ dB)</span></p>
+                    </div>
+                </div>
+                <div class="tile" style="text-align: left; padding: 40px;">
+                    <h3 style="color: #0066cc;">คุณภาพ (Timbre)</h3>
+                    <p>สัมพันธ์กับ <span class="highlight">รูปร่างของคลื่นเสียง</span> (Shape of sound wave)</p>
+                    <div style="margin-top: 20px; padding: 15px; background: #eef2ff; border-radius: 8px;">
+                        <p style="margin: 0;">ช่วยจำแนกความต่างของแหล่งกำเนิดเสียง</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: Table - Summary -->
+    <div class="slide-container" id="slide7">
+        <h2 class="slide-title">สรุปคุณสมบัติของเสียง</h2>
+        <div class="content-area">
+            <div class="table-layout">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>QUALITIES</th>
+                            <th>DISTINCTION</th>
+                            <th>PRODUCED BY</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>PITCH</strong></td>
+                            <td>Low / High</td>
+                            <td>Wave frequency (Hz)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DURATION</strong></td>
+                            <td>Long / Short</td>
+                            <td>Wave persistence</td>
+                        </tr>
+                        <tr>
+                            <td><strong>INTENSITY</strong></td>
+                            <td>Loud / Soft</td>
+                            <td>Wave amplitude (dB)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TIMBRE</strong></td>
+                            <td>Voices / Instruments</td>
+                            <td>Harmonic sounds / Wave Shape</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: What is Speech? -->
+    <div class="slide-container" id="slide8">
+        <h2 class="slide-title">เสียงพูดคืออะไร? (What is Speech?)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div>
+                    <ul class="bullet-list">
+                        <li>คือเสียงที่มนุษย์สร้างขึ้นโดยใช้อวัยวะออกเสียง (<span class="highlight">Speech Organ</span>)
+                        </li>
+                        <li>เพื่อสื่อสารความหมายผ่านภาษา</li>
+                        <li>มีคุณสมบัติเช่นเดียวกับเสียงอื่น ๆ</li>
+                    </ul>
+                </div>
+                <div class="image-wrapper contain-img">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/5248001270101120584"
+                        alt="แผนผังอวัยวะออกเสียง">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 9: Discussion 2 -->
+    <div class="slide-container" id="slide9">
+        <div class="section-title-layout">
+            <h2 style="font-size: 60px;">ชวนคุย! (Let's discuss!)</h2>
+            <hr>
+            <div class="tiled-content" style="justify-content: center; margin-top: 40px;">
+                <div class="tile" style="max-width: 450px;">
+                    <p>ตัวอย่างอวัยวะออกเสียงมีอะไรบ้าง?</p>
+                </div>
+                <div class="tile" style="max-width: 450px; background-color: #fff1f2; border-color: #fecaca;">
+                    <p class="highlight" style="color: #e11d48;">เสียงกรี๊ดเป็นเสียงพูดหรือไม่?</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: Production & Meaning -->
+    <div class="slide-container" id="slide10">
+        <h2 class="slide-title">การผลิตและจำแนกความหมาย</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div>
+                    <p>มนุษย์ใช้อวัยวะออกเสียงผลิตเสียงที่หลากหลายเพื่อสื่อสาร เช่น <span class="highlight">สระ
+                            พยัญชนะ</span> เป็นต้น</p>
+                    <div
+                        style="margin-top: 30px; padding: 20px; background: #f0fdf4; border-radius: 12px; border: 1px solid #bbf7d0;">
+                        <p style="font-size: 40px; text-align: center; margin: 0; font-weight: 700;">กาแฟ</p>
+                        <p style="text-align: center; font-size: 18px; color: #166534; font-style: italic;">Coffee</p>
+                    </div>
+                </div>
+                <div class="image-wrapper">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/3841533510950579219"
+                        alt="ถ้วยกาแฟ">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 11: Distinction -->
+    <div class="slide-container" id="slide11">
+        <h2 class="slide-title">เสียงที่แตกต่างใช้จำแนกความหมาย</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="image-wrapper contain-img">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/4796420836295908754"
+                        alt="ภาพม้าและหมา">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div
+                        style="padding: 20px; background: #fffbeb; border-radius: 12px; display: flex; justify-content: space-around; align-items: center;">
+                        <p style="font-size: 48px; margin: 0; font-weight: 700;">ม้า</p>
+                        <p style="font-size: 48px; margin: 0; color: #d97706; font-weight: 700;">หมา</p>
+                    </div>
+                    <p>เสียงที่เปลี่ยนไปเพียงเล็กน้อยสามารถเปลี่ยนความหมายของคำจาก <span
+                            class="highlight">"Horse"</span> เป็น <span class="highlight">"Dog"</span> ได้ในภาษาไทย</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 12: Conclusion -->
+    <div class="slide-container" id="slide12">
+        <h2 class="slide-title">มิติต่าง ๆ ของเสียงพูด</h2>
+        <div class="content-area">
+            <ul class="bullet-list" style="max-width: 900px; margin: 0 auto;">
+                <li><span class="highlight">บ่งชี้ภูมิหลังของผู้พูด:</span> เพศ ถิ่นที่อยู่ การศึกษา ฯลฯ</li>
+                <li><span class="highlight">แตกต่างตามสถานการณ์:</span> เช่น พูดในที่ประชุมกับพูดกับเพื่อน
+                    เสียงจะไม่เหมือนกัน</li>
+                <li><span class="highlight">ถ่ายถอดอารมณ์ความรู้สึกได้:</span> เช่น ดีใจ เสียใจ โกรธ ฯลฯ</li>
+            </ul>
+            <div style="text-align: center; margin-top: 60px;">
+                <p style="font-size: 40px; color: #003366; font-weight: 700;">จบการนำเสนอ</p>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const slides = document.querySelectorAll('.slide-container');
+        let currentSlide = 0;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            } else if (e.key === 'ArrowLeft') {
+                currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                showSlide(currentSlide);
+            }
+        });
+
+        // Initialize first slide
+        showSlide(currentSlide);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini 语音转义验证</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-lg">
+        <header class="text-center">
+            <h1 class="text-2xl font-bold text-slate-800">Gemini 语音转录原型</h1>
+            <p class="text-slate-500 text-sm mt-2">支持泰语、英语、中文实时转录</p>
+        </header>
+
+        <gemini-recorder id="recorder-component"></gemini-recorder>
+
+        <div class="border-t pt-4">
+            <input type="password" id="api-key" placeholder="输入你的 Gemini API Key" 
+                   class="w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+    </div>
+
+    <template id="recorder-template">
+        <div class="flex flex-col gap-4">
+            <select id="lang-select" class="w-full p-2 border rounded-lg bg-white text-slate-700">
+                <option value="Thai">泰语 (ภาษาไทย)</option>
+                <option value="English">英语 (English)</option>
+                <option value="Chinese">中文 (Mandarin)</option>
+            </select>
+
+            <div class="flex items-center justify-center py-6">
+                <button id="record-btn" class="w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-all shadow-lg active:scale-95">
+                    <svg id="mic-icon" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </button>
+            </div>
+
+            <div id="status" class="text-center text-sm font-medium text-slate-600 h-6">准备就绪</div>
+
+            <div id="result-area" class="mt-4 p-4 bg-slate-100 rounded-lg min-h-[100px] whitespace-pre-wrap text-slate-800 border border-slate-200 hidden">
+                </div>
+        </div>
+    </template>
+
+    <script>
+        class GeminiRecorder extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+                this.isRecording = false;
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+            }
+
+            connectedCallback() {
+                const template = document.getElementById('recorder-template');
+                this.shadowRoot.appendChild(template.content.cloneNode(true));
+                this.shadowRoot.querySelector('style')?.remove(); // 允许外部Tailwind
+                this.initApp();
+            }
+
+            initApp() {
+                const btn = this.shadowRoot.getElementById('record-btn');
+                const langSelect = this.shadowRoot.getElementById('lang-select');
+                
+                btn.onclick = () => this.toggleRecording();
+            }
+
+            async toggleRecording() {
+                if (this.isRecording) {
+                    this.stopRecording();
+                } else {
+                    await this.startRecording();
+                }
+            }
+
+            async startRecording() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    this.mediaRecorder = new MediaRecorder(stream);
+                    this.audioChunks = [];
+
+                    this.mediaRecorder.ondataavailable = (e) => this.audioChunks.push(e.data);
+                    this.mediaRecorder.onstop = () => this.handleAudioReady();
+
+                    this.mediaRecorder.start();
+                    this.isRecording = true;
+                    this.updateUI(true);
+                } catch (err) {
+                    alert('无法访问麦克风: ' + err);
+                }
+            }
+
+            stopRecording() {
+                this.mediaRecorder.stop();
+                this.isRecording = false;
+                this.updateUI(false);
+            }
+
+            updateUI(recording) {
+                const btn = this.shadowRoot.getElementById('record-btn');
+                const status = this.shadowRoot.getElementById('status');
+                btn.classList.toggle('bg-red-600', recording);
+                btn.classList.toggle('bg-blue-600', !recording);
+                btn.classList.toggle('animate-pulse', recording);
+                status.innerText = recording ? '正在录音...点击停止' : '处理中...';
+            }
+
+            async handleAudioReady() {
+                const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                const base64Data = await this.blobToBase64(audioBlob);
+                this.callGemini(base64Data);
+            }
+
+            async callGemini(base64Data) {
+                const apiKey = document.getElementById('api-key').value;
+                const lang = this.shadowRoot.getElementById('lang-select').value;
+                const resultArea = this.shadowRoot.getElementById('result-area');
+                const status = this.shadowRoot.getElementById('status');
+
+                if (!apiKey) {
+                    alert('请先输入 API Key');
+                    status.innerText = '等待 API Key';
+                    return;
+                }
+
+                resultArea.classList.remove('hidden');
+                resultArea.innerText = '正在转录...';
+
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{
+                        parts: [
+                            { text: `You are a transcription expert. Transcribe the following audio exactly as spoken in ${lang}. Only output the transcript, no explanations.` },
+                            { inline_data: { mime_type: "audio/webm", data: base64Data.split(',')[1] } }
+                        ]
+                    }]
+                };
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json();
+                    const text = data.candidates[0].content.parts[0].text;
+                    
+                    resultArea.innerText = text || "(未能识别到语音内容)";
+                    status.innerText = '完成';
+                } catch (err) {
+                    resultArea.innerText = '转录失败: ' + err.message;
+                    status.innerText = '错误';
+                }
+            }
+
+            blobToBase64(blob) {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+            }
+        }
+
+        customElements.define('gemini-recorder', GeminiRecorder);
+    </script>
+</body>
+</html>

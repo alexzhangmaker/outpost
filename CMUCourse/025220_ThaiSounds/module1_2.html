@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลักษณะเสียงพูดและการผลิตเสียงพูด (2)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Importing Noto Serif Thai and Kanit from Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@400;700&family=Kanit:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* 1. SETUP & CORE DESIGN PRINCIPLES */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Noto Serif Thai', serif;
+        }
+
+        .slide-container {
+            background-color: #ffffff;
+            border-radius: 0px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            height: 720px;
+            overflow: hidden;
+            padding: 60px;
+            position: relative;
+            width: 1280px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slide-container.active {
+            display: flex;
+        }
+
+        /* LIGHT ACADEMIC THEME */
+        .slide-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, #800000, #cc0000);
+            /* Changed to a deep red academic theme for part 2 */
+            z-index: 10;
+        }
+
+        /* ABSTRACT BACKGROUND DECORATION */
+        .bg-accent {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(128, 0, 0, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .bg-accent.top-right {
+            top: -200px;
+            right: -200px;
+        }
+
+        .bg-accent.bottom-left {
+            bottom: -200px;
+            left: -200px;
+        }
+
+        .slide-container>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* TYPOGRAPHY */
+        h1,
+        h2,
+        h3 {
+            color: #4a0000;
+            font-family: 'Noto Serif Thai', serif;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 64px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .slide-title {
+            font-size: 42px;
+            margin-bottom: 40px;
+            text-align: left;
+            width: 100%;
+            border-left: 8px solid #800000;
+            padding-left: 20px;
+        }
+
+        p,
+        li,
+        td,
+        th {
+            font-size: 24px;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .subtitle {
+            font-size: 28px;
+            color: #64748b;
+            margin-top: 20px;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* LAYOUT COMPONENTS */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .tiled-content {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+        }
+
+        .tile {
+            background-color: #fffaf0;
+            border: 1px solid #fee2e2;
+            border-radius: 12px;
+            padding: 30px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .tile .icon {
+            font-size: 48px;
+            color: #800000;
+            margin-bottom: 20px;
+        }
+
+        .tile h3 {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .bullet-list li {
+            position: relative;
+            padding-left: 45px;
+            margin-bottom: 25px;
+        }
+
+        .bullet-list li::before {
+            content: '\f05d';
+            /* Check-circle icon */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            color: #800000;
+            font-size: 22px;
+        }
+
+        .image-wrapper {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            height: 450px;
+            background: #fff;
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 10px;
+        }
+
+        /* HIGHLIGHTS */
+        .highlight {
+            color: #cc0000;
+            font-weight: 700;
+        }
+
+        .box {
+            background: #fef2f2;
+            border: 2px dashed #f87171;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Slide 1: Title_Slide -->
+    <div class="slide-container" id="slide1">
+        <div class="bg-accent top-right"></div>
+        <div class="bg-accent bottom-left"></div>
+        <div class="content-area" style="align-items: center;">
+            <p class="highlight" style="margin-bottom: 10px;">ม.ทปท. 220 ลักษณะเสียงและการออกเสียงภาษาไทย (ภาคทฤษฎี)</p>
+            <h1>ลักษณะเสียงพูด<br>และการผลิตเสียงพูด (2)</h1>
+            <div style="width: 150px; height: 4px; background: #800000; margin: 40px 0;"></div>
+            <p class="subtitle">Speech Production: The Four Major Processes</p>
+        </div>
+    </div>
+
+    <!-- Slide 2: Speech Production Intro -->
+    <div class="slide-container" id="slide2">
+        <h2 class="slide-title">การผลิตเสียงพูด (Speech Production)</h2>
+        <div class="content-area">
+            <ul class="bullet-list">
+                <li>ร่างกายมนุษย์มีอวัยวะออกเสียงหลายส่วนที่ทำงานร่วมกัน</li>
+                <li>เสียงพูดเกิดจากการเปลี่ยน <span class="highlight">พลังงานลมหายใจเป็นเสียง</span></li>
+                <li>ประกอบด้วยขั้นตอนที่ซับซ้อน แบ่งเป็นกระบวนการหลัก ๆ เพื่อความสะดวกในการศึกษา</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 3: Anatomy Overview -->
+    <div class="slide-container" id="slide3">
+        <h2 class="slide-title">ระบบอวัยวะที่เกี่ยวข้อง</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="image-wrapper">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Respiratory_system.svg/1280px-Respiratory_system.svg.png?20230416054304"
+                        alt="Diagram of Lungs, Nose, Mouth, Trachea, Diaphragm">
+                </div>
+                <ul class="bullet-list">
+                    <li><span class="highlight">Nose / Mouth</span> (ทางผ่านลม)</li>
+                    <li><span class="highlight">Trachea</span> (หลอดลม)</li>
+                    <li><span class="highlight">Lungs</span> (ปอด - แหล่งกำเนิดลม)</li>
+                    <li><span class="highlight">Diaphragm</span> (กะบังลม - ตัวควบคุม)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: 4 Main Processes -->
+    <div class="slide-container" id="slide4">
+        <h2 class="slide-title">4 กระบวนการหลักในการผลิตเสียง</h2>
+        <div class="content-area">
+            <div class="tiled-content" style="flex-wrap: wrap;">
+                <div class="tile">
+                    <div class="icon"><i class="fa-solid fa-wind"></i></div>
+                    <h3>1. กระบวนการกระแสลม</h3>
+                    <p class="highlight">Airstream process</p>
+                </div>
+                <div class="tile">
+                    <div class="icon"><i class="fa-solid fa-music"></i></div>
+                    <h3>2. กระบวนการเปล่งเสียง</h3>
+                    <p class="highlight">Phonation process</p>
+                </div>
+                <div class="tile">
+                    <div class="icon"><i class="fa-solid fa-lips"></i></div>
+                    <h3>3. กระบวนการโอษฐ์-นาสิก</h3>
+                    <p class="highlight">Oro-nasal process</p>
+                </div>
+                <div class="tile">
+                    <div class="icon"><i class="fa-solid fa-comment-dots"></i></div>
+                    <h3>4. กระบวนการออกเสียง</h3>
+                    <p class="highlight">Articulatory process</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Airstream Process -->
+    <div class="slide-container" id="slide5">
+        <h2 class="slide-title">1. กระบวนการกระแสลม (Airstream)</h2>
+        <div class="content-area">
+            <ul class="bullet-list">
+                <li>คือการบังคับกระแสลมเพื่อใช้ออกเสียงพูด</li>
+                <li>มนุษย์สร้างลมได้จากหลายแหล่งและหลายทิศทาง</li>
+                <li><span class="highlight">ภาษาไทย:</span> ใช้เพียงกระแสลมจากปอด (<span class="highlight">pulmonic
+                        airstream</span>) เท่านั้น</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 6: Inhalation Mechanism -->
+    <div class="slide-container" id="slide6">
+        <h2 class="slide-title">กลไกการหายใจเข้า (Inhalation)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div style="background: #fdf2f2; padding: 30px; border-radius: 12px;">
+                    <p>1. กะบังลมหด / ลดตัวลง</p>
+                    <p>2. ช่องอกและปอดขยายตัว</p>
+                    <p>3. ความดันอากาศในปอด <span class="highlight">น้อยกว่า</span> ภายนอก</p>
+                    <p>4. อากาศไหลเข้าสู่ปอด</p>
+                </div>
+                <div class="image-wrapper">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/%D0%91%D0%A1%D0%AD1._%D0%93%D0%BE%D0%BB%D0%BE%D1%81%D0%BE%D0%B2%D1%8B%D0%B5_%D1%81%D0%B2%D1%8F%D0%B7%D0%BA%D0%B8.jpg?20200812154238"
+                        alt="Inhalation visualization">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: Exhalation Mechanism -->
+    <div class="slide-container" id="slide7">
+        <h2 class="slide-title">กลไกการหายใจออก (Exhalation)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="image-wrapper">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/15286595431411516082"
+                        alt="Exhalation visualization">
+                </div>
+                <div style="background: #fdf2f2; padding: 30px; border-radius: 12px;">
+                    <p>1. กะบังลมยืด / ยกตัวขึ้น</p>
+                    <p>2. ช่องอกและปอดหดตัว</p>
+                    <p>3. ความดันอากาศในปอด <span class="highlight">มากกว่า</span> ภายนอก</p>
+                    <p>4. อากาศออกจากปอดผ่านหลอดลม (<span class="highlight">trachea</span>)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: Phonation Process -->
+    <div class="slide-container" id="slide8">
+        <h2 class="slide-title">2. กระบวนการเปล่งเสียง (Phonation)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <ul class="bullet-list">
+                    <li>คือการทำงานของ <span class="highlight">เส้นเสียง (vocal cords)</span></li>
+                    <li>เส้นเสียงอยู่ใน <span class="highlight">กล่องเสียง (larynx)</span></li>
+                    <li>สภาพของช่องเส้นเสียงที่ต่างกันส่งผลต่อลักษณะเสียงที่ออกมา</li>
+                </ul>
+                <div class="image-wrapper">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/10931551044390666065"
+                        alt="Vocal cords and Arytenoid cartilage">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 9: Glottis States -->
+    <div class="slide-container" id="slide9">
+        <h2 class="slide-title">สภาพของช่องเส้นเสียง</h2>
+        <div class="content-area">
+            <div class="tiled-content">
+                <div class="tile">
+                    <h3 class="highlight">เส้นเสียงเปิด</h3>
+                    <p>กระดูกอ่อนแอริทินอยด์ (<span class="highlight">arytenoid</span>) อยู่ห่างกัน ลมไหลผ่านสะดวก</p>
+                </div>
+                <div class="tile">
+                    <h3 class="highlight">เส้นเสียงปิด</h3>
+                    <p>กระดูกอ่อนแอริทินอยด์ชิดกัน กระแสลมถูกกักไว้</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: Oro-nasal Process -->
+    <div class="slide-container" id="slide10">
+        <h2 class="slide-title">3. กระบวนการโอษฐ์-นาสิก (Oro-nasal)</h2>
+        <div class="content-area">
+            <ul class="bullet-list">
+                <li>คือการเคลื่อนไหวของ <span class="highlight">เพดานอ่อน (velum)</span></li>
+                <li>ทำหน้าที่เหมือน "ลิ้นเปิด-ปิด" ทางเดินลมระหว่างช่องปากและช่องจมูก</li>
+                <li>ในภาษาไทยเกี่ยวข้องโดยตรงกับลักษณะของ <span class="highlight">เสียงพยัญชนะ</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 11: Oral vs Nasal Sound -->
+    <div class="slide-container" id="slide11">
+        <h2 class="slide-title">กลไกการควบคุมกระแสลม</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="tile">
+                    <h3 class="highlight">เสียงทางปาก (Oral)</h3>
+                    <p>เพดานอ่อน <span class="highlight">ยกตัวขึ้น</span> ปิดช่องทางไปจมูก ลมผ่านได้เฉพาะช่องปาก</p>
+                </div>
+                <div class="tile">
+                    <h3 class="highlight">เสียงทางจมูก (Nasal)</h3>
+                    <p>เพดานอ่อน <span class="highlight">ลดตัวลง</span> เปิดช่องทางให้ลมผ่านออกทางจมูก</p>
+                </div>
+            </div>
+            <div class="image-wrapper" style="height: 250px; margin-top: 30px;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Voyelles.svg/1920px-Voyelles.svg.png?20070107134215"
+                    alt="Oral and Nasal airflow diagram">
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 12: Articulatory Process -->
+    <div class="slide-container" id="slide12">
+        <h2 class="slide-title">4. กระบวนการออกเสียง (Articulatory)</h2>
+        <div class="content-area">
+            <ul class="bullet-list">
+                <li>คือการเคลื่อนไหวของอวัยวะใน <span class="highlight">ช่องปาก (oral cavity)</span></li>
+                <li>เพื่อบีบกระแสลม (<span class="highlight">stricture</span>) ให้เกิดเสียงต่าง ๆ</li>
+                <li>แบ่งประเภทการบีบลมเป็น แบบปิด (closed) และแบบเปิด (open)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 13: Articulatory Organs -->
+    <div class="slide-container" id="slide13">
+        <h2 class="slide-title">อวัยวะที่เกี่ยวข้องกับการออกเสียง</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <ul class="bullet-list">
+                    <li>ริมฝีปาก (lips)</li>
+                    <li>ฟันบน (upper teeth)</li>
+                    <li>แนวปุ่มเหงือก (alveolar ridge)</li>
+                    <li>เพดานแข็ง (palate)</li>
+                    <li>เพดานอ่อน (velum)</li>
+                    <li>ลิ้น (tongue)</li>
+                </ul>
+                <div class="image-wrapper">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/16278831086111894458"
+                        alt="Speech organs diagram">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 14: Conclusion -->
+    <div class="slide-container" id="slide14">
+        <div class="section-title-layout">
+            <h2 style="font-size: 60px;">สรุปกระบวนการผลิตเสียง</h2>
+            <div class="box" style="display: inline-block; width: 80%; text-align: left; margin: 0 auto;">
+                <p><strong>Airstream:</strong> แหล่งพลังงานลม (ไทยใช้จากปอด)</p>
+                <p><strong>Phonation:</strong> การทำงานของเส้นเสียงในกล่องเสียง</p>
+                <p><strong>Oro-nasal:</strong> การเปิด-ปิดเพดานอ่อน (ปาก/จมูก)</p>
+                <p><strong>Articulatory:</strong> การปรับรูปช่องปากด้วยลิ้น/ริมฝีปาก</p>
+            </div>
+            <p style="margin-top: 40px; font-weight: 700; color: #800000; font-size: 32px;">จบการนำเสนอตอนที่ 2</p>
+        </div>
+    </div>
+
+
+    <script>
+        const slides = document.querySelectorAll('.slide-container');
+        let currentSlide = 0;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            } else if (e.key === 'ArrowLeft') {
+                currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                showSlide(currentSlide);
+            }
+        });
+
+        // Initialize first slide
+        showSlide(currentSlide);
+    </script>
+</body>
+
+</html>
