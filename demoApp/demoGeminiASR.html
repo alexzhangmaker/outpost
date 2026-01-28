@@ -141,19 +141,25 @@
                     }]
                 };
 
+
+                // 修改后的解析逻辑
                 try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        body: JSON.stringify(payload)
-                    });
+                    const response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
                     const data = await response.json();
+
+                    // 增加错误检查
+                    if (data.error) {
+                        throw new Error(`API 错误: ${data.error.message} (代码: ${data.error.code})`);
+                    }
+
+                    if (!data.candidates || data.candidates.length === 0) {
+                        throw new Error("模型未返回任何结果，请尝试重新说话。");
+                    }
+
                     const text = data.candidates[0].content.parts[0].text;
-                    
-                    resultArea.innerText = text || "(未能识别到语音内容)";
-                    status.innerText = '完成';
+                    resultArea.innerText = text;
                 } catch (err) {
-                    resultArea.innerText = '转录失败: ' + err.message;
-                    status.innerText = '错误';
+                    resultArea.innerText = "出错了: " + err.message;
                 }
             }
 
