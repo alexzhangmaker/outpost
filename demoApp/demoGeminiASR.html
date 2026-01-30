@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gemini 语音转义验证</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center p-4">
 
     <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-lg">
@@ -17,8 +19,8 @@
         <gemini-recorder id="recorder-component"></gemini-recorder>
 
         <div class="border-t pt-4">
-            <input type="password" id="api-key" placeholder="输入你的 Gemini API Key" 
-                   class="w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="password" id="api-key" placeholder="输入你的 Gemini API Key"
+                class="w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
         </div>
     </div>
 
@@ -31,17 +33,21 @@
             </select>
 
             <div class="flex items-center justify-center py-6">
-                <button id="record-btn" class="w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-all shadow-lg active:scale-95">
-                    <svg id="mic-icon" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                <button id="record-btn"
+                    class="w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-all shadow-lg active:scale-95">
+                    <svg id="mic-icon" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                     </svg>
                 </button>
             </div>
 
             <div id="status" class="text-center text-sm font-medium text-slate-600 h-6">准备就绪</div>
 
-            <div id="result-area" class="mt-4 p-4 bg-slate-100 rounded-lg min-h-[100px] whitespace-pre-wrap text-slate-800 border border-slate-200 hidden">
-                </div>
+            <div id="result-area"
+                class="mt-4 p-4 bg-slate-100 rounded-lg min-h-[100px] whitespace-pre-wrap text-slate-800 border border-slate-200 hidden">
+            </div>
         </div>
     </template>
 
@@ -65,7 +71,7 @@
             initApp() {
                 const btn = this.shadowRoot.getElementById('record-btn');
                 const langSelect = this.shadowRoot.getElementById('lang-select');
-                
+
                 btn.onclick = () => this.toggleRecording();
             }
 
@@ -132,12 +138,11 @@
 
                 //const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
                 //const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                //https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=AIzaSyD2l2Nwpz8AVDhAwWJ9wZAgD7hegHZ6xhM
-                
+
                 // 建议使用 gemini-2.0-flash-lite 以获得极致响应速度
-                const modelName = "gemini-2.0-flash-lite"; 
+                const modelName = "gemini-2.0-flash-lite";
                 const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
-                
+
                 const payload = {
                     contents: [{
                         parts: [
@@ -181,4 +186,5 @@
         customElements.define('gemini-recorder', GeminiRecorder);
     </script>
 </body>
+
 </html>
