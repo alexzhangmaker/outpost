@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,26 +8,49 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Console 风格滚动条 */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        .font-mono-nums { font-variant-numeric: tabular-nums; }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .font-mono-nums {
+            font-variant-numeric: tabular-nums;
+        }
     </style>
 </head>
+
 <body class="bg-gray-100 font-sans text-gray-800 h-screen overflow-hidden">
 
-    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 text-white transition-opacity duration-500">
-        <div class="text-center space-y-6 p-10 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 max-w-md w-full">
+    <div id="login-screen"
+        class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 text-white transition-opacity duration-500">
+        <div
+            class="text-center space-y-6 p-10 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 max-w-md w-full">
             <h1 class="text-4xl font-bold tracking-wider text-green-400">STATION INBOX</h1>
             <p class="text-slate-400">站内消息中心</p>
-            
+
             <div id="url-param-info" class="text-xs font-mono bg-slate-900 p-2 rounded text-slate-500">
                 Checking URL parameters...
             </div>
 
-            <button id="btn-login" class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+            <button id="btn-login"
+                class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
+                </svg>
                 Sign in with Google
             </button>
             <p id="login-error" class="text-red-400 text-sm hidden"></p>
@@ -34,23 +58,34 @@
     </div>
 
     <div id="app-container" class="flex h-screen w-full hidden">
-        
+
         <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-700 flex-shrink-0">
             <div class="h-16 flex items-center justify-center border-b border-slate-800">
-                <span class="text-xl font-bold text-white tracking-wider">INBOX<span class="text-green-500">_CLI</span></span>
+                <span class="text-xl font-bold text-white tracking-wider">INBOX<span
+                        class="text-green-500">_CLI</span></span>
             </div>
-            
+
             <nav class="flex-1 overflow-y-auto py-4">
                 <ul class="space-y-1">
                     <li>
-                        <button onclick="router('inbox')" class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                        <button onclick="router('inbox')"
+                            class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                                </path>
+                            </svg>
                             InBox
                         </button>
                     </li>
                     <li>
-                        <button onclick="router('todo')" class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                        <button onclick="router('todo')"
+                            class="nav-item w-full text-left px-6 py-3 hover:bg-slate-800 hover:text-white transition-colors border-l-4 border-transparent focus:outline-none flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+                                </path>
+                            </svg>
                             ToDo
                         </button>
                     </li>
@@ -59,7 +94,8 @@
 
             <div class="p-4 border-t border-slate-800">
                 <div class="text-xs text-slate-500 mb-2">TARGET USER:</div>
-                <div id="target-user-display" class="text-xs font-mono text-green-400 truncate bg-slate-800 p-2 rounded mb-4">
+                <div id="target-user-display"
+                    class="text-xs font-mono text-green-400 truncate bg-slate-800 p-2 rounded mb-4">
                     Wait...
                 </div>
                 <div class="flex items-center gap-3 mb-3">
@@ -68,23 +104,27 @@
                         <p id="user-name" class="text-sm font-medium text-white truncate">Loading...</p>
                     </div>
                 </div>
-                <button id="btn-logout" class="w-full py-2 text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded transition-colors">
+                <button id="btn-logout"
+                    class="w-full py-2 text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 rounded transition-colors">
                     退出登录
                 </button>
             </div>
         </aside>
 
         <main class="flex-1 flex flex-col bg-slate-100 overflow-hidden">
-            <header class="h-16 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-8 shrink-0">
+            <header
+                class="h-16 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-8 shrink-0">
                 <div class="flex items-center gap-4">
                     <h2 id="page-title" class="text-xl font-semibold text-slate-800">Dashboard</h2>
-                    <span id="data-count-badge" class="hidden px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">0</span>
+                    <span id="data-count-badge"
+                        class="hidden px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">0</span>
                 </div>
                 <div class="text-sm text-slate-500 font-mono-nums" id="current-time"></div>
             </header>
 
             <div id="content-area" class="flex-1 overflow-auto p-8 relative">
-                <div id="loading-spinner" class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
+                <div id="loading-spinner"
+                    class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
                     <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
                 </div>
                 <div id="view-container"></div>
@@ -371,7 +411,7 @@
                 loginScreen.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => loginScreen.classList.add('hidden'), 500);
                 appContainer.classList.remove('hidden');
-                
+
                 document.getElementById('user-name').textContent = user.displayName;
                 document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
 
@@ -399,7 +439,7 @@
                 el.classList.add('border-transparent');
             });
             const activeBtn = document.querySelector(`button[onclick="router('${viewName}')"]`);
-            if(activeBtn) {
+            if (activeBtn) {
                 activeBtn.classList.add('bg-slate-800', 'text-white', 'border-green-500');
                 activeBtn.classList.remove('border-transparent');
             }
@@ -415,7 +455,10 @@
         };
 
         // ================= 业务逻辑：状态更新 =================
-        
+
+        // Global filter state
+        let currentFilterClass = 'all';
+
         // 修改点 3: 新增状态更新函数
         window.updateMessageStatus = async (messageId, newStatus) => {
             // 简单的防误触提示
@@ -426,7 +469,7 @@
             try {
                 const updates = {};
                 updates[`userMessages/${messageId}/status`] = newStatus;
-                
+
                 await update(ref(db), updates);
                 // 更新成功后重新加载列表
                 renderInbox();
@@ -464,16 +507,17 @@
                     const todayDate = new Date(todayStr);
 
                     const validMessages = [];
+                    const classes = new Set(['all']);
 
                     Object.keys(allMessages).forEach(key => {
                         const msg = allMessages[key];
-                        
+
                         // 1. User Filter
                         if (msg.user !== targetUserEmail) return;
 
                         // 修改点 2: Status Filter (只显示 todo 或者没有 status 字段的消息)
-                        const status = msg.status || 'todo'; 
-                        if (status !== 'todo') return; 
+                        const status = msg.status || 'todo';
+                        if (status !== 'todo') return;
 
                         // 3. Expiry Filter
                         if (msg.expireAt) {
@@ -483,6 +527,7 @@
                             }
                         }
 
+                        if (msg.classification) classes.add(msg.classification);
                         validMessages.push({ id: key, ...msg });
                     });
 
@@ -492,7 +537,13 @@
                     if (validMessages.length > 0) {
                         // 按时间倒序排列（新的在上面）
                         validMessages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                        renderTable(validMessages);
+
+                        // Apply classification filter
+                        const filteredMessages = currentFilterClass === 'all'
+                            ? validMessages
+                            : validMessages.filter(m => m.classification === currentFilterClass);
+
+                        renderTable(filteredMessages, Array.from(classes));
                     } else {
                         viewContainer.innerHTML = `<div class="bg-white p-10 rounded-lg shadow text-center text-gray-500">No active messages for ${targetUserEmail}</div>`;
                     }
@@ -508,8 +559,23 @@
             }
         }
 
-        function renderTable(messages) {
+        window.filterByClass = (cls) => {
+            currentFilterClass = cls;
+            renderInbox();
+        };
+
+        function renderTable(messages, availableClasses) {
+            const filterOptions = availableClasses.sort().map(cls =>
+                `<option value="${cls}" ${currentFilterClass === cls ? 'selected' : ''}>${cls === 'all' ? 'All Classes' : cls.toUpperCase()}</option>`
+            ).join('');
+
             let html = `
+                <div class="mb-4 flex items-center gap-2">
+                    <label class="text-sm font-medium text-slate-600">Filter by Class:</label>
+                    <select onchange="filterByClass(this.value)" class="text-sm border border-slate-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        ${filterOptions}
+                    </select>
+                </div>
                 <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-slate-50">
@@ -526,8 +592,8 @@
 
             messages.forEach(msg => {
                 let classBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">${msg.classification || 'Gen'}</span>`;
-                if(msg.classification === 'todo') classBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">TODO</span>`;
-                if(msg.classification === 'alert') classBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">ALERT</span>`;
+                if (msg.classification === 'todo') classBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">TODO</span>`;
+                if (msg.classification === 'alert') classBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">ALERT</span>`;
 
                 // 修改点 4: 构造 Actions 列
                 // 1. 链接/附件按钮
@@ -591,4 +657,5 @@
 
     </script>
 </body>
+
 </html>
