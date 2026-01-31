@@ -298,6 +298,8 @@
 
         let currentCourseId = null;
         let availableCourses = []; // 缓存课程列表
+        let allQuizzes = []; // Global storage for filtering
+        let currentTagFilter = 'all';
 
         // ================= Accordion Logic =================
         window.toggleAccordion = (drawerId) => {
@@ -677,11 +679,20 @@
                     return titleA.localeCompare(titleB, 'zh-CN', { numeric: true });
                 });
 
+                allQuizzes = validQuizSets;
+                currentTagFilter = 'all'; // Reset filter on course load
+
+                // Extract unique tags
+                const tagsSet = new Set(['all']);
+                validQuizSets.forEach(qs => {
+                    (qs.tags || []).forEach(t => tagsSet.add(t));
+                });
+
                 quizCountBadge.textContent = validQuizSets.length;
                 quizCountBadge.classList.remove('hidden');
 
                 if (validQuizSets.length > 0) {
-                    renderQuizTable(validQuizSets);
+                    renderQuizTable(validQuizSets, Array.from(tagsSet));
                 } else {
                     viewContainer.innerHTML = `<div class="bg-white p-10 rounded-lg shadow text-center text-gray-500">Quiz sets referenced but not found in database.</div>`;
                 }
@@ -694,8 +705,32 @@
             }
         };
 
-        function renderQuizTable(quizSets) {
+        window.filterByTag = (tag) => {
+            currentTagFilter = tag;
+            const filtered = tag === 'all'
+                ? allQuizzes
+                : allQuizzes.filter(q => (q.tags || []).includes(tag));
+
+            // Re-extract tags to keep the dropdown consistent (or just pass the same ones)
+            const tagsSet = new Set(['all']);
+            allQuizzes.forEach(qs => {
+                (qs.tags || []).forEach(t => tagsSet.add(t));
+            });
+            renderQuizTable(filtered, Array.from(tagsSet));
+        };
+
+        function renderQuizTable(quizSets, availableTags) {
+            const tagOptions = availableTags.sort().map(t =>
+                `<option value="${t}" ${currentTagFilter === t ? 'selected' : ''}>${t === 'all' ? 'All Tags' : t}</option>`
+            ).join('');
+
             let html = `
+                <div class="mb-4 flex items-center gap-2">
+                    <label class="text-sm font-medium text-slate-600">Filter by Tag:</label>
+                    <select onchange="filterByTag(this.value)" class="text-sm border border-slate-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        ${tagOptions}
+                    </select>
+                </div>
                 <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
