@@ -162,6 +162,9 @@
         const loginBtn = document.getElementById('btn-login');
         const logoutBtn = document.getElementById('btn-logout');
 
+        let allDecks = [];
+        let currentTagFilter = 'all';
+
         // ================= 工具函数 =================
 
         // 显示/隐藏 Loading
@@ -254,7 +257,6 @@
 
         // ================= 业务功能：Anki Deck 管理 =================
 
-        /*
         async function renderDeckManagement() {
             showLoading(true);
             viewContainer.innerHTML = '';
@@ -265,94 +267,39 @@
 
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    let html = `
-                        <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Review</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
-                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200" id="deck-table-body">
-                    `;
+                    allDecks = Object.entries(data).map(([key, deck]) => ({
+                        key,
+                        ...deck,
+                        tags: deck.tags || []
+                    }));
 
-                    Object.keys(data).forEach(key => {
-                        const deck = data[key];
-                        const dateValue = formatDateForInput(deck.nextReview);
+                    // Extract unique tags
+                    const tagsSet = new Set(['all']);
+                    allDecks.forEach(d => (d.tags || []).forEach(t => tagsSet.add(t)));
+                    const sortedTags = Array.from(tagsSet).sort();
 
-                        html += `
-                            <tr id="row-${key}" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">${deck.title || 'Untitled'}</div>
-                                    <div class="text-xs text-gray-400 font-mono">${deck.wordSetID || ''}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    ${deck.createdAt}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <input type="date" 
-                                           value="${dateValue}" 
-                                           onchange="updateNextReview('${key}', this.value)"
-                                           class="text-sm border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-md shadow-sm text-gray-700 bg-white border p-1"
-                                    />
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
-                                    <a href="${deck.wordSetURL}" target="_blank" class="hover:underline flex items-center gap-1">
-                                        JSON 
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                                    </a>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                    <button onclick="assignDeck('${key}')" class="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-1 rounded transition-colors border border-blue-200">
-                                        Assign
-                                    </button>
-                                    <button onclick="deleteDeck('${key}')" class="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-1 rounded transition-colors border border-red-200">
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    });
+                    const tagOptions = sortedTags.map(t =>
+                        `<option value="${t}" ${currentTagFilter === t ? 'selected' : ''}>${t === 'all' ? 'All Tags' : t}</option>`
+                    ).join('');
 
-                    html += `</tbody></table></div>`;
-                    viewContainer.innerHTML = html;
-                } else {
-                    viewContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow text-center text-gray-500">No decks found in database.</div>`;
-                }
-            } catch (error) {
-                console.error(error);
-                viewContainer.innerHTML = `<div class="bg-red-50 p-4 rounded text-red-600">Error loading data: ${error.message}</div>`;
-            } finally {
-                showLoading(false);
-            }
-        }
-        */
-        async function renderDeckManagement() {
-            showLoading(true);
-            viewContainer.innerHTML = '';
-
-            try {
-                const dbRef = ref(db);
-                const snapshot = await get(child(dbRef, 'thaiAnki/reviewSets'));
-
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-
-                    // 1. 构建 HTML，在表格上方增加搜索框
                     let html = `
                         <div class="flex flex-col gap-4">
-                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                                <input type="text" 
-                                       id="deck-search-input" 
-                                       placeholder="搜索 Title 关键字..." 
-                                       class="flex-1 border-none focus:ring-0 text-sm text-gray-700 placeholder-gray-400 outline-none"
-                                />
-                                <span id="search-count" class="text-xs text-gray-400 px-2"></span>
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-wrap items-center gap-4">
+                                <div class="flex-1 flex items-center gap-2 border-r border-gray-100 pr-4">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                    <input type="text" 
+                                           id="deck-search-input" 
+                                           placeholder="搜索 Title 关键字..." 
+                                           class="w-full border-none focus:ring-0 text-sm text-gray-700 placeholder-gray-400 outline-none"
+                                    />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="text-xs font-medium text-gray-400 uppercase tracking-wider">Filter by Tag:</label>
+                                    <select onchange="filterByTag(this.value)" class="text-sm border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        ${tagOptions}
+                                    </select>
+                                </div>
+                                <span id="search-count" class="text-xs text-gray-400 ml-auto"></span>
                             </div>
 
                             <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
@@ -362,6 +309,7 @@
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Review</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
                                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
@@ -369,17 +317,23 @@
                                     <tbody class="bg-white divide-y divide-gray-200" id="deck-table-body">
                     `;
 
-                    // --- 修改：将对象转换为数组并按照 Title 排序 ---
-                    const sortedDecks = Object.entries(data).sort((a, b) => {
-                        const titleA = a[1].title || 'Untitled';
-                        const titleB = b[1].title || 'Untitled';
+                    // Apply tag filter and title sorting
+                    const filteredDecks = (currentTagFilter === 'all'
+                        ? allDecks
+                        : allDecks.filter(d => (d.tags || []).includes(currentTagFilter))
+                    ).sort((a, b) => {
+                        const titleA = a.title || 'Untitled';
+                        const titleB = b.title || 'Untitled';
                         return titleA.localeCompare(titleB, 'zh-CN', { numeric: true });
                     });
 
-                    sortedDecks.forEach(([key, deck]) => {
+                    filteredDecks.forEach((deck) => {
+                        const key = deck.key;
                         const dateValue = formatDateForInput(deck.nextReview);
-                        // 注意：我们在 tr 上添加了 data-title 属性，方便搜索逻辑快速读取
                         const titleText = (deck.title || 'Untitled').toLowerCase();
+                        const tagsHtml = (deck.tags || []).map(t =>
+                            `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-1 mb-1">${t}</span>`
+                        ).join('');
 
                         html += `
                             <tr id="row-${key}" data-title="${titleText}" class="hover:bg-gray-50 transition-colors deck-row">
@@ -398,6 +352,9 @@
                                            onchange="updateNextReview('${key}', this.value)"
                                            class="text-sm border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-md shadow-sm text-gray-700 bg-white border p-1"
                                     />
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500 cursor-pointer hover:text-blue-600 transition-colors" onclick="startEditDeckTags('${key}', this)">
+                                    <div class="flex flex-wrap">${tagsHtml || '<span class="text-gray-300 italic">None</span>'}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
                                     <a href="${deck.wordSetURL}" target="_blank" class="hover:underline flex items-center gap-1">
@@ -430,7 +387,6 @@
                         let visibleCount = 0;
 
                         allRows.forEach(row => {
-                            // 直接从 data-title 属性获取，比查询 innerText 更快更准
                             const title = row.getAttribute('data-title');
                             if (title.includes(term)) {
                                 row.style.display = '';
@@ -440,13 +396,10 @@
                             }
                         });
 
-                        // 更新搜索结果数量提示
-                        if (term !== '') {
-                            searchCount.textContent = `${visibleCount} found`;
-                        } else {
-                            searchCount.textContent = '';
-                        }
+                        searchCount.textContent = `${visibleCount} found`;
                     });
+
+                    searchCount.textContent = `${filteredDecks.length} found`;
 
                 } else {
                     viewContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow text-center text-gray-500">No decks found in database.</div>`;
@@ -479,6 +432,65 @@
             }
         };
 
+        window.filterByTag = (tag) => {
+            currentTagFilter = tag;
+            renderDeckManagement();
+        };
+
+        window.startEditDeckTags = (key, cell) => {
+            if (cell.querySelector('input')) return;
+
+            const deck = allDecks.find(d => d.key === key);
+            const originalTagsStr = (deck?.tags || []).join(', ');
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = originalTagsStr;
+            input.className = 'w-full px-2 py-1 border border-blue-300 rounded outline-none focus:ring-2 focus:ring-blue-200 text-sm font-medium text-gray-900';
+
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            input.focus();
+
+            let isFinished = false;
+            const finishEdit = async (isSave) => {
+                if (isFinished) return;
+                isFinished = true;
+                const newTagsStr = input.value.trim();
+
+                if (isSave && newTagsStr !== originalTagsStr) {
+                    const newTagsArray = newTagsStr ? newTagsStr.split(',').map(t => t.trim()).filter(t => t !== '') : [];
+                    try {
+                        showLoading(true);
+                        await update(ref(db, `thaiAnki/reviewSets/${key}`), { tags: newTagsArray });
+                        renderDeckManagement();
+                    } catch (err) {
+                        alert("修改失败: " + err.message);
+                        restore();
+                    } finally {
+                        showLoading(false);
+                    }
+                } else {
+                    restore();
+                }
+            };
+
+            const restore = () => {
+                const tags = deck?.tags || [];
+                const tagsHtml = tags.map(t =>
+                    `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-1 mb-1">${t}</span>`
+                ).join('');
+                cell.innerHTML = `<div class="flex flex-wrap">${tagsHtml || '<span class="text-gray-300 italic">None</span>'}</div>`;
+            };
+
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') finishEdit(true);
+                else if (e.key === 'Escape') finishEdit(false);
+            };
+
+            input.onblur = () => finishEdit(false);
+        };
+
         window.startEditDeckTitle = (key, cell) => {
             const currentTitle = cell.getAttribute('data-current-title');
             const wordSetId = cell.querySelector('.font-mono').innerText;
@@ -504,14 +516,8 @@
                         showLoading(true);
                         await update(ref(db, `thaiAnki/reviewSets/${key}`), { title: newTitle });
 
-                        // Update UI state
-                        cell.setAttribute('data-current-title', newTitle.replace(/"/g, '&quot;'));
-                        document.getElementById(`row-${key}`).setAttribute('data-title', newTitle.toLowerCase());
-
-                        cell.innerHTML = `
-                            <div class="text-sm font-medium text-gray-900">${newTitle}</div>
-                            <div class="text-xs text-gray-400 font-mono">${wordSetId}</div>
-                        `;
+                        // Update local cache to avoid full reload if possible, but for title we might want sorting to work
+                        renderDeckManagement();
                     } catch (err) {
                         alert("修改失败: " + err.message);
                         restore();
@@ -553,46 +559,6 @@
             }
         };
 
-        /*
-        // 新增的 Assign Deck 功能
-        window.assignDeck = async (key) => {
-            // 确认操作
-            if(!confirm("确认将此 Deck 分配给 Ray (rayzhang20030603@gmail.com) 吗？")) return;
-
-            showLoading(true);
-            try {
-                // 1. 获取连接到第二个数据库的实例
-                // 在 Firebase Web SDK 中，可以通过传递 URL 给 getDatabase 来连接同一项目下的不同数据库实例
-                const messageDb = getDatabase(app, MESSAGE_DB_URL);
-
-                // 2. 准备日期
-                const now = new Date();
-                const expireDate = new Date();
-                expireDate.setDate(now.getDate() + 2); // 2天后过期
-
-                // 3. 构建消息体
-                const newMessage = {
-                    attachment: `https://alexzhangmaker.github.io/outpost/ankiAnywherev2.html?reviewSet=${key}`,
-                    classification: "anki",
-                    createdAt: getISODate(now), // YYYY-MM-DD
-                    expireAt: getISODate(expireDate), // YYYY-MM-DD
-                    message: "anki assignment",
-                    user: "rayzhang20030603@gmail.com"
-                };
-
-                // 4. Push 到 userMessages
-                // push 会自动生成唯一 ID (如 qHEcwa...)
-                await push(ref(messageDb, 'userMessages'), newMessage);
-
-                alert("任务分配成功！");
-            } catch (error) {
-                console.error("Assign failed:", error);
-                alert("分配失败: " + error.message);
-            } finally {
-                showLoading(false);
-            }
-        };
-        */
         // 新增的 Assign Deck 功能
         window.assignDeck = async (key) => {
             // 确认操作
@@ -600,14 +566,12 @@
 
             showLoading(true);
             try {
-                // --- 修改开始：先获取 Title ---
                 const dbRef = ref(db);
                 // 获取 title 节点快照
                 const titleSnapshot = await get(child(dbRef, `thaiAnki/reviewSets/${key}/title`));
 
                 // 如果获取不到，给一个默认值 'assignment'，否则使用获取到的标题
                 const reviewSetTitle = titleSnapshot.exists() ? titleSnapshot.val() : 'assignment';
-                // --- 修改结束 ---
 
                 // 1. 获取连接到第二个数据库的实例
                 const messageDb = getDatabase(app, MESSAGE_DB_URL);
