@@ -973,7 +973,7 @@
                 tr.innerHTML = `
                     <td style="font-weight: 500; cursor: pointer;" onclick="startEditNoteTitle('${note.id}', this)" class="note-title-cell">${note.title}</td>
                     <td>${note.subject ? note.subject.course : '未分类'}</td>
-                    <td>${tagsHtml || '<span style="color:#ccc">无标签</span>'}</td>
+                    <td style="cursor: pointer;" onclick="startEditNoteTags('${note.id}', this)">${tagsHtml || '<span style="color:#ccc">无标签</span>'}</td>
                     <td style="font-size: 13px; color: #666;">${dateStr}</td>
                     <td>
                         <button class="action-btn edit" onclick="openEditModal('${note.id}')" title="编辑">
@@ -1422,6 +1422,80 @@
             el.appendChild(input);
             input.focus();
             input.select();
+        };
+
+        // --- 行内编辑标签 ---
+        window.startEditNoteTags = function (noteId, el) {
+            if (el.querySelector('input')) return; // 已经在编辑中
+
+            const note = notes.find(n => n.id === noteId);
+            const originalTagsStr = (note?.tags || []).join(', ');
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = originalTagsStr;
+            input.className = 'inline-edit-input';
+            input.style.width = '100%';
+            input.style.padding = '4px 8px';
+            input.style.border = '1px solid #4285f4';
+            input.style.borderRadius = '4px';
+            input.style.outline = 'none';
+            input.style.fontSize = '12px';
+
+            // 阻止点击输入框触发单元格点击
+            input.onclick = (e) => e.stopPropagation();
+
+            el.innerHTML = '';
+            el.appendChild(input);
+            input.focus();
+
+            let isFinished = false;
+            const handleFinish = async (save) => {
+                if (isFinished) return;
+                isFinished = true;
+
+                const newTagsStr = input.value.trim();
+                const newTagsArray = newTagsStr ? newTagsStr.split(',').map(t => t.trim()).filter(t => t !== '') : [];
+                const finalTagsStr = newTagsArray.join(', ');
+
+                if (save && finalTagsStr !== originalTagsStr) {
+                    try {
+                        el.style.opacity = '0.5';
+                        await database.ref(`mdNotes/${noteId}`).update({
+                            tags: newTagsArray,
+                            updatedAt: new Date().toISOString()
+                        });
+
+                        // 更新本地缓存
+                        if (note) {
+                            note.tags = newTagsArray;
+                            note.updatedAt = new Date().toISOString();
+                        }
+
+                        renderTags(el, newTagsArray);
+                    } catch (error) {
+                        console.error('Update failed:', error);
+                        alert('更新失败: ' + error.message);
+                        renderTags(el, note?.tags || []);
+                    } finally {
+                        el.style.opacity = '1';
+                    }
+                } else {
+                    renderTags(el, note?.tags || []);
+                }
+            };
+
+            const renderTags = (container, tags) => {
+                const tagsHtml = (tags || []).map(t => `<span class="tag-pill">${t}</span>`).join('');
+                container.innerHTML = tagsHtml || '<span style="color:#ccc">无标签</span>';
+            };
+
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') handleFinish(true);
+                else if (e.key === 'Escape') handleFinish(false);
+            };
+
+            input.onblur = () => handleFinish(false);
         };
 
         // 监听标题、文件夹和标签变化
