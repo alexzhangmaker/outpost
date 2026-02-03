@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语单词闪卡学习</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+Thai+Looped:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            /* 1rem = 16px */
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            line-height: 1.6;
+            height: 100vh;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            height: 100vh;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            padding: 20px;
+
+            display: flex;
+            flex-direction: column;
+
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 5px;
+            background: #f8f9fa;
+            padding: 5px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: #3498db;
+            font-size: 16px;
+        }
+
+        .flashcard-container {
+            perspective: 1000px;
+            margin-bottom: 5px;
+            height: 80%
+                /*580px*/
+            ;
+        }
+
+        .flashcard {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front,
+        .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-front {
+            background: linear-gradient(145deg, #3498db, #2c3e50);
+            color: white;
+        }
+
+        .card-back {
+            background: white;
+            color: #333;
+            transform: rotateY(180deg);
+            overflow-y: auto;
+            justify-content: flex-start;
+        }
+
+        .thai-word {
+            font-family: 'Noto Sans Thai Looped', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .pronunciation {
+            font-size: 1.4rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 5px;
+        }
+
+        .hint {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .definition {
+            margin-bottom: 12px;
+            text-align: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            width: 100%;
+        }
+
+        .definition-en {
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 3px;
+            font-size: 1.5rem;
+            text-align: start;
+        }
+
+        .definition-zh {
+            color: #7f8c8d;
+            font-size: 1.5rem;
+            text-align: start;
+
+        }
+
+        .synonyms,
+        .antonyms,
+        .phrases {
+            width: 100%;
+            margin-bottom: 2px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #3498db;
+            margin-bottom: 2px;
+            font-size: 0.6rem;
+        }
+
+        .synonym,
+        .antonym {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin: 3px;
+            font-family: 'Noto Sans Thai Looped', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .synonym {
+            background: #e3f2fd;
+            color: #0d47a1;
+        }
+
+        .antonym {
+            background: #ffebee;
+            color: #b71c1c;
+        }
+
+        .phrase {
+            margin-bottom: 6px;
+            padding: 5px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .thai-phrase {
+            font-family: 'Noto Sans Thai Looped', sans-serif;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .phrase-translation {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .rating-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            gap: 5px;
+        }
+
+        .rating-btn {
+            flex: 1;
+            padding: 5px 3px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.6rem;
+            min-width: 0;
+        }
+
+        .rating-1 {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .rating-2 {
+            background: #e67e22;
+            color: white;
+        }
+
+        .rating-3 {
+            background: #f1c40f;
+            color: white;
+        }
+
+        .rating-4 {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .rating-5 {
+            background: #27ae60;
+            color: white;
+        }
+
+        .rating-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            background: #ecf0f1;
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .completion-message {
+            text-align: center;
+            padding: 30px;
+            display: none;
+        }
+
+        .completion-message h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .completion-message p {
+            margin-bottom: 20px;
+            color: #7f8c8d;
+        }
+
+        .reset-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .reset-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .desktopOnly {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+
+            .desktopOnly {
+                display: none;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .thai-word {
+                font-size: 2.6rem;
+            }
+
+            .flashcard-container {
+                height: 580px;
+            }
+
+            .rating-btn {
+                padding: 8px 2px;
+                font-size: 0.8rem;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .desktopOnly {
+                display: none;
+            }
+
+            h1 {
+                font-size: 1.6rem;
+            }
+
+            .thai-word {
+                font-size: 2.2rem;
+            }
+
+            .pronunciation {
+                font-size: 1.1rem;
+            }
+
+            .flashcard-container {
+                height: 580px;
+            }
+
+            .rating-container {
+                flex-wrap: wrap;
+            }
+
+            .rating-btn {
+                flex: 1;
+                min-width: 55px;
+            }
+        }
+    </style>
+    <style>
+        .svgBTN:hover {
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="desktopOnly">
+            <h3>泰语单词闪卡学习</h3>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">进度</div>
+                    <div class="stat-value" id="progress-count">1/5</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">已学单词</div>
+                    <div class="stat-value" id="learned-count">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">掌握程度</div>
+                    <div class="stat-value" id="mastery-level">0%</div>
+                </div>
+                <button id="idBTNPlayer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" class="svgBTN" viewBox="0 0 32 32">
+                        <path fill="#000000"
+                            d="m15.969 0l-.464.016c-.432.025-1.027.083-1.505.145C9.615.76 5.869 2.964 3.344 6.245a16.266 16.266 0 0 0-1.631 2.583c-.077.161-.156.317-.229.479c-.12.267-.239.532-.348.803c-.141.349-.267.697-.381 1.052l-.061.193a15.965 15.965 0 0 0-.693 4.624v.052C.017 24.855 7.178 32 16.001 32c8.213 0 15.088-6.219 15.917-14.385l.004-.031c.052-.521.079-1.043.079-1.557v-.068a15.922 15.922 0 0 0-1.027-5.573a9.015 9.015 0 0 0-.167-.416a10.992 10.992 0 0 0-.301-.677C28.527 5.089 24.777 1.84 20.246.616C19.23.34 17.605.095 16.49.028a13.044 13.044 0 0 0-.459-.027zm3.094 3.839c.224.005.505.079.901.213c2.375.812 5.031 2.875 6.473 5.021c1 1.489 1.781 3.233 1.781 3.979c0 .479-.464.912-.964.912c-.468 0-.948-.412-1.072-.912c-.172-.697-1.109-2.468-1.797-3.375c-1.219-1.609-3.104-3.016-4.959-3.704c-1.301-.489-1.64-1.061-1.036-1.78c.203-.245.385-.355.672-.355zM13.88 5.708c.349 0 .661.073.937.219c1.745.885 1.652 3.423-.167 4.12c-2.244.855-3.375 1.76-4.109 3.251c-1.536 3.119-.281 6.801 2.828 8.291c2.287 1.095 4.891.715 6.709-.963c.828-.771 1.281-1.432 1.687-2.505c.573-1.5 1.224-2.063 2.391-2.063c1.489 0 2.516 1.26 2.213 2.703c-.62 2.839-3.005 5.693-5.896 7.032c-1.593.735-2.468.921-4.484.921c-1.979 0-2.839-.177-4.375-.875c-4.193-1.896-6.765-6.437-6.235-10.943a10.83 10.83 0 0 1 7.349-8.979c.421-.141.807-.215 1.151-.209zm4.62 1.276c.292.005.667.141 1.219.412c2.251 1.068 4.109 3.036 5.109 5.38c.375.896.188 1.479-.541 1.708c-.563.167-.937-.135-1.423-1.151c-.911-1.921-2.203-3.251-4.02-4.145c-1.057-.511-1.188-.631-1.292-1.131c-.047-.265 0-.417.245-.708c.208-.245.411-.371.703-.365zm-.531 3.261c.307 0 .661.14 1.119.443c1.281.839 2.724 2.645 2.724 3.4c0 .385-.369.876-.744.969c-.5.131-.86-.12-1.385-.943c-.568-.875-1.235-1.536-1.923-1.885c-.593-.308-.765-.536-.765-1.027a.772.772 0 0 1 .323-.687a.97.97 0 0 1 .652-.271z" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="flashcard-container" id="flashcard-container">
+            <div class="flashcard" id="flashcard">
+                <div class="card-front">
+                    <div class="thai-word" id="thai-word">ช่วยเหลือ</div>
+                    <div class="pronunciation" id="pronunciation">chûay-lĕua</div>
+                    <div class="hint">点击卡片查看释义</div>
+                </div>
+                <div class="card-back">
+                    <div class="definition">
+                        <div class="definition-en" id="definition-en">to help, assist, or aid someone</div>
+                        <div class="definition-zh" id="definition-zh">帮助，援助，协助</div>
+                    </div>
+
+                    <div class="synonyms">
+                        <div class="section-title">同义词</div>
+                        <div id="synonyms-container">
+                            <span class="synonym">สนับสนุน</span>
+                            <span class="synonym">เอื้อเฟื้อ</span>
+                            <span class="synonym">อุปถัมภ์</span>
+                        </div>
+                    </div>
+
+                    <div class="antonyms">
+                        <div class="section-title">反义词</div>
+                        <div id="antonyms-container">
+                            <span class="antonym">ขัดขวาง</span>
+                            <span class="antonym">เป็นอุปสรรค</span>
+                        </div>
+                    </div>
+
+                    <div class="phrases">
+                        <div class="section-title">常用短语</div>
+                        <div id="phrases-container">
+                            <div class="phrase">
+                                <div class="thai-phrase">ช่วยเหลือตัวเอง</div>
+                                <div class="phrase-translation">自助</div>
+                            </div>
+                            <div class="phrase">
+                                <div class="thai-phrase">ช่วยเหลือซึ่งกันและกัน</div>
+                                <div class="phrase-translation">互相帮助</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <div class="rating-container" id="rating-container">
+                <button class="rating-btn rating-1" data-rating="1">1<br><span>不认识</span></button>
+                <button class="rating-btn rating-2" data-rating="2">2<br><span>有点印象</span></button>
+                <button class="rating-btn rating-3" data-rating="3">3<br><span>一般熟悉</span></button>
+                <button class="rating-btn rating-4" data-rating="4">4<br><span>比较熟悉</span></button>
+                <button class="rating-btn rating-5" data-rating="5">5<br><span>完全掌握</span></button>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress" id="progress-bar"></div>
+        </div>
+
+        <div class="completion-message" id="completion-message">
+            <h2>恭喜！您已完成所有单词的学习</h2>
+            <p>您已经学习了 <span id="total-learned">0</span> 个单词，掌握程度为 <span id="final-mastery">0%</span></p>
+            <button class="reset-btn" id="reset-btn">重新开始</button>
+        </div>
+    </div>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script src="./outpostPlugins.js"></script>
+    <script src="./js/firebaseCommon.js"></script>
+    <script src="./js/dynamicModal.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Correct: auth() is the function
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then((result) => {
+                // User signed in successfully.
+                const user = result.user;
+                console.log("User:", user);
+            }).catch((error) => {
+                // Handle Errors here.
+                console.error("Sign-in error:", error);
+            });
+        }
+    </script>
+    <script>
+        let gWordSetKey = 'B1_Work_Social';
+        //let tWordSetURL = `https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/thaiWordList/${gWordSetKey}.json` ;
+        // 新增：用于存储本次Session的元数据，供Log使用
+        let gSessionInfo = {
+            reviewSetId: "",
+            title: "",
+            wordSetID: ""
+        };
+
+        // 示例单词数据
+        let wordList = [];
+
+        // 应用状态
+        let currentIndex = 0;
+        let learnedWords = [];
+        let isTempDeck = false; // 是否处于错误卡片重扫模式
+        let mainWordList = [];  // 存储原始的完整单词列表
+
+        // 从localStorage加载已学习数据
+        function loadProgress() {
+            const savedProgress = localStorage.getItem(`thaiFlashcardProgress_${gWordSetKey}`);
+            if (savedProgress) {
+                learnedWords = JSON.parse(savedProgress);
+                // 找到第一个未学习的单词
+                const learnedIndices = learnedWords.map(w => w.index);
+                for (let i = 0; i < wordList.length; i++) {
+                    if (!learnedIndices.includes(i)) {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+            }
+            updateStats();
+        }
+
+        // 保存进度到localStorage
+        function saveProgress() {
+            localStorage.setItem(`thaiFlashcardProgress_${gWordSetKey}`, JSON.stringify(learnedWords));
+            updateStats();
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            const progressText = `${currentIndex + 1}/${wordList.length}`;
+            const learnedCount = learnedWords.length;
+            const masteryLevel = learnedWords.length > 0 ?
+                Math.round((learnedWords.reduce((sum, word) => sum + word.rating, 0) / (learnedWords.length * 5)) * 100) : 0;
+
+            document.getElementById('progress-count').textContent = progressText;
+            document.getElementById('learned-count').textContent = learnedCount;
+            document.getElementById('mastery-level').textContent = `${masteryLevel}%`;
+
+            // 更新进度条
+            const progressPercent = (currentIndex / wordList.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+            // 检查是否已完成所有单词
+            if (learnedWords.length >= wordList.length) {
+                showCompletionMessage();
+            }
+        }
+
+        // 显示完成消息
+        async function showCompletionMessage() {
+            // 筛选错误/困难单词 (Rating 1:不认识, 2:有点印象)
+            const errorItems = learnedWords.filter(w => w.rating <= 2);
+
+            // 如果不是临时 Deck，则上报 Firebase
+            if (!isTempDeck) {
+                await uploadAnkiRecord();
+            }
+
+            if (errorItems.length > 0) {
+                // 进入错误复习模式
+                console.log("进入错误复习模式, 错误数:", errorItems.length);
+
+                // 提取对应的原始单词对象
+                const errorWordsObjects = errorItems.map(item => {
+                    return mainWordList.find(w => w.thai === item.word);
+                }).filter(w => w !== undefined);
+
+                // 更新应用状态
+                wordList = [...errorWordsObjects];
+                learnedWords = [];
+                currentIndex = 0;
+                isTempDeck = true;
+
+                // 提示用户并开始
+                alert(`本轮有 ${errorItems.length} 个单词不熟悉，即将进入强化复习模式（临时复习不记录到服务器）。`);
+                showCurrentWord();
+                updateStats();
+            } else {
+                // 真正的全部完成
+                document.querySelector('.flashcard-container').style.display = 'none';
+                document.getElementById('rating-container').style.display = 'none';
+                document.getElementById('progress-bar').style.display = 'none';
+
+                const learnedCount = learnedWords.length;
+                const masteryLevel = 100; // 既然能走到这里说明全对
+
+                document.getElementById('total-learned').textContent = isTempDeck ? mainWordList.length : learnedCount;
+                document.getElementById('final-mastery').textContent = `100%`;
+                document.getElementById('completion-message').style.display = 'block';
+
+                if (isTempDeck) {
+                    document.querySelector('#completion-message h2').textContent = "强化复习完成！所有单词已掌握";
+                }
+
+                isTempDeck = false;
+                wordList = [...mainWordList]; // 恢复列表供下次研究
+            }
+        }
+
+
+        // Supermemo SM2 algorithm implementation (as SM18 is proprietary, using SM2 as a base which is inspired by Ebbinghaus and Supermemo principles)
+        function supermemo(item, grade) {
+            let { interval, repetition, efactor } = item;
+            if (grade >= 3) { // Pass
+                if (repetition === 0) {
+                    interval = 1;
+                } else if (repetition === 1) {
+                    interval = 6;
+                } else {
+                    interval = Math.round(interval * efactor);
+                }
+                repetition += 1;
+                efactor += (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
+                if (efactor < 1.3) efactor = 1.3;
+            } else { // Fail
+                repetition = 0;
+                interval = 1;
+                efactor = Math.max(1.3, efactor - 0.2); // Optional decay on fail
+            }
+            return { interval, repetition, efactor };
+        }
+
+        let bUploaded = false;
+
+        /*
+        async function uploadAnkiRecord(){
+            if(bUploaded == true) return ;
+
+            let cDate = new Date() ;
+            let nextDate = new Date() ;
+
+            console.log(learnedWords) ;
+            for(let i=0;i<learnedWords.length;i++){
+                //let encodeWord = encodeURIComponent(learnedWords[i].word) ;
+                let snapshot = await database.ref(`thaiAnki/SM2Records/${learnedWords[i].word}`).once('value');
+                let jsonResult = snapshot.val();
+
+                let jsonSM2 = {
+                    "efactor": 2.5,
+                    "interval": 0,
+                    "repetition": 0
+                };
+                let jsonRecord={
+                    "efactor": 2.5,
+                    "interval": 0,
+                    "repetition": 0,
+                    "id": learnedWords[i].word,
+                    "next_review": cDate.toDateString(),
+                };
+
+                console.log(jsonResult) ;
+                if(jsonResult==null){
+                    jsonSM2= supermemo(jsonSM2,learnedWords[i].rating) ;
+                    console.log(jsonSM2)  ;
+                    nextDate.setDate(cDate.getDate()+jsonSM2.interval) ;
+                    jsonRecord.next_review = nextDate.toDateString() ;
+                    jsonRecord.efactor = jsonSM2.efactor ;
+                    jsonRecord.interval = jsonSM2.interval ;
+                    jsonRecord.repetition = jsonSM2.repetition ;
+                    
+                }else{
+                    jsonSM2= supermemo(jsonResult,learnedWords[i].rating) ;
+                    console.log(jsonSM2)  ;
+
+                    nextDate.setDate(cDate.getDate()+jsonSM2.interval) ;
+                    jsonRecord.next_review = nextDate.toDateString() ;
+                    jsonRecord.interval = jsonSM2.interval ;
+                    jsonRecord.repetition = jsonSM2.repetition ;
+                }
+                console.log(jsonRecord) ;
+                await database.ref(`thaiAnki/SM2Records/${learnedWords[i].word}`).set(jsonRecord) ;
+            }
+            bUploaded = true ;
+        }
+        */
+
+        async function uploadAnkiRecord() {
+            if (bUploaded == true) return;
+
+            let cDate = new Date();
+            let nextDate = new Date();
+
+            console.log("正在上传单词进度...", learnedWords);
+
+            // 1. 原有的 SM2 记录上传 (保持不变)
+            for (let i = 0; i < learnedWords.length; i++) {
+                let snapshot = await database.ref(`thaiAnki/SM2Records/${learnedWords[i].word}`).once('value');
+                let jsonResult = snapshot.val();
+
+                let jsonSM2 = {
+                    "efactor": 2.5,
+                    "interval": 0,
+                    "repetition": 0
+                };
+                let jsonRecord = {
+                    "efactor": 2.5,
+                    "interval": 0,
+                    "repetition": 0,
+                    "id": learnedWords[i].word,
+                    "next_review": cDate.toDateString(),
+                };
+
+                if (jsonResult == null) {
+                    jsonSM2 = supermemo(jsonSM2, learnedWords[i].rating);
+                    nextDate.setDate(cDate.getDate() + jsonSM2.interval);
+                    jsonRecord.next_review = nextDate.toDateString();
+                    jsonRecord.efactor = jsonSM2.efactor;
+                    jsonRecord.interval = jsonSM2.interval;
+                    jsonRecord.repetition = jsonSM2.repetition;
+                } else {
+                    jsonSM2 = supermemo(jsonResult, learnedWords[i].rating);
+                    nextDate.setDate(cDate.getDate() + jsonSM2.interval);
+                    jsonRecord.next_review = nextDate.toDateString();
+                    jsonRecord.interval = jsonSM2.interval;
+                    jsonRecord.repetition = jsonSM2.repetition;
+                }
+                await database.ref(`thaiAnki/SM2Records/${learnedWords[i].word}`).set(jsonRecord);
+            }
+
+            // 2. 新增：上传本次复习的 Summary Log 到 ankiLogs
+            try {
+                // 筛选错误/困难单词 (Rating 1:不认识, 2:有点印象)
+                const errorItems = learnedWords.filter(w => w.rating <= 2);
+                const errorWordsArray = errorItems.map(w => w.word);
+
+                const logData = {
+                    reviewSetId: gSessionInfo.reviewSetId || "unknown_set",
+                    title: gSessionInfo.title || "Untitled Session",
+                    wordSetID: gSessionInfo.wordSetID || "unknown_wordset",
+                    date: cDate.toISOString(), // 可读日期字符串
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, // 用于排序的时间戳
+                    totalWords: learnedWords.length,
+                    errorCount: errorWordsArray.length,
+                    errorWords: errorWordsArray, // 记录错误的单词数组
+                    masteryRate: document.getElementById('final-mastery').innerText // 记录最终掌握度
+                };
+
+                console.log("Uploading Log:", logData);
+                await database.ref('thaiAnki/ankiLogs').push(logData);
+                console.log("Log uploaded successfully.");
+
+            } catch (e) {
+                console.error("Error uploading ankiLog:", e);
+            }
+
+            bUploaded = true;
+        }
+
+
+        // 显示当前单词
+        function showCurrentWord() {
+            const word = wordList[currentIndex];
+            let tagFlashcard = document.getElementById('flashcard');
+            tagFlashcard.dataset.word = word.thai;
+
+            // 更新卡片正面
+            document.getElementById('thai-word').textContent = word.thai;
+            document.getElementById('pronunciation').textContent = word.pronunciation;
+
+            // 更新卡片背面
+            let en = word.definitions[0].hasOwnProperty("en") ? word.definitions[0].en : word.definitions[0].english;
+            let zh = word.definitions[0].hasOwnProperty("zh") ? word.definitions[0].zh : word.definitions[0].chinese;
+            document.getElementById('definition-en').textContent = en;
+            document.getElementById('definition-zh').textContent = zh;
+
+            // 更新同义词
+            const synonymsContainer = document.getElementById('synonyms-container');
+            synonymsContainer.innerHTML = '';
+            word.synonyms.slice(0, 3).forEach(synonym => {
+                const span = document.createElement('span');
+                span.className = 'synonym';
+                span.textContent = synonym;
+                synonymsContainer.appendChild(span);
+            });
+
+            // 更新反义词
+            if (word.hasOwnProperty("antonyms") == true && word.antonyms != undefined) {
+                const antonymsContainer = document.getElementById('antonyms-container');
+                antonymsContainer.innerHTML = '';
+                word.antonyms.slice(0, 2).forEach(antonym => {
+                    const span = document.createElement('span');
+                    span.className = 'antonym';
+                    span.textContent = antonym;
+                    antonymsContainer.appendChild(span);
+                });
+            }
+
+            // 更新常用短语
+            const phrasesContainer = document.getElementById('phrases-container');
+            phrasesContainer.innerHTML = '';
+            word.common_phrases.slice(0, 2).forEach(phrase => {
+                const div = document.createElement('div');
+                div.className = 'phrase';
+                div.innerHTML = `
+                    <div class="thai-phrase">${phrase.phrase}</div>
+                    <div class="phrase-translation">${phrase.translation}</div>
+                `;
+                phrasesContainer.appendChild(div);
+            });
+
+            // 重置卡片状态
+            tagFlashcard.classList.remove('flipped');
+
+            // 检查是否已经评分
+            const existingRating = learnedWords.findIndex(w => w.index === currentIndex);
+            if (existingRating !== -1) {
+                document.querySelectorAll('.rating-btn').forEach(btn => {
+                    btn.disabled = true;
+                });
+            } else {
+                document.querySelectorAll('.rating-btn').forEach(btn => {
+                    btn.disabled = false;
+                });
+            }
+            updateStats();
+        }
+
+        // 前进到下一个单词
+        async function nextWord() {
+            // 找到下一个未学习的单词
+            const learnedIndices = learnedWords.map(w => w.index);
+            for (let i = currentIndex + 1; i < wordList.length; i++) {
+                if (!learnedIndices.includes(i)) {
+                    currentIndex = i;
+                    showCurrentWord();
+                    return;
+                }
+            }
+
+            // 如果后面没有未学习的单词，从开头找
+            for (let i = 0; i < currentIndex; i++) {
+                if (!learnedIndices.includes(i)) {
+                    currentIndex = i;
+                    showCurrentWord();
+                    return;
+                }
+            }
+
+            // 如果所有单词都已学习，显示完成消息
+            showCompletionMessage();
+            await uploadAnkiRecord();
+        }
+
+        // 重置应用
+        function resetApp() {
+            learnedWords = [];
+            currentIndex = 0;
+            isTempDeck = false;
+            wordList = [...mainWordList]; // 恢复完整列表
+
+            localStorage.removeItem(`thaiFlashcardProgress_${gWordSetKey}`);
+
+            document.getElementById('flashcard-container').style.display = 'block';
+            document.getElementById('rating-container').style.display = 'flex';
+            document.getElementById('progress-bar').style.display = 'block';
+            document.getElementById('completion-message').style.display = 'none';
+            document.querySelector('#completion-message h2').textContent = "恭喜！您已完成所有单词的学习";
+
+            showCurrentWord();
+        }
+
+
+        // 初始化应用
+        async function initApp(refWordList) {
+
+            wordList = [];
+            await _loadFireBaseWordSet(refWordList);
+
+            loadProgress();
+            showCurrentWord();
+
+            // Fix: 不要在 initApp 内部添加 flashcard 和 reset 的 addEventListener
+            // 因为 initApp 可能会被多次调用（例如切换 Set 时），导致事件重复绑定
+            // 事件绑定已移动到 DOMContentLoaded 或是一次性执行的区域
+        }
+
+        // 评分按钮事件
+        document.querySelectorAll('.rating-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const rating = parseInt(this.getAttribute('data-rating'));
+
+                // 检查是否已经评分
+                const existingIndex = learnedWords.findIndex(w => w.index === currentIndex);
+                if (existingIndex !== -1) {
+                    learnedWords[existingIndex].rating = rating;
+                } else {
+                    learnedWords.push({
+                        index: currentIndex,
+                        word: wordList[currentIndex].thai,
+                        rating: rating,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+
+                // 保存进度
+                saveProgress();
+
+                // 禁用评分按钮
+                document.querySelectorAll('.rating-btn').forEach(btn => {
+                    btn.disabled = true;
+                });
+
+                // 自动前进到下一个单词
+                setTimeout(nextWord, 500);
+            });
+        });
+
+        function formatDateToYYYYMMDD(date) {
+            // Ensure input is a Date object
+            const d = new Date(date);
+
+            // Validate date
+            if (isNaN(d)) {
+                throw new Error('Invalid date input');
+            }
+
+            // Get year, month, and day
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+            const day = String(d.getDate()).padStart(2, '0');
+
+            // Return formatted string
+            return `${year}${month}${day}`;
+        }
+
+        async function _loadFireBaseWordSet(refWordList) {
+            let snapshot = await database.ref(refWordList).once('value');
+            let jsonWordSet = snapshot.val();
+            console.log(jsonWordSet);
+            if (jsonWordSet == null) return;
+
+
+            for (let i = 0; i < jsonWordSet.words.length; i++) {
+                let word = jsonWordSet.words[i];
+                //console.log(word) ;
+                if (hasInvalidFirebaseChars(word)) continue;
+
+                let snapshot = await database.ref(`thaiDictionary/${word}`).once('value');
+                let jsonWord = snapshot.val();
+                //console.log(jsonWord) ;
+                if (jsonWord == null) {
+                    console.log(`${word} not in DB,something wrong`);
+                    continue;
+                }
+
+                /*
+                let ankiWord={
+                    thai:jsonWord.thai.word,
+                    pronunciation:jsonWord.thai.pronunciation,
+                    definitions:jsonWord.definitions,
+                    synonyms:jsonWord.synonyms,
+                    antonyms:jsonWord.antonyms,
+                    common_phrases:jsonWord.common_phrases
+                };
+                */
+                try {
+                    // 定义需要的字段路径（支持嵌套，如 'thai.word'）
+                    const requiredPaths = [
+                        'thai.word',
+                        'thai.pronunciation',
+                        'definitions',
+                        'synonyms',
+                        'antonyms',
+                        'common_phrases'
+                    ];
+
+                    // 辅助函数：安全获取嵌套属性并判断是否存在（非 null / undefined）
+                    function hasPath(obj, path) {
+                        return path.split('.').every(key => {
+                            if (obj == null) return false; // null 或 undefined 中断
+                            obj = obj[key];
+                            return obj != null; // 允许 0, '', false 等 falsy 但存在的值
+                        });
+                    }
+
+                    // 检查所有必需路径是否存在
+                    for (const path of requiredPaths) {
+                        if (!hasPath(jsonWord, path)) {
+                            throw new Error(`Missing required property: ${path}`);
+                        }
+                    }
+
+                    // 如果全部存在，构建对象
+                    let ankiWord = {
+                        thai: jsonWord.thai.word,
+                        pronunciation: jsonWord.thai.pronunciation,
+                        definitions: jsonWord.definitions,
+                        synonyms: jsonWord.synonyms,
+                        antonyms: jsonWord.antonyms,
+                        common_phrases: jsonWord.common_phrases
+                    };
+                    // ✅ 后续使用 ankiWord ...
+                    wordList.push(ankiWord);
+                } catch (error) {
+                    console.error('Data validation failed:', error.message);
+                    // 可在此处 fallback（如跳过、用默认值、提示用户等）
+                    console.log(jsonWord);
+                }
+            }
+            mainWordList = [...wordList]; // 备份完整列表
+        }
+
+        /*
+        async function _loadAnkiSets(){
+            const ankiSets = '/thaiAnki/reviewSets' ;
+            let snapshot = await database.ref(ankiSets).once('value');
+            let jsonAnkiSets = snapshot.val();
+            console.log(jsonAnkiSets) ;
+
+            const selectedKey = await doModalChooseAnkiSet(jsonAnkiSets);
+            if (selectedKey) {
+                console.log('用户选择了:', selectedKey);
+                let keyEncode = encodeURIComponent(selectedKey) ;
+                let snapshot = await database.ref(`thaiAnki/reviewSets/${keyEncode}`).once('value');
+                let jsonReviewSet = snapshot.val();
+                console.log(jsonReviewSet) ;
+                let refWordList = `thaiWordList/${jsonReviewSet.wordSetID}` ;
+                initApp(refWordList);
+
+            } else {
+                console.log('用户取消了选择');
+            }
+        }
+        */
+        async function _loadAnkiSets() {
+            const ankiSets = '/thaiAnki/reviewSets';
+            let snapshot = await database.ref(ankiSets).once('value');
+            let jsonAnkiSets = snapshot.val();
+            console.log(jsonAnkiSets);
+
+            const selectedKey = await doModalChooseAnkiSet(jsonAnkiSets);
+            if (selectedKey) {
+                console.log('用户选择了:', selectedKey);
+                let keyEncode = encodeURIComponent(selectedKey);
+                let snapshot = await database.ref(`thaiAnki/reviewSets/${keyEncode}`).once('value');
+                let jsonReviewSet = snapshot.val();
+
+                // --- 新增：填充 Session Info ---
+                gSessionInfo = {
+                    reviewSetId: selectedKey,
+                    title: jsonReviewSet.title || selectedKey,
+                    wordSetID: jsonReviewSet.wordSetID
+                };
+                // -----------------------------
+
+                console.log(jsonReviewSet);
+                let refWordList = `thaiWordList/${jsonReviewSet.wordSetID}`;
+                initApp(refWordList);
+
+            } else {
+                console.log('用户取消了选择');
+            }
+        }
+
+
+
+    </script>
+    <script>
+        let tagBTNPlayer = document.getElementById('idBTNPlayer');
+        tagBTNPlayer.addEventListener('click', async (event) => {
+            let tagFlashcard = document.getElementById('flashcard');
+            //tagFlashcard.dataset.word= word ;
+            //const text = jsonDict.textTh;//tagOutput.querySelector("text").value;
+            const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${tagFlashcard.dataset.word}`;
+            const audio = new Audio(urlGoogleTTSProxy);
+            audio.play();
+        });
+    </script>
+    <script>
+        // 新增：独立的翻转逻辑函数，供点击事件和快捷键调用
+        function toggleFlashcard() {
+            // 防止选中文本时误触翻转
+            const selection = window.getSelection();
+            if (selection.toString().length > 0) return;
+
+            const card = document.getElementById('flashcard');
+            card.classList.toggle('flipped');
+        }
+
+        document.addEventListener('DOMContentLoaded', async (event) => {
+            console.log('DOMContentLoaded');
+
+            // Fix: 在 DOMContentLoaded 中绑定事件，确保生命周期内只执行一次
+            document.getElementById('flashcard').addEventListener('click', toggleFlashcard);
+            document.getElementById('reset-btn').addEventListener('click', resetApp);
+
+            const svgBTNSize = 18;
+            createStickyToolbar({
+                buttons: [
+                    {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/home.svg',
+                        svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 16 16"><path fill="#000000" d="M8 1.4L6 2.7V1H4v3L0 6.6l.6.8L8 2.6l7.4 4.8l.6-.8z"/><path fill="#000000" d="M8 4L2 8v7h5v-3h2v3h5V8z"/></svg>`,
+                        tip: 'Home',
+                        onClick: () => alert('Home clicked'),
+                    },
+                    {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 512 512"><path fill="#000000" d="M379.087 75.202c18.168 40.684 25.533 83.89 32.421 127.21c-1.265.358-2.528.72-3.794 1.082c-.91-2.534-1.984-5.021-2.707-7.61c-5.218-18.653-10.48-37.296-15.474-56.011c-1.797-6.733-6.035-10.084-12.096-13.381c-8.901-4.842-17.313-11.084-24.69-18.046c-4.707-4.44-8.735-7.149-15.413-7.078c-44.46.47-88.925.515-133.384.924c-2.963.03-6.63 1.124-8.728 3.065c-8.089 7.484-15.671 15.514-25.642 25.556c26.3 64.04 39.522 133.84 33.845 208.044c-12.626-8.084-22.4-14.48-22.981-31.418c-2.904-84.661-29.02-161.225-83.58-227.108c-1.228-1.482-1.838-3.476-2.738-5.23h284.96ZM48.73 107.847c12.663 0 25.332-.2 37.984.172c2.51.072 6.022 1.668 7.277 3.68c37.836 60.79 67.334 124.635 71.155 197.682c.018.29-.282.594-1.362 2.716c-22.612-77.293-63.404-142.735-115.872-201.39c.274-.952.545-1.906.819-2.86zM8 161.029c18.09-.658 33.39-1.318 48.692-1.602c1.541-.03 3.36 2.009 4.65 3.443c29.848 33.202 56.936 68.281 73.633 110.235c3.177 7.98 5.351 16.36 7.989 24.555C108.379 243.235 60.254 202.538 8 161.028Zm194.474 275.77c-31.481-50.066-61.803-98.29-92.128-146.513l1.112-1.428c2.542 2.047 56.622 45.412 80.91 65.302c6.766 5.541 11.878 5.441 18.915-.274c82.584-67.085 174.737-117.862 272.583-158.809c5.223-2.185 10.64-3.916 15.983-5.816c1.186-.42 2.44-.654 4.151-.222c-113.623 65.987-222.022 138.239-301.526 247.76Z"/></svg>`,
+                        tip: 'Anki Sets',
+                        onClick: async () => {
+                            //await loadQuizData("") ;
+                            //alert('to load Anki sets') ;
+                            await _loadAnkiSets();
+                        },
+                    }, {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 48 48"><g fill="none" stroke-linejoin="round" stroke-width="4"><path fill="#2F88FF" stroke="#000" d="M21 38C30.3888 38 38 30.3888 38 21C38 11.6112 30.3888 4 21 4C11.6112 4 4 11.6112 4 21C4 30.3888 11.6112 38 21 38Z"/><path stroke="#fff" stroke-linecap="round" d="M26.657 14.3431C25.2093 12.8954 23.2093 12 21.0001 12C18.791 12 16.791 12.8954 15.3433 14.3431"/><path stroke="#000" stroke-linecap="round" d="M33.2216 33.2217L41.7069 41.707"/></g></svg>`,
+                        tip: 'Search',
+                        onClick: () => alert('Search clicked'),
+                    }, {
+                        iconUrl: 'https://freesvgicons.com/wp-content/uploads/2023/07/search.svg',
+                        svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${svgBTNSize}" height="${svgBTNSize}" viewBox="0 0 24 24"><path fill="#000000" d="M8 15h8v-.55q0-1.125-1.1-1.788T12 12q-1.8 0-2.9.663T8 14.45V15Zm4-4q.825 0 1.413-.588T14 9q0-.825-.588-1.413T12 7q-.825 0-1.413.588T10 9q0 .825.588 1.413T12 11ZM8 21v-2H4q-.825 0-1.413-.588T2 17V5q0-.825.588-1.413T4 3h16q.825 0 1.413.588T22 5v12q0 .825-.588 1.413T20 19h-4v2H8Z"/></svg>`,
+                        tip: 'SignIn',
+                        onClick: () => signInWithGoogle(),
+                    }
+                ],
+            });
+
+            // 启动应用
+            //?wordSet=
+            //?reviewSet=
+            const queryString = window.location.search; // "?color=purple&size=M&size=L"
+            const urlParams = new URLSearchParams(queryString);
+            let wordSetKey = urlParams.get('wordSet'); // "purple"
+            let reviewSetKey = urlParams.get('reviewSet'); // "purple"
+            let cDate = new Date();
+
+            let refWordList = '';//`thaiWordList/${keyEncode}` ;
+            if (wordSetKey != null) {
+                console.log(wordSetKey);
+                let keyEncode = encodeURIComponent(wordSetKey);
+                refWordList = `thaiWordList/${keyEncode}`;
+
+                // --- 新增: 填充 Session Info (WordSet模式) ---
+                gSessionInfo = {
+                    reviewSetId: "custom_wordset",
+                    title: wordSetKey,
+                    wordSetID: wordSetKey
+                };
+
+            } else if (reviewSetKey != null) {
+                let keyEncode = encodeURIComponent(reviewSetKey);
+                let snapshot = await database.ref(`thaiAnki/reviewSets/${keyEncode}`).once('value');
+                let jsonReviewSet = snapshot.val();
+                console.log(jsonReviewSet);
+                refWordList = `thaiWordList/${jsonReviewSet.wordSetID}`;
+
+                // --- 新增: 填充 Session Info (URL ReviewSet模式) ---
+                gSessionInfo = {
+                    reviewSetId: reviewSetKey,
+                    title: jsonReviewSet.title || reviewSetKey,
+                    wordSetID: jsonReviewSet.wordSetID
+                };
+
+            } else {
+                reviewSetKey = `${formatDateToYYYYMMDD(cDate)}`;
+                let keyEncode = encodeURIComponent(reviewSetKey);
+                refWordList = `thaiAnki/DailyReview/${keyEncode}`;
+
+                // --- 新增: 填充 Session Info (每日复习模式) ---
+                gSessionInfo = {
+                    reviewSetId: reviewSetKey,
+                    title: "Daily Review " + reviewSetKey,
+                    wordSetID: "daily_mixed"
+                };
+            }
+
+            initApp(refWordList);
+        });
+    </script>
+    <script>
+        const hotKeyCall_A = (event) => {
+            console.log("hotKeyCall_A called:" + event.key);
+            let tagBTNPlayer = document.getElementById('idBTNPlayer');
+            tagBTNPlayer.click();
+        };
+
+        const hotKeyCall_SPACE = (event) => {
+            console.log("hotKeyCall_SPACE called:" + event.key);
+            // Fix: 直接调用 toggleFlashcard 函数，而不是触发 click 事件
+            toggleFlashcard();
+        };
+
+        const hotKeyCall_Num1 = (event) => {
+            console.log("hotKeyCall_Num1 called:" + event.key);
+            let tagBTNRating = document.querySelector(".rating-1");
+            tagBTNRating.click();
+        };
+        const hotKeyCall_Num2 = (event) => {
+            console.log("hotKeyCall_Num2 called:" + event.key);
+            let tagBTNRating = document.querySelector(".rating-2");
+            tagBTNRating.click();
+        };
+        const hotKeyCall_Num3 = (event) => {
+            console.log("hotKeyCall_Num1 called:" + event.key);
+            let tagBTNRating = document.querySelector(".rating-3");
+            tagBTNRating.click();
+        };
+        const hotKeyCall_Num4 = (event) => {
+            console.log("hotKeyCall_Num2 called:" + event.key);
+            let tagBTNRating = document.querySelector(".rating-4");
+            tagBTNRating.click();
+        };
+        const hotKeyCall_Num5 = (event) => {
+            console.log("hotKeyCall_Num1 called:" + event.key);
+            let tagBTNRating = document.querySelector(".rating-5");
+            tagBTNRating.click();
+        };
+
+
+        const hotKeyCalls = {
+            'a': hotKeyCall_A,
+            '1': hotKeyCall_Num1,
+            '2': hotKeyCall_Num2,
+            '3': hotKeyCall_Num3,
+            '4': hotKeyCall_Num4,
+            '5': hotKeyCall_Num5,
+            ' ': hotKeyCall_SPACE
+        };
+
+        document.addEventListener('keydown', (event) => {
+            let hotKeyCall = hotKeyCalls[event.key];
+            if (hotKeyCall) {
+                console.log("The hotKeyCall key was pressed!");
+                event.preventDefault();
+                event.stopPropagation();
+                hotKeyCall(event);
+            }
+        });
+    </script>
+</body>
+
+</html>
