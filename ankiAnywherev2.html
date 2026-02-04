@@ -654,42 +654,56 @@
 
                 // 提取对应的原始单词对象
                 const errorWordsObjects = errorItems.map(item => {
-                    return mainWordList.find(w => w.thai === item.word);
+                    const found = mainWordList.find(w => w.thai === item.word);
+                    if (!found) {
+                        console.warn(`Could not find word "${item.word}" in mainWordList. Searching by index...`);
+                        return mainWordList[item.index]; // Fallback to index if string match fails
+                    }
+                    return found;
                 }).filter(w => w !== undefined);
 
-                // 更新应用状态
-                wordList = [...errorWordsObjects];
-                learnedWords = [];
-                currentIndex = 0;
-                isTempDeck = true;
+                if (errorWordsObjects.length > 0) {
+                    // 更新应用状态
+                    wordList = [...errorWordsObjects];
+                    learnedWords = [];
+                    currentIndex = 0;
+                    isTempDeck = true;
 
-                // 提示用户并开始
-                const statusNotice = document.getElementById('status-notification');
-                statusNotice.textContent = `本轮有 ${errorItems.length} 个单词不熟悉，即将进入强化复习模式（临时复习不记录到服务器）。`;
-                statusNotice.style.display = 'block';
+                    // 提示用户并开始
+                    const statusNotice = document.getElementById('status-notification');
+                    statusNotice.textContent = `本轮有 ${errorItems.length} 个单词不熟悉，即将进入强化复习模式（临时复习不记录到服务器）。`;
+                    statusNotice.style.display = 'block';
 
-                showCurrentWord();
-                updateStats();
-            } else {
-                // 真正的全部完成
-                document.querySelector('.flashcard-container').style.display = 'none';
-                document.getElementById('rating-container').style.display = 'none';
-                document.getElementById('progress-bar').style.display = 'none';
-
-                const learnedCount = learnedWords.length;
-                const masteryLevel = 100; // 既然能走到这里说明全对
-
-                document.getElementById('total-learned').textContent = isTempDeck ? mainWordList.length : learnedCount;
-                document.getElementById('final-mastery').textContent = `100%`;
-                document.getElementById('completion-message').style.display = 'block';
-
-                if (isTempDeck) {
-                    document.querySelector('#completion-message h2').textContent = "强化复习完成！所有单词已掌握";
+                    showCurrentWord();
+                    updateStats();
+                } else {
+                    console.error("Failed to recover error words objects. Skipping retry loop.");
+                    showFinalCompletion();
                 }
-
-                isTempDeck = false;
-                wordList = [...mainWordList]; // 恢复列表供下次研究
+            } else {
+                showFinalCompletion();
             }
+        }
+
+        // 提取最终完成逻辑为独立函数以便复用
+        function showFinalCompletion() {
+            document.querySelector('.flashcard-container').style.display = 'none';
+            document.getElementById('rating-container').style.display = 'none';
+            document.getElementById('progress-bar').style.display = 'none';
+
+            const learnedCount = learnedWords.length;
+            const masteryLevel = 100;
+
+            document.getElementById('total-learned').textContent = isTempDeck ? mainWordList.length : (learnedCount || wordList.length);
+            document.getElementById('final-mastery').textContent = `100%`;
+            document.getElementById('completion-message').style.display = 'block';
+
+            if (isTempDeck) {
+                document.querySelector('#completion-message h2').textContent = "强化复习完成！所有单词已掌握";
+            }
+
+            isTempDeck = false;
+            wordList = [...mainWordList]; // 恢复列表供下次研究
         }
 
 
@@ -845,6 +859,10 @@
         // 显示当前单词
         function showCurrentWord() {
             const word = wordList[currentIndex];
+            if (!word) {
+                console.error("Attempted to show undefined word at index", currentIndex, "in wordList", wordList);
+                return;
+            }
             let tagFlashcard = document.getElementById('flashcard');
             tagFlashcard.dataset.word = word.thai;
 
