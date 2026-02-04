@@ -67,11 +67,39 @@
         .stats {
             display: flex;
             justify-content: space-around;
+            flex-wrap: wrap;
+            /* Added for notification */
             margin-bottom: 5px;
             background: #f8f9fa;
-            padding: 5px;
+            padding: 10px;
             border-radius: 10px;
             font-size: 14px;
+            gap: 10px;
+        }
+
+        .status-notification {
+            width: 100%;
+            text-align: center;
+            padding: 8px;
+            background: #e1f5fe;
+            color: #0288d1;
+            border-radius: 6px;
+            font-weight: 500;
+            display: none;
+            /* Hidden by default */
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .stat-item {
@@ -431,6 +459,8 @@
                     <div class="stat-label">掌握程度</div>
                     <div class="stat-value" id="mastery-level">0%</div>
                 </div>
+                <!-- Status Notification Bar -->
+                <div id="status-notification" class="status-notification"></div>
                 <button id="idBTNPlayer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" class="svgBTN" viewBox="0 0 32 32">
                         <path fill="#000000"
@@ -634,7 +664,10 @@
                 isTempDeck = true;
 
                 // 提示用户并开始
-                alert(`本轮有 ${errorItems.length} 个单词不熟悉，即将进入强化复习模式（临时复习不记录到服务器）。`);
+                const statusNotice = document.getElementById('status-notification');
+                statusNotice.textContent = `本轮有 ${errorItems.length} 个单词不熟悉，即将进入强化复习模式（临时复习不记录到服务器）。`;
+                statusNotice.style.display = 'block';
+
                 showCurrentWord();
                 updateStats();
             } else {
@@ -917,6 +950,10 @@
             document.getElementById('progress-bar').style.display = 'block';
             document.getElementById('completion-message').style.display = 'none';
             document.querySelector('#completion-message h2').textContent = "恭喜！您已完成所有单词的学习";
+
+            const statusNotice = document.getElementById('status-notification');
+            statusNotice.style.display = 'none';
+            statusNotice.textContent = '';
 
             showCurrentWord();
         }
