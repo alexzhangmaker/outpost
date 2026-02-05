@@ -248,54 +248,104 @@
                 </button>
             </div>
 
-            <div class="p-6 space-y-6 overflow-y-auto max-h-[70vh] custom-scroll">
-                <div class="space-y-4">
-                    <h4
-                        class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
-                        Gemini AI Configuration</h4>
-                    <div class="space-y-2">
-                        <label class="text-sm font-semibold text-slate-700">API Key</label>
-                        <div class="relative">
-                            <input id="gemini-api-key" type="password"
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                                placeholder="Paste your API key here...">
-                            <button id="toggle-key-visibility"
-                                class="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600">
-                                <i data-lucide="eye" class="w-4 h-4"></i>
-                            </button>
+            <div class="px-6 border-b border-slate-200">
+                <div class="flex gap-6">
+                    <button id="tab-system-btn"
+                        class="py-4 text-xs font-black uppercase tracking-widest border-b-2 border-blue-600 text-blue-600 transition">System
+                        Config</button>
+                    <button id="tab-subjects-btn"
+                        class="py-4 text-xs font-black uppercase tracking-widest border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition">Subject
+                        Management</button>
+                </div>
+            </div>
+
+            <div id="settings-panes" class="flex-1 overflow-y-auto max-h-[70vh] custom-scroll">
+                <!-- System Config Pane -->
+                <div id="pane-system" class="p-6 space-y-6">
+                    <div class="space-y-4">
+                        <h4
+                            class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                            Gemini AI Configuration</h4>
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-slate-700">API Key</label>
+                            <div class="relative">
+                                <input id="gemini-api-key" type="password"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                                    placeholder="Paste your API key here...">
+                                <button id="toggle-key-visibility"
+                                    class="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-slate-700">Grading System Prompt</label>
+                            <textarea id="grading-prompt"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition min-h-[100px]"
+                                placeholder="Instruction for AI grading..."></textarea>
+                            <p class="text-[10px] text-slate-400 italic">This prompt guides Gemini on how to evaluate
+                                student answers.</p>
                         </div>
                     </div>
-                    <div class="space-y-2">
-                        <label class="text-sm font-semibold text-slate-700">Grading System Prompt</label>
-                        <textarea id="grading-prompt"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition min-h-[100px]"
-                            placeholder="Instruction for AI grading..."></textarea>
-                        <p class="text-[10px] text-slate-400 italic">This prompt guides Gemini on how to evaluate
-                            student answers.</p>
+
+                    <div class="space-y-4 pt-4">
+                        <h4
+                            class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                            App Preferences</h4>
+                        <div
+                            class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
+                                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-700">Auto-Feedback</p>
+                                    <p class="text-[10px] text-slate-500">Submit answer immediately after voice
+                                        transcription</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input id="auto-feedback-toggle" type="checkbox" class="sr-only peer">
+                                <div
+                                    class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                                </div>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <div class="space-y-4 pt-4">
-                    <h4
-                        class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
-                        App Preferences</h4>
-                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
-                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <!-- Subject Management Pane -->
+                <div id="pane-subjects" class="p-6 space-y-6 hidden">
+                    <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 space-y-4">
+                        <h4 class="text-xs font-bold text-blue-800 uppercase tracking-widest flex items-center gap-2">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i> Add/Edit Subject
+                        </h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-slate-500 uppercase">Course Name</label>
+                                <input id="course-name-input" type="text"
+                                    class="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="e.g. Critical Reading">
                             </div>
-                            <div>
-                                <p class="text-sm font-semibold text-slate-700">Auto-Feedback</p>
-                                <p class="text-[10px] text-slate-500">Submit answer immediately after voice
-                                    transcription</p>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-slate-500 uppercase">Course Code</label>
+                                <input id="course-code-input" type="text"
+                                    class="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="e.g. 001201">
                             </div>
                         </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input id="auto-feedback-toggle" type="checkbox" class="sr-only peer">
-                            <div
-                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
-                            </div>
-                        </label>
+                        <button id="save-course-btn"
+                            class="w-full bg-blue-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-blue-700 transition uppercase tracking-widest">Save
+                            Subject</button>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h4
+                            class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                            Existing Subjects</h4>
+                        <div id="course-list" class="space-y-2">
+                            <!-- Course items will be injected here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -328,9 +378,10 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
                         <label class="text-sm font-semibold text-slate-700">Subject / Folder</label>
-                        <input id="item-subject" type="text"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm"
-                            placeholder="e.g., Mathematics">
+                        <select id="item-subject"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Subject</option>
+                        </select>
                     </div>
                     <div class="space-y-2">
                         <label class="text-sm font-semibold text-slate-700">Knowledge Point Title</label>
@@ -363,14 +414,28 @@
         </div>
     </div>
 
+    <!-- Firebase SDK (v10) -->
     <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, set, get, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
         // --- Configuration & Constants ---
-        const DB_NAME = 'OralQuizDB';
-        const DB_VERSION = 1;
-        const STORES = {
-            SETTINGS: 'settings',
-            ITEMS: 'quizItems',
-            HISTORY: 'quizHistory'
+        const DB_NAME_LOCAL = 'OralQuizDB_Local';
+        const DB_VERSION_LOCAL = 1;
+        const STORES_LOCAL = {
+            SETTINGS: 'settings'
+        };
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-8d74e-uiz-d289c.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
         };
 
         const DEFAULT_GRADING_PROMPT = `As an expert tutor, evaluate the user's answer against the reference answer. 
@@ -380,35 +445,42 @@
 4. Keep the feedback encouraging and professional.
 Use Markdown for formatting.`;
 
+        // --- Firebase Init ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
         // --- App State ---
         let state = {
+            user: null,
             settings: {
                 apiKey: '',
                 gradingPrompt: DEFAULT_GRADING_PROMPT,
                 autoFeedback: false
             },
-            items: [],
+            subjects: [], // From courseOralQuiz
+            items: [],    // From oralQuiz
             currentItem: null,
             isRecording: false,
             mediaRecorder: null,
             audioChunks: []
         };
 
-        // --- IndexedDB Utility ---
-        const dbPromise = new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
+        // --- IndexedDB Local Utility (For API Key & Local Settings) ---
+        const localDbPromise = new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME_LOCAL, DB_VERSION_LOCAL);
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
-                Object.values(STORES).forEach(store => {
-                    if (!db.objectStoreNames.contains(store)) db.createObjectStore(store, { keyPath: 'id', autoIncrement: true });
+                Object.values(STORES_LOCAL).forEach(store => {
+                    if (!db.objectStoreNames.contains(store)) db.createObjectStore(store, { keyPath: 'id' });
                 });
             };
             request.onsuccess = (e) => resolve(e.target.result);
             request.onerror = (e) => reject(e.target.error);
         });
 
-        async function dbGet(storeName, id) {
-            const db = await dbPromise;
+        async function localDbGet(storeName, id) {
+            const db = await localDbPromise;
             return new Promise((resolve) => {
                 const transaction = db.transaction(storeName, 'readonly');
                 const request = transaction.objectStore(storeName).get(id);
@@ -416,38 +488,14 @@ Use Markdown for formatting.`;
             });
         }
 
-        async function dbGetAll(storeName) {
-            const db = await dbPromise;
-            return new Promise((resolve) => {
-                const transaction = db.transaction(storeName, 'readonly');
-                const request = transaction.objectStore(storeName).getAll();
-                request.onsuccess = () => resolve(request.result);
-            });
-        }
-
-        async function dbPut(storeName, data, key) {
-            const db = await dbPromise;
+        async function localDbPut(storeName, data, id) {
+            const db = await localDbPromise;
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction(storeName, 'readwrite');
                 const store = transaction.objectStore(storeName);
-                if (key) {
-                    const request = store.put({ ...data, id: key });
-                    request.onsuccess = () => resolve();
-                } else {
-                    const request = store.put(data);
-                    request.onsuccess = () => resolve();
-                }
-                transaction.oncomplete = () => resolve();
-                transaction.onerror = (e) => reject(e.target.error);
-            });
-        }
-
-        async function dbDelete(storeName, id) {
-            const db = await dbPromise;
-            return new Promise((resolve) => {
-                const transaction = db.transaction(storeName, 'readwrite');
-                const request = transaction.objectStore(storeName).delete(id);
+                const request = store.put({ ...data, id });
                 request.onsuccess = () => resolve();
+                transaction.onerror = (e) => reject(e.target.error);
             });
         }
 
@@ -511,11 +559,109 @@ Use Markdown for formatting.`;
             $('gemini-api-key').value = state.settings.apiKey;
             $('grading-prompt').value = state.settings.gradingPrompt;
             $('auto-feedback-toggle').checked = state.settings.autoFeedback;
+            switchTab('system');
+            renderCourseList();
             openModal('settings-modal');
         }
 
-        async function loadSettings() {
-            const config = await dbGet(STORES.SETTINGS, 'config');
+        function switchTab(tab) {
+            const systemBtn = $('tab-system-btn');
+            const subjectsBtn = $('tab-subjects-btn');
+            const systemPane = $('pane-system');
+            const subjectsPane = $('pane-subjects');
+
+            if (tab === 'system') {
+                systemBtn.className = 'py-4 text-xs font-black uppercase tracking-widest border-b-2 border-blue-600 text-blue-600 transition';
+                subjectsBtn.className = 'py-4 text-xs font-black uppercase tracking-widest border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition';
+                systemPane.classList.remove('hidden');
+                subjectsPane.classList.add('hidden');
+            } else {
+                subjectsBtn.className = 'py-4 text-xs font-black uppercase tracking-widest border-b-2 border-blue-600 text-blue-600 transition';
+                systemBtn.className = 'py-4 text-xs font-black uppercase tracking-widest border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition';
+                subjectsPane.classList.remove('hidden');
+                systemPane.classList.add('hidden');
+            }
+        }
+
+        function renderCourseList() {
+            const list = $('course-list');
+            list.innerHTML = '';
+
+            state.subjects.forEach(subject => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-100 transition group';
+                item.innerHTML = `
+                    <div>
+                        <p class="text-sm font-bold text-slate-800">${subject.course || subject.Title}</p>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">${subject.courseCode || 'No Code'}</p>
+                    </div>
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                        <button class="edit-course-btn p-1.5 text-slate-400 hover:text-blue-600 rounded-lg" data-id="${subject.id}" title="Edit">
+                            <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button class="delete-course-btn p-1.5 text-slate-400 hover:text-red-500 rounded-lg" data-id="${subject.id}" title="Delete">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                `;
+                item.querySelector('.edit-course-btn').onclick = () => {
+                    $('course-name-input').value = subject.course || subject.Title;
+                    $('course-code-input').value = subject.courseCode || '';
+                    $('save-course-btn').dataset.editId = subject.id;
+                };
+                item.querySelector('.delete-course-btn').onclick = () => deleteCourse(subject.id);
+                list.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        async function saveCourse() {
+            if (!state.user) { alert("Please login to manage subjects."); return; }
+            const name = $('course-name-input').value.trim();
+            const code = $('course-code-input').value.trim();
+            const editId = $('save-course-btn').dataset.editId;
+
+            if (!name) { alert("Course name is required."); return; }
+
+            const data = {
+                course: name,
+                Title: name, // Maintain compatibility
+                courseCode: code,
+                updatedAt: new Date().toISOString()
+            };
+
+            try {
+                if (editId) {
+                    await update(ref(db, `courseOralQuiz/${editId}`), data);
+                } else {
+                    const newId = Date.now().toString();
+                    await set(ref(db, `courseOralQuiz/${newId}`), data);
+                }
+
+                $('course-name-input').value = '';
+                $('course-code-input').value = '';
+                delete $('save-course-btn').dataset.editId;
+
+                loadFirebaseData();
+            } catch (err) {
+                alert("Save course failed: " + err.message);
+            }
+        }
+
+        async function deleteCourse(id) {
+            if (!state.user) { alert("Please login to manage subjects."); return; }
+            if (confirm("Delete this subject? Quiz items under it will become Uncategorized.")) {
+                try {
+                    await remove(ref(db, `courseOralQuiz/${id}`));
+                    loadFirebaseData();
+                } catch (err) {
+                    alert("Delete failed: " + err.message);
+                }
+            }
+        }
+
+        async function loadLocalStorage() {
+            const config = await localDbGet(STORES_LOCAL.SETTINGS, 'config');
             if (config) {
                 state.settings = { ...state.settings, ...config };
                 updateGeminiStatus();
@@ -539,31 +685,86 @@ Use Markdown for formatting.`;
                 gradingPrompt: $('grading-prompt').value.trim(),
                 autoFeedback: $('auto-feedback-toggle').checked
             };
-            await dbPut(STORES.SETTINGS, state.settings, 'config');
+            await localDbPut(STORES_LOCAL.SETTINGS, state.settings, 'config');
             updateGeminiStatus();
             closeModal('settings-modal');
         }
 
-        async function loadItems() {
-            state.items = await dbGetAll(STORES.ITEMS);
-            renderSidebar();
+        // --- Auth & Data Fetching ---
+        function initAuth() {
+            onAuthStateChanged(auth, (user) => {
+                state.user = user;
+                if (user) {
+                    const avatar = document.querySelector('.w-8.h-8.rounded-full');
+                    avatar.innerHTML = `<img src="${user.photoURL}" class="w-full h-full rounded-full" />`;
+                    const name = document.querySelector('.text-sm.font-medium.text-white');
+                    name.textContent = user.displayName || user.email;
+                    loadFirebaseData();
+                } else {
+                    const avatar = document.querySelector('.w-8.h-8.rounded-full');
+                    avatar.innerHTML = 'U';
+                    const name = document.querySelector('.text-sm.font-medium.text-white');
+                    name.textContent = 'Guest Student';
+                    loadFirebaseData(); // Partial load or empty state
+                }
+            });
+        }
+
+        function login() {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(err => {
+                console.error("Login failed:", err);
+                alert("Login failed: " + err.message);
+            });
+        }
+
+        async function loadFirebaseData() {
+            const nav = $('sidebar-nav');
+            nav.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Initialising Library...</span>
+                </div>
+            `;
+
+            try {
+                // Fetch Subjects
+                const subjectSnap = await get(ref(db, 'courseOralQuiz'));
+                const subjectsObj = subjectSnap.val() || {};
+                state.subjects = Object.keys(subjectsObj).map(key => ({ id: key, ...subjectsObj[key] }));
+
+                // Fetch Quiz Items
+                const itemSnap = await get(ref(db, 'oralQuiz'));
+                const itemsObj = itemSnap.val() || {};
+                state.items = Object.keys(itemsObj).map(key => ({ id: key, ...itemsObj[key] }));
+
+                updateSubjectDropdown();
+                renderSidebar();
+                renderCourseList();
+            } catch (err) {
+                console.error("Data fetch error:", err);
+                nav.innerHTML = `<div class="p-4 text-xs text-red-400">Error loading data.</div>`;
+            }
+        }
+
+        function updateSubjectDropdown() {
+            const select = $('item-subject');
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Select Subject</option>';
+            state.subjects.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.course || s.Title;
+                select.appendChild(opt);
+            });
+            select.value = currentValue;
         }
 
         function renderSidebar() {
             const nav = $('sidebar-nav');
-            if (state.items.length === 0) {
-                nav.innerHTML = `
-                    <div class="text-center py-12 px-4 opacity-40">
-                        <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3"></i>
-                        <p class="text-[10px] uppercase font-bold tracking-widest">Library is empty</p>
-                    </div>
-                `;
-                lucide.createIcons();
-                return;
-            }
-
-            const subjects = [...new Set(state.items.map(i => i.subject || 'Uncategorized'))];
             nav.innerHTML = '';
+
+            const subjects = state.subjects.length > 0 ? state.subjects : [{ id: 'general', Title: 'General' }];
 
             subjects.forEach(subject => {
                 const folder = document.createElement('div');
@@ -571,14 +772,20 @@ Use Markdown for formatting.`;
                 folder.innerHTML = `
                     <div class="flex items-center gap-2 text-[10px] font-black text-slate-500 mb-2 px-2 uppercase tracking-[0.2em] opacity-80">
                         <i data-lucide="folder" class="w-3 h-3 text-blue-500"></i>
-                        ${subject}
+                        ${subject.Title || 'Uncategorized'}
                     </div>
-                    <div id="subject-${subject.replace(/\s+/g, '-')}" class="space-y-0.5"></div>
+                    <div id="subject-${subject.id}" class="space-y-0.5"></div>
                 `;
                 nav.appendChild(folder);
 
-                const container = folder.querySelector(`#subject-${subject.replace(/\s+/g, '-')}`);
-                state.items.filter(i => (i.subject || 'Uncategorized') === subject).forEach(item => {
+                const container = folder.querySelector(`#subject-${subject.id}`);
+                const subjectItems = state.items.filter(i => i.subjectId === subject.id || (subject.id === 'general' && !i.subjectId));
+
+                if (subjectItems.length === 0) {
+                    container.innerHTML = `<div class="p-2 text-[10px] text-slate-600 italic px-4">No content here.</div>`;
+                }
+
+                subjectItems.forEach(item => {
                     const btn = document.createElement('button');
                     btn.className = `w-full text-left p-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between group h-10 border border-transparent ${state.currentItem?.id === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'hover:bg-slate-800 hover:text-white'}`;
                     btn.innerHTML = `
@@ -612,19 +819,26 @@ Use Markdown for formatting.`;
         }
 
         async function deleteItem(id) {
-            if (confirm("Permanently remove this knowledge point?")) {
-                await dbDelete(STORES.ITEMS, id);
-                if (state.currentItem?.id === id) {
-                    state.currentItem = null;
-                    $('no-item-selected').classList.remove('hidden');
-                    $('quiz-workspace').classList.add('hidden');
+            if (!state.user) { alert("Please login to manage items."); return; }
+            if (confirm("Permanently remove this knowledge point from cloud?")) {
+                try {
+                    await remove(ref(db, `oralQuiz/${id}`));
+                    if (state.currentItem?.id === id) {
+                        state.currentItem = null;
+                        $('no-item-selected').classList.remove('hidden');
+                        $('quiz-workspace').classList.add('hidden');
+                    }
+                    loadFirebaseData();
+                } catch (err) {
+                    alert("Delete failed: " + err.message);
                 }
-                loadItems();
             }
         }
 
         function editItem(item) {
-            $('item-subject').value = item.subject || '';
+            if (!state.user) { alert("Please login to manage items."); return; }
+            updateSubjectDropdown();
+            $('item-subject').value = item.subjectId || '';
             $('item-title').value = item.title;
             $('item-question').value = item.question;
             $('item-reference').value = item.reference;
@@ -637,19 +851,25 @@ Use Markdown for formatting.`;
             $('no-item-selected').classList.add('hidden');
             $('quiz-workspace').classList.remove('hidden');
             $('question-display').innerHTML = marked.parse(item.question);
-            $('subject-tag').textContent = (item.subject || 'GENERAL').toUpperCase();
+
+            const subject = state.subjects.find(s => s.id === item.subjectId);
+            $('subject-tag').textContent = (subject?.Title || 'GENERAL').toUpperCase();
+
             $('answer-input').value = '';
             $('ai-result-panel').classList.add('hidden');
             renderSidebar();
         }
 
         async function saveItem() {
+            if (!state.user) { alert("Please login to save items."); return; }
             const editId = $('manage-item-modal').dataset.editId;
             const data = {
-                subject: $('item-subject').value.trim(),
+                subjectId: $('item-subject').value.trim() || 'general',
                 title: $('item-title').value.trim(),
                 question: $('item-question').value.trim(),
-                reference: $('item-reference').value.trim()
+                reference: $('item-reference').value.trim(),
+                updatedAt: new Date().toISOString(),
+                createdBy: state.user.uid
             };
 
             if (!data.title || !data.question) {
@@ -657,28 +877,32 @@ Use Markdown for formatting.`;
                 return;
             }
 
-            if (editId) {
-                await dbPut(STORES.ITEMS, data, parseInt(editId));
+            try {
+                if (editId) {
+                    await update(ref(db, `oralQuiz/${editId}`), data);
+                } else {
+                    const newRef = ref(db, `oralQuiz/${Date.now()}`); // Simple ID generator
+                    await set(newRef, data);
+                }
+
+                closeModal('manage-item-modal');
+                loadFirebaseData();
+
+                // Clear inputs
+                $('item-subject').value = '';
+                $('item-title').value = '';
+                $('item-question').value = '';
+                $('item-reference').value = '';
                 delete $('manage-item-modal').dataset.editId;
-            } else {
-                await dbPut(STORES.ITEMS, data);
+            } catch (err) {
+                alert("Save failed: " + err.message);
             }
-
-            closeModal('manage-item-modal');
-            loadItems();
-
-            // Clear inputs
-            $('item-subject').value = '';
-            $('item-title').value = '';
-            $('item-question').value = '';
-            $('item-reference').value = '';
         }
 
         // --- Voice Recording ---
         async function startRecording() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                // Try to find supported mime type
                 const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
                 state.mediaRecorder = new MediaRecorder(stream, { mimeType });
                 state.audioChunks = [];
@@ -688,7 +912,6 @@ Use Markdown for formatting.`;
                     const audioBlob = new Blob(state.audioChunks, { type: mimeType });
                     const base64 = await blobToBase64(audioBlob);
 
-                    // Show processing UI inside overlay
                     $('recording-overlay').innerHTML = `
                         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
                         <p class="text-blue-600 font-black uppercase tracking-widest text-sm">Transcribing Audio...</p>
@@ -789,14 +1012,20 @@ ${studentAnswer}
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', async () => {
-            await loadSettings();
-            await loadItems();
+            await loadLocalStorage();
+            initAuth();
 
             $('open-settings-btn').onclick = openSettings;
 
             $('add-item-btn').onclick = () => {
+                if (!state.user) { alert("Please login to add items."); return; }
                 $('manage-item-modal').dataset.editId = '';
                 openModal('manage-item-modal');
+            };
+
+            document.querySelector('.w-8.h-8.rounded-full').parentElement.onclick = () => {
+                if (!state.user) login();
+                else if (confirm("Sign out?")) signOut(auth);
             };
 
             document.querySelectorAll('.close-modal-btn').forEach(btn => {
@@ -808,6 +1037,11 @@ ${studentAnswer}
 
             $('save-settings-btn').onclick = saveSettings;
             $('save-item-btn').onclick = saveItem;
+            $('save-course-btn').onclick = saveCourse;
+
+            $('tab-system-btn').onclick = () => switchTab('system');
+            $('tab-subjects-btn').onclick = () => switchTab('subjects');
+
             $('submit-quiz-btn').onclick = submitQuiz;
             $('clear-input-btn').onclick = () => $('answer-input').value = '';
             $('close-result-btn').onclick = () => $('ai-result-panel').classList.add('hidden');
