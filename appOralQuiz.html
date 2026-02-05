@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oral Quiz AI - Knowledge Practice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .sidebar-item-active {
+            background-color: #334155;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: all 200ms ease-out;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Status Bar -->
+    <header
+        class="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-6 shrink-0 z-30 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <i data-lucide="mic-2" class="w-5 h-5"></i>
+            </div>
+            <h1 class="font-bold text-lg text-slate-800">Oral Quiz <span class="text-blue-600">AI</span></h1>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div id="gemini-status"
+                class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-red-600 text-xs font-medium border border-red-100">
+                <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                Gemini: Not Configured
+            </div>
+            <button id="open-settings-btn" class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Sidebar -->
+        <aside
+            class="w-72 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 shrink-0 shadow-xl overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Knowledge Base</span>
+                <button id="add-item-btn"
+                    class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition"
+                    title="Add Subject">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <nav id="sidebar-nav" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-2">
+                <!-- Folders and items will be injected here -->
+                <div class="text-center py-8">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                    <span class="text-xs text-slate-500">Loading library...</span>
+                </div>
+            </nav>
+            <div class="p-4 bg-slate-800/50 border-t border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
+                        U</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate">Student User</p>
+                        <p class="text-xs text-slate-500 truncate">Settings stored locally</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Interaction Area -->
+        <main class="flex-1 flex flex-col relative bg-gray-50 overflow-hidden">
+            <!-- Empty State -->
+            <div id="no-item-selected" class="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                <div class="bg-blue-100 p-6 rounded-full text-blue-600 mb-6 scale-110 shadow-inner">
+                    <i data-lucide="book-open" class="w-12 h-12"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Ready to Start?</h2>
+                <p class="text-slate-500 max-w-md">Select a knowledge point from the library on the left to begin your
+                    oral quiz session.</p>
+            </div>
+
+            <!-- Quiz Content (Hidden by default) -->
+            <div id="quiz-workspace" class="hidden flex-1 flex flex-col overflow-hidden">
+                <!-- Question Card -->
+                <div class="flex-none p-6 pb-2">
+                    <div
+                        class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span id="subject-tag"
+                                class="text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-blue-50 text-blue-600 rounded">GENERAL</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-4">Question</h3>
+                        <div id="question-display"
+                            class="prose prose-slate max-w-none text-xl font-medium text-slate-800">
+                            <!-- Question content -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interaction Area -->
+                <div class="flex-1 p-6 flex flex-col gap-6 overflow-hidden">
+                    <!-- Answer Input -->
+                    <div
+                        class="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="flex border-b border-slate-100">
+                            <button
+                                class="flex-1 py-3 text-sm font-semibold border-b-2 border-blue-600 text-blue-600">Keyboard
+                                / Voice Input</button>
+                            <button
+                                class="flex-1 py-3 text-sm font-semibold text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition border-b-2 border-transparent">History</button>
+                        </div>
+
+                        <div class="flex-1 relative flex flex-col p-4">
+                            <textarea id="answer-input"
+                                class="flex-1 w-full p-4 text-lg bg-slate-50 border-none focus:ring-0 resize-none rounded-xl placeholder-slate-300"
+                                placeholder="Type your answer here or use the voice button below..."></textarea>
+
+                            <!-- Recording Indicator -->
+                            <div id="recording-overlay"
+                                class="hidden absolute inset-0 bg-white/95 z-10 flex flex-col items-center justify-center gap-4 transition-all animate-in fade-in">
+                                <div class="relative">
+                                    <div class="absolute inset-0 bg-red-400 rounded-full animate-ping opacity-25"></div>
+                                    <div
+                                        class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white relative z-10 shadow-lg shadow-red-200">
+                                        <i data-lucide="mic" class="w-8 h-8"></i>
+                                    </div>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-red-600 font-bold">Listening...</p>
+                                    <p class="text-slate-400 text-xs mt-1">Click the button again to finish</p>
+                                </div>
+                                <div id="vumeter" class="flex items-center gap-1 h-8 mt-2">
+                                    <!-- Dynamic bars -->
+                                    <div class="w-1 bg-red-400 rounded-full h-2 animate-pulse"></div>
+                                    <div class="w-1 bg-red-400 rounded-full h-4 animate-pulse"
+                                        style="animation-delay: 0.1s"></div>
+                                    <div class="w-1 bg-red-500 rounded-full h-6 animate-pulse"
+                                        style="animation-delay: 0.2s"></div>
+                                    <div class="w-1 bg-red-400 rounded-full h-4 animate-pulse"
+                                        style="animation-delay: 0.3s"></div>
+                                    <div class="w-1 bg-red-400 rounded-full h-2 animate-pulse"
+                                        style="animation-delay: 0.4s"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer Controls -->
+                        <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-2">
+                                <button id="voice-input-btn"
+                                    class="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg shadow-blue-200 transition active:scale-95 group">
+                                    <i data-lucide="mic" class="w-5 h-5 group-hover:scale-110 transition"></i>
+                                </button>
+                                <span class="text-[10px] text-slate-400 font-medium">Record Audio</span>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <button id="clear-input-btn"
+                                    class="text-slate-400 hover:text-slate-600 p-2 rounded-lg transition">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                </button>
+                                <button id="submit-quiz-btn"
+                                    class="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-xl font-bold transition flex items-center gap-2 shadow-lg shadow-slate-200 active:scale-95">
+                                    Submit Answer
+                                    <i data-lucide="send" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Result Panel (Hidden initially) -->
+                    <div id="ai-result-panel"
+                        class="hidden h-64 bg-slate-900 rounded-2xl shadow-2xl p-6 overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+                        <div class="flex items-center justify-between mb-4 shrink-0">
+                            <div class="flex items-center gap-2 text-blue-400">
+                                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                                <span class="font-bold text-sm uppercase tracking-widest">AI Feedback & Grading</span>
+                            </div>
+                            <button id="close-result-btn" class="text-slate-500 hover:text-white p-1 transition">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div id="ai-feedback-content"
+                            class="flex-1 overflow-y-auto custom-scroll pr-2 prose prose-invert prose-sm max-w-none">
+                            <div class="flex items-center gap-3 py-12 justify-center">
+                                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                                <span class="text-slate-400">Gemini is analyzing your response...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="p-6 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-slate-900 p-2 rounded-xl text-white">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800">System Configuration</h3>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-tighter">Stored in local IndexedDB</p>
+                    </div>
+                </div>
+                <button
+                    class="close-modal-btn text-slate-400 hover:text-slate-600 p-1 hover:bg-white rounded-full transition shadow-sm border border-transparent hover:border-slate-100">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-6 overflow-y-auto max-h-[70vh] custom-scroll">
+                <div class="space-y-4">
+                    <h4
+                        class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                        Gemini AI Configuration</h4>
+                    <div class="space-y-2">
+                        <label class="text-sm font-semibold text-slate-700">API Key</label>
+                        <div class="relative">
+                            <input id="gemini-api-key" type="password"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                                placeholder="Paste your API key here...">
+                            <button id="toggle-key-visibility"
+                                class="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-semibold text-slate-700">Grading System Prompt</label>
+                        <textarea id="grading-prompt"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition min-h-[100px]"
+                            placeholder="Instruction for AI grading..."></textarea>
+                        <p class="text-[10px] text-slate-400 italic">This prompt guides Gemini on how to evaluate
+                            student answers.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 pt-4">
+                    <h4
+                        class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                        App Preferences</h4>
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-700">Auto-Feedback</p>
+                                <p class="text-[10px] text-slate-500">Submit answer immediately after voice
+                                    transcription</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input id="auto-feedback-toggle" type="checkbox" class="sr-only peer">
+                            <div
+                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-50 border-t border-slate-200 flex gap-4">
+                <button
+                    class="close-modal-btn flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-white transition">Cancel</button>
+                <button id="save-settings-btn"
+                    class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-100">Save
+                    Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Modal (Add/Edit items) -->
+    <div id="manage-item-modal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="p-6 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="edit" class="w-5 h-5 text-blue-600"></i>
+                    Add Knowledge Point
+                </h3>
+                <button class="close-modal-btn text-slate-400 hover:text-slate-600 p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-sm font-semibold text-slate-700">Subject / Folder</label>
+                        <input id="item-subject" type="text"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm"
+                            placeholder="e.g., Mathematics">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-semibold text-slate-700">Knowledge Point Title</label>
+                        <input id="item-title" type="text"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm"
+                            placeholder="e.g., Pythagorean Theorem">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-sm font-semibold text-slate-700">Question (Markdown supported)</label>
+                    <textarea id="item-question"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm min-h-[80px]"
+                        placeholder="What is the question?"></textarea>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-sm font-semibold text-slate-700">Reference Answer</label>
+                    <textarea id="item-reference"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm min-h-[100px]"
+                        placeholder="What is the ideal answer?"></textarea>
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-50 border-t border-slate-200 flex gap-4">
+                <button
+                    class="close-modal-btn flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-white transition">Discard</button>
+                <button id="save-item-btn"
+                    class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition">Save
+                    Knowledge Point</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- Configuration & Constants ---
+        const DB_NAME = 'OralQuizDB';
+        const DB_VERSION = 1;
+        const STORES = {
+            SETTINGS: 'settings',
+            ITEMS: 'quizItems',
+            HISTORY: 'quizHistory'
+        };
+
+        const DEFAULT_GRADING_PROMPT = `As an expert tutor, evaluate the user's answer against the reference answer. 
+1. Provide a concise overall grade (e.g., A, B, C, D).
+2. Compare key points mentioned.
+3. Highlight what was good and what could be improved.
+4. Keep the feedback encouraging and professional.
+Use Markdown for formatting.`;
+
+        // --- App State ---
+        let state = {
+            settings: {
+                apiKey: '',
+                gradingPrompt: DEFAULT_GRADING_PROMPT,
+                autoFeedback: false
+            },
+            items: [],
+            currentItem: null,
+            isRecording: false,
+            mediaRecorder: null,
+            audioChunks: []
+        };
+
+        // --- IndexedDB Utility ---
+        const dbPromise = new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                Object.values(STORES).forEach(store => {
+                    if (!db.objectStoreNames.contains(store)) db.createObjectStore(store, { keyPath: 'id', autoIncrement: true });
+                });
+            };
+            request.onsuccess = (e) => resolve(e.target.result);
+            request.onerror = (e) => reject(e.target.error);
+        });
+
+        async function dbGet(storeName, id) {
+            const db = await dbPromise;
+            return new Promise((resolve) => {
+                const transaction = db.transaction(storeName, 'readonly');
+                const request = transaction.objectStore(storeName).get(id);
+                request.onsuccess = () => resolve(request.result);
+            });
+        }
+
+        async function dbGetAll(storeName) {
+            const db = await dbPromise;
+            return new Promise((resolve) => {
+                const transaction = db.transaction(storeName, 'readonly');
+                const request = transaction.objectStore(storeName).getAll();
+                request.onsuccess = () => resolve(request.result);
+            });
+        }
+
+        async function dbPut(storeName, data, key) {
+            const db = await dbPromise;
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(storeName, 'readwrite');
+                const store = transaction.objectStore(storeName);
+                if (key) {
+                    const request = store.put({ ...data, id: key });
+                    request.onsuccess = () => resolve();
+                } else {
+                    const request = store.put(data);
+                    request.onsuccess = () => resolve();
+                }
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function dbDelete(storeName, id) {
+            const db = await dbPromise;
+            return new Promise((resolve) => {
+                const transaction = db.transaction(storeName, 'readwrite');
+                const request = transaction.objectStore(storeName).delete(id);
+                request.onsuccess = () => resolve();
+            });
+        }
+
+        // --- Gemini API Integration ---
+        async function callGemini(prompt, audioData = null, audioMime = 'audio/webm') {
+            if (!state.settings.apiKey) {
+                alert("Please configure your Gemini API Key in Settings first.");
+                openSettings();
+                return null;
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${state.settings.apiKey}`;
+
+            const contents = [{
+                parts: [{ text: prompt }]
+            }];
+
+            if (audioData) {
+                contents[0].parts.push({
+                    inlineData: {
+                        mimeType: audioMime,
+                        data: audioData
+                    }
+                });
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                if (!data.candidates) throw new Error("No response from Gemini. Check your quota or safety filters.");
+                return data.candidates[0].content.parts[0].text;
+            } catch (err) {
+                console.error("Gemini Error:", err);
+                alert("Gemini Error: " + err.message);
+                return null;
+            }
+        }
+
+        // --- Core UI Logic ---
+        const $ = (id) => document.getElementById(id);
+        const modals = {
+            'settings-modal': $('settings-modal'),
+            'manage-item-modal': $('manage-item-modal')
+        };
+
+        function openModal(id) {
+            $(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            $(id).classList.add('hidden');
+        }
+
+        function openSettings() {
+            $('gemini-api-key').value = state.settings.apiKey;
+            $('grading-prompt').value = state.settings.gradingPrompt;
+            $('auto-feedback-toggle').checked = state.settings.autoFeedback;
+            openModal('settings-modal');
+        }
+
+        async function loadSettings() {
+            const config = await dbGet(STORES.SETTINGS, 'config');
+            if (config) {
+                state.settings = { ...state.settings, ...config };
+                updateGeminiStatus();
+            }
+        }
+
+        function updateGeminiStatus() {
+            const status = $('gemini-status');
+            if (state.settings.apiKey) {
+                status.className = 'flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200';
+                status.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>Gemini Active';
+            } else {
+                status.className = 'flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-red-600 text-xs font-bold border border-red-100';
+                status.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>Gemini Key Missing';
+            }
+        }
+
+        async function saveSettings() {
+            state.settings = {
+                apiKey: $('gemini-api-key').value.trim(),
+                gradingPrompt: $('grading-prompt').value.trim(),
+                autoFeedback: $('auto-feedback-toggle').checked
+            };
+            await dbPut(STORES.SETTINGS, state.settings, 'config');
+            updateGeminiStatus();
+            closeModal('settings-modal');
+        }
+
+        async function loadItems() {
+            state.items = await dbGetAll(STORES.ITEMS);
+            renderSidebar();
+        }
+
+        function renderSidebar() {
+            const nav = $('sidebar-nav');
+            if (state.items.length === 0) {
+                nav.innerHTML = `
+                    <div class="text-center py-12 px-4 opacity-40">
+                        <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3"></i>
+                        <p class="text-[10px] uppercase font-bold tracking-widest">Library is empty</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            const subjects = [...new Set(state.items.map(i => i.subject || 'Uncategorized'))];
+            nav.innerHTML = '';
+
+            subjects.forEach(subject => {
+                const folder = document.createElement('div');
+                folder.className = 'mb-4 last:mb-0';
+                folder.innerHTML = `
+                    <div class="flex items-center gap-2 text-[10px] font-black text-slate-500 mb-2 px-2 uppercase tracking-[0.2em] opacity-80">
+                        <i data-lucide="folder" class="w-3 h-3 text-blue-500"></i>
+                        ${subject}
+                    </div>
+                    <div id="subject-${subject.replace(/\s+/g, '-')}" class="space-y-0.5"></div>
+                `;
+                nav.appendChild(folder);
+
+                const container = folder.querySelector(`#subject-${subject.replace(/\s+/g, '-')}`);
+                state.items.filter(i => (i.subject || 'Uncategorized') === subject).forEach(item => {
+                    const btn = document.createElement('button');
+                    btn.className = `w-full text-left p-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between group h-10 border border-transparent ${state.currentItem?.id === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'hover:bg-slate-800 hover:text-white'}`;
+                    btn.innerHTML = `
+                        <span class="truncate flex-1">${item.title}</span>
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition translate-x-1 group-hover:translate-x-0">
+                             <button class="edit-btn p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700" data-id="${item.id}" title="Edit">
+                                <i data-lucide="edit-3" class="w-3 h-3"></i>
+                             </button>
+                             <button class="delete-btn p-1.5 text-slate-400 hover:text-red-400 rounded-lg hover:bg-slate-700" data-id="${item.id}" title="Delete">
+                                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                             </button>
+                        </div>
+                    `;
+                    btn.onclick = (e) => {
+                        const editBtn = e.target.closest('.edit-btn');
+                        const delBtn = e.target.closest('.delete-btn');
+                        if (editBtn) {
+                            editItem(item);
+                            return;
+                        }
+                        if (delBtn) {
+                            deleteItem(item.id);
+                            return;
+                        }
+                        selectItem(item);
+                    };
+                    container.appendChild(btn);
+                });
+            });
+            lucide.createIcons();
+        }
+
+        async function deleteItem(id) {
+            if (confirm("Permanently remove this knowledge point?")) {
+                await dbDelete(STORES.ITEMS, id);
+                if (state.currentItem?.id === id) {
+                    state.currentItem = null;
+                    $('no-item-selected').classList.remove('hidden');
+                    $('quiz-workspace').classList.add('hidden');
+                }
+                loadItems();
+            }
+        }
+
+        function editItem(item) {
+            $('item-subject').value = item.subject || '';
+            $('item-title').value = item.title;
+            $('item-question').value = item.question;
+            $('item-reference').value = item.reference;
+            $('manage-item-modal').dataset.editId = item.id;
+            openModal('manage-item-modal');
+        }
+
+        function selectItem(item) {
+            state.currentItem = item;
+            $('no-item-selected').classList.add('hidden');
+            $('quiz-workspace').classList.remove('hidden');
+            $('question-display').innerHTML = marked.parse(item.question);
+            $('subject-tag').textContent = (item.subject || 'GENERAL').toUpperCase();
+            $('answer-input').value = '';
+            $('ai-result-panel').classList.add('hidden');
+            renderSidebar();
+        }
+
+        async function saveItem() {
+            const editId = $('manage-item-modal').dataset.editId;
+            const data = {
+                subject: $('item-subject').value.trim(),
+                title: $('item-title').value.trim(),
+                question: $('item-question').value.trim(),
+                reference: $('item-reference').value.trim()
+            };
+
+            if (!data.title || !data.question) {
+                alert("Title and Question are required.");
+                return;
+            }
+
+            if (editId) {
+                await dbPut(STORES.ITEMS, data, parseInt(editId));
+                delete $('manage-item-modal').dataset.editId;
+            } else {
+                await dbPut(STORES.ITEMS, data);
+            }
+
+            closeModal('manage-item-modal');
+            loadItems();
+
+            // Clear inputs
+            $('item-subject').value = '';
+            $('item-title').value = '';
+            $('item-question').value = '';
+            $('item-reference').value = '';
+        }
+
+        // --- Voice Recording ---
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Try to find supported mime type
+                const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
+                state.mediaRecorder = new MediaRecorder(stream, { mimeType });
+                state.audioChunks = [];
+
+                state.mediaRecorder.ondataavailable = (e) => state.audioChunks.push(e.data);
+                state.mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(state.audioChunks, { type: mimeType });
+                    const base64 = await blobToBase64(audioBlob);
+
+                    // Show processing UI inside overlay
+                    $('recording-overlay').innerHTML = `
+                        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
+                        <p class="text-blue-600 font-black uppercase tracking-widest text-sm">Transcribing Audio...</p>
+                        <p class="text-slate-400 text-xs mt-2">Sending to Gemini AI</p>
+                    `;
+
+                    const transcript = await callGemini("Transcribe this audio clip exactly. Return only the text. If no speech is detected, return '...'", base64, mimeType);
+                    if (transcript && transcript.trim() !== '...') {
+                        $('answer-input').value += transcript.trim() + ' ';
+                        if (state.settings.autoFeedback) submitQuiz();
+                    }
+
+                    $('recording-overlay').classList.add('hidden');
+                    resetOverlay();
+                };
+
+                state.mediaRecorder.start();
+                state.isRecording = true;
+                $('recording-overlay').classList.remove('hidden');
+            } catch (err) {
+                console.error("Mic access denied:", err);
+                alert("Microphone access is required for voice input: " + err.message);
+                $('recording-overlay').classList.add('hidden');
+            }
+        }
+
+        function stopRecording() {
+            if (state.mediaRecorder && state.isRecording) {
+                state.mediaRecorder.stop();
+                state.isRecording = false;
+                state.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function resetOverlay() {
+            $('recording-overlay').innerHTML = `
+                <div class="relative">
+                    <div class="absolute inset-0 bg-red-400 rounded-full animate-ping opacity-25"></div>
+                    <div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white relative z-10 shadow-lg shadow-red-200">
+                        <i data-lucide="mic" class="w-8 h-8"></i>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <p class="text-red-600 font-bold">Listening...</p>
+                    <p class="text-slate-400 text-xs mt-1">Click the button again to finish</p>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+            });
+        }
+
+        // --- Quiz Submission ---
+        async function submitQuiz() {
+            const studentAnswer = $('answer-input').value.trim();
+            if (!studentAnswer) {
+                alert("Please provide an answer first.");
+                return;
+            }
+
+            const panel = $('ai-result-panel');
+            const feedback = $('ai-feedback-content');
+
+            panel.classList.remove('hidden');
+            feedback.innerHTML = `
+                <div class="flex flex-col items-center gap-4 py-12 justify-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    <span class="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Analyzing Response</span>
+                </div>
+            `;
+
+            const prompt = `
+${state.settings.gradingPrompt}
+
+QUESTION:
+${state.currentItem.question}
+
+REFERENCE ANSWER:
+${state.currentItem.reference}
+
+STUDENT ANSWER:
+${studentAnswer}
+            `;
+
+            const result = await callGemini(prompt);
+            if (result) {
+                feedback.innerHTML = marked.parse(result);
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSettings();
+            await loadItems();
+
+            $('open-settings-btn').onclick = openSettings;
+
+            $('add-item-btn').onclick = () => {
+                $('manage-item-modal').dataset.editId = '';
+                openModal('manage-item-modal');
+            };
+
+            document.querySelectorAll('.close-modal-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    const modal = e.target.closest('.fixed');
+                    modal.classList.add('hidden');
+                };
+            });
+
+            $('save-settings-btn').onclick = saveSettings;
+            $('save-item-btn').onclick = saveItem;
+            $('submit-quiz-btn').onclick = submitQuiz;
+            $('clear-input-btn').onclick = () => $('answer-input').value = '';
+            $('close-result-btn').onclick = () => $('ai-result-panel').classList.add('hidden');
+
+            $('voice-input-btn').onclick = () => {
+                if (state.isRecording) stopRecording();
+                else startRecording();
+            };
+
+            $('toggle-key-visibility').onclick = () => {
+                const input = $('gemini-api-key');
+                const btn = $('toggle-key-visibility');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    btn.innerHTML = '<i data-lucide="eye-off" class="w-4 h-4"></i>';
+                } else {
+                    input.type = 'password';
+                    btn.innerHTML = '<i data-lucide="eye" class="w-4 h-4"></i>';
+                }
+                lucide.createIcons();
+            };
+
+            // Keyboard shortcut for recording (hold Space?) - maybe too complex, stick to buttons for now
+            lucide.createIcons();
+        });
+    </script>
+</body>
+
+</html>

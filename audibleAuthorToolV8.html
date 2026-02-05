@@ -70,14 +70,18 @@
 
         /* Sidebar styling */
         #sidebar {
-            transition: all 0.3s ease-in-out;
+            transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out;
             width: 320px;
+            flex-shrink: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         #sidebar.collapsed {
             width: 0;
-            margin-right: -320px;
             opacity: 0;
+            border-right-width: 0;
             pointer-events: none;
         }
 
@@ -889,6 +893,12 @@
         loadExistingBtn.addEventListener('click', async () => {
             if (!currentUser) { alert("Please login first."); return; }
             sidebar.classList.toggle('collapsed');
+
+            // Force WaveSurfer redraw if exists
+            if (wavesurfer) {
+                setTimeout(() => wavesurfer.zoom(zoomSlider.value), 300);
+            }
+
             if (sidebar.classList.contains('collapsed')) return;
 
             sidebarLoadList.innerHTML = '<div class="flex flex-col items-center justify-center p-8 space-y-3"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><span class="text-slate-400 text-xs">Loading library...</span></div>';
