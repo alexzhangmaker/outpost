@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentence Pattern Hub</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .active-nav-item {
+            background: #334155;
+            border-left: 4px solid #3b82f6;
+            color: white !important;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 h-screen flex flex-col overflow-hidden text-slate-900">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
+        <div class="flex flex-col items-center gap-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p class="text-sm font-medium text-slate-500 uppercase tracking-widest">Initialising Hub...</p>
+        </div>
+    </div>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay"
+        class="hidden fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 backdrop-blur-md">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="shield-check" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Authenticated Access</h2>
+            <p class="text-slate-500 mb-8">Please sign in with your Gmail account to access the sentence pattern
+                library.</p>
+            <button onclick="login()"
+                class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 py-3 rounded-xl font-semibold hover:bg-slate-50 transition shadow-sm">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
+                Sign in with Google
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Toolbar -->
+    <header
+        class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-30 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-slate-900 p-2 rounded-lg text-white">
+                <i data-lucide="book-marked" class="w-5 h-5"></i>
+            </div>
+            <h1 class="font-bold text-xl tracking-tight">Sentence<span class="text-blue-600">Pattern</span></h1>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div id="user-info"
+                class="hidden flex items-center gap-3 px-3 py-1.5 bg-slate-50 rounded-full border border-slate-200">
+                <img id="user-avatar" src="" class="w-6 h-6 rounded-full border border-slate-300">
+                <span id="user-name" class="text-sm font-medium">Loading...</span>
+                <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <button onclick="login()" id="login-nav-btn"
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg shadow-blue-100">Sign
+                In</button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="w-80 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 shrink-0">
+            <div
+                class="p-5 border-b border-slate-800 flex justify-between items-center text-xs font-bold uppercase tracking-widest text-slate-500">
+                Digital Library
+            </div>
+            <nav id="nav-list" class="flex-1 overflow-y-auto custom-scroll py-4 space-y-1 px-3">
+                <!-- Navigation items dynamically loaded -->
+                <div class="text-center py-12 opacity-50">
+                    <div class="animate-pulse flex flex-col items-center gap-3">
+                        <div class="h-4 w-3/4 bg-slate-700 rounded"></div>
+                        <div class="h-4 w-1/2 bg-slate-700 rounded"></div>
+                        <div class="h-4 w-2/3 bg-slate-700 rounded"></div>
+                    </div>
+                </div>
+            </nav>
+            <div class="p-4 bg-slate-800/50 text-[10px] text-slate-500 flex justify-between items-center">
+                <span>SYSTEM STATUS</span>
+                <span class="text-emerald-500">ONLINE</span>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-y-auto custom-scroll bg-slate-50 p-8">
+            <div id="empty-state" class="h-full flex flex-col items-center justify-center text-slate-400">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-6">
+                    <i data-lucide="layers" class="w-12 h-12 text-blue-200"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 mb-2">Select a Pattern</h2>
+                <p class="max-w-xs text-center">Choose a grammar structure from the sidebar to view its details and
+                    examples.</p>
+            </div>
+
+            <div id="content-view"
+                class="hidden max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom duration-500">
+                <!-- Header Info -->
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span id="label-tag"
+                            class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-bold text-[10px] uppercase tracking-wider">Grammar</span>
+                        <span id="session-tag"
+                            class="px-2 py-0.5 bg-slate-200 text-slate-600 rounded font-bold text-[10px] uppercase tracking-wider">Session</span>
+                    </div>
+                    <h1 id="pattern-title" class="text-4xl font-extrabold text-slate-900 tracking-tight">Pattern Topic
+                    </h1>
+                    <p id="pattern-definition" class="text-lg text-slate-600 leading-relaxed"></p>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex border-b border-slate-200">
+                    <button id="tab-visual-btn" onclick="switchContentTab('visual')"
+                        class="px-6 py-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600">Visual
+                        View</button>
+                    <button id="tab-json-btn" onclick="switchContentTab('json')"
+                        class="px-6 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600">JSON
+                        Editor</button>
+                </div>
+
+                <!-- Visual View -->
+                <div id="view-visual" class="space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Grammar Card -->
+                        <div class="glass-card rounded-2xl p-6 shadow-sm border border-slate-200">
+                            <h3 class="text-xs font-black text-blue-600 uppercase tracking-[0.2em] mb-4">Grammar Rule
+                            </h3>
+                            <div id="pattern-grammar" class="prose prose-slate font-medium text-slate-800"></div>
+                        </div>
+
+                        <!-- Details Card -->
+                        <div class="glass-card rounded-2xl p-6 shadow-sm border border-slate-200">
+                            <h3 class="text-xs font-black text-blue-600 uppercase tracking-[0.2em] mb-4">Metadata</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between text-sm py-1 border-b border-slate-100">
+                                    <span class="text-slate-500">Created At</span>
+                                    <span id="meta-created" class="font-medium"></span>
+                                </div>
+                                <div class="flex justify-between text-sm py-1">
+                                    <span class="text-slate-500">Session ID</span>
+                                    <span id="meta-session" class="font-medium"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Examples Section -->
+                    <div>
+                        <h3
+                            class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                            Example Sentences
+                            <div class="flex-1 h-px bg-slate-200"></div>
+                        </h3>
+                        <div id="examples-list" class="grid grid-cols-1 gap-4">
+                            <!-- Example items -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JSON Editor View -->
+                <div id="view-json" class="hidden space-y-4">
+                    <div class="bg-slate-900 rounded-2xl p-4 shadow-xl border border-slate-800">
+                        <textarea id="json-textarea"
+                            class="w-full h-[500px] bg-transparent text-emerald-400 font-mono text-sm border-none focus:ring-0 resize-none"
+                            spellcheck="false"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <span id="save-status" class="text-xs text-slate-400 self-center"></span>
+                        <button onclick="saveJson()"
+                            class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition active:scale-95">Save
+                            Changes</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // --- App State ---
+        let state = {
+            user: null,
+            patterns: {},
+            selectedId: null
+        };
+
+        // --- Auth Initialization ---
+        onAuthStateChanged(auth, (user) => {
+            state.user = user;
+            document.getElementById('loading-overlay').classList.add('hidden');
+
+            if (user) {
+                document.getElementById('login-overlay').classList.add('hidden');
+                document.getElementById('user-info').classList.remove('hidden');
+                document.getElementById('login-nav-btn').classList.add('hidden');
+                document.getElementById('user-avatar').src = user.photoURL;
+                document.getElementById('user-name').innerText = user.displayName;
+                initData();
+            } else {
+                document.getElementById('login-overlay').classList.remove('hidden');
+                document.getElementById('user-info').classList.add('hidden');
+                document.getElementById('login-nav-btn').classList.remove('hidden');
+            }
+        });
+
+        window.login = () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider);
+        };
+
+        window.logout = () => signOut(auth);
+
+        // --- Data Fetching ---
+        function initData() {
+            const patternRef = ref(db, 'sentencePatterns');
+            onValue(patternRef, (snapshot) => {
+                state.patterns = snapshot.val() || {};
+                renderSidebar();
+            });
+        }
+
+        // --- UI Rendering ---
+        function renderSidebar() {
+            const list = document.getElementById('nav-list');
+            list.innerHTML = '';
+
+            const sortedIds = Object.keys(state.patterns).sort((a, b) => {
+                const dateA = new Date(state.patterns[a].createdAt || 0);
+                const dateB = new Date(state.patterns[b].createdAt || 0);
+                return dateB - dateA;
+            });
+
+            if (sortedIds.length === 0) {
+                list.innerHTML = '<div class="p-4 text-sm text-slate-500 text-center">No patterns found</div>';
+                return;
+            }
+
+            sortedIds.forEach(id => {
+                const item = state.patterns[id];
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-3.5 rounded-xl text-sm font-medium transition flex flex-col gap-1 border border-transparent ${state.selectedId === id ? 'active-nav-item shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`;
+                btn.onclick = () => selectPattern(id);
+                btn.innerHTML = `
+                    <div class="flex justify-between items-start gap-2">
+                        <strong class="font-bold truncate">${item.topic || 'No Title'}</strong>
+                    </div>
+                    <div class="flex items-center gap-2 opacity-60 text-[10px]">
+                        <span class="uppercase tracking-wider font-extrabold">${new Date(item.createdAt).toLocaleDateString()}</span>
+                    </div>
+                `;
+                list.appendChild(btn);
+            });
+            lucide.createIcons();
+        }
+
+        function selectPattern(id) {
+            state.selectedId = id;
+            renderSidebar();
+
+            const item = state.patterns[id];
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('content-view').classList.remove('hidden');
+
+            document.getElementById('pattern-title').innerText = item.topic;
+            document.getElementById('pattern-definition').innerText = item.definition || '';
+            document.getElementById('pattern-grammar').innerHTML = item.grammar || 'No grammar rule specified.';
+            document.getElementById('meta-created').innerText = new Date(item.createdAt).toLocaleString();
+            document.getElementById('meta-session').innerText = item.sessionId || 'N/A';
+
+            const examplesList = document.getElementById('examples-list');
+            examplesList.innerHTML = '';
+
+            if (item.patterns) {
+                item.patterns.forEach(p => {
+                    if (p.examples) {
+                        p.examples.forEach(ex => {
+                            const card = document.createElement('div');
+                            card.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-400 transition-colors group";
+                            card.innerHTML = `
+                                <div class="flex justify-between items-start gap-4">
+                                    <div class="space-y-2">
+                                        <p class="text-xl font-bold text-slate-900 leading-tight">${ex.thai || ''}</p>
+                                        <p class="text-sm text-slate-500 font-medium">${ex.english || ''}</p>
+                                    </div>
+                                    ${ex.audioThai ? `
+                                        <button onclick="playAudio('${ex.audioThai}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm">
+                                            <i data-lucide="play" class="w-4 h-4"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            `;
+                            examplesList.appendChild(card);
+                        });
+                    }
+                });
+            }
+
+            lucide.createIcons();
+            // Update JSON editor
+            document.getElementById('json-textarea').value = JSON.stringify(item, null, 2);
+            // Scroll to top of content
+            document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.switchContentTab = (tab) => {
+            const visualBtn = document.getElementById('tab-visual-btn');
+            const jsonBtn = document.getElementById('tab-json-btn');
+            const visualView = document.getElementById('view-visual');
+            const jsonView = document.getElementById('view-json');
+
+            if (tab === 'visual') {
+                visualBtn.className = 'px-6 py-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600';
+                jsonBtn.className = 'px-6 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600';
+                visualView.classList.remove('hidden');
+                jsonView.classList.add('hidden');
+            } else {
+                jsonBtn.className = 'px-6 py-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600';
+                visualBtn.className = 'px-6 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600';
+                jsonView.classList.remove('hidden');
+                visualView.classList.add('hidden');
+            }
+        };
+
+        window.saveJson = async () => {
+            const status = document.getElementById('save-status');
+            const text = document.getElementById('json-textarea').value;
+            try {
+                const updatedData = JSON.parse(text);
+                status.innerText = 'Saving...';
+                await set(ref(db, `sentencePatterns/${state.selectedId}`), updatedData);
+                status.innerText = 'Saved successfully!';
+                setTimeout(() => status.innerText = '', 3000);
+            } catch (err) {
+                alert('Invalid JSON: ' + err.message);
+                status.innerText = 'Save failed.';
+            }
+        };
+
+        window.playAudio = (url) => {
+            const audio = new Audio(url);
+            audio.play();
+        };
+
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
