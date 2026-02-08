@@ -325,27 +325,51 @@
             examplesList.innerHTML = '';
 
             if (item.patterns) {
-                item.patterns.forEach(p => {
-                    if (p.examples) {
+                item.patterns.forEach((p, pIdx) => {
+                    // Create Pattern Group Container
+                    const patternGroup = document.createElement('div');
+                    patternGroup.className = 'bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8';
+
+                    // Highlighted Format Banner
+                    const formatBanner = document.createElement('div');
+                    formatBanner.className = 'bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between';
+                    formatBanner.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="px-2 py-1 bg-blue-600 text-white rounded text-[10px] font-black uppercase tracking-tight">Format ${pIdx + 1}</div>
+                            <code class="text-sm font-bold text-slate-700">${p.format || 'No format specified'}</code>
+                        </div>
+                    `;
+                    patternGroup.appendChild(formatBanner);
+
+                    // Examples List for this pattern
+                    const exampleContainer = document.createElement('div');
+                    exampleContainer.className = 'p-6 space-y-4';
+
+                    if (p.examples && p.examples.length > 0) {
                         p.examples.forEach(ex => {
                             const card = document.createElement('div');
-                            card.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-400 transition-colors group";
+                            card.className = "p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:border-blue-300 transition-colors group";
                             card.innerHTML = `
                                 <div class="flex justify-between items-start gap-4">
-                                    <div class="space-y-2">
-                                        <p class="text-xl font-bold text-slate-900 leading-tight">${ex.thai || ''}</p>
-                                        <p class="text-sm text-slate-500 font-medium">${ex.english || ''}</p>
+                                    <div class="space-y-1">
+                                        <p class="text-lg font-bold text-slate-900 leading-tight">${ex.thai || ''}</p>
+                                        <p class="text-xs text-slate-500 font-medium">${ex.english || ''}</p>
                                     </div>
                                     ${ex.audioThai ? `
-                                        <button onclick="playAudio('${ex.audioThai}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm">
-                                            <i data-lucide="play" class="w-4 h-4"></i>
+                                        <button onclick="playAudio('${ex.audioThai}')" class="w-8 h-8 bg-white text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm border border-slate-200">
+                                            <i data-lucide="play" class="w-3.5 h-3.5"></i>
                                         </button>
                                     ` : ''}
                                 </div>
                             `;
-                            examplesList.appendChild(card);
+                            exampleContainer.appendChild(card);
                         });
+                    } else {
+                        exampleContainer.innerHTML = '<p class="text-sm text-slate-400 italic">No examples found for this pattern.</p>';
                     }
+
+                    patternGroup.appendChild(exampleContainer);
+                    examplesList.appendChild(patternGroup);
                 });
             }
 
