@@ -334,9 +334,12 @@
                     const formatBanner = document.createElement('div');
                     formatBanner.className = 'bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between';
                     formatBanner.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="px-2 py-1 bg-blue-600 text-white rounded text-[10px] font-black uppercase tracking-tight">Format ${pIdx + 1}</div>
-                            <code class="text-sm font-bold text-slate-700">${p.format || 'No format specified'}</code>
+                        <div class="flex flex-col gap-1">
+                            <div class="flex items-center gap-3">
+                                <div class="px-2 py-1 bg-blue-600 text-white rounded text-[10px] font-black uppercase tracking-tight">Format ${pIdx + 1}</div>
+                                <code class="text-sm font-bold text-slate-700">${p.format || 'No format specified'}</code>
+                            </div>
+                            ${p.usage ? `<p class="text-[11px] text-slate-500 font-medium ml-1">用途: ${p.usage}</p>` : ''}
                         </div>
                     `;
                     patternGroup.appendChild(formatBanner);

@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import short from 'short-uuid';
-import { geminiAgent, mastra, imageExtractionSchema } from './agent.js';
+import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT } from './agent.js';
 import { saveMessage, getMessages, createSession, saveResult, getResults, updateResult, getResultById } from './database.js';
 import { generateThaiAudio } from './tts.js';
 import { uploadAudioToStorage, saveToRealtimeDb, getFromRealtimeDb } from './firebase.js';
@@ -106,11 +106,19 @@ app.get('/', (req, res) => {
       <div class="main-container">
         <div class="sidebar">
           <div class="sidebar-section">
-            <h3>Extraction Stage 1</h3>
+            <h3>Extraction Stage 1 (Images)</h3>
             <form action="/api/process-images" method="post" enctype="multipart/form-data" class="upload-form">
               <input type="file" name="images" multiple>
               <button type="submit" class="btn-primary" style="width: 100%">Run Vision Analyzer</button>
             </form>
+          </div>
+
+          <div class="sidebar-section">
+            <h3>Extraction Stage 1 (Text)</h3>
+            <div class="upload-form">
+              <textarea id="markdown-input" placeholder="Paste Markdown document here..." style="width: 100%; height: 100px; padding: 10px; font-size: 11px; margin-bottom: 8px; box-sizing: border-box;"></textarea>
+              <button onclick="processMarkdown()" class="btn-primary" style="width: 100%">Run Text Analyzer</button>
+            </div>
           </div>
           
           <div class="sidebar-section" style="background: #fff; padding: 10px;">
@@ -278,6 +286,30 @@ app.get('/', (req, res) => {
           }
         }
 
+        async function processMarkdown() {
+          const content = document.getElementById('markdown-input').value;
+          if (!content) return logStatus('Please paste some content first', 'error');
+
+          logStatus('Processing Markdown...');
+          try {
+            const res = await fetch('/api/extract/markdown', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content })
+            });
+            const result = await res.json();
+            if (result.success) {
+              logStatus('Markdown processed successfully!', 'success');
+              document.getElementById('markdown-input').value = '';
+              loadLocalList();
+            } else {
+              logStatus('Extraction failed: ' + result.error, 'error');
+            }
+          } catch (err) {
+            logStatus('Network error: ' + err.message, 'error');
+          }
+        }
+
         // Init
         loadSidebar();
       </script>
@@ -323,6 +355,40 @@ app.post('/api/process-images', upload.array('images'), async (req, res) => {
     }
     catch (error) {
         console.error('Error processing images:', error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+});
+app.post('/api/extract/markdown', async (req, res) => {
+    const { content, sessionId = 'default' } = req.body;
+    if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+    }
+    try {
+        createSession(sessionId);
+        const result = await geminiAgent.generate([
+            {
+                role: 'user',
+                content: [
+                    { type: 'text', text: MARKDOWN_EXTRACTION_PROMPT },
+                    { type: 'text', text: content }
+                ],
+            },
+        ], {
+            structuredOutput: {
+                schema: imageExtractionSchema,
+            },
+        });
+        const extractedData = result.object;
+        // Phase 1: Save to local SQLite only (same as images)
+        saveResult(sessionId, ['text-source'], extractedData);
+        res.json({
+            success: true,
+            sessionId,
+            data: extractedData,
+        });
+    }
+    catch (error) {
+        console.error('Error extracting markdown:', error);
         res.status(500).json({ error: error.message || 'Internal server error' });
     }
 });
