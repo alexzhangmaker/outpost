@@ -29,10 +29,18 @@ db.exec(`
     sessionId TEXT NOT NULL,
     images TEXT, -- JSON array of image paths
     extractedData TEXT, -- JSON response
+    type TEXT DEFAULT 'pattern', -- 'pattern' or 'common'
     status TEXT DEFAULT 'pending',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 `);
+
+// Migration: Add type column if it doesn't exist
+try {
+  db.exec("ALTER TABLE results ADD COLUMN type TEXT DEFAULT 'pattern'");
+} catch (e) {
+  // Column likely already exists
+}
 
 export interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -49,18 +57,31 @@ export function getMessages(sessionId: string): Message[] {
   return stmt.all(sessionId) as Message[];
 }
 
-export function saveResult(sessionId: string, images: string[], extractedData: any) {
-  const stmt = db.prepare('INSERT INTO results (sessionId, images, extractedData, status) VALUES (?, ?, ?, ?)');
-  stmt.run(sessionId, JSON.stringify(images), JSON.stringify(extractedData), 'completed');
+export function saveResult(sessionId: string, images: string[], extractedData: any, type: string = 'pattern') {
+  const stmt = db.prepare('INSERT INTO results (sessionId, images, extractedData, status, type) VALUES (?, ?, ?, ?, ?)');
+  stmt.run(sessionId, JSON.stringify(images), JSON.stringify(extractedData), 'completed', type);
 }
 
-export function getResults(sessionId?: string) {
-  if (sessionId) {
-    const stmt = db.prepare('SELECT * FROM results WHERE sessionId = ? ORDER BY createdAt DESC');
-    return stmt.all(sessionId);
+export function getResults(sessionId?: string, type?: string) {
+  let query = 'SELECT * FROM results';
+  const params: any[] = [];
+
+  if (sessionId || type) {
+    query += ' WHERE';
+    if (sessionId) {
+      query += ' sessionId = ?';
+      params.push(sessionId);
+    }
+    if (type) {
+      if (sessionId) query += ' AND';
+      query += ' type = ?';
+      params.push(type);
+    }
   }
-  const stmt = db.prepare('SELECT * FROM results ORDER BY createdAt DESC');
-  return stmt.all();
+
+  query += ' ORDER BY createdAt DESC';
+  const stmt = db.prepare(query);
+  return stmt.all(...params);
 }
 
 export function getResultById(id: number | string) {

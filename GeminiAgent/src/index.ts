@@ -4,9 +4,9 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import short from 'short-uuid';
+import { generate } from 'short-uuid';
 
-import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT } from './agent.js';
+import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT } from './agent.js';
 import { saveMessage, getMessages, createSession, saveResult, getResults, updateResult, getResultById } from './database.js';
 import { generateThaiAudio } from './tts.js';
 import { uploadAudioToStorage, saveToRealtimeDb, getFromRealtimeDb } from './firebase.js';
@@ -123,17 +123,27 @@ app.get('/', (req, res) => {
           <div class="sidebar-section">
             <h3>Extraction Stage 1 (Text)</h3>
             <div class="upload-form">
-              <textarea id="markdown-input" placeholder="Paste Markdown document here..." style="width: 100%; height: 100px; padding: 10px; font-size: 11px; margin-bottom: 8px; box-sizing: border-box;"></textarea>
-              <button onclick="processMarkdown()" class="btn-primary" style="width: 100%">Run Text Analyzer</button>
+              <textarea id="markdown-input" placeholder="Paste Markdown document here..." style="width: 100%; height: 80px; padding: 10px; font-size: 11px; margin-bottom: 8px; box-sizing: border-box;"></textarea>
+              <div style="display: flex; gap: 5px;">
+                <button onclick="processMarkdown('pattern')" class="btn-primary" style="flex: 1; font-size: 10px;">Extract Patterns</button>
+                <button onclick="processMarkdown('common')" class="btn-primary" style="flex: 1; font-size: 10px;">Extract Common</button>
+              </div>
             </div>
           </div>
-          
+
           <div class="sidebar-section" style="background: #fff; padding: 10px;">
             <button onclick="loadSidebar()" class="btn-secondary" style="width: 100%; font-size: 11px; padding: 6px;">Refresh Firebase List</button>
           </div>
-
-          <div class="nav-list" id="sidebar-list">
-            <!-- Sidebar items will load here -->
+          
+          <div class="sidebar-section">
+            <h3>Local Extraction Queue</h3>
+            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+              <button onclick="loadLocalList('pattern')" class="btn-secondary" style="flex: 1; font-size: 10px;">Patterns</button>
+              <button onclick="loadLocalList('common')" class="btn-secondary" style="flex: 1; font-size: 10px;">Common Sentences</button>
+            </div>
+            <div class="nav-list" id="sidebar-list">
+              <!-- Sidebar items will load here -->
+            </div>
           </div>
         </div>
         
@@ -150,7 +160,7 @@ app.get('/', (req, res) => {
             
             <div class="actions">
               <button id="btn-save" onclick="saveChanges()" class="btn-primary">Save Local Changes</button>
-              <button id="btn-finalize" onclick="finalizeRecord()" class="btn-success">Finalize & Generate Audio</button>
+              <button id="btn-finalize" onclick="finalizeRecord()" class="btn-success">Finalize & Sync to Cloud</button>
             </div>
           </div>
           
@@ -201,18 +211,19 @@ app.get('/', (req, res) => {
           }
         }
 
-        async function loadLocalList() {
+        async function loadLocalList(type = 'pattern') {
           const list = document.getElementById('sidebar-list');
           list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Fetching Local...</div>';
           try {
-            const res = await fetch('/api/results');
+            const res = await fetch(\`/api/results?type=\${type}\`);
             const { results } = await res.json();
             
-            list.innerHTML = '<h3>Local Queue</h3>' + results.map(r => {
+            list.innerHTML = results.map(r => {
               const data = JSON.parse(r.extractedData);
+              const title = type === 'pattern' ? (data.topic || 'Untitled') : (data.title || 'Untitled');
               return \`
-                <div class="nav-item" onclick="selectRecord('\${r.id}', false, \${r.extractedData.replace(/"/g, '&quot;')}, '\${r.createdAt}')">
-                  <strong>\${data.topic || 'Untitled'}</strong>
+                <div class="nav-item" onclick="selectRecord('\${r.id}', false, \${r.extractedData.replace(/"/g, '&quot;')}, '\${r.createdAt}', '\${r.type}')">
+                  <strong>\${title}</strong>
                   <small>Local ID: \${r.id} | \${new Date(r.createdAt).toLocaleTimeString()}</small>
                 </div>
               \`;
@@ -222,9 +233,12 @@ app.get('/', (req, res) => {
           }
         }
 
-        function selectRecord(id, fromFirebase, data, timestamp = '') {
+        let currentRecordType = 'pattern';
+
+        function selectRecord(id, fromFirebase, data, timestamp = '', type = 'pattern') {
           currentRecordId = id;
           isFirebase = fromFirebase;
+          currentRecordType = type;
           
           document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
           event.currentTarget.classList.add('active');
@@ -276,8 +290,10 @@ app.get('/', (req, res) => {
           finalizeBtn.disabled = true;
           logStatus('Finalizing... (Generating Audio & Syncing to Firebase)');
           
+          const endpoint = currentRecordType === 'pattern' ? '/api/finalize-audio/' : '/api/finalize-common-sentences/';
+          
           try {
-            const res = await fetch('/api/finalize-audio/' + currentRecordId, { method: 'POST' });
+            const res = await fetch(endpoint + currentRecordId, { method: 'POST' });
             const result = await res.json();
             if (result.success) {
               logStatus('Finalized! Synced to Firebase.', 'success');
@@ -293,22 +309,23 @@ app.get('/', (req, res) => {
           }
         }
 
-        async function processMarkdown() {
+        async function processMarkdown(type = 'pattern') {
           const content = document.getElementById('markdown-input').value;
           if (!content) return logStatus('Please paste some content first', 'error');
 
-          logStatus('Processing Markdown...');
+          logStatus('Processing ' + type + ' extraction...');
+          const endpoint = type === 'pattern' ? '/api/extract/markdown' : '/api/extract/common-sentences';
           try {
-            const res = await fetch('/api/extract/markdown', {
+            const res = await fetch(endpoint, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ content })
             });
             const result = await res.json();
             if (result.success) {
-              logStatus('Markdown processed successfully!', 'success');
+              logStatus('Processed successfully!', 'success');
               document.getElementById('markdown-input').value = '';
-              loadLocalList();
+              loadLocalList(type);
             } else {
               logStatus('Extraction failed: ' + result.error, 'error');
             }
@@ -319,6 +336,7 @@ app.get('/', (req, res) => {
 
         // Init
         loadSidebar();
+        loadLocalList('pattern');
       </script>
     </body>
     </html>
@@ -455,7 +473,7 @@ app.post('/api/finalize-audio/:id', async (req: any, res: any) => {
               console.log(`Generating audio for: ${example.thai}`);
               try {
                 const audioBuffer = await generateThaiAudio(example.thai);
-                const audioId = short.generate();
+                const audioId = generate();
                 const fileName = `${audioId}.mp3`;
                 const audioUrl = await uploadAudioToStorage(audioBuffer, fileName);
                 example.audioThai = audioUrl;
@@ -488,6 +506,104 @@ app.post('/api/finalize-audio/:id', async (req: any, res: any) => {
   }
 });
 
+app.post('/api/extract/common-sentences', async (req: any, res: any) => {
+  const { content, sessionId = 'default' } = req.body;
+
+  if (!content) {
+    return res.status(400).json({ error: 'Content is required' });
+  }
+
+  try {
+    createSession(sessionId);
+
+    const result = await (geminiAgent as any).generate(
+      [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: COMMON_SENTENCES_PROMPT },
+            { type: 'text', text: content }
+          ],
+        },
+      ],
+      {
+        structuredOutput: {
+          schema: commonSentencesSchema,
+        },
+      },
+    );
+
+    const extractedData = result.object;
+    saveResult(sessionId, ['common-text'], extractedData, 'common');
+
+    res.json({
+      success: true,
+      sessionId,
+      data: extractedData,
+    });
+  } catch (error: any) {
+    console.error('Error extracting common sentences:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+app.post('/api/finalize-common-sentences/:id', async (req: any, res: any) => {
+  const { id } = req.params;
+
+  try {
+    const record: any = getResultById(id);
+    if (!record) {
+      return res.status(404).json({ error: 'Record not found' });
+    }
+
+    let extractedData = JSON.parse(record.extractedData);
+
+    // Generate audio for common sentences
+    if (extractedData.sections) {
+      for (const section of extractedData.sections) {
+        if (section.categories) {
+          for (const category of section.categories) {
+            if (category.sentences) {
+              for (const sentence of category.sentences) {
+                if (sentence.thai && !sentence.audioPath) {
+                  console.log(`Generating audio for common sentence: ${sentence.thai}`);
+                  try {
+                    const audioBuffer = await generateThaiAudio(sentence.thai);
+                    const audioId = generate();
+                    const fileName = `${audioId}.mp3`;
+                    const audioUrl = await uploadAudioToStorage(audioBuffer, fileName);
+                    sentence.audioPath = audioUrl; // Use audioPath for common sentences
+                  } catch (ttsError) {
+                    console.error(`TTS Error for "${sentence.thai}":`, ttsError);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Update local SQLite
+    updateResult(id, extractedData);
+
+    // Save to Firebase Realtime Database
+    await saveToRealtimeDb('commonSentences', {
+      sessionId: record.sessionId,
+      ...extractedData,
+      createdAt: new Date().toISOString()
+    });
+
+    res.json({
+      success: true,
+      data: extractedData,
+    });
+  } catch (error: any) {
+    console.error('Error finalizing common sentences:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
 app.post('/api/chat', async (req: any, res: any) => {
   const { message, sessionId = 'default' } = req.body;
   if (!message) return res.status(400).json({ error: 'Message is required' });
@@ -505,7 +621,8 @@ app.post('/api/chat', async (req: any, res: any) => {
 
 app.get('/api/results', (req: any, res: any) => {
   const sessionId = req.query.sessionId as string;
-  const results = getResults(sessionId);
+  const type = req.query.type as string;
+  const results = getResults(sessionId, type);
   res.json({ results });
 });
 

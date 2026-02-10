@@ -6,8 +6,8 @@ export interface Message {
 }
 export declare function saveMessage(sessionId: string, role: string, content: string): void;
 export declare function getMessages(sessionId: string): Message[];
-export declare function saveResult(sessionId: string, images: string[], extractedData: any): void;
-export declare function getResults(sessionId?: string): unknown[];
+export declare function saveResult(sessionId: string, images: string[], extractedData: any, type?: string): void;
+export declare function getResults(sessionId?: string, type?: string): unknown[];
 export declare function getResultById(id: number | string): unknown;
 export declare function updateResult(id: number | string, extractedData: any): void;
 export declare function createSession(sessionId: string): void;

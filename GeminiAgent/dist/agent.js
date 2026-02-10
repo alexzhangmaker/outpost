@@ -18,6 +18,22 @@ export const imageExtractionSchema = z.object({
         })),
     })).describe('确保包含展示的所有 Pattern 和 Example'),
 });
+export const commonSentencesSchema = z.object({
+    title: z.string().describe('文档标题'),
+    introduction: z.string().describe('文档简介/概述'),
+    sections: z.array(z.object({
+        sectionTitle: z.string().describe('分组标题'),
+        sectionDescription: z.string().describe('分组描述'),
+        categories: z.array(z.object({
+            categoryTitle: z.string().describe('子类别标题（中文）'),
+            categorySubtitle: z.string().describe('子类别副标题（泰语）'),
+            sentences: z.array(z.object({
+                thai: z.string().describe('泰语句子'),
+                chinese: z.string().describe('中文翻译'),
+            })),
+        })),
+    })),
+});
 const THAI_VISION_PROMPT = `**Role:** 你是一位精通泰语、中文和英语的语言学专家，擅长将泰语教学材料转换为结构化的 JSON 数据。
 
 **Task:** 请分析上传的图片，提取其中的泰语句型教学内容，并严格按照提供的 JSON 格式输出。
@@ -92,6 +108,92 @@ export const MARKDOWN_EXTRACTION_PROMPT = `# Role: 结构化数据转换专家
    - 例句中的泰语标点符号需正确处理
 
 # 处理流程提示：
+
+1. 首先识别文档的整体结构和主题
+2. 提取所有句型部分，按原文顺序整理
+3. 为每个句型匹配对应的用途说明和例句
+4. 从整体内容中提炼关键词
+5. 构建完整的JSON结构
+
+请严格按照上述要求处理输入的Markdown文档，输出纯净的JSON数据。`;
+export const COMMON_SENTENCES_PROMPT = `## 背景
+你是一个结构化数据处理专家。你的任务是根据用户提供的文档内容，提取关键信息并按照指定的JSON schema生成结构化的数据。
+
+## 输入
+用户将提供包含以下信息的文档：
+1. 文档标题
+2. 文档简介/概述
+3. 多个内容分组，每个分组包含：
+   - 分组标题
+   - 分组描述
+   - 若干个子类别，每个子类别包含：
+     - 子类别标题
+     - 子类别副标题（通常为泰语名称）
+     - 多个句子条目，每个条目包含泰语和中文文本
+
+## 输出要求
+
+### 1. JSON结构
+你必须输出一个符合以下schema的JSON对象：
+
+\`\`\`json
+{
+  "title": "string - 文档标题",
+  "introduction": "string - 文档简介",
+  "sections": [
+    {
+      "sectionTitle": "string - 分组标题",
+      "sectionDescription": "string - 分组描述",
+      "categories": [
+        {
+          "categoryTitle": "string - 子类别标题（中文）",
+          "categorySubtitle": "string - 子类别副标题（泰语，包含括号）",
+          "sentences": [
+            {
+              "thai": "string - 泰语句子",
+              "chinese": "string - 中文翻译"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+### 2. 内容提取规则
+1. **标题提取**：从文档最顶部的标题（通常以##开头）中提取
+2. **简介提取**：从标题下方的描述性段落中提取
+3. **分组识别**：每个主要分组以##开头，包含分组标题和描述
+4. **子类别识别**：子类别以###或列表项形式出现，通常包含标题和副标题
+5. **句子提取**：
+   - 每个句子条目通常以数字序号开头
+   - 泰语部分为句子本身
+   - 中文部分在泰语下方，以括号包裹
+   - 保持原文格式，不添加额外内容
+
+### 3. 格式要求
+1. 严格遵循JSON格式，确保有效的JSON语法
+2. 所有字符串使用双引号
+3. 数组和对象保持正确的缩进层级
+4. 不要包含任何JSON之外的文本、解释或markdown格式
+5. 如果某些字段在文档中缺失，可以使用空字符串或适当推断
+
+### 4. 数据清洗规则
+1. 移除句子前的数字序号和标点（如1. **、**）
+2. 保持泰语原文的完整性和标点符号
+3. 中文翻译保留但移除括号（()或（））
+4. 标题和描述中的markdown标记（如**、📘等）可以移除
+
+### 5. 验证检查
+在输出前请确保：
+- [ ] JSON语法正确，可以通过JSON解析器验证
+- [ ] 所有必填字段都存在
+- [ ] 数组长度与实际条目数一致
+- [ ] 没有丢失任何文档中的重要内容
+- [ ] 数据类型符合schema要求
+
+## 处理流程提示：
 
 1. 首先识别文档的整体结构和主题
 2. 提取所有句型部分，按原文顺序整理

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Common Sentences Hub</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .active-nav-item {
+            background: #334155;
+            border-left: 4px solid #10b981;
+            color: white !important;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .section-card {
+            border-left: 4px solid #10b981;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 h-screen flex flex-col overflow-hidden text-slate-900">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
+        <div class="flex flex-col items-center gap-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+            <p class="text-sm font-medium text-slate-500 uppercase tracking-widest">Initialising Library...</p>
+        </div>
+    </div>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay"
+        class="hidden fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 backdrop-blur-md">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
+            <div
+                class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="shield-check" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Secure Access</h2>
+            <p class="text-slate-500 mb-8">Please sign in with your Gmail account to access the common sentences
+                library.</p>
+            <button onclick="login()"
+                class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 py-3 rounded-xl font-semibold hover:bg-slate-50 transition shadow-sm">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
+                Sign in with Google
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Toolbar -->
+    <header
+        class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-30 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-emerald-600 p-2 rounded-lg text-white">
+                <i data-lucide="message-square" class="w-5 h-5"></i>
+            </div>
+            <h1 class="font-bold text-xl tracking-tight">Common<span class="text-emerald-600">Sentences</span></h1>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div id="user-info"
+                class="hidden flex items-center gap-3 px-3 py-1.5 bg-slate-50 rounded-full border border-slate-200">
+                <img id="user-avatar" src="" class="w-6 h-6 rounded-full border border-slate-300">
+                <span id="user-name" class="text-sm font-medium text-slate-700">Loading...</span>
+                <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <button onclick="login()" id="login-nav-btn"
+                class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg shadow-emerald-100/50">Sign
+                In</button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="w-80 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 shrink-0">
+            <div
+                class="p-5 border-b border-slate-800 flex justify-between items-center text-xs font-bold uppercase tracking-widest text-slate-500">
+                Topics List
+            </div>
+            <nav id="nav-list" class="flex-1 overflow-y-auto custom-scroll py-4 space-y-1 px-3">
+                <div class="text-center py-12 opacity-50">
+                    <div class="animate-pulse flex flex-col items-center gap-3">
+                        <div class="h-4 w-3/4 bg-slate-700 rounded"></div>
+                        <div class="h-4 w-1/2 bg-slate-700 rounded"></div>
+                    </div>
+                </div>
+            </nav>
+            <div class="p-4 bg-slate-800/50 text-[10px] text-slate-500 flex justify-between items-center">
+                <span>DATABASE</span>
+                <span class="text-emerald-500 font-bold uppercase">Connected</span>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-y-auto custom-scroll bg-slate-50 p-8">
+            <div id="empty-state" class="h-full flex flex-col items-center justify-center text-slate-400">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-6">
+                    <i data-lucide="text-quote" class="w-12 h-12 text-emerald-200"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 mb-2">Listen & Learn</h2>
+                <p class="max-w-xs text-center text-sm">Select a topic from the sidebar to explore common Thai sentences
+                    and their audio.</p>
+            </div>
+
+            <div id="content-view"
+                class="hidden max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom duration-500">
+
+                <!-- Header Info -->
+                <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded font-bold text-[10px] uppercase tracking-wider">Listening</span>
+                        <span id="created-tag"
+                            class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Loading date...</span>
+                    </div>
+                    <div>
+                        <h1 id="view-title"
+                            class="text-3xl font-black text-slate-900 tracking-tight leading-tight mb-3">Topic Title
+                        </h1>
+                        <p id="view-intro" class="text-slate-500 leading-relaxed max-w-3xl"></p>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex border-b border-slate-200 px-2 gap-8">
+                    <button id="tab-visual-btn" onclick="switchContentTab('visual')"
+                        class="px-2 py-3 text-sm font-bold border-b-2 border-emerald-600 text-emerald-600 transition-all">Visual
+                        Library</button>
+                    <button id="tab-json-btn" onclick="switchContentTab('json')"
+                        class="px-2 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-all">Raw
+                        JSON</button>
+                </div>
+
+                <!-- Visual View -->
+                <div id="view-visual" class="space-y-12 pb-12">
+                    <!-- Sections will be rendered here -->
+                </div>
+
+                <!-- JSON Editor View -->
+                <div id="view-json" class="hidden space-y-4">
+                    <div class="bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-800">
+                        <div class="flex items-center justify-between mb-4 px-2">
+                            <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Database
+                                Editor</span>
+                            <i data-lucide="code-2" class="w-4 h-4 text-slate-600"></i>
+                        </div>
+                        <textarea id="json-textarea"
+                            class="w-full h-[600px] bg-transparent text-emerald-400/90 font-mono text-xs border-none focus:ring-0 resize-none custom-scroll"
+                            spellcheck="false"></textarea>
+                    </div>
+                    <div class="flex justify-end items-center gap-4">
+                        <span id="save-status"
+                            class="text-xs font-bold text-slate-400 uppercase tracking-widest"></span>
+                        <button onclick="saveJson()"
+                            class="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition active:scale-95 uppercase text-xs tracking-widest">Update
+                            Cloud Database</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        let state = {
+            user: null,
+            items: {},
+            selectedId: null
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            state.user = user;
+            document.getElementById('loading-overlay').classList.add('hidden');
+
+            if (user) {
+                document.getElementById('login-overlay').classList.add('hidden');
+                document.getElementById('user-info').classList.remove('hidden');
+                document.getElementById('login-nav-btn').classList.add('hidden');
+                document.getElementById('user-avatar').src = user.photoURL;
+                document.getElementById('user-name').innerText = user.displayName;
+                initData();
+            } else {
+                document.getElementById('login-overlay').classList.remove('hidden');
+                document.getElementById('user-info').classList.add('hidden');
+                document.getElementById('login-nav-btn').classList.remove('hidden');
+            }
+        });
+
+        window.login = () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider);
+        };
+
+        window.logout = () => signOut(auth);
+
+        function initData() {
+            const dataRef = ref(db, 'commonSentences');
+            onValue(dataRef, (snapshot) => {
+                state.items = snapshot.val() || {};
+                renderSidebar();
+                if (state.selectedId) renderContent(state.selectedId);
+            });
+        }
+
+        function renderSidebar() {
+            const list = document.getElementById('nav-list');
+            list.innerHTML = '';
+
+            const sortedIds = Object.keys(state.items).sort((a, b) => {
+                const dateA = new Date(state.items[a].createdAt || 0);
+                const dateB = new Date(state.items[b].createdAt || 0);
+                return dateB - dateA;
+            });
+
+            if (sortedIds.length === 0) {
+                list.innerHTML = '<div class="p-4 text-xs text-slate-500 text-center font-bold tracking-widest uppercase opacity-50">Empty Library</div>';
+                return;
+            }
+
+            sortedIds.forEach(id => {
+                const item = state.items[id];
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-4 rounded-2xl text-sm font-semibold transition flex flex-col gap-1.5 border border-transparent mb-1 ${state.selectedId === id ? 'active-nav-item shadow-xl shadow-emerald-900/40' : 'text-slate-400 hover:bg-slate-800/50 hover:text-emerald-400'}`;
+                btn.onclick = () => selectItem(id);
+                btn.innerHTML = `
+                    <span class="truncate pr-4">${item.title || 'Untitled Topic'}</span>
+                    <span class="text-[10px] font-black uppercase tracking-widest opacity-40">${new Date(item.createdAt).toLocaleDateString()}</span>
+                `;
+                list.appendChild(btn);
+            });
+            lucide.createIcons();
+        }
+
+        function selectItem(id) {
+            state.selectedId = id;
+            renderSidebar();
+            renderContent(id);
+            document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderContent(id) {
+            const item = state.items[id];
+            if (!item) return;
+
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('content-view').classList.remove('hidden');
+
+            document.getElementById('view-title').innerText = item.title;
+            document.getElementById('view-intro').innerText = item.introduction || '';
+            document.getElementById('created-tag').innerText = new Date(item.createdAt).toLocaleString();
+
+            const visualArea = document.getElementById('view-visual');
+            visualArea.innerHTML = '';
+
+            if (item.sections) {
+                item.sections.forEach((section, sIdx) => {
+                    const sectionEl = document.createElement('div');
+                    sectionEl.className = 'space-y-6';
+                    sectionEl.innerHTML = `
+                        <div class="space-y-2">
+                           <div class="flex items-center gap-4">
+                               <div class="h-8 w-1 bg-emerald-500 rounded-full"></div>
+                               <h2 class="text-xl font-black text-slate-800 tracking-tight">${section.sectionTitle}</h2>
+                           </div>
+                           <p class="text-sm text-slate-500 pl-5 font-medium leading-relaxed">${section.sectionDescription}</p>
+                        </div>
+                        <div class="grid grid-cols-1 gap-8 pl-5">
+                            ${(section.categories || []).map(cat => `
+                                <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-center justify-between">
+                                        <div class="flex flex-col">
+                                            <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">${cat.categoryTitle}</h3>
+                                            <span class="text-[10px] text-emerald-600 font-bold tracking-widest uppercase">${cat.categorySubtitle || ''}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-0.5 bg-slate-200 text-slate-500 rounded-full text-[9px] font-black">${(cat.sentences || []).length} ITEMS</span>
+                                        </div>
+                                    </div>
+                                    <div class="p-6 divide-y divide-slate-100">
+                                        ${(cat.sentences || []).map(sent => `
+                                            <div class="py-4 first:pt-0 last:pb-0 group">
+                                                <div class="flex justify-between items-start gap-6">
+                                                    <div class="flex-1 space-y-1.5">
+                                                        <p class="text-lg font-bold text-slate-900 leading-snug group-hover:text-emerald-700 transition-colors">${sent.thai}</p>
+                                                        <p class="text-sm text-slate-500 font-medium">${sent.chinese}</p>
+                                                    </div>
+                                                    ${sent.audioPath ? `
+                                                        <button onclick="playAudio('${sent.audioPath}')" class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-90">
+                                                            <i data-lucide="play" class="w-4 h-4"></i>
+                                                        </button>
+                                                    ` : ''}
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    visualArea.appendChild(sectionEl);
+                });
+            }
+
+            lucide.createIcons();
+            document.getElementById('json-textarea').value = JSON.stringify(item, null, 2);
+        }
+
+        window.switchContentTab = (tab) => {
+            const visualBtn = document.getElementById('tab-visual-btn');
+            const jsonBtn = document.getElementById('tab-json-btn');
+            const visualView = document.getElementById('view-visual');
+            const jsonView = document.getElementById('view-json');
+
+            if (tab === 'visual') {
+                visualBtn.className = 'px-2 py-3 text-sm font-bold border-b-2 border-emerald-600 text-emerald-600';
+                jsonBtn.className = 'px-2 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600';
+                visualView.classList.remove('hidden');
+                jsonView.classList.add('hidden');
+            } else {
+                jsonBtn.className = 'px-2 py-3 text-sm font-bold border-b-2 border-emerald-600 text-emerald-600';
+                visualBtn.className = 'px-2 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600';
+                jsonView.classList.remove('hidden');
+                visualView.classList.add('hidden');
+            }
+        };
+
+        window.saveJson = async () => {
+            if (!state.selectedId) return;
+            const status = document.getElementById('save-status');
+            const text = document.getElementById('json-textarea').value;
+            try {
+                const updatedData = JSON.parse(text);
+                status.innerText = 'Syncing...';
+                await set(ref(db, `commonSentences/${state.selectedId}`), updatedData);
+                status.innerText = 'Sync Complete';
+                status.className = 'text-xs font-bold text-emerald-500 uppercase tracking-widest';
+                setTimeout(() => {
+                    status.innerText = '';
+                    status.className = 'text-xs font-bold text-slate-400 uppercase tracking-widest';
+                }, 3000);
+            } catch (err) {
+                alert('JSON Syntax Error: ' + err.message);
+            }
+        };
+
+        window.playAudio = (url) => {
+            const audio = new Audio(url);
+            audio.play().catch(e => console.error('Audio play failed:', e));
+        };
+
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
