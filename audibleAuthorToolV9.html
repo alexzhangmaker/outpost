@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaveSurfer Transcript Authoring</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom scrollbar for transcript list */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Region styling overrides */
+        .wavesurfer-region {
+            border: 1px solid rgba(59, 130, 246, 0.5) !important;
+            /* Default Blue */
+            background-color: rgba(59, 130, 246, 0.1) !important;
+            z-index: 10;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        .wavesurfer-region:hover {
+            background-color: rgba(59, 130, 246, 0.2) !important;
+            z-index: 11;
+        }
+
+        /* Active Region - VISUAL ENHANCEMENT (Amber/Orange) */
+        .wavesurfer-region.active-region {
+            background-color: rgba(245, 158, 11, 0.4) !important;
+            /* Amber-500 with opacity */
+            border: 2px solid rgba(217, 119, 6, 1) !important;
+            /* Amber-600 Solid Border */
+            z-index: 20 !important;
+        }
+
+        /* Make handle bigger and orange when active */
+        .wavesurfer-region.active-region .wavesurfer-handle {
+            background-color: #d97706 !important;
+            /* Amber-600 */
+            width: 6px !important;
+        }
+
+        /* Active Row Styling - VISUAL ENHANCEMENT */
+        .segment-row.active-row {
+            background-color: #fff7ed !important;
+            /* Orange-50 */
+            border-left: 4px solid #f97316 !important;
+            /* Orange-500 */
+            border-top: 1px solid #fdba74;
+            border-bottom: 1px solid #fdba74;
+            border-right: 1px solid #fdba74;
+            box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.1), 0 2px 4px -1px rgba(249, 115, 22, 0.06);
+        }
+
+        /* Sidebar styling */
+        #sidebar {
+            transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            width: 320px;
+            flex-shrink: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #sidebar.collapsed {
+            width: 0;
+            opacity: 0;
+            border-right-width: 0;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                position: absolute;
+                height: 100%;
+                z-index: 40;
+            }
+
+            #sidebar.collapsed {
+                margin-right: 0;
+                transform: translateX(-100%);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden font-sans">
+
+    <div id="splash-screen"
+        class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="text-center space-y-6 p-8">
+            <div class="bg-blue-600 p-4 rounded-2xl inline-block shadow-lg mb-4">
+                <i data-lucide="waves" class="w-12 h-12 text-white"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-800">Transcript Authoring Tool</h1>
+            <p class="text-slate-500 max-w-md mx-auto">Please sign in with Google to access the editor and load your
+                projects.</p>
+
+            <button id="google-login-btn"
+                class="flex items-center justify-center gap-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-3 px-6 rounded-lg shadow-sm transition-all w-full max-w-xs mx-auto group">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4" />
+                    <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853" />
+                    <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05" />
+                    <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335" />
+                </svg>
+                Sign in with Google
+            </button>
+
+            <div id="login-status" class="text-sm text-slate-400 h-5"></div>
+        </div>
+    </div>
+
+    <header class="bg-white border-b border-slate-200 p-4 flex items-center justify-between shadow-sm z-20">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <i data-lucide="waves" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">Transcript Authoring Tool</h1>
+                <p class="text-xs text-slate-500 flex items-center gap-1">
+                    <span id="user-email-display">Guest</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="undo-btn"
+                class="text-slate-500 hover:text-slate-800 hover:bg-slate-100 p-2 rounded-lg border border-transparent hover:border-slate-200 transition disabled:opacity-30 disabled:cursor-not-allowed mr-2"
+                title="Undo (Ctrl+Z)" disabled>
+                <i data-lucide="undo-2" class="w-5 h-5"></i>
+            </button>
+
+            <button id="load-existing-btn"
+                class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-3 py-2 rounded-lg transition flex items-center gap-2 text-sm font-medium shadow-sm">
+                <i data-lucide="folder-open" class="w-4 h-4"></i>
+                Load Existing
+            </button>
+
+            <label
+                class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg transition flex items-center gap-2 text-sm font-medium shadow-sm">
+                <i data-lucide="upload" class="w-4 h-4"></i>
+                Select Audio
+                <input type="file" id="file-input" accept="audio/*" class="hidden">
+            </label>
+
+            <div class="flex items-center border-l border-slate-300 ml-2 pl-2 gap-2">
+                <button id="import-txt-trigger" class="text-slate-600 hover:bg-slate-100 p-2 rounded-md transition"
+                    title="Import Transcript">
+                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                    <input type="file" id="transcript-input" accept=".txt" class="hidden">
+                </button>
+                <button id="import-translation-btn" class="text-slate-600 hover:bg-slate-100 p-2 rounded-md transition"
+                    title="Import Translation">
+                    <i data-lucide="languages" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <button id="open-publish-modal-btn"
+                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 text-sm font-medium shadow-sm ml-2">
+                <i data-lucide="cloud-upload" class="w-4 h-4"></i>
+                Publish
+            </button>
+
+            <button id="export-btn"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 text-sm font-medium shadow-sm opacity-50 cursor-not-allowed"
+                disabled>
+                <i data-lucide="download" class="w-4 h-4"></i>
+                Export Transcript
+            </button>
+
+            <button id="logout-btn" class="text-slate-400 hover:text-red-500 ml-2 transition" title="Sign Out">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="bg-white border-r border-slate-200 flex flex-col collapsed shadow-lg z-30">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="library" class="w-5 h-5 text-blue-600"></i>
+                    Your Library
+                </h3>
+                <button id="close-sidebar-btn"
+                    class="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded-full transition md:hidden">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-2 flex-1 overflow-y-auto custom-scroll bg-slate-50">
+                <div id="sidebar-load-list" class="space-y-2">
+                    <p class="text-center text-slate-400 py-8 text-sm">Sign in to view your projects.</p>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden relative">
+
+            <div class="bg-white border-b border-slate-200 p-4 relative shrink-0 z-10 shadow-sm">
+
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <button id="play-pause-btn"
+                            class="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed ring-4 ring-blue-50"
+                            disabled title="Space">
+                            <i data-lucide="play" class="w-6 h-6 fill-current"></i>
+                        </button>
+                        <div
+                            class="bg-slate-100 rounded px-3 py-1 text-sm font-mono text-slate-600 border border-slate-200 shadow-inner">
+                            <span id="current-time">00:00.000</span> / <span id="total-duration">00:00.000</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200">
+                            <i data-lucide="gauge" class="w-4 h-4"></i>
+                            <select id="playback-rate"
+                                class="bg-transparent border-none focus:ring-0 text-slate-700 text-sm font-medium cursor-pointer disabled:opacity-50"
+                                disabled>
+                                <option value="0.5">0.5x</option>
+                                <option value="0.7">0.7x</option>
+                                <option value="0.85">0.85x</option>
+                                <option value="1.0" selected>1.0x</option>
+                                <option value="1.15">1.15x</option>
+                                <option value="1.25">1.25x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2.0">2.0x</option>
+                            </select>
+                        </div>
+
+                        <div class="h-6 w-px bg-slate-200"></div>
+
+                        <div class="flex items-center gap-2 text-sm text-slate-600">
+                            <i data-lucide="zoom-in" class="w-4 h-4"></i>
+                            <input type="range" id="zoom-slider" min="10" max="500" value="50"
+                                class="w-32 accent-blue-600 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
+                                disabled>
+                        </div>
+                        <button id="add-region-btn"
+                            class="text-sm bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 px-3 py-1.5 rounded-md transition flex items-center gap-2 disabled:opacity-50 shadow-sm"
+                            disabled>
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            Add Region
+                        </button>
+                    </div>
+                </div>
+
+                <div id="waveform"
+                    class="w-full h-32 bg-slate-50 rounded-lg border border-slate-200 relative overflow-hidden">
+                    <div id="loading-spinner"
+                        class="absolute inset-0 flex items-center justify-center hidden z-20 bg-white/90 backdrop-blur-sm">
+                        <div class="flex flex-col items-center">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                            <span class="text-xs text-slate-500">Loading audio...</span>
+                        </div>
+                    </div>
+                    <div id="empty-state"
+                        class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 pointer-events-none z-10">
+                        <i data-lucide="music" class="w-10 h-10 mb-2 opacity-20"></i>
+                        <p class="text-sm font-medium opacity-60">No audio loaded</p>
+                    </div>
+                </div>
+                <div id="wave-timeline" class="w-full h-5 mt-1"></div>
+
+                <div class="mt-2 flex justify-between text-xs text-slate-400 font-medium">
+                    <p>Shortcuts: <span class="bg-slate-100 px-1 rounded">Space</span> Play/Pause, <span
+                            class="bg-slate-100 px-1 rounded">Del</span> Delete, <span
+                            class="bg-slate-100 px-1 rounded">Ctrl+Z</span> Undo, <span
+                            class="bg-slate-100 px-1 rounded">Ctrl+←/→</span> Seek 5s</p>
+                </div>
+            </div>
+
+            <div class="flex-1 bg-slate-50 p-4 overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between mb-2 px-2">
+                    <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2">
+                        Transcript Segments
+                        <span id="segment-count"
+                            class="text-xs font-medium bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">0</span>
+                    </h2>
+                </div>
+
+                <div
+                    class="grid grid-cols-12 gap-4 px-4 py-2 bg-slate-200 rounded-t-lg text-xs font-semibold text-slate-600 border border-slate-300 shadow-sm z-10">
+                    <div class="col-span-1 text-center">#</div>
+                    <div class="col-span-2">Start</div>
+                    <div class="col-span-2">End</div>
+                    <div class="col-span-6">Content / Translation</div>
+                    <div class="col-span-1 text-right">Actions</div>
+                </div>
+
+                <div id="segments-container"
+                    class="flex-1 overflow-y-auto custom-scroll bg-white border-x border-b border-slate-200 rounded-b-lg shadow-inner p-1 space-y-1 relative">
+                    <div class="h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
+                        <p>No regions created.</p>
+                        <p class="text-xs mt-1">Click on the waveform or drag to start transcribing.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+
+    <div id="translation-modal"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-200 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[80vh]">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-purple-50 rounded-t-lg">
+                <h3 class="font-bold text-lg text-purple-900 flex items-center gap-2">
+                    <i data-lucide="languages" class="w-5 h-5"></i>
+                    Import Translation
+                </h3>
+                <button class="close-modal-btn text-slate-400 hover:text-slate-600"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-4 flex-1 overflow-hidden flex flex-col">
+                <p class="text-sm text-slate-600 mb-2">Paste your translation text below with timestamps (e.g., [12.5s
+                    -> 15.0s] Translation text).</p>
+                <textarea id="translation-text-input"
+                    class="w-full flex-1 border border-slate-300 rounded-md p-3 font-mono text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none shadow-inner"
+                    placeholder="[359.81s -> 373.81s] Actually, we've been doing..."></textarea>
+            </div>
+            <div class="p-4 border-t border-slate-200 flex justify-end gap-2 bg-slate-50 rounded-b-lg">
+                <button
+                    class="cancel-modal-btn px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg text-sm font-medium transition">Cancel</button>
+                <button id="confirm-import-btn"
+                    class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition shadow-sm">Import
+                    Translation</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="publish-modal"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-200 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg flex flex-col">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-emerald-50 rounded-t-lg">
+                <h3 class="font-bold text-lg text-emerald-800 flex items-center gap-2">
+                    <i data-lucide="cloud-upload" class="w-5 h-5"></i>
+                    Publish to Audible
+                </h3>
+                <button class="close-modal-btn text-slate-400 hover:text-slate-600"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Audible
+                        Title</label>
+                    <input type="text" id="pub-title"
+                        class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                        placeholder="e.g., Ep 1: Introduction to Business">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Media URL
+                        (MP3/Audio)</label>
+                    <input type="url" id="pub-url"
+                        class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                        placeholder="https://example.com/audio.mp3">
+                    <p class="text-xs text-slate-400 mt-1">Ensure this URL is publicly accessible (CORS enabled).</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Tags</label>
+                    <input type="text" id="pub-tags"
+                        class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                        placeholder="e.g., Business, Thai, Advanced (comma separated)">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Select
+                        Course</label>
+                    <div class="relative">
+                        <select id="pub-course-select"
+                            class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none appearance-none bg-white">
+                            <option value="" disabled selected>Loading courses...</option>
+                        </select>
+                        <i data-lucide="chevron-down"
+                            class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div id="pub-status" class="text-sm min-h-[20px] text-center font-medium"></div>
+            </div>
+
+            <div class="p-4 border-t border-slate-200 flex justify-end gap-2 bg-slate-50 rounded-b-lg">
+                <button
+                    class="cancel-modal-btn px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg text-sm font-medium transition">Cancel</button>
+                <button id="confirm-publish-btn"
+                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition shadow-sm flex items-center gap-2">
+                    <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                    Publish Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <template id="segment-template">
+        <div class="segment-row grid grid-cols-12 gap-4 px-4 py-3 bg-white border border-slate-100 rounded-md hover:shadow-sm transition items-start group mb-1"
+            data-id="">
+            <div class="col-span-1 flex items-center justify-center mt-2">
+                <button
+                    class="play-segment-btn w-8 h-8 rounded-full bg-slate-100 hover:bg-blue-100 hover:text-blue-600 text-slate-500 flex items-center justify-center transition"
+                    tabindex="-1" title="Play Segment">
+                    <i data-lucide="play" class="w-3 h-3 fill-current"></i>
+                </button>
+            </div>
+            <div class="col-span-2">
+                <input type="number" step="0.1"
+                    class="start-input w-full text-sm bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-slate-600">
+            </div>
+            <div class="col-span-2">
+                <input type="number" step="0.1"
+                    class="end-input w-full text-sm bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-slate-600">
+            </div>
+            <div class="col-span-6 flex flex-col gap-2">
+                <textarea
+                    class="content-input w-full text-sm bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none shadow-sm"
+                    rows="2" placeholder="Transcript..."></textarea>
+                <textarea
+                    class="translation-input w-full text-sm bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-slate-600 italic shadow-sm"
+                    rows="2" placeholder="Translation..."></textarea>
+            </div>
+            <div class="col-span-1 flex justify-end mt-1 gap-1">
+                <button
+                    class="merge-prev-btn invisible group-[.active-row]:visible text-slate-400 hover:text-blue-500 hover:bg-blue-50 p-2 rounded transition"
+                    tabindex="-1" title="Merge Previous Segment">
+                    <i data-lucide="arrow-up-to-line" class="w-4 h-4"></i>
+                </button>
+                <button
+                    class="merge-next-btn invisible group-[.active-row]:visible text-slate-400 hover:text-blue-500 hover:bg-blue-50 p-2 rounded transition"
+                    tabindex="-1" title="Merge Next Segment">
+                    <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+                </button>
+                <button class="delete-btn text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded transition"
+                    tabindex="-1" title="Delete Region">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <script type="module">
+        import WaveSurfer from 'https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.esm.js'
+        import RegionsPlugin from 'https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.esm.js'
+        import TimelinePlugin from 'https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.esm.js'
+
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, set, get, child, query, orderByChild, equalTo, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        lucide.createIcons();
+
+        // --- Firebase Configuration & Init ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-audible-8d74e-6ba9c.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        let currentUser = null;
+
+        // --- Auth Logic ---
+        const splashScreen = document.getElementById('splash-screen');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        const userEmailDisplay = document.getElementById('user-email-display');
+        const logoutBtn = document.getElementById('logout-btn');
+        const loginStatus = document.getElementById('login-status');
+
+
+        // 添加一个全局变量，用来防止 seek 造成的误暂停
+        let isSeekingToStart = false;
+
+        googleLoginBtn.addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            loginStatus.textContent = "Connecting to Google...";
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    loginStatus.textContent = "Success!";
+                }).catch((error) => {
+                    console.error(error);
+                    loginStatus.textContent = "Error: " + error.message;
+                    loginStatus.className = "text-sm text-red-500 h-5";
+                });
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                userEmailDisplay.textContent = user.email;
+                splashScreen.classList.add('fade-out');
+                setTimeout(() => splashScreen.classList.add('hidden'), 500);
+                fetchCourses();
+            } else {
+                currentUser = null;
+                splashScreen.classList.remove('hidden');
+                setTimeout(() => splashScreen.classList.remove('fade-out'), 10);
+                userEmailDisplay.textContent = "Guest";
+            }
+        });
+
+
+        // --- Main App State ---
+        let wavesurfer;
+        let wsRegions;
+        let activeRegionId = null;
+        let isRegionPlaying = false;
+
+        // Editing State
+        let currentProjectId = null;
+        let currentCreatedAt = null;
+
+        // Undo History
+        const historyStack = [];
+        const MAX_HISTORY = 50;
+        let isUndoOperation = false;
+
+        // DOM Elements
+        const fileInput = document.getElementById('file-input');
+        const transcriptInput = document.getElementById('transcript-input');
+        const importTxtTrigger = document.getElementById('import-txt-trigger');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const zoomSlider = document.getElementById('zoom-slider');
+        const playbackRateSelect = document.getElementById('playback-rate');
+        const addRegionBtn = document.getElementById('add-region-btn');
+        const segmentsContainer = document.getElementById('segments-container');
+        const template = document.getElementById('segment-template');
+        const emptyState = document.getElementById('empty-state');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const timeDisplay = document.getElementById('current-time');
+        const durationDisplay = document.getElementById('total-duration');
+        const segmentCountLabel = document.getElementById('segment-count');
+        const undoBtn = document.getElementById('undo-btn');
+        const exportBtn = document.getElementById('export-btn');
+
+        // Modal Elements
+        const importTranslationBtn = document.getElementById('import-translation-btn');
+        const translationModal = document.getElementById('translation-modal');
+        const translationTextInput = document.getElementById('translation-text-input');
+
+        const openPublishModalBtn = document.getElementById('open-publish-modal-btn');
+        const publishModal = document.getElementById('publish-modal');
+        const pubCourseSelect = document.getElementById('pub-course-select');
+        const pubTitle = document.getElementById('pub-title');
+        const pubUrl = document.getElementById('pub-url');
+        const pubTags = document.getElementById('pub-tags');
+        const confirmPublishBtn = document.getElementById('confirm-publish-btn');
+        const pubStatus = document.getElementById('pub-status');
+
+        const loadExistingBtn = document.getElementById('load-existing-btn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarLoadList = document.getElementById('sidebar-load-list');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+
+
+        // --- Trigger hidden inputs ---
+        importTxtTrigger.addEventListener('click', () => transcriptInput.click());
+
+        // --- Initialization ---
+
+        function initWaveSurfer() {
+            if (wavesurfer) {
+                try {
+                    wavesurfer.destroy();
+                } catch (e) {
+                    console.warn('Error destroying wavesurfer', e);
+                }
+            }
+
+            wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: '#cbd5e1',
+                progressColor: '#3b82f6',
+                height: 128,
+                barWidth: 2,
+                barGap: 3,
+                barRadius: 3,
+                cursorColor: '#ef4444',
+                cursorWidth: 2,
+                normalize: true,
+                minPxPerSec: 50,
+                autoCenter: true,
+                // CRITICAL FIX: Ensure backend is ready for heavy lifting if needed, though v7 handles this.
+                // We rely on default Web Audio for precision.
+                plugins: [
+                    TimelinePlugin.create({
+                        container: '#wave-timeline',
+                        formatTimeCallback: formatTime,
+                        primaryLabelInterval: 5,
+                        secondaryLabelInterval: 1,
+                    })
+                ]
+            });
+
+            wsRegions = wavesurfer.registerPlugin(RegionsPlugin.create({
+                dragSelection: true,
+                color: 'rgba(59, 130, 246, 0.1)',
+            }));
+
+            // Events
+            wavesurfer.on('ready', () => {
+                const duration = wavesurfer.getDuration();
+                durationDisplay.textContent = formatTime(duration);
+                enableControls();
+                wavesurfer.setPlaybackRate(parseFloat(playbackRateSelect.value));
+                loadingSpinner.classList.add('hidden');
+            });
+
+            wavesurfer.on('audioprocess', () => {
+                timeDisplay.textContent = formatTime(wavesurfer.getCurrentTime());
+                // OPTIMIZATION: Removed immediate highlight logic to prevent UI lag during playback
+                if (!isRegionPlaying) {
+                    // Only throttled or necessary updates here
+                    // highlightActiveRegion(); // Commented out to prevent playing lag
+                }
+            });
+
+            // Re-enable tracking when pausing
+            wavesurfer.on('pause', () => {
+                if (!isRegionPlaying) highlightActiveRegion();
+            });
+
+            wavesurfer.on('seek', () => {
+                timeDisplay.textContent = formatTime(wavesurfer.getCurrentTime());
+                if (!isRegionPlaying) highlightActiveRegion();
+            });
+
+            wavesurfer.on('interaction', () => {
+                isRegionPlaying = false;
+                // CRITICAL FIX: Wake up AudioContext on user interaction
+                checkAudioContext();
+            });
+
+            // Click to create logic
+            wavesurfer.on('click', () => {
+                if (!wsRegions) return;
+                isRegionPlaying = false;
+
+                const currentTime = wavesurfer.getCurrentTime();
+                const regions = wsRegions.getRegions();
+                const clickedOnRegion = regions.some(r => currentTime >= r.start && currentTime <= r.end);
+
+                if (clickedOnRegion) return;
+
+                saveState();
+
+                const duration = wavesurfer.getDuration();
+                const defaultDuration = 0.5;
+                let endTime = currentTime + defaultDuration;
+                const nextRegion = regions.filter(r => r.start > currentTime).sort((a, b) => a.start - b.start)[0];
+
+                if (nextRegion && endTime > nextRegion.start) endTime = nextRegion.start;
+                if (endTime > duration) endTime = duration;
+
+                if (endTime > currentTime + 0.01) {
+                    const newRegion = wsRegions.addRegion({
+                        start: currentTime,
+                        end: endTime,
+                        content: '',
+                        color: getRandomColor()
+                    });
+                    activeRegionId = newRegion.id;
+                    highlightRow(newRegion.id);
+                }
+            });
+
+            wsRegions.on('region-created', (region) => {
+                addSegmentToDOM(region);
+                updateSegmentCount();
+            });
+
+            wsRegions.on('region-updated-end', (region) => {
+                if (!isUndoOperation) saveState();
+                updateDOMFromRegion(region);
+            });
+
+            wsRegions.on('region-updated', (region) => {
+                updateDOMFromRegion(region);
+            });
+
+            // Region Playback Logic via Waveform Click
+            wsRegions.on('region-clicked', (region, e) => {
+                e.stopPropagation();
+                playRegionOptimized(region);
+            });
+
+
+
+            // 1. 修改 region-out 监听器
+            wsRegions.on('region-out', (region) => {
+                // 如果正在执行“回跳到开头”的操作，直接无视 region-out 事件
+                if (isSeekingToStart) {
+                    console.log('Ignored region-out due to seeking');
+                    return;
+                }
+
+                if (isRegionPlaying && activeRegionId === region.id) {
+                    wavesurfer.pause();
+                    isRegionPlaying = false;
+                }
+            });
+        }
+
+        // --- 调试/修复代码：替换原有的 playRegionOptimized 函数 ---
+        // --- 修复版：更稳健的播放逻辑 ---
+        async function playRegionOptimized(region) {
+            // 1. 尝试唤醒音频引擎
+            try {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (Ctx && new Ctx().state === 'suspended') new Ctx().resume();
+            } catch (e) { }
+
+            // 2. 设置状态
+            isRegionPlaying = true;
+            activeRegionId = region.id;
+
+            // 3. 上锁！(阻止 region-out 暂停音频)
+            isSeekingToStart = true;
+
+            try {
+                // 4. 操作：暂停 -> 跳到开头
+                wavesurfer.pause();
+                wavesurfer.setTime(region.start);
+
+                // 5. 缓冲：给浏览器 10ms 让光标位置更新完毕
+                await new Promise(resolve => setTimeout(resolve, 10));
+
+                // 6. 播放：直接调用主播放器，不要用 region.play()
+                // region.play() 可能会再次 seek，造成多余的 region-out 事件
+                await wavesurfer.play();
+
+            } catch (err) {
+                console.error("Play failed", err);
+            } finally {
+                // 7. 解锁：关键点！
+                // 不要立即解锁，延迟 100ms 再解锁。
+                // 这能覆盖播放开始瞬间可能产生的所有抖动事件。
+                setTimeout(() => {
+                    isSeekingToStart = false;
+                }, 100);
+            }
+
+            // UI 高亮更新
+            requestAnimationFrame(() => {
+                highlightRow(region.id);
+            });
+        }
+        // Helper to wake up AudioContext (Fixes "Suspended" state on iOS/Chrome)
+        function checkAudioContext() {
+            try {
+                // WaveSurfer v7 internal audio context access
+                // Note: v7 creates context lazily or uses backend. 
+                // This is a generic safeguard.
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+            } catch (e) {
+                // Ignore if context not accessible yet
+            }
+        }
+
+
+        // --- History / Undo Logic ---
+
+        function saveState() {
+            if (!wsRegions) return;
+            const regionsData = wsRegions.getRegions().map(r => ({
+                start: r.start,
+                end: r.end,
+                transcript: r.transcript || '',
+                translation: r.translation || '',
+                color: r.color,
+                content: r.content
+            }));
+
+            historyStack.push(JSON.stringify(regionsData));
+            if (historyStack.length > MAX_HISTORY) historyStack.shift();
+
+            undoBtn.disabled = false;
+        }
+
+        function performUndo() {
+            if (historyStack.length === 0) return;
+
+            isUndoOperation = true;
+            const previousState = JSON.parse(historyStack.pop());
+            if (historyStack.length === 0) undoBtn.disabled = true;
+
+            // Clear current
+            wsRegions.clearRegions();
+            segmentsContainer.innerHTML = '';
+
+            // Restore
+            previousState.forEach(data => {
+                const region = wsRegions.addRegion({
+                    start: data.start,
+                    end: data.end,
+                    color: data.color,
+                    content: data.content
+                });
+                region.transcript = data.transcript;
+                region.translation = data.translation;
+
+                setTimeout(() => {
+                    const row = document.getElementById(`row-${region.id}`);
+                    if (row) {
+                        row.querySelector('.content-input').value = data.transcript;
+                        row.querySelector('.translation-input').value = data.translation;
+                    }
+                }, 0);
+            });
+
+            updateSegmentCount();
+            checkEmptyState();
+            isUndoOperation = false;
+        }
+
+        undoBtn.addEventListener('click', performUndo);
+
+        function mergeRegions(regionId, direction) {
+            const regions = wsRegions.getRegions().sort((a, b) => a.start - b.start);
+            const index = regions.findIndex(r => r.id === regionId);
+            if (index === -1) return;
+
+            let targetIndex = -1;
+            if (direction === 'prev' && index > 0) targetIndex = index - 1;
+            else if (direction === 'next' && index < regions.length - 1) targetIndex = index + 1;
+
+            if (targetIndex === -1) return;
+
+            saveState();
+
+            const current = regions[index];
+            const other = regions[targetIndex];
+
+            // Merge values
+            const newStart = Math.min(current.start, other.start);
+            const newEnd = Math.max(current.end, other.end);
+
+            // For text, we always want prev + next order regardless of which one was clicked
+            const prev = direction === 'prev' ? other : current;
+            const next = direction === 'prev' ? current : other;
+
+            const newTranscript = (prev.transcript || "").trim() + " " + (next.transcript || "").trim();
+            const newTranslation = (prev.translation || "").trim() + " " + (next.translation || "").trim();
+
+            // Update current region
+            current.setOptions({ start: newStart, end: newEnd });
+            current.transcript = newTranscript.trim();
+            current.translation = newTranslation.trim();
+
+            // Update identifying properties used in saveState if any (v7 holds them in the object)
+
+            // Remove the other region
+            const otherId = other.id;
+            other.remove();
+
+            // Remove from DOM
+            const otherRow = document.getElementById(`row-${otherId}`);
+            if (otherRow) otherRow.remove();
+
+            // Update the current row in DOM
+            const currentRow = document.getElementById(`row-${current.id}`);
+            if (currentRow) {
+                currentRow.querySelector('.start-input').value = newStart.toFixed(2);
+                currentRow.querySelector('.end-input').value = newEnd.toFixed(2);
+                currentRow.querySelector('.content-input').value = current.transcript;
+                currentRow.querySelector('.translation-input').value = current.translation;
+            }
+
+            updateSegmentCount();
+            highlightRow(current.id);
+        }
+
+
+        // --- File Handling ---
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            loadAudioFile(file);
+        });
+
+        function loadAudioFile(file) {
+            currentProjectId = null;
+            currentCreatedAt = null;
+            updatePublishButtonState();
+
+            segmentsContainer.innerHTML = '';
+            segmentCountLabel.textContent = '0 segments';
+            emptyState.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+
+            initWaveSurfer();
+
+            const url = URL.createObjectURL(file);
+            wavesurfer.load(url);
+
+            historyStack.length = 0;
+            undoBtn.disabled = true;
+            pubUrl.value = "";
+        }
+
+        function loadAudioFromUrl(url) {
+            segmentsContainer.innerHTML = '';
+            segmentCountLabel.textContent = '0 segments';
+            emptyState.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+
+            initWaveSurfer();
+            wavesurfer.load(url);
+
+            historyStack.length = 0;
+            undoBtn.disabled = true;
+        }
+
+
+        // --- Load Existing Logic (Sidebar) ---
+        loadExistingBtn.addEventListener('click', async () => {
+            if (!currentUser) { alert("Please login first."); return; }
+            sidebar.classList.toggle('collapsed');
+
+            // Force WaveSurfer redraw if exists
+            if (wavesurfer) {
+                setTimeout(() => wavesurfer.zoom(zoomSlider.value), 300);
+            }
+
+            if (sidebar.classList.contains('collapsed')) return;
+
+            sidebarLoadList.innerHTML = '<div class="flex flex-col items-center justify-center p-8 space-y-3"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><span class="text-slate-400 text-xs">Loading library...</span></div>';
+
+            try {
+                const [coursesSnap, audiblesSnap] = await Promise.all([
+                    get(ref(db, 'audibleCourses')),
+                    get(ref(db, 'audibles'))
+                ]);
+
+                sidebarLoadList.innerHTML = '';
+
+                const coursesMap = {};
+                if (coursesSnap.exists()) {
+                    const coursesVal = coursesSnap.val();
+                    const coursesArr = Array.isArray(coursesVal) ? coursesVal : Object.values(coursesVal);
+                    coursesArr.sort((a, b) => (a.course || '').localeCompare(b.course || ''));
+
+                    coursesArr.forEach(c => {
+                        coursesMap[c.courseCode] = { ...c, items: [] };
+                    });
+                }
+                coursesMap['uncategorized'] = { course: 'Uncategorized', courseCode: 'uncategorized', items: [] };
+
+                if (audiblesSnap.exists()) {
+                    const allAudibles = audiblesSnap.val();
+                    Object.keys(allAudibles).forEach(key => {
+                        const record = allAudibles[key];
+                        //if(record.createdBy === currentUser.email) 
+                        {
+                            const item = { key: key, ...record };
+                            if (record.courseCode && coursesMap[record.courseCode]) {
+                                coursesMap[record.courseCode].items.push(item);
+                            } else {
+                                coursesMap['uncategorized'].items.push(item);
+                            }
+                        }
+                    });
+                }
+
+                Object.values(coursesMap).forEach(courseGroup => {
+                    const isEmpty = courseGroup.items.length === 0;
+                    if (courseGroup.courseCode === 'uncategorized' && isEmpty) return;
+
+                    courseGroup.items.sort((a, b) => b.updatedAt - a.updatedAt);
+
+                    const accordionItem = document.createElement('div');
+                    accordionItem.className = `border rounded-lg mb-2 overflow-hidden bg-white shadow-sm ${isEmpty ? 'border-slate-100 opacity-60' : 'border-slate-200'}`;
+
+                    const headerClass = isEmpty
+                        ? "flex items-center justify-between p-4 bg-slate-50 cursor-default select-none"
+                        : "flex items-center justify-between p-4 cursor-pointer bg-slate-50 hover:bg-slate-100 transition select-none group";
+
+                    const header = document.createElement('div');
+                    header.className = headerClass;
+
+                    const iconColor = isEmpty ? "bg-slate-200 text-slate-400" : "bg-blue-100 text-blue-600";
+                    const chevronClass = isEmpty ? "hidden" : "w-5 h-5 text-slate-400 transition-transform duration-200 transform group-hover:text-slate-600";
+
+                    header.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="${iconColor} p-1.5 rounded-md icon-container">
+                                <i data-lucide="${isEmpty ? 'book' : 'book-open'}" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800">${courseGroup.course}</h4>
+                                <span class="text-xs text-slate-500">${isEmpty ? 'No files' : courseGroup.items.length + ' file' + (courseGroup.items.length !== 1 ? 's' : '')}</span>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="${chevronClass}"></i>
+                    `;
+
+                    if (!isEmpty) {
+                        const content = document.createElement('div');
+                        content.className = "hidden border-t border-slate-100 bg-white";
+
+                        header.addEventListener('click', () => {
+                            const isHidden = content.classList.contains('hidden');
+                            const icon = header.querySelector('.lucide-chevron-down');
+                            if (isHidden) {
+                                content.classList.remove('hidden');
+                                icon.classList.add('rotate-180');
+                            } else {
+                                content.classList.add('hidden');
+                                icon.classList.remove('rotate-180');
+                            }
+                        });
+
+                        courseGroup.items.forEach(data => {
+                            const itemRow = document.createElement('div');
+                            itemRow.className = "flex items-center justify-between p-3 pl-12 hover:bg-blue-50 border-b border-slate-50 last:border-0 cursor-pointer transition group/item";
+                            itemRow.innerHTML = `
+                                <div class="flex-1 pr-4">
+                                    <h5 class="text-sm font-medium text-slate-700 group-hover/item:text-blue-700 truncate">${data.title || 'Untitled'}</h5>
+                                    <p class="text-xs text-slate-400 mt-0.5 flex gap-2">
+                                        <span>${new Date(data.updatedAt).toLocaleDateString()}</span>
+                                        ${data.tags ? `<span>•</span><span class="bg-slate-100 px-1 rounded text-[10px]">${data.tags[0]}</span>` : ''}
+                                    </p>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button class="open-item-btn opacity-0 group-hover/item:opacity-100 text-blue-600 bg-white border border-blue-200 hover:bg-blue-600 hover:text-white px-3 py-1 rounded text-xs transition shadow-sm">
+                                        Open
+                                    </button>
+                                    <button class="delete-item-btn opacity-0 group-hover/item:opacity-100 text-slate-400 hover:text-red-600 bg-white border border-slate-200 hover:border-red-200 p-1.5 rounded transition shadow-sm" title="Delete Project">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+                            `;
+
+                            const openBtn = itemRow.querySelector('.open-item-btn');
+                            const deleteBtn = itemRow.querySelector('.delete-item-btn');
+
+                            openBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                loadAudibleData(data, data.key);
+                                if (window.innerWidth < 768) sidebar.classList.add('collapsed');
+                            });
+
+                            deleteBtn.addEventListener('click', async (e) => {
+                                e.stopPropagation();
+                                if (confirm(`Are you sure you want to delete "${data.title || 'Untitled'}"? This action cannot be undone.`)) {
+                                    try {
+                                        await remove(ref(db, 'audibles/' + data.key));
+                                        itemRow.remove();
+                                        // Update count in header
+                                        const countSpan = header.querySelector('.text-xs');
+                                        const newCount = courseGroup.items.length - 1;
+                                        courseGroup.items = courseGroup.items.filter(item => item.key !== data.key);
+                                        if (courseGroup.items.length === 0) {
+                                            accordionItem.classList.add('opacity-60', 'border-slate-100');
+                                            accordionItem.classList.remove('border-slate-200');
+                                            header.querySelector('.icon-container').classList.replace('bg-blue-100', 'bg-slate-200');
+                                            header.querySelector('.icon-container').classList.replace('text-blue-600', 'text-slate-400');
+                                            header.querySelector('.lucide-chevron-down').classList.add('hidden');
+                                        }
+                                        countSpan.textContent = courseGroup.items.length === 0 ? 'No files' : courseGroup.items.length + ' file' + (courseGroup.items.length !== 1 ? 's' : '');
+
+                                        // If deleted project was currently open
+                                        if (currentProjectId === data.key) {
+                                            currentProjectId = null;
+                                            updatePublishButtonState();
+                                        }
+                                    } catch (err) {
+                                        console.error("Delete failed", err);
+                                        alert("Delete failed: " + err.message);
+                                    }
+                                }
+                            });
+
+                            itemRow.addEventListener('click', () => {
+                                loadAudibleData(data, data.key);
+                                if (window.innerWidth < 768) sidebar.classList.add('collapsed');
+                            });
+                            content.appendChild(itemRow);
+                        });
+                        accordionItem.appendChild(header);
+                        accordionItem.appendChild(content);
+                    } else {
+                        accordionItem.appendChild(header);
+                    }
+
+                    sidebarLoadList.appendChild(accordionItem);
+                });
+                lucide.createIcons();
+            } catch (e) {
+                console.error(e);
+                sidebarLoadList.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-lg text-xs text-center">Error: ' + e.message + '</div>';
+            }
+        });
+
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.add('collapsed');
+        });
+
+        function loadAudibleData(data, key = null) {
+            currentProjectId = key;
+            currentCreatedAt = data.createdAt || Date.now();
+            updatePublishButtonState();
+
+            const url = data.audioUrl || data.audioURL;
+            if (url) loadAudioFromUrl(url);
+
+            pubTitle.value = data.title || '';
+            pubUrl.value = url || '';
+            pubCourseSelect.value = data.courseCode || '';
+            pubTags.value = data.tags ? data.tags.join(', ') : '';
+
+            wavesurfer.once('ready', () => {
+                wsRegions.clearRegions();
+
+                if (data.timeStamps && Array.isArray(data.timeStamps)) {
+                    data.timeStamps.forEach(ts => {
+                        const region = wsRegions.addRegion({
+                            start: ts.start,
+                            end: ts.end,
+                            color: getRandomColor()
+                        });
+                        region.transcript = ts.thai_text;
+                        region.translation = ts.english_translation;
+
+                        const row = document.getElementById(`row-${region.id}`);
+                        if (row) {
+                            row.querySelector('.content-input').value = ts.thai_text || '';
+                            row.querySelector('.translation-input').value = ts.english_translation || '';
+                        }
+                    });
+                    updateSegmentCount();
+                }
+                historyStack.length = 0;
+                undoBtn.disabled = true;
+            });
+        }
+
+        function updatePublishButtonState() {
+            if (currentProjectId) {
+                openPublishModalBtn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Update / Save`;
+                openPublishModalBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                openPublishModalBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+            } else {
+                openPublishModalBtn.innerHTML = `<i data-lucide="cloud-upload" class="w-4 h-4"></i> Publish`;
+                openPublishModalBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+                openPublishModalBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+            }
+            lucide.createIcons();
+        }
+
+        transcriptInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!wsRegions) {
+                alert("Please load an audio file first.");
+                transcriptInput.value = '';
+                return;
+            }
+
+            saveState();
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const text = event.target.result;
+                parseAndLoadTranscript(text);
+            };
+            reader.readAsText(file);
+            transcriptInput.value = '';
+        });
+
+        function parseAndLoadTranscript(text) {
+            const regex = /\[\s*([\d\.]+)\s*s\s*->\s*([\d\.]+)\s*s\s*\]\s*(.*)/;
+            const lines = text.split(/\r?\n/);
+
+            wsRegions.clearRegions();
+            segmentsContainer.innerHTML = '';
+            let addedCount = 0;
+
+            lines.forEach(line => {
+                const match = line.match(regex);
+                if (match) {
+                    const start = parseFloat(match[1]);
+                    const end = parseFloat(match[2]);
+                    const content = match[3].trim();
+
+                    if (!isNaN(start) && !isNaN(end) && end > start) {
+                        const region = wsRegions.addRegion({
+                            start: start,
+                            end: end,
+                            content: '',
+                            color: getRandomColor(),
+                        });
+                        region.transcript = content;
+                        region.translation = '';
+
+                        const row = document.getElementById(`row-${region.id}`);
+                        if (row) {
+                            row.querySelector('.content-input').value = content;
+                        }
+                        addedCount++;
+                    }
+                }
+            });
+
+            if (addedCount > 0) updateSegmentCount();
+        }
+
+        importTranslationBtn.addEventListener('click', () => {
+            if (!wsRegions || wsRegions.getRegions().length === 0) {
+                alert("Please create or import transcript regions first.");
+                return;
+            }
+            translationTextInput.value = '';
+            openModal(translationModal);
+            translationTextInput.focus();
+        });
+
+        document.getElementById('confirm-import-btn').addEventListener('click', () => {
+            const text = translationTextInput.value;
+            if (!text.trim()) { closeModal(translationModal); return; }
+
+            saveState();
+            parseAndMatchTranslation(text);
+            closeModal(translationModal);
+        });
+
+        function parseAndMatchTranslation(text) {
+            const regex = /\[\s*([\d\.]+)\s*s\s*->\s*([\d\.]+)\s*s\s*\]\s*(.*)/;
+            const lines = text.split(/\r?\n/);
+            const regions = wsRegions.getRegions();
+            let matchedCount = 0;
+
+            lines.forEach(line => {
+                const match = line.match(regex);
+                if (match) {
+                    const start = parseFloat(match[1]);
+                    const end = parseFloat(match[2]);
+                    const translationText = match[3].trim();
+                    const tolerance = 0.05;
+                    const region = regions.find(r => Math.abs(r.start - start) < tolerance && Math.abs(r.end - end) < tolerance);
+
+                    if (region) {
+                        region.translation = translationText;
+                        const row = document.getElementById(`row-${region.id}`);
+                        if (row) row.querySelector('.translation-input').value = translationText;
+                        matchedCount++;
+                    }
+                }
+            });
+            if (matchedCount === 0) alert("No matching regions found.");
+        }
+
+        async function fetchCourses() {
+            if (!currentUser) return;
+            pubCourseSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+            try {
+                const dbRef = ref(db, 'audibleCourses');
+                const snapshot = await get(dbRef);
+
+                if (snapshot.exists()) {
+                    const courses = snapshot.val();
+                    pubCourseSelect.innerHTML = '<option value="" disabled selected>Select a course</option>';
+                    const courseList = Array.isArray(courses) ? courses : Object.values(courses);
+                    courseList.forEach(c => {
+                        const option = document.createElement('option');
+                        option.value = c.courseCode;
+                        option.textContent = `${c.course} (${c.courseCode})`;
+                        pubCourseSelect.appendChild(option);
+                    });
+                } else {
+                    pubCourseSelect.innerHTML = '<option value="" disabled>No courses available</option>';
+                }
+            } catch (error) {
+                console.error(error);
+                pubCourseSelect.innerHTML = '<option value="" disabled>Error loading courses</option>';
+            }
+        }
+
+        openPublishModalBtn.addEventListener('click', () => {
+            if (!wsRegions || wsRegions.getRegions().length === 0) {
+                alert("Cannot publish empty document.");
+                return;
+            }
+            openModal(publishModal);
+
+            const modalTitle = publishModal.querySelector('h3');
+            if (currentProjectId) {
+                modalTitle.innerHTML = `<i data-lucide="save" class="w-5 h-5"></i> Update Existing Audible`;
+                confirmPublishBtn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Save Changes`;
+            } else {
+                modalTitle.innerHTML = `<i data-lucide="cloud-upload" class="w-5 h-5"></i> Publish to Audible`;
+                confirmPublishBtn.innerHTML = `<i data-lucide="upload-cloud" class="w-4 h-4"></i> Publish Now`;
+            }
+            lucide.createIcons();
+
+            pubStatus.textContent = "";
+        });
+
+        function formatTimestamp(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secondsRemainder = Math.floor(seconds % 60);
+            const pad = (num) => num.toString().padStart(2, '0');
+            return `${pad(minutes)}:${pad(secondsRemainder)}`;
+        }
+
+        confirmPublishBtn.addEventListener('click', async () => {
+            if (!currentUser) { alert("Login required."); return; }
+            const title = pubTitle.value.trim();
+            const url = pubUrl.value.trim();
+            const courseCode = pubCourseSelect.value;
+            const tagsInput = pubTags.value.trim();
+
+            if (!title || !url || !courseCode) {
+                pubStatus.textContent = "Fill all fields.";
+                pubStatus.className = "text-sm text-center text-red-500";
+                return;
+            }
+
+            const tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+            pubStatus.textContent = currentProjectId ? "Updating..." : "Publishing...";
+            pubStatus.className = "text-sm text-center text-blue-500";
+
+            const regions = wsRegions.getRegions();
+            regions.sort((a, b) => a.start - b.start);
+
+            const timeStamps = regions.map((r) => ({
+                start: parseFloat(r.start.toFixed(3)),
+                end: parseFloat(r.end.toFixed(3)),
+                thai_text: r.transcript || "",
+                english_translation: r.translation || "",
+                timestamp: formatTimestamp(r.start)
+            }));
+
+            const uuid = currentProjectId || crypto.randomUUID();
+            const createdDate = currentProjectId ? (currentCreatedAt || Date.now()) : Date.now();
+
+            const payload = {
+                title: title,
+                audioURL: url,
+                courseCode: courseCode,
+                tags: tags,
+                timeStamps: timeStamps,
+                createdAt: createdDate,
+                createdBy: currentUser.email,
+                updatedAt: Date.now()
+            };
+
+            try {
+                await set(ref(db, 'audibles/' + uuid), payload);
+
+                if (!currentProjectId) {
+                    currentProjectId = uuid;
+                    currentCreatedAt = createdDate;
+                    updatePublishButtonState();
+                }
+
+                pubStatus.textContent = "Saved successfully!";
+                pubStatus.className = "text-sm text-center text-green-500";
+                setTimeout(() => {
+                    closeModal(publishModal);
+                }, 1500);
+            } catch (error) {
+                pubStatus.textContent = "Error: " + error.message;
+                pubStatus.className = "text-sm text-center text-red-500";
+            }
+        });
+
+
+        // --- UI Utils ---
+
+        function openModal(modal) {
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function closeModal(modal) {
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        document.querySelectorAll('.close-modal-btn, .cancel-modal-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const modal = e.target.closest('.fixed');
+                if (modal) closeModal(modal);
+            });
+        });
+
+        playPauseBtn.addEventListener('click', () => {
+            isRegionPlaying = false;
+            // CRITICAL FIX: Ensure playback state is robust
+            checkAudioContext();
+            wavesurfer.playPause();
+            updatePlayButton();
+        });
+
+        wavesurfer && wavesurfer.on('play', updatePlayButton);
+        wavesurfer && wavesurfer.on('pause', updatePlayButton);
+
+        function updatePlayButton() {
+            if (wavesurfer.isPlaying()) {
+                playPauseBtn.innerHTML = `<i data-lucide="pause" class="w-6 h-6 fill-current"></i>`;
+            } else {
+                playPauseBtn.innerHTML = `<i data-lucide="play" class="w-6 h-6 fill-current"></i>`;
+            }
+            lucide.createIcons();
+        }
+
+        zoomSlider.addEventListener('input', (e) => {
+            const zoomLevel = Number(e.target.value);
+            wavesurfer.zoom(zoomLevel);
+        });
+
+        playbackRateSelect.addEventListener('change', (e) => {
+            if (wavesurfer) wavesurfer.setPlaybackRate(parseFloat(e.target.value));
+        });
+
+        addRegionBtn.addEventListener('click', () => {
+            saveState();
+            const currentTime = wavesurfer.getCurrentTime();
+            const newRegion = wsRegions.addRegion({
+                start: currentTime,
+                end: currentTime + 0.5,
+                content: '',
+                color: getRandomColor()
+            });
+            activeRegionId = newRegion.id;
+            highlightRow(newRegion.id);
+        });
+
+        function addSegmentToDOM(region) {
+            if (segmentsContainer.children.length > 0 && segmentsContainer.firstElementChild.classList.contains('text-center')) {
+                segmentsContainer.innerHTML = '';
+            }
+
+            const clone = template.content.cloneNode(true);
+            const row = clone.querySelector('.segment-row');
+
+            row.dataset.id = region.id;
+            row.id = `row-${region.id}`;
+
+            const startInput = row.querySelector('.start-input');
+            const endInput = row.querySelector('.end-input');
+            const contentInput = row.querySelector('.content-input');
+            const translationInput = row.querySelector('.translation-input');
+            const deleteBtn = row.querySelector('.delete-btn');
+            const mergePrevBtn = row.querySelector('.merge-prev-btn');
+            const mergeNextBtn = row.querySelector('.merge-next-btn');
+            const playBtn = row.querySelector('.play-segment-btn');
+
+            startInput.value = region.start.toFixed(2);
+            endInput.value = region.end.toFixed(2);
+            region.transcript = region.transcript || '';
+            region.translation = region.translation || '';
+
+            startInput.addEventListener('change', () => { saveState(); region.setOptions({ start: parseFloat(startInput.value) }); });
+            endInput.addEventListener('change', () => { saveState(); region.setOptions({ end: parseFloat(endInput.value) }); });
+
+            contentInput.addEventListener('input', () => region.transcript = contentInput.value);
+            contentInput.addEventListener('change', () => saveState());
+
+            translationInput.addEventListener('input', () => region.translation = translationInput.value);
+            translationInput.addEventListener('change', () => saveState());
+
+            deleteBtn.addEventListener('click', () => {
+                saveState();
+                region.remove();
+                row.remove();
+                updateSegmentCount();
+                checkEmptyState();
+            });
+
+            mergePrevBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mergeRegions(region.id, 'prev');
+            });
+
+            mergeNextBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mergeRegions(region.id, 'next');
+            });
+
+            // --- CRITICAL FIX: Optimize Play Button ---
+            playBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                playRegionOptimized(region);
+            });
+
+            row.addEventListener('click', () => {
+                activeRegionId = region.id;
+                // Defer UI update here as well
+                requestAnimationFrame(() => highlightRow(region.id));
+                wavesurfer.setTime(region.start);
+                isRegionPlaying = false;
+            });
+
+            row.addEventListener('dblclick', () => {
+                playRegionOptimized(region);
+            });
+
+            insertRowSorted(row, region.start);
+            lucide.createIcons();
+        }
+
+        function insertRowSorted(row, startTime) {
+            const rows = Array.from(segmentsContainer.children);
+            const nextRow = rows.find(r => {
+                const rStart = parseFloat(r.querySelector('.start-input').value);
+                return rStart > startTime;
+            });
+            if (nextRow) segmentsContainer.insertBefore(row, nextRow);
+            else segmentsContainer.appendChild(row);
+        }
+
+        function updateDOMFromRegion(region) {
+            const row = document.getElementById(`row-${region.id}`);
+            if (!row) return;
+
+            const startInput = row.querySelector('.start-input');
+            const endInput = row.querySelector('.end-input');
+
+            if (document.activeElement !== startInput) startInput.value = region.start.toFixed(2);
+            if (document.activeElement !== endInput) endInput.value = region.end.toFixed(2);
+        }
+
+        function highlightRow(id) {
+            document.querySelectorAll('.segment-row').forEach(r => {
+                r.classList.remove('active-row');
+                r.classList.add('bg-white');
+            });
+
+            document.querySelectorAll('.wavesurfer-region').forEach(r => r.classList.remove('active-region'));
+
+            const row = document.getElementById(`row-${id}`);
+            if (row) {
+                row.classList.remove('bg-white');
+                row.classList.add('active-row');
+                // Only scroll if strictly needed to avoid jank
+                row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            const region = wsRegions.getRegions().find(r => r.id === id);
+            if (region) {
+                if (region.element) region.element.classList.add('active-region');
+            }
+        }
+
+        function highlightActiveRegion() {
+            const currentTime = wavesurfer.getCurrentTime();
+            const regions = wsRegions.getRegions();
+            const active = regions.find(r => currentTime >= r.start && currentTime <= r.end);
+
+            if (isRegionPlaying && activeRegionId) {
+                return;
+            }
+
+            if (active && active.id !== activeRegionId) {
+                activeRegionId = active.id;
+                // Use requestAnimationFrame for smooth updates during playback
+                requestAnimationFrame(() => highlightRow(active.id));
+            }
+        }
+
+        // --- EXPORT TRANSCRIPT LOGIC ---
+        exportBtn.addEventListener('click', () => {
+            const regions = wsRegions.getRegions();
+            if (regions.length === 0) {
+                alert("No segments to export.");
+                return;
+            }
+
+            // Sort chronologically by start time
+            regions.sort((a, b) => a.start - b.start);
+
+            // Format into: [0.00s -> 5.56s] Text content
+            const transcriptLines = regions.map(r => {
+                const start = r.start.toFixed(2);
+                const end = r.end.toFixed(2);
+                const text = r.transcript || "";
+                return `[${start}s -> ${end}s] ${text}`;
+            });
+
+            const finalString = transcriptLines.join('\n');
+
+            // Download file
+            const blob = new Blob([finalString], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const fileName = (pubTitle.value.trim() || 'transcript').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            a.href = url;
+            a.download = `${fileName}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const activeTag = document.activeElement.tagName;
+            const isInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
+
+            if (!isInput) {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    if (wavesurfer) {
+                        isRegionPlaying = false;
+                        checkAudioContext(); // Fix for spacebar latency
+                        wavesurfer.playPause();
+                    }
+                    updatePlayButton();
+                }
+                if (e.code === 'Delete' || e.code === 'Backspace') {
+                    if (activeRegionId) {
+                        const region = wsRegions.getRegions().find(r => r.id === activeRegionId);
+                        if (region) {
+                            saveState();
+                            region.remove();
+                            const row = document.getElementById(`row-${activeRegionId}`);
+                            if (row) row.remove();
+                            updateSegmentCount();
+                            checkEmptyState();
+                            activeRegionId = null;
+                        }
+                    }
+                }
+                if (e.ctrlKey && e.code === 'ArrowRight') {
+                    wavesurfer.skipForward(5);
+                }
+                if (e.ctrlKey && e.code === 'ArrowLeft') {
+                    wavesurfer.skipBackward(5);
+                }
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') {
+                e.preventDefault();
+                performUndo();
+            }
+        });
+
+        function updateSegmentCount() {
+            if (!wsRegions) { segmentCountLabel.textContent = '0 segments'; return; }
+            const count = wsRegions.getRegions().length;
+            segmentCountLabel.textContent = `${count} segment${count !== 1 ? 's' : ''}`;
+        }
+
+        function checkEmptyState() {
+            if (wsRegions && wsRegions.getRegions().length === 0) {
+                segmentsContainer.innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
+                    <p>No regions created.</p>
+                    <p class="text-xs mt-1">Click on the waveform or drag to start transcribing.</p>
+                </div>`;
+            }
+        }
+
+        function getRandomColor() {
+            return `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.2)`;
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secondsRemainder = Math.floor(seconds % 60);
+            const milliseconds = Math.floor((seconds % 1) * 1000);
+            const pad = (num) => num.toString().padStart(2, '0');
+            const padMs = (num) => num.toString().padStart(3, '0');
+            return `${pad(minutes)}:${pad(secondsRemainder)}.${padMs(milliseconds)}`;
+        }
+
+        function enableControls() {
+            playPauseBtn.disabled = false;
+            zoomSlider.disabled = false;
+            playbackRateSelect.disabled = false;
+            addRegionBtn.disabled = false;
+            exportBtn.disabled = false;
+            exportBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+    </script>
+
+</body>
+
+</html>
