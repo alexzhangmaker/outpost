@@ -6,10 +6,10 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { generate } from 'short-uuid';
 
-import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT } from './agent.js';
-import { saveMessage, getMessages, createSession, saveResult, getResults, updateResult, getResultById } from './database.js';
+import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT, thaiArticleSchema, THAI_ARTICLE_PROMPT } from './agent.js';
+import { saveMessage, getMessages, createSession, saveResult, getResults, updateResult, getResultById, saveArticle, getArticles, getArticleById, updateArticle } from './database.js';
 import { generateThaiAudio } from './tts.js';
-import { uploadAudioToStorage, saveToRealtimeDb, getFromRealtimeDb } from './firebase.js';
+import { uploadAudioToStorage, saveToRealtimeDb, getFromRealtimeDb, saveArticleToFirebase } from './firebase.js';
 
 dotenv.config();
 
@@ -127,6 +127,7 @@ app.get('/', (req, res) => {
               <div style="display: flex; gap: 5px;">
                 <button onclick="processMarkdown('pattern')" class="btn-primary" style="flex: 1; font-size: 10px;">Extract Patterns</button>
                 <button onclick="processMarkdown('common')" class="btn-primary" style="flex: 1; font-size: 10px;">Extract Common</button>
+                <button onclick="processArticle()" class="btn-primary" style="flex: 1; font-size: 10px;">Extract Article</button>
               </div>
             </div>
           </div>
@@ -140,6 +141,7 @@ app.get('/', (req, res) => {
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
               <button onclick="loadLocalList('pattern')" class="btn-secondary" style="flex: 1; font-size: 10px;">Patterns</button>
               <button onclick="loadLocalList('common')" class="btn-secondary" style="flex: 1; font-size: 10px;">Common Sentences</button>
+              <button onclick="loadArticlesUI()" class="btn-secondary" style="flex: 1; font-size: 10px;">Articles</button>
             </div>
             <div class="nav-list" id="sidebar-list">
               <!-- Sidebar items will load here -->
@@ -208,6 +210,27 @@ app.get('/', (req, res) => {
           } catch (err) {
             logStatus('Firebase load error: ' + err.message, 'error');
             list.innerHTML = '<div style="padding: 20px; color: #e74c3c;">Failed to load Firebase list</div>';
+          }
+        }
+
+        async function loadArticlesUI() {
+          const list = document.getElementById('sidebar-list');
+          list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Fetching Articles...</div>';
+          try {
+            const res = await fetch('/api/articles');
+            const { articles } = await res.json();
+            
+            list.innerHTML = articles.map(a => {
+              const data = JSON.parse(a.content);
+              return \`
+                <div class="nav-item" onclick="selectRecord('\${a.id}', false, \${a.content.replace(/"/g, '&quot;')}, '\${a.createdAt}', 'article')">
+                  <strong>\${data.title || 'Untitled Article'}</strong>
+                  <small>Article: \${a.id} | \${new Date(a.createdAt).toLocaleTimeString()}</small>
+                </div>
+              \`;
+            }).join('');
+          } catch (err) {
+            logStatus('Article load error: ' + err.message, 'error');
           }
         }
 
@@ -290,10 +313,15 @@ app.get('/', (req, res) => {
           finalizeBtn.disabled = true;
           logStatus('Finalizing... (Generating Audio & Syncing to Firebase)');
           
-          const endpoint = currentRecordType === 'pattern' ? '/api/finalize-audio/' : '/api/finalize-common-sentences/';
+          let endpoint;
+          if (currentRecordType === 'pattern') endpoint = '/api/finalize-audio/';
+          else if (currentRecordType === 'common') endpoint = '/api/finalize-common-sentences/';
+          else if (currentRecordType === 'article') endpoint = '/api/articles/';
+          
+          const suffix = currentRecordType === 'article' ? '/finalize' : '';
           
           try {
-            const res = await fetch(endpoint + currentRecordId, { method: 'POST' });
+            const res = await fetch(endpoint + currentRecordId + suffix, { method: 'POST' });
             const result = await res.json();
             if (result.success) {
               logStatus('Finalized! Synced to Firebase.', 'success');
@@ -306,6 +334,30 @@ app.get('/', (req, res) => {
             logStatus('System error: ' + err.message, 'error');
           } finally {
             finalizeBtn.disabled = false;
+          }
+        }
+
+        async function processArticle() {
+          const content = document.getElementById('markdown-input').value;
+          if (!content) return logStatus('Please paste article content first', 'error');
+
+          logStatus('Processing Thai article extraction...');
+          try {
+            const res = await fetch('/api/articles/process', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content })
+            });
+            const result = await res.json();
+            if (result.success) {
+              logStatus('Article processed successfully!', 'success');
+              document.getElementById('markdown-input').value = '';
+              loadArticlesUI();
+            } else {
+              logStatus('Extraction failed: ' + result.error, 'error');
+            }
+          } catch (err) {
+            logStatus('Network error: ' + err.message, 'error');
           }
         }
 
@@ -600,6 +652,116 @@ app.post('/api/finalize-common-sentences/:id', async (req: any, res: any) => {
     });
   } catch (error: any) {
     console.error('Error finalizing common sentences:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// --- Thai Close Reading Article Endpoints ---
+
+// Step 1: Process text/markdown via Gemini and save to local SQLite
+app.post('/api/articles/process', async (req: any, res: any) => {
+  const { content } = req.body;
+
+  if (!content) {
+    return res.status(400).json({ error: 'Content is required' });
+  }
+
+  try {
+    console.log('Processing Thai article with Gemini...');
+
+    const result = await (geminiAgent as any).generate(
+      [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: THAI_ARTICLE_PROMPT },
+            { type: 'text', text: content }
+          ],
+        },
+      ],
+      {
+        structuredOutput: {
+          schema: thaiArticleSchema,
+        },
+      },
+    );
+
+    const article = result.object;
+    article.status = 'pending_verification';
+
+    saveArticle(article);
+
+    res.json({
+      success: true,
+      data: article,
+    });
+  } catch (error: any) {
+    console.error('Error processing article:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// List articles for verification
+app.get('/api/articles', async (req: any, res: any) => {
+  try {
+    const status = req.query.status as string;
+    const articles = getArticles(status);
+    res.json({ success: true, articles });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Step 2: Finalize article - Generate TTS, Upload to Firebase Storage, Save to Firebase DB
+app.post('/api/articles/:id/finalize', async (req: any, res: any) => {
+  const { id } = req.params;
+
+  try {
+    const record = getArticleById(id) as any;
+    if (!record) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+
+    let article = JSON.parse(record.content);
+
+    console.log(`Finalizing article: ${article.title}`);
+
+    // Iterate through paragraphs and sentences for TTS
+    for (const paragraph of article.paragraphs) {
+      for (const sentence of paragraph.sentences) {
+        if (sentence.thai) {
+          console.log(`Generating TTS for: ${sentence.thai.substring(0, 30)}...`);
+          try {
+            const audioBuffer = await generateThaiAudio(sentence.thai);
+            const fileName = `${sentence.sentence_id}.mp3`;
+
+            // Upload to Firebase Storage in 'audio' directory to match UI expectations
+            await uploadAudioToStorage(audioBuffer, fileName, 'audio');
+
+            // The audioURI in the JSON should match the path used by the UI (relative to storage bucket root)
+            sentence.audioURI = `audio/${fileName}`;
+          } catch (ttsError) {
+            console.error(`TTS/Upload Error for "${sentence.thai}":`, ttsError);
+          }
+        }
+      }
+    }
+
+    // Mark as completed and update local DB
+    article.status = 'completed';
+    updateArticle(id, article, 'completed');
+
+    // Save final JSON to Firebase Realtime Database
+    await saveArticleToFirebase(article);
+
+    console.log(`Article ${id} finalized and synced to Firebase.`);
+
+    res.json({
+      success: true,
+      data: article,
+    });
+  } catch (error: any) {
+    console.error('Error finalizing article:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });

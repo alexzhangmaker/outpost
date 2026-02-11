@@ -7,35 +7,53 @@ dotenv.config();
 
 // Define the schema for image extraction based on user requirements
 export const imageExtractionSchema = z.object({
-    topic: z.string().describe('图片的主标题或核心语法概念名称'),
-    description: z.string().describe('图片中关于该语法概念的泰语原文 definition/解释'),
-    comments: z.string().describe('对 description 字段内容的中文翻译与语法要点解析'),
-    keywords: z.array(z.string()).describe('提取句型中出现的关键动词或连接词列表'),
-    patterns: z.array(z.object({
-        format: z.string().describe('句型结构公式（如：นามวลี + ...）'),
-        usage: z.string().optional().describe('该句型的用途或用法说明'),
-        examples: z.array(z.object({
-            thai: z.string().describe('完整的泰语示例句子'),
-            english: z.string().describe('该示例句子的准确英文翻译'),
-        })),
-    })).describe('确保包含展示的所有 Pattern 和 Example'),
+  topic: z.string().describe('图片的主标题或核心语法概念名称'),
+  description: z.string().describe('图片中关于该语法概念的泰语原文 definition/解释'),
+  comments: z.string().describe('对 description 字段内容的中文翻译与语法要点解析'),
+  keywords: z.array(z.string()).describe('提取句型中出现的关键动词或连接词列表'),
+  patterns: z.array(z.object({
+    format: z.string().describe('句型结构公式（如：นามวลี + ...）'),
+    usage: z.string().optional().describe('该句型的用途或用法说明'),
+    examples: z.array(z.object({
+      thai: z.string().describe('完整的泰语示例句子'),
+      english: z.string().describe('该示例句子的准确英文翻译'),
+    })),
+  })).describe('确保包含展示的所有 Pattern 和 Example'),
 });
 
 export const commonSentencesSchema = z.object({
-    title: z.string().describe('文档标题'),
-    introduction: z.string().describe('文档简介/概述'),
-    sections: z.array(z.object({
-        sectionTitle: z.string().describe('分组标题'),
-        sectionDescription: z.string().describe('分组描述'),
-        categories: z.array(z.object({
-            categoryTitle: z.string().describe('子类别标题（中文）'),
-            categorySubtitle: z.string().describe('子类别副标题（泰语）'),
-            sentences: z.array(z.object({
-                thai: z.string().describe('泰语句子'),
-                chinese: z.string().describe('中文翻译'),
-            })),
-        })),
+  title: z.string().describe('文档标题'),
+  introduction: z.string().describe('文档简介/概述'),
+  sections: z.array(z.object({
+    sectionTitle: z.string().describe('分组标题'),
+    sectionDescription: z.string().describe('分组描述'),
+    categories: z.array(z.object({
+      categoryTitle: z.string().describe('子类别标题（中文）'),
+      categorySubtitle: z.string().describe('子类别副标题（泰语）'),
+      sentences: z.array(z.object({
+        thai: z.string().describe('泰语句子'),
+        chinese: z.string().describe('中文翻译'),
+      })),
     })),
+  })),
+});
+
+export const thaiArticleSchema = z.object({
+  id: z.string().describe('文章唯一标识符 (可以使用 uuid)'),
+  title: z.string().describe('文章标题'),
+  paragraphs: z.array(z.object({
+    paragraph_id: z.string().describe('段落标识符 (如 p1, p2...)'),
+    sentences: z.array(z.object({
+      thai: z.string().describe('泰文原句'),
+      english: z.string().describe('英文翻译'),
+      sentence_id: z.string().describe('句子唯一标识 (uuid)'),
+      audioURI: z.string().describe('音频路径，初始可为空或占位符'),
+    })),
+  })),
+  words: z.array(z.object({
+    thai: z.string().describe('重点单词'),
+    definition: z.string().describe('发音与释义'),
+  })).optional(),
 });
 
 const THAI_VISION_PROMPT = `**Role:** 你是一位精通泰语、中文和英语的语言学专家，擅长将泰语教学材料转换为结构化的 JSON 数据。
@@ -209,15 +227,33 @@ export const COMMON_SENTENCES_PROMPT = `## 背景
 
 请严格按照上述要求处理输入的Markdown文档，输出纯净的JSON数据。`;
 
+export const THAI_ARTICLE_PROMPT = `**Role:** 你是一位泰语语言学专家，擅长将泰语文章拆分为段落和句子，并提供准确的翻译。
+
+**Task:** 请处理用户提供的泰语文章（Markdown 或 纯文本），将其转换为结构化的 JSON，用于泰语阅读学习应用。
+
+**Instructions:**
+1. **结构化拆分**：
+   - 将文章拆分为有意义的段落 (\`paragraphs\`)。
+   - 每个段落内部按标点或语意将其拆分为独立的句子 (\`sentences\`)。
+2. **翻译**：为每个句子提供准确、地道的英文翻译。
+3. **元数据**：
+   - \`id\`: 请生成一个新的 uuid (如 'f47ac10b-...') 或提取文章中隐含的 ID。
+   - \`title\`: 提取或总结文章标题。
+   - \`sentence_id\`: 为每个句子生成独立的 uuid。
+   - \`audioURI\`: 统一设置为 \`audio/[sentence_id].mp3\`（注意：后缀为 .mp3，与 TTS 输出一致）。
+4. **词汇提取**（可选）：提取文章中的 5-10 个关键生词及其泰语发音 and 定义。
+
+**Output Format:** 严格按照提供的 JSON Schema 输出，不包含任何多余解释。`;
+
 export const geminiAgent = new Agent({
-    id: 'GeminiAgent',
-    name: 'GeminiAgent',
-    instructions: THAI_VISION_PROMPT,
-    model: {
-        id: 'google/gemini-2.0-flash',
-    },
+  id: 'GeminiAgent',
+  name: 'GeminiAgent',
+  instructions: THAI_VISION_PROMPT,
+  model: {
+    id: 'google/gemini-2.0-flash',
+  },
 });
 
 export const mastra = new Mastra({
-    agents: { geminiAgent },
+  agents: { geminiAgent },
 });

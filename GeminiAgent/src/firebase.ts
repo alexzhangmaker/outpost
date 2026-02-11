@@ -18,8 +18,17 @@ if (serviceAccountPath && fs.existsSync(serviceAccountPath)) {
     console.warn('FIREBASE_SERVICE_ACCOUNT_PATH not found or invalid. Firebase features will not work.');
 }
 
-export const db = admin.database ? admin.database() : null;
-export const storage = admin.storage ? admin.storage() : null;
+export const db = admin.apps.length ? admin.database() : null;
+export const storage = admin.apps.length ? admin.storage() : null;
+
+/**
+ * Get a specific database instance by URL.
+ * If no URL is provided, returns the default database instance.
+ */
+export function getDatabase(url?: string) {
+    if (!admin.apps.length) throw new Error('Firebase not initialized');
+    return url ? admin.app().database(url) : admin.database();
+}
 
 export async function saveToRealtimeDb(path: string, data: any) {
     if (!db) throw new Error('Firebase Database not initialized');
@@ -27,17 +36,26 @@ export async function saveToRealtimeDb(path: string, data: any) {
     await ref.push(data);
 }
 
-export async function uploadAudioToStorage(buffer: Buffer, fileName: string) {
+export async function uploadAudioToStorage(buffer: Buffer, fileName: string, directory: string = 'audioSentences') {
     if (!storage) throw new Error('Firebase Storage not initialized');
     const bucket = storage.bucket();
-    const file = bucket.file(`audioSentences/${fileName}`);
+    const file = bucket.file(`${directory}/${fileName}`);
 
     await file.save(buffer, {
         metadata: { contentType: 'audio/mpeg' },
         public: true
     });
 
-    return `https://storage.googleapis.com/${bucket.name}/audioSentences/${fileName}`;
+    return `https://storage.googleapis.com/${bucket.name}/${directory}/${fileName}`;
+}
+
+export async function saveArticleToFirebase(article: any) {
+    const articlesDbUrl = process.env.FIREBASE_ARTICLES_DATABASE_URL;
+    const targetDb = articlesDbUrl ? getDatabase(articlesDbUrl) : db;
+
+    if (!targetDb) throw new Error('Firebase Database not initialized');
+    const ref = targetDb.ref(`ThaiCLoseReading/${article.id}`);
+    await ref.set(article);
 }
 export async function getFromRealtimeDb(path: string) {
     if (!db) throw new Error('Firebase Database not initialized');

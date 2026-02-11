@@ -33,6 +33,14 @@ db.exec(`
     status TEXT DEFAULT 'pending',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS articles (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL, -- The full JSON article
+    status TEXT DEFAULT 'pending_verification', -- pending_verification, completed
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Migration: Add type column if it doesn't exist
@@ -97,6 +105,37 @@ export function updateResult(id: number | string, extractedData: any) {
 export function createSession(sessionId: string) {
   const stmt = db.prepare('INSERT OR IGNORE INTO sessions (id) VALUES (?)');
   stmt.run(sessionId);
+}
+
+// Article Helpers
+export function saveArticle(article: any) {
+  const stmt = db.prepare('INSERT OR REPLACE INTO articles (id, title, content, status) VALUES (?, ?, ?, ?)');
+  stmt.run(article.id, article.title, JSON.stringify(article), article.status || 'pending_verification');
+}
+
+export function getArticles(status?: string) {
+  let query = 'SELECT * FROM articles';
+  const params: any[] = [];
+  if (status) {
+    query += ' WHERE status = ?';
+    params.push(status);
+  }
+  query += ' ORDER BY createdAt DESC';
+  return db.prepare(query).all(...params);
+}
+
+export function getArticleById(id: string) {
+  return db.prepare('SELECT * FROM articles WHERE id = ?').get(id);
+}
+
+export function updateArticle(id: string, article: any, status?: string) {
+  if (status) {
+    const stmt = db.prepare('UPDATE articles SET content = ?, status = ? WHERE id = ?');
+    stmt.run(JSON.stringify(article), status, id);
+  } else {
+    const stmt = db.prepare('UPDATE articles SET content = ? WHERE id = ?');
+    stmt.run(JSON.stringify(article), id);
+  }
 }
 
 export default db;
