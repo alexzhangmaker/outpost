@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import multer from 'multer';
 import path from 'path';
@@ -9,7 +10,7 @@ import { generate } from 'short-uuid';
 import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT, thaiArticleSchema, THAI_ARTICLE_PROMPT } from './agent.js';
 import { saveMessage, getMessages, createSession, saveResult, getResults, updateResult, getResultById, saveArticle, getArticles, getArticleById, updateArticle } from './database.js';
 import { generateThaiAudio } from './tts.js';
-import { uploadAudioToStorage, saveToRealtimeDb, getFromRealtimeDb, saveArticleToFirebase } from './firebase.js';
+import { saveToRealtimeDb, updateRealtimeDb, uploadAudioToStorage, getFromRealtimeDb, saveArticleToFirebase } from './firebase.js';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 // Setup multer for image uploads
@@ -35,6 +37,65 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const port = process.env.PORT || 3000;
+
+app.get('/api/tts-proxy', async (req: any, res: any) => {
+  const text = req.query.text as string;
+  const sync = req.query.sync === 'true';
+  const pKey = req.query.pKey as string;
+  const toneKey = req.query.toneKey as string;
+
+  if (!text) return res.status(400).json({ error: 'Text is required' });
+
+  try {
+    const targetUrl = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(text)}`;
+    const response = await fetch(targetUrl);
+
+    if (!response.ok) {
+      throw new Error(`Upstream TTS Proxy returned ${response.status}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // If sync is requested, perform background tasks
+    if (sync && pKey && toneKey) {
+      (async () => {
+        try {
+          console.log(`[Background Sync] Starting for ${text} (${pKey}/${toneKey})`);
+          const fileName = `${text.replace(/\//g, '_')}_${toneKey}_${Date.now()}.mp3`;
+          const downloadURL = await uploadAudioToStorage(buffer, fileName, 'thaiIPA');
+
+          const dbPath = `thaiIPA/practices/${pKey}/${toneKey}`;
+          await updateRealtimeDb(dbPath, { audioURL: downloadURL }); // Assuming saveToRealtimeDb can update
+          console.log(`[Background Sync] Success: ${downloadURL}`);
+        } catch (err) {
+          console.error(`[Background Sync] Failed:`, err);
+        }
+      })();
+    }
+
+    res.set('Content-Type', 'audio/mpeg');
+    res.set('Access-Control-Allow-Origin', '*');
+    res.send(buffer);
+  } catch (error: any) {
+    console.error('TTS Proxy Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/thai-ipa/practices', async (req: any, res: any) => {
+  const data = req.body;
+  if (!data) return res.status(400).json({ error: 'Data is required' });
+
+  try {
+    const dbPath = 'thaiIPA/practices';
+    await saveToRealtimeDb(dbPath, data);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Firebase Save Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.get('/api/firebase/results', async (req: any, res: any) => {
   try {

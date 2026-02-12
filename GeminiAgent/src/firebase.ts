@@ -36,17 +36,25 @@ export async function saveToRealtimeDb(path: string, data: any) {
     await ref.push(data);
 }
 
+export async function updateRealtimeDb(path: string, data: any) {
+    if (!db) throw new Error('Firebase Database not initialized');
+    const ref = db.ref(path);
+    await ref.update(data);
+}
+
 export async function uploadAudioToStorage(buffer: Buffer, fileName: string, directory: string = 'audioSentences') {
     if (!storage) throw new Error('Firebase Storage not initialized');
     const bucket = storage.bucket();
-    const file = bucket.file(`${directory}/${fileName}`);
+    const filePath = `${directory}/${fileName}`;
+    const file = bucket.file(filePath);
 
     await file.save(buffer, {
         metadata: { contentType: 'audio/mpeg' },
         public: true
     });
 
-    return `https://storage.googleapis.com/${bucket.name}/${directory}/${fileName}`;
+    // Use common download URL format or public URL
+    return `https://storage.googleapis.com/${bucket.name}/${filePath}`;
 }
 
 export async function saveArticleToFirebase(article: any) {
