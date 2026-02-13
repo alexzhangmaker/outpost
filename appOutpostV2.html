@@ -79,15 +79,26 @@
             }
         }
 
-        /* Safe area padding for iPhones with notches */
-        body {
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
+        /* Skeleton Loading Animation */
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
         }
 
-        /* Fix for status bar overlap when using black-translucent */
-        #app-container {
-            min-height: 100vh;
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .dark .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
         }
     </style>
 </head>
@@ -144,8 +155,11 @@
         </header>
 
         <main id="todo-list" class="flex-1 overflow-y-auto px-4 pt-3 pb-20 space-y-2 scrollbar-hide">
-            <div class="text-center py-20 text-slate-400">
-                <p>加载中...</p>
+            <!-- Skeleton Loader -->
+            <div id="todo-skeleton" class="space-y-2">
+                <div class="h-20 w-full rounded-lg skeleton opacity-50"></div>
+                <div class="h-20 w-full rounded-lg skeleton opacity-30"></div>
+                <div class="h-20 w-full rounded-lg skeleton opacity-10"></div>
             </div>
         </main>
 
@@ -338,6 +352,7 @@
 
         // --- 3. IndexedDB Layer ---
         const initDB = () => {
+            if (db) return Promise.resolve(db); // Prevent multiple concurrent opens
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open('OutpostDB', 2);
                 request.onupgradeneeded = (event) => {
@@ -558,28 +573,43 @@
         const handleLogout = () => signOut(auth);
 
         onAuthStateChanged(auth, async (user) => {
-            if (!db) await initDB();
             currentUser = user;
-            els.loading.classList.add('hidden');
 
-            if (user) {
-                els.login.classList.add('hidden');
-                els.app.classList.remove('hidden');
-
-                sendToSW('SET_USER', { userId: user.uid });
-                await loadSettings();
-                renderTodos();
-                checkSharedContent();
-            } else {
+            // 1. Determine which screen to show immediately
+            if (!user) {
+                els.loading.classList.add('hidden');
                 els.app.classList.add('hidden');
                 els.login.classList.remove('hidden');
                 sendToSW('SET_USER', { userId: null });
-                // Clear local data if needed or just show empty
                 if (db) {
                     const tx = db.transaction('todos', 'readwrite');
                     tx.objectStore('todos').clear();
                 }
                 renderTodos();
+                return;
+            }
+
+            // 2. User is logged in - Start parallel initialization
+            els.login.classList.add('hidden');
+            els.app.classList.remove('hidden');
+
+            // Hide full-page loading once we know we're inside the app
+            // The Skeleton UI will handle the data-loading state
+            els.loading.classList.add('hidden');
+
+            sendToSW('SET_USER', { userId: user.uid });
+
+            // Parallelize DB init, Settings load, and Initial render
+            try {
+                if (!db) await initDB();
+                await Promise.all([
+                    loadSettings(),
+                    renderTodos(),
+                    checkSharedContent()
+                ]);
+            } catch (err) {
+                console.error("Initialization error:", err);
+                renderTodos(); // Fallback render
             }
         });
 
@@ -714,6 +744,9 @@
                 }
             });
         }
+
+        // Final optimization: Trigger DB init immediately
+        initDB();
     </script>
 </body>
 

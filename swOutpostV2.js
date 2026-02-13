@@ -47,7 +47,10 @@ self.addEventListener('install', (event) => {
     const externalAssets = [
         'https://cdn.tailwindcss.com?plugins=forms,container-queries',
         'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-        'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
+        'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
+        'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js',
+        'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js',
+        'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
     ];
 
     event.waitUntil(
