@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getFirestore, collection, query, where, onSnapshot, doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const CACHE_NAME = 'outpost-v2-cache-v1';
+const CACHE_NAME = 'outpost-v2-cache-v2';
 const DB_NAME = 'OutpostDB';
 const DB_VERSION = 2;
 const STORE_NAME = 'todos';
@@ -58,15 +58,15 @@ self.addEventListener('install', (event) => {
             // 1. Cache core local assets (blocking)
             await cache.addAll(coreAssets);
 
-            // 2. Cache external assets (non-blocking, mode: no-cors for CDNs)
-            externalAssets.forEach(url => {
-                fetch(url, { mode: 'no-cors' })
+            // 2. Cache external assets (blocking, public CDNs support CORS)
+            await Promise.all(externalAssets.map(url => {
+                return fetch(url)
                     .then(response => {
-                        // For no-cors, response.ok is false, but we can still cache it (opaque response)
-                        cache.put(url, response);
+                        if (!response.ok) throw new Error(`Fetch failed: ${url}`);
+                        return cache.put(url, response);
                     })
                     .catch(err => console.warn('Failed to cache external asset:', url, err));
-            });
+            }));
 
             return self.skipWaiting();
         })
