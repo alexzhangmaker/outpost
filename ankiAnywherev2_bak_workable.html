@@ -617,35 +617,6 @@
             updateStats();
         }
 
-        /**
-         * 结构化错误上报工具
-         * @param {string} errorType - 错误类型 (如 'MISSING_WORD', 'INCOMPLETE_DATA')
-         * @param {string} sourceTable - 来源数据库表 (如 'thaiDictionary')
-         * @param {string} sourceKey - 来源主键 (如 单词名)
-         * @param {any} details - 详细信息 (如 缺失的路径)
-         */
-        async function reportDataError(errorType, sourceTable, sourceKey, details) {
-            try {
-                const errorLog = {
-                    appName: "AnkiAnywhereV3",
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    dateString: new Date().toISOString(),
-                    errorType: errorType,
-                    sourceTable: sourceTable,
-                    sourceKey: sourceKey,
-                    details: details,
-                    context: {
-                        wordSetKey: gWordSetKey,
-                        userAgent: navigator.userAgent
-                    }
-                };
-                console.warn(`[DataError] Reporting: ${errorType} for ${sourceKey}`, errorLog);
-                await database.ref('system/dataErrors').push(errorLog);
-            } catch (e) {
-                console.error("Failed to report data error:", e);
-            }
-        }
-
         // 更新统计信息
         function updateStats() {
             const progressText = `${currentIndex + 1}/${wordList.length}`;
@@ -1086,7 +1057,6 @@
                 //console.log(jsonWord) ;
                 if (jsonWord == null) {
                     console.log(`${word} not in DB,something wrong`);
-                    await reportDataError('MISSING_WORD', 'thaiDictionary', word, 'Word not found in dictionary');
                     continue;
                 }
 
@@ -1121,15 +1091,10 @@
                     }
 
                     // 检查所有必需路径是否存在
-                    let missingPaths = [];
                     for (const path of requiredPaths) {
                         if (!hasPath(jsonWord, path)) {
-                            missingPaths.push(path);
+                            throw new Error(`Missing required property: ${path}`);
                         }
-                    }
-
-                    if (missingPaths.length > 0) {
-                        throw new Error(`Missing required property: ${missingPaths.join(', ')}`);
                     }
 
                     // 如果全部存在，构建对象
@@ -1145,7 +1110,6 @@
                     wordList.push(ankiWord);
                 } catch (error) {
                     console.error('Data validation failed:', error.message);
-                    await reportDataError('INCOMPLETE_DATA', 'thaiDictionary', word, error.message);
                     // 可在此处 fallback（如跳过、用默认值、提示用户等）
                     console.log(jsonWord);
                 }
