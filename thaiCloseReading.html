@@ -241,7 +241,75 @@
             display: none;
         }
 
-        .svgICON {}
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-content h3 {
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-weight: 500;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--brand-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: var(--text-primary);
+        }
     </style>
 </head>
 
@@ -261,6 +329,16 @@
                     <h1>泰语阅读助手</h1>
                 </div>
                 <div class="header-actions">
+                    <button id="idBTNSettings">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon">
+                            <path
+                                d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z">
+                            </path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
                     <button>
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -311,6 +389,21 @@
                 </div>
             </main>
         </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal-overlay noShow">
+            <div class="modal-content">
+                <h3>设置</h3>
+                <div class="form-group">
+                    <label for="db-url">Firebase Database URL</label>
+                    <input type="text" id="db-url" placeholder="https://your-database.firebaseio.com/">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeSettings()">取消</button>
+                    <button class="btn btn-primary" onclick="saveSettings()">保存并重载</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="./jsResource/localforage.min.js"></script>
@@ -331,33 +424,91 @@
             appId: "1:724993324937:web:ce6c7e6b06489331c79358",
             measurementId: "G-QPHWRTH6BH"
         };
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth(); // Correct: auth() is the function
-        const database = firebase.database();
-        const storage = firebase.storage(); // Initialize Cloud Storage using v8 syntax
-        const provider = new firebase.auth.GoogleAuthProvider();
 
-        // Initialize localforage for audio caching
-        const audioCacheStore = localforage.createInstance({
-            name: "AudioCache"
-        });
+        // Initialize localforage instances
+        const audioCacheStore = localforage.createInstance({ name: "AudioCache" });
+        const appSettingsStore = localforage.createInstance({ name: "AppSettings" });
+
+        let app, auth, database, storage, provider;
+
+        async function initFirebase() {
+            const customDbUrl = await appSettingsStore.getItem('databaseURL');
+            if (customDbUrl) {
+                firebaseConfig.databaseURL = customDbUrl;
+                console.log("Using custom database URL:", customDbUrl);
+            }
+
+            app = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            database = firebase.database();
+            storage = firebase.storage();
+            provider = new firebase.auth.GoogleAuthProvider();
+
+            // Set up Auth persistence listener
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    console.log("Auto-login: User is signed in:", user.email);
+                    callbackSignIn();
+                } else {
+                    console.log("No user signed in.");
+                    // Reset UI if needed
+                    updateAuthUI(false);
+                }
+            });
+        }
+
+        function updateAuthUI(isSignedIn) {
+            const btnSignIn = document.querySelector('#idBTNSignIn');
+            const btnSignOut = document.querySelector('#idBTNSignOut');
+            if (isSignedIn) {
+                btnSignIn.classList.add('noShow');
+                btnSignOut.classList.remove('noShow');
+            } else {
+                btnSignIn.classList.remove('noShow');
+                btnSignOut.classList.add('noShow');
+            }
+        }
+
+        // Initialize app on load
+        initFirebase();
 
         // 使用Google登录
         function signInWithGoogle(callback) {
             auth.signInWithPopup(provider).then((result) => {
-                // User signed in successfully.
-                const user = result.user;
-                console.log("User:", user);
-                callback();
+                // User already handled by onAuthStateChanged if successful
+                if (callback) callback();
             }).catch((error) => {
-                // Handle Errors here.
                 console.error("Sign-in error:", error);
             });
         }
 
         // 退出登录
         function signOut() {
-            auth.signOut();
+            auth.signOut().then(() => {
+                location.reload(); // Reload to clear state
+            });
+        }
+
+        // Settings Logic
+        const settingsModal = document.getElementById('settings-modal');
+        const dbUrlInput = document.getElementById('db-url');
+
+        document.getElementById('idBTNSettings').addEventListener('click', async () => {
+            const currentUrl = await appSettingsStore.getItem('databaseURL') || firebaseConfig.databaseURL;
+            dbUrlInput.value = currentUrl;
+            settingsModal.classList.remove('noShow');
+        });
+
+        function closeSettings() {
+            settingsModal.classList.add('noShow');
+        }
+
+        async function saveSettings() {
+            const newUrl = dbUrlInput.value.trim();
+            if (newUrl) {
+                await appSettingsStore.setItem('databaseURL', newUrl);
+                location.reload();
+            }
         }
 
     </script>
@@ -589,11 +740,7 @@
         });
 
         async function callbackSignIn() {
-            let tagButtonContainer = document.querySelector('#idBTNSignIn').closest('button');
-            let svgButtons = tagButtonContainer.querySelectorAll('.svgICON');
-            svgButtons.forEach(svgButton => {
-                svgButton.classList.toggle('noShow');
-            });
+            updateAuthUI(true);
 
             await loadArticles('/ThaiCLoseReading');
             // 初始化
