@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getFirestore, collection, query, where, onSnapshot, doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const CACHE_NAME = 'outpost-v2-cache-v2';
+const CACHE_NAME = 'outpost-v2-cache-v3';
 const DB_NAME = 'OutpostDB';
 const DB_VERSION = 2;
 const STORE_NAME = 'todos';
@@ -58,11 +58,15 @@ self.addEventListener('install', (event) => {
             // 1. Cache core local assets (blocking)
             await cache.addAll(coreAssets);
 
-            // 2. Cache external assets (blocking, public CDNs support CORS)
+            // 2. Cache external assets with appropriate CORS mode
             await Promise.all(externalAssets.map(url => {
-                return fetch(url)
+                // Firebase SDKs (modules) MUST have CORS. 
+                // Styles and fonts can use no-cors (opaque) if they fail CORS.
+                const isFirebase = url.includes('firebase');
+                return fetch(url, { mode: isFirebase ? 'cors' : 'no-cors' })
                     .then(response => {
-                        if (!response.ok) throw new Error(`Fetch failed: ${url}`);
+                        // For cors mode, check ok. For no-cors, response.ok is always false (type: opaque)
+                        if (isFirebase && !response.ok) throw new Error(`Fetch failed: ${url}`);
                         return cache.put(url, response);
                     })
                     .catch(err => console.warn('Failed to cache external asset:', url, err));
