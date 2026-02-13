@@ -67,7 +67,8 @@ export function getMessages(sessionId: string): Message[] {
 
 export function saveResult(sessionId: string, images: string[], extractedData: any, type: string = 'pattern') {
   const stmt = db.prepare('INSERT INTO results (sessionId, images, extractedData, status, type) VALUES (?, ?, ?, ?, ?)');
-  stmt.run(sessionId, JSON.stringify(images), JSON.stringify(extractedData), 'completed', type);
+  const result = stmt.run(sessionId, JSON.stringify(images), JSON.stringify(extractedData), 'completed', type);
+  return result.lastInsertRowid;
 }
 
 export function getResults(sessionId?: string, type?: string) {

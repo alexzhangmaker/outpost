@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +12,7 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: #333;
@@ -19,7 +20,7 @@
             min-height: 100vh;
             padding: 20px;
         }
-        
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -27,7 +28,7 @@
             flex-direction: column;
             gap: 20px;
         }
-        
+
         header {
             text-align: center;
             padding: 20px;
@@ -35,24 +36,24 @@
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
-        
+
         h1 {
             color: #2c3e50;
             margin-bottom: 10px;
             font-size: 2.5rem;
         }
-        
+
         .subtitle {
             color: #7f8c8d;
             font-size: 1.2rem;
         }
-        
+
         .content-wrapper {
             display: flex;
             gap: 20px;
             min-height: 600px;
         }
-        
+
         .dictionary-content {
             flex: 1;
             background: rgba(255, 255, 255, 0.9);
@@ -62,7 +63,7 @@
             overflow-y: auto;
             max-height: 700px;
         }
-        
+
         .group-tabs {
             width: 200px;
             background: rgba(255, 255, 255, 0.9);
@@ -75,7 +76,7 @@
             max-height: 700px;
             overflow-y: auto;
         }
-        
+
         .group-tab {
             padding: 12px 15px;
             background: #ecf0f1;
@@ -87,19 +88,19 @@
             color: #2c3e50;
             border: 2px solid transparent;
         }
-        
+
         .group-tab:hover {
             background: #d5dbdb;
             transform: translateX(-5px);
         }
-        
+
         .group-tab.active {
             background: #3498db;
             color: white;
             border-color: #2980b9;
             transform: translateX(-5px);
         }
-        
+
         .group-title {
             font-size: 1.8rem;
             color: #2c3e50;
@@ -107,14 +108,14 @@
             padding-bottom: 10px;
             border-bottom: 2px solid #ecf0f1;
         }
-        
+
         .words-grid {
             display: flex;
             flex-direction: column;
             /*grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));*/
             gap: 20px;
         }
-        
+
         .word-card {
             background: white;
             border-radius: 10px;
@@ -123,25 +124,25 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             border-left: 4px solid #3498db;
         }
-        
+
         .word-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
-        
+
         .word-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
         }
-        
+
         .word-text {
             font-size: 1.5rem;
             font-weight: bold;
             color: #2c3e50;
         }
-        
+
         .word-class {
             background: #3498db;
             color: white;
@@ -149,12 +150,12 @@
             border-radius: 20px;
             font-size: 0.8rem;
         }
-        
+
         .word-meaning {
             color: #7f8c8d;
             margin-bottom: 10px;
         }
-        
+
         .word-example {
             font-style: italic;
             color: #95a5a6;
@@ -162,13 +163,13 @@
             padding-left: 10px;
             margin-top: 10px;
         }
-        
+
         .search-box {
             margin-bottom: 20px;
             display: flex;
             gap: 10px;
         }
-        
+
         .search-input {
             flex: 1;
             padding: 12px 15px;
@@ -177,12 +178,12 @@
             font-size: 1rem;
             transition: border-color 0.3s;
         }
-        
+
         .search-input:focus {
             outline: none;
             border-color: #3498db;
         }
-        
+
         .search-btn {
             padding: 12px 20px;
             background: #3498db;
@@ -193,58 +194,67 @@
             font-weight: 600;
             transition: background 0.3s;
         }
-        
+
         .search-btn:hover {
             background: #2980b9;
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 40px;
             color: #7f8c8d;
         }
-        
+
         .empty-state i {
             font-size: 3rem;
             margin-bottom: 15px;
             display: block;
             color: #bdc3c7;
         }
-        
+
         @media (max-width: 768px) {
             .content-wrapper {
                 flex-direction: column;
             }
-            
+
             .group-tabs {
                 width: 100%;
                 flex-direction: row;
                 overflow-x: auto;
                 padding: 15px;
             }
-            
+
             .group-tab {
                 min-width: 60px;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
             <h1>泰语字典</h1>
             <p class="subtitle">
                 <span>按辅音字母分组展示 - 点击右侧标签查看不同分组</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" id="idBTNAuditAIResults" viewBox="0 0 32 32"><path fill="#000000" d="M28 16v6H4V6h12V4H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8v4H8v2h16v-2h-4v-4h8a2 2 0 0 0 2-2v-6ZM18 28h-4v-4h4Z"/><path fill="#000000" d="m21 15l-5-4.96l1.59-1.57L21 11.85l7.41-7.35L30 6.08L21 15z"/></svg>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" id="idBTNGoConsole" viewBox="0 0 24 24"><path fill="#000000" d="M5 4h13a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3m0 1a2 2 0 0 0-2 2h17a2 2 0 0 0-2-2H5M3 18a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2V8H3v10m14 0h-5v-1h5v1M6 10.5l.71-.71l4.2 4.21l-4.2 4.21L6 17.5L9.5 14L6 10.5Z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" id="idBTNAuditAIResults"
+                    viewBox="0 0 32 32">
+                    <path fill="#000000"
+                        d="M28 16v6H4V6h12V4H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8v4H8v2h16v-2h-4v-4h8a2 2 0 0 0 2-2v-6ZM18 28h-4v-4h4Z" />
+                    <path fill="#000000" d="m21 15l-5-4.96l1.59-1.57L21 11.85l7.41-7.35L30 6.08L21 15z" />
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" id="idBTNGoConsole" viewBox="0 0 24 24">
+                    <path fill="#000000"
+                        d="M5 4h13a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3m0 1a2 2 0 0 0-2 2h17a2 2 0 0 0-2-2H5M3 18a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2V8H3v10m14 0h-5v-1h5v1M6 10.5l.71-.71l4.2 4.21l-4.2 4.21L6 17.5L9.5 14L6 10.5Z" />
+                </svg>
             </p>
-            
+
             <div class="search-box">
                 <input type="text" class="search-input" placeholder="搜索泰语单词...">
                 <button class="search-btn">搜索</button>
             </div>
         </header>
-        
+
         <div class="content-wrapper">
             <div class="dictionary-content">
                 <h2 class="group-title" id="current-group">ก 分组</h2>
@@ -252,7 +262,7 @@
                     <!-- 单词卡片将通过JavaScript动态生成 -->
                 </div>
             </div>
-            
+
             <div class="group-tabs" id="group-tabs">
                 <!-- 分组标签将通过JavaScript动态生成 -->
             </div>
@@ -263,7 +273,7 @@
         <div id="statusDisplay"></div>
         <div id="queueStatus"></div>
         <div id="activeRequests"></div>
-        
+
     </div>
     <script src="./jsResource/localforage.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -297,58 +307,74 @@
         }
     </script>
     <script>
-        let jsonDictCache = {} ;
-        let dictEntries=[] ;
-
-        function filterDiction(searchTerm){
-            const filteredData = dictEntries.filter(dictEntry => 
-                dictEntry.word.toLowerCase().includes(searchTerm)
-            );
-            return filteredData ;
+        /**
+         * 与后端一致的 Firebase Key 清洗函数
+         */
+        function sanitizeFirebaseKey(key) {
+            if (!key) return key;
+            return key
+                .trim()
+                .replace(/^['"]|['"]$/g, '')
+                .replace(/\./g, '．')
+                .replace(/#/g, '＃')
+                .replace(/\$/g, '＄')
+                .replace(/\[/g, '［')
+                .replace(/\]/g, '］')
+                .replace(/\//g, '／');
         }
 
-        async function prepareLocalDiction(){
-            const gDictCacheKey = "outpostDictCache" ;
-            const gDictLocalKey ="outpostDictLocal" ;
+        let jsonDictCache = {};
+        let dictEntries = [];
+
+        function filterDiction(searchTerm) {
+            const filteredData = dictEntries.filter(dictEntry =>
+                dictEntry.word.toLowerCase().includes(searchTerm)
+            );
+            return filteredData;
+        }
+
+        async function prepareLocalDiction() {
+            const gDictCacheKey = "outpostDictCache";
+            const gDictLocalKey = "outpostDictLocal";
 
             dictEntries = await localforage.getItem(gDictLocalKey);
-            if(dictEntries==null){
+            if (dictEntries == null) {
                 jsonDictCache = await localforage.getItem(gDictCacheKey);
                 console.log(jsonDictCache);
-                if(jsonDictCache==null){
+                if (jsonDictCache == null) {
                     //alex 
                     let snapshot = await database.ref(`thaiDictionary`).once('value');
                     jsonDictCache = snapshot.val();
-                    await localforage.setItem(gDictCacheKey,jsonDictCache);
+                    await localforage.setItem(gDictCacheKey, jsonDictCache);
                     //end alex 
                 }
-                let keys = Object.keys(jsonDictCache) ;
-                console.log('length of keys:'+keys.length) ;
+                let keys = Object.keys(jsonDictCache);
+                console.log('length of keys:' + keys.length);
 
-                dictEntries=[] ;
-                keys.forEach(key=>{
+                dictEntries = [];
+                keys.forEach(key => {
                     //if(key==null || key ==undefined)continue ;
                     let jsonEntry = {
-                        word:key,
-                        dictEntry:jsonDictCache[key]
-                    } ;
-                    dictEntries.push(jsonEntry) ;
+                        word: sanitizeFirebaseKey(key),
+                        dictEntry: jsonDictCache[key]
+                    };
+                    dictEntries.push(jsonEntry);
                     //console.log(jsonEntry) ;
-                }) ;
-                console.log(dictEntries) ;
-                await localforage.setItem(gDictLocalKey,dictEntries);
+                });
+                console.log(dictEntries);
+                await localforage.setItem(gDictLocalKey, dictEntries);
             }
         }
 
         function sortThaiWordsByConsonant(words) {
             // 泰语辅音字母传统顺序
             const THAI_CONSONANTS = [
-                'ก', 'ข', 'ฃ', 'ค', 'ฅ', 'ฆ', 'ง', 
-                'จ', 'ฉ', 'ช', 'ซ', 'ฌ', 'ญ', 
-                'ฎ', 'ฏ', 'ฐ', 'ฑ', 'ฒ', 'ณ', 
-                'ด', 'ต', 'ถ', 'ท', 'ธ', 'น', 
-                'บ', 'ป', 'ผ', 'ฝ', 'พ', 'ฟ', 'ภ', 'ม', 
-                'ย', 'ร', 'ล', 'ว', 
+                'ก', 'ข', 'ฃ', 'ค', 'ฅ', 'ฆ', 'ง',
+                'จ', 'ฉ', 'ช', 'ซ', 'ฌ', 'ญ',
+                'ฎ', 'ฏ', 'ฐ', 'ฑ', 'ฒ', 'ณ',
+                'ด', 'ต', 'ถ', 'ท', 'ธ', 'น',
+                'บ', 'ป', 'ผ', 'ฝ', 'พ', 'ฟ', 'ภ', 'ม',
+                'ย', 'ร', 'ล', 'ว',
                 'ศ', 'ษ', 'ส', 'ห', 'ฬ', 'อ', 'ฮ'
             ];
 
@@ -402,19 +428,19 @@
                 // 移除可能的引号
                 const cleanWord = word.replace(/'/g, '');
                 if (!cleanWord) return null;
-                
+
                 let index = 0;
                 // 跳过前置元音、声调符号和其他非辅音字符
                 while (index < cleanWord.length) {
                     const char = cleanWord.charAt(index);
-                    
+
                     // 如果是辅音字母，返回它
                     if (THAI_CONSONANTS.includes(char)) {
                         return char;
                     }
-                    
+
                     // 如果是前置元音、声调符号、上下元音或其他符号，继续检查下一个字符
-                    if (THAI_PREFIX_VOWELS.includes(char) || 
+                    if (THAI_PREFIX_VOWELS.includes(char) ||
                         THAI_TONE_MARKS.includes(char) ||
                         THAI_ABOVE_VOWELS.includes(char) ||
                         THAI_BELOW_VOWELS.includes(char) ||
@@ -422,11 +448,11 @@
                         index++;
                         continue;
                     }
-                    
+
                     // 其他字符（数字、英文、标点、中文等）
                     return null;
                 }
-                
+
                 return null;
             }
 
@@ -434,7 +460,7 @@
             function analyzeWord(word) {
                 const cleanWord = word.replace(/'/g, '');
                 const initialConsonant = getInitialConsonant(cleanWord);
-                
+
                 if (!initialConsonant) {
                     return {
                         initialConsonant: null,
@@ -460,7 +486,7 @@
 
                 // 检测元音类型
                 let vowelType = 'implicit';
-                
+
                 // 检查复合元音和前置元音
                 if (cleanWord.includes('เ') && cleanWord.includes('า')) {
                     vowelType = 'sara_ao';
@@ -497,7 +523,7 @@
                         // 检查这个辅音是否可能是首辅音（在单词开头位置）
                         let isPotentialInitial = false;
                         for (let j = 0; j <= i; j++) {
-                            if (cleanWord.charAt(j) === char && 
+                            if (cleanWord.charAt(j) === char &&
                                 !THAI_PREFIX_VOWELS.includes(cleanWord.charAt(j)) &&
                                 !THAI_TONE_MARKS.includes(cleanWord.charAt(j)) &&
                                 !THAI_ABOVE_VOWELS.includes(cleanWord.charAt(j)) &&
@@ -506,7 +532,7 @@
                                 break;
                             }
                         }
-                        
+
                         // 如果这个辅音不是首辅音，那么它就是尾辅音
                         if (char !== initialConsonant || !isPotentialInitial) {
                             finalConsonant = char;
@@ -539,7 +565,7 @@
                 // 1. 按辅音字母顺序
                 const consonantOrderA = THAI_CONSONANTS.indexOf(analysisA.initialConsonant);
                 const consonantOrderB = THAI_CONSONANTS.indexOf(analysisB.initialConsonant);
-                
+
                 if (consonantOrderA !== consonantOrderB) {
                     return consonantOrderA - consonantOrderB;
                 }
@@ -547,7 +573,7 @@
                 // 2. 按元音类型
                 const vowelOrderA = VOWEL_ORDER[analysisA.vowelType] || VOWEL_ORDER.other;
                 const vowelOrderB = VOWEL_ORDER[analysisB.vowelType] || VOWEL_ORDER.other;
-                
+
                 if (vowelOrderA !== vowelOrderB) {
                     return vowelOrderA - vowelOrderB;
                 }
@@ -555,7 +581,7 @@
                 // 3. 按声调
                 const toneOrderA = TONE_ORDER[analysisA.tone];
                 const toneOrderB = TONE_ORDER[analysisB.tone];
-                
+
                 if (toneOrderA !== toneOrderB) {
                     return toneOrderA - toneOrderB;
                 }
@@ -563,7 +589,7 @@
                 // 4. 按尾辅音
                 const finalOrderA = FINAL_CONSONANT_ORDER[analysisA.finalConsonant] || FINAL_CONSONANT_ORDER.none;
                 const finalOrderB = FINAL_CONSONANT_ORDER[analysisB.finalConsonant] || FINAL_CONSONANT_ORDER.none;
-                
+
                 if (finalOrderA !== finalOrderB) {
                     return finalOrderA - finalOrderB;
                 }
@@ -574,18 +600,18 @@
 
             // 主处理逻辑
             const sortedWords = [...words].sort(compareThaiWords);
-            
+
             // 按辅音字母分组
             const groupedResult = {};
-            
+
             sortedWords.forEach(item => {
                 const consonant = getInitialConsonant(item.word);
                 const groupKey = consonant || 'other';
-                
+
                 if (!groupedResult[groupKey]) {
                     groupedResult[groupKey] = [];
                 }
-                
+
                 groupedResult[groupKey].push(item);
             });
 
@@ -596,7 +622,7 @@
                     sortedGroupedResult[consonant] = groupedResult[consonant];
                 }
             });
-            
+
             // 添加other分组（如果有）
             if (groupedResult['other'] && groupedResult['other'].length > 0) {
                 sortedGroupedResult['other'] = groupedResult['other'];
@@ -612,35 +638,35 @@
         const aiClient = new AIServiceClient();
         window.aiClient = aiClient;
 
-        const keyRequestIDs = 'keyRequestIDs' ;
-        async function logAIRequestID(requestID){
-            let requestIDs = await localforage.getItem(keyRequestIDs) ;
-            if(requestIDs==null){
-                requestIDs=[requestID] ;
-            }else{
-                if(requestIDs.includes(requestID))return ;
-                requestIDs.push(requestID) ;
+        const keyRequestIDs = 'keyRequestIDs';
+        async function logAIRequestID(requestID) {
+            let requestIDs = await localforage.getItem(keyRequestIDs);
+            if (requestIDs == null) {
+                requestIDs = [requestID];
+            } else {
+                if (requestIDs.includes(requestID)) return;
+                requestIDs.push(requestID);
             }
-            await localforage.setItem(keyRequestIDs,requestIDs) ;
+            await localforage.setItem(keyRequestIDs, requestIDs);
         }
 
-        const keyRequestResults = 'keyRequestResults' ;
-        async function logAIRequestResult(requestID,result){
+        const keyRequestResults = 'keyRequestResults';
+        async function logAIRequestResult(requestID, result) {
             let jsonResult = {
-                requestID:requestID,
-                result:result
-            } ;
-            let requestResults = await localforage.getItem(keyRequestResults) ;
-            if(requestResults==null){
-                requestResults=[jsonResult] ;
-            }else{
+                requestID: requestID,
+                result: result
+            };
+            let requestResults = await localforage.getItem(keyRequestResults);
+            if (requestResults == null) {
+                requestResults = [jsonResult];
+            } else {
                 //if(requestResults.includes(requestID))return ;
                 const hasObjectWithKeyValue = requestResults.some((obj) => obj.requestID === requestID);
-                if(hasObjectWithKeyValue)return ;
+                if (hasObjectWithKeyValue) return;
 
-                requestResults.push(jsonResult) ;
+                requestResults.push(jsonResult);
             }
-            await localforage.setItem(keyRequestResults,requestResults) ;
+            await localforage.setItem(keyRequestResults, requestResults);
         }
 
         // 设置所有事件监听
@@ -655,10 +681,10 @@
             });
 
             aiClient.on('requestProcessingStarted', async (data) => {
-                console.log("=====>>>requestProcessingStarted====>>>") ;
+                console.log("=====>>>requestProcessingStarted====>>>");
                 addLog(`请求开始处理: ${data.queueId}`, data);
                 //localforage.setItem()
-                await logAIRequestID(data.queueId) ;
+                await logAIRequestID(data.queueId);
             });
 
             aiClient.on('requestRetry', (data) => {
@@ -669,7 +695,7 @@
                 addLog(`请求完成: ${data.queueId}`, data);
                 if (data.result && data.result.response) {
                     addLog(`AI 回复: ${data.result.response.choices[0].message.content}`);
-                    await logAIRequestResult(data.queueId,data.result.response.choices[0].message.content) ;
+                    await logAIRequestResult(data.queueId, data.result.response.choices[0].message.content);
                 }
             });
 
@@ -691,7 +717,7 @@
             });
         }
 
-        
+
 
         // 工具函数
         function addLog(message, data = null) {
@@ -712,14 +738,14 @@
             logElement.appendChild(logEntry);
             logElement.scrollTop = logElement.scrollHeight;
             */
-            console.log(message) ;
+            console.log(message);
         }
 
         function updateStatus(message) {
             /*
             document.getElementById('statusDisplay').textContent = message;
             */
-           console.log(message) ;
+            console.log(message);
         }
 
         async function updateQueueStatus() {
@@ -763,7 +789,7 @@
         }
 
         // 全局函数供按钮调用
-        window.checkStatus = async function() {
+        window.checkStatus = async function () {
             try {
                 const stats = await aiClient.getQueueStatistics();
                 addLog('系统状态检查', stats);
@@ -773,7 +799,7 @@
             }
         };
 
-        window.getQueueStats = async function() {
+        window.getQueueStats = async function () {
             try {
                 const stats = await aiClient.getQueueStatistics();
                 addLog('队列统计', stats);
@@ -782,7 +808,7 @@
             }
         };
 
-        window.cleanupQueue = async function() {
+        window.cleanupQueue = async function () {
             try {
                 const result = await aiClient.cleanupQueue();
                 addLog('队列清理完成', result);
@@ -792,7 +818,7 @@
             }
         };
 
-        window.submitRequest = async function(prompt,priority) {
+        window.submitRequest = async function (prompt, priority) {
             /*
             const prompt = document.getElementById('promptInput').value;
             const priority = document.getElementById('prioritySelect').value;
@@ -807,10 +833,10 @@
                     priority: priority,
                     conversationId: 'demo_conversation'
                 });
-                
+
                 addLog(`请求已提交: ${result.queueId}`, result);
                 document.getElementById('promptInput').value = '';
-                
+
             } catch (error) {
                 addLog('提交请求失败: ' + error.message);
             }
@@ -841,7 +867,7 @@
         };
         */
 
-        window.cancelRequest = async function(queueId) {
+        window.cancelRequest = async function (queueId) {
             try {
                 const result = await aiClient.cancelQueuedRequest(queueId);
                 addLog(`取消请求: ${queueId}`, result);
@@ -851,12 +877,12 @@
             }
         };
 
-        window.setStorageData = async function(key,value) {
+        window.setStorageData = async function (key, value) {
             /*
             const key = document.getElementById('storageKey').value;
             const value = document.getElementById('storageValue').value;
             */
-            
+
             if (!key) {
                 alert('请输入键名');
                 return;
@@ -870,11 +896,11 @@
             }
         };
 
-        window.getStorageData = async function(key) {
+        window.getStorageData = async function (key) {
             /*
             const key = document.getElementById('storageKey').value;
             */
-            
+
             if (!key) {
                 alert('请输入键名');
                 return;
@@ -888,7 +914,7 @@
             }
         };
 
-        window.getAllStorageData = async function() {
+        window.getAllStorageData = async function () {
             try {
                 const result = await aiClient.getAllData();
                 addLog('获取所有数据成功', result);
@@ -897,11 +923,11 @@
             }
         };
 
-        window.setApiConfig = async function(apiKey) {
+        window.setApiConfig = async function (apiKey) {
             /*
             const apiKey = document.getElementById('apiKeyInput').value;
             */
-            
+
             if (!apiKey) {
                 alert('请输入 API Key');
                 return;
@@ -919,15 +945,15 @@
         // 初始化
         async function init() {
             setupEventListeners();
-            
+
             try {
                 const result = await aiClient.connect();
                 addLog('连接成功', result);
                 updateStatus('已连接 - ' + result.clientId);
-                
+
                 // 初始状态检查
                 await updateQueueStatus();
-                
+
             } catch (error) {
                 addLog('连接失败: ' + error.message);
                 updateStatus('连接失败');
@@ -937,42 +963,42 @@
         // 启动应用
         init();
 
-        document.querySelector('#idBTNAuditAIResults').addEventListener('click',(event)=>{
-            window.open("consoleAuditAILog.html","_blank");
-        }) ;
+        document.querySelector('#idBTNAuditAIResults').addEventListener('click', (event) => {
+            window.open("consoleAuditAILog.html", "_blank");
+        });
 
         //idBTNGoConsole
-        document.querySelector('#idBTNGoConsole').addEventListener('click',(event)=>{
-            window.open("deepSeekConsole.html","_blank");
-        }) ;
+        document.querySelector('#idBTNGoConsole').addEventListener('click', (event) => {
+            window.open("deepSeekConsole.html", "_blank");
+        });
     </script>
     <script>
 
-    async function _larkGoogleTranslate(text,sourceLang,targetLang){
-        console.log("_larkGoogleTranslate==============>>>>>>>>>>>>>>");
-        console.log(text);
-        let textPre = text.replace(/( )/ig, "%20") ;
-        //let encodedText = encodeURI(textPre) ;
-        //var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="+ sourceLang + "&tl=" + targetLang + "&dt=t&q=" + encodedText;
-        var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="+ sourceLang + "&tl=" + targetLang + "&dt=t&q=" + textPre;
-        
-        console.log(url);
-        console.log("<<<<<<<<<<<================");
+        async function _larkGoogleTranslate(text, sourceLang, targetLang) {
+            console.log("_larkGoogleTranslate==============>>>>>>>>>>>>>>");
+            console.log(text);
+            let textPre = text.replace(/( )/ig, "%20");
+            //let encodedText = encodeURI(textPre) ;
+            //var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="+ sourceLang + "&tl=" + targetLang + "&dt=t&q=" + encodedText;
+            var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + sourceLang + "&tl=" + targetLang + "&dt=t&q=" + textPre;
+
+            console.log(url);
+            console.log("<<<<<<<<<<<================");
 
 
-        let jsonResp = await fetch(url) ;//larkHTTPFetchJSON(url) ;
-        let jsonData = await jsonResp.text() ;
-        let jsonDict = JSON.parse(jsonData) ;
-        console.log(jsonDict) ;
-        let meaning = jsonDict[0][0] ;
-        return meaning[0] ;
-    }
+            let jsonResp = await fetch(url);//larkHTTPFetchJSON(url) ;
+            let jsonData = await jsonResp.text();
+            let jsonDict = JSON.parse(jsonData);
+            console.log(jsonDict);
+            let meaning = jsonDict[0][0];
+            return meaning[0];
+        }
 
 
 
-    // 生成提示词用于DeepSeek API
-    function promptQueryDictThai(thaiWord) {
-        return `
+        // 生成提示词用于DeepSeek API
+        function promptQueryDictThai(thaiWord) {
+            return `
         请提供泰语单词"${thaiWord}"的详细字典定义,以JSON格式返回,包含以下字段:
         - word_id: 唯一ID
         - thai: JSON对象,包含word, pronunciation, spelling_breakdown属性
@@ -990,7 +1016,7 @@
         请确保返回纯JSON格式,不要包含其他文本。
         
         `;
-    }
+        }
 
     </script>
     <script>
@@ -1136,55 +1162,55 @@
         };
 
         // 初始化页面
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', async function () {
             const groupTabsContainer = document.getElementById('group-tabs');
             const wordsContainer = document.getElementById('words-container');
             const currentGroupTitle = document.getElementById('current-group');
             const searchInput = document.querySelector('.search-input');
             const searchBtn = document.querySelector('.search-btn');
-            
+
             //    const result = sortThaiWordsByConsonant(testWords);
-            await prepareLocalDiction() ;
+            await prepareLocalDiction();
             dictionaryData = sortThaiWordsByConsonant(dictEntries);
 
             // 生成分组标签
             function renderGroupTabs() {
                 groupTabsContainer.innerHTML = '';
-                
+
                 Object.keys(dictionaryData).forEach(group => {
                     const tab = document.createElement('div');
                     tab.className = 'group-tab';
                     tab.textContent = group === 'other' ? '其他' : group;
                     tab.dataset.group = group;
-                    
-                    tab.addEventListener('click', function() {
+
+                    tab.addEventListener('click', function () {
                         // 移除所有标签的active类
                         document.querySelectorAll('.group-tab').forEach(t => {
                             t.classList.remove('active');
                         });
-                        
+
                         // 为当前标签添加active类
                         this.classList.add('active');
-                        
+
                         // 显示对应分组的单词
                         displayWordsByGroup(this.dataset.group);
                     });
-                    
+
                     groupTabsContainer.appendChild(tab);
                 });
-                
+
                 // 默认激活第一个标签
                 if (groupTabsContainer.firstChild) {
                     groupTabsContainer.firstChild.classList.add('active');
                     displayWordsByGroup(groupTabsContainer.firstChild.dataset.group);
                 }
             }
-            
 
-            function renderWord(wordsContainer,item){
+
+            function renderWord(wordsContainer, item) {
                 const wordCard = document.createElement('div');
                 wordCard.className = 'word-card';
-                    
+
                 wordCard.innerHTML = `
                     <div class="word-header">
                         <div class="word-text">${item.word}</div>
@@ -1201,35 +1227,35 @@
                     <div class="word-example"></div>
                     <div>备注：${item.dictEntry.grammar_notes}</div>
                 `;
-                let tagMeaning = wordCard.querySelector('.word-meaning') ;
-                item.dictEntry.definitions.forEach(jsonMeaning=>{
-                    let tagMeanContent = document.createElement('div') ;
-                    if(jsonMeaning==null || jsonMeaning == undefined)return ;
-                    if(jsonMeaning.en == undefined|| jsonMeaning.zh == undefined)return ;
-                    tagMeanContent.innerHTML=`
+                let tagMeaning = wordCard.querySelector('.word-meaning');
+                item.dictEntry.definitions.forEach(jsonMeaning => {
+                    let tagMeanContent = document.createElement('div');
+                    if (jsonMeaning == null || jsonMeaning == undefined) return;
+                    if (jsonMeaning.en == undefined || jsonMeaning.zh == undefined) return;
+                    tagMeanContent.innerHTML = `
                         <p>${jsonMeaning.en}</p>
                         <p>${jsonMeaning.zh}</p>
                     `;
-                    tagMeaning.appendChild(tagMeanContent) ;
-                }) ;
+                    tagMeaning.appendChild(tagMeanContent);
+                });
 
-                let tagExamples = wordCard.querySelector('.word-example') ;
-                item.dictEntry.common_phrases.forEach(jsonPhrases=>{
-                    let tagPhaseContent = document.createElement('div') ;
-                    tagPhaseContent.innerHTML=`
+                let tagExamples = wordCard.querySelector('.word-example');
+                item.dictEntry.common_phrases.forEach(jsonPhrases => {
+                    let tagPhaseContent = document.createElement('div');
+                    tagPhaseContent.innerHTML = `
                         <p>${jsonPhrases.phrase}</p>
                         <p>${jsonPhrases.translation}</p>
                     `;
-                    tagExamples.appendChild(tagPhaseContent) ;
-                }) ;
+                    tagExamples.appendChild(tagPhaseContent);
+                });
 
                 //idBTNPlayAudio
-                wordCard.querySelector('#idBTNPlayAudio').addEventListener('click',async (event)=>{
-                    const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${item.word}` ;
+                wordCard.querySelector('#idBTNPlayAudio').addEventListener('click', async (event) => {
+                    const urlGoogleTTSProxy = `https://googleapi-w56agazoha-uc.a.run.app/?text=${item.word}`;
                     const audio = new Audio(urlGoogleTTSProxy);
                     audio.play();
-                }) ;
-                
+                });
+
                 wordsContainer.appendChild(wordCard);
             }
 
@@ -1238,9 +1264,9 @@
             function displayWordsByGroup(group) {
                 const words = dictionaryData[group] || [];
                 currentGroupTitle.textContent = group === 'other' ? '其他分组' : `${group} 分组`;
-                
+
                 wordsContainer.innerHTML = '';
-                
+
                 if (words.length === 0) {
                     const emptyState = document.createElement('div');
                     emptyState.className = 'empty-state';
@@ -1252,16 +1278,16 @@
                     wordsContainer.appendChild(emptyState);
                     return;
                 }
-                
+
                 words.forEach(item => {
-                    renderWord(wordsContainer,item) ;
+                    renderWord(wordsContainer, item);
                 });
             }
-            
+
             // 搜索功能
             function searchWords() {
                 const query = searchInput.value.trim().toLowerCase();
-                
+
                 if (!query) {
                     // 如果没有搜索词，显示当前激活的分组
                     const activeTab = document.querySelector('.group-tab.active');
@@ -1270,21 +1296,21 @@
                     }
                     return;
                 }
-                
+
                 // 在所有分组中搜索匹配的单词
                 const allWords = [];
                 Object.keys(dictionaryData).forEach(group => {
                     dictionaryData[group].forEach(word => {
                         if (word.word == query/*word.word.toLowerCase().includes(query)*//* || word.meaning.toLowerCase().includes(query)*/) {
-                            allWords.push({...word, group});
+                            allWords.push({ ...word, group });
                         }
                     });
                 });
-                
+
                 // 更新显示搜索结果
                 currentGroupTitle.textContent = `搜索结果: "${query}"`;
                 wordsContainer.innerHTML = '';
-                
+
                 if (allWords.length === 0) {
                     const emptyState = document.createElement('div');
                     emptyState.className = 'empty-state';
@@ -1306,7 +1332,7 @@
                         return array.some(obj => obj[attribute] === value);
                     }
 
-                    emptyState.querySelector('#idBTNCheckGoogle').addEventListener('click',async (event)=>{
+                    emptyState.querySelector('#idBTNCheckGoogle').addEventListener('click', async (event) => {
                         /*
                         let cDate = new Date() ;
                         let jsonGoogleQuery={
@@ -1328,13 +1354,13 @@
                         }
                         */
 
-                        let sourceLang = 'th' ;
-                        let targetLang = 'en' ;
-                        let meaning = await _larkGoogleTranslate(query,sourceLang,targetLang) ;
-                        emptyState.querySelector('#idGoogleOutput').innerHTML= meaning ;
+                        let sourceLang = 'th';
+                        let targetLang = 'en';
+                        let meaning = await _larkGoogleTranslate(query, sourceLang, targetLang);
+                        emptyState.querySelector('#idGoogleOutput').innerHTML = meaning;
 
-                    }) ;
-                    emptyState.querySelector('#idBTNCheckDeepSeek').addEventListener('click',async (event)=>{
+                    });
+                    emptyState.querySelector('#idBTNCheckDeepSeek').addEventListener('click', async (event) => {
                         //alert(`will ask DeepSeek: ${query}`) ;
                         /*
                         let cDate = new Date() ;
@@ -1356,30 +1382,31 @@
                             await localforage.setItem(deepSeepQueueKey,deepSeekQueue) ;
                         }
                         */
-                        let promptText = promptQueryDictThai(query) ;
-                        window.submitRequest(promptText,"normal") ;
+                        let promptText = promptQueryDictThai(query);
+                        window.submitRequest(promptText, "normal");
 
-                    }) ;
+                    });
 
                     return;
                 }
-                
+
                 allWords.forEach(item => {
-                    renderWord(wordsContainer,item) ;
+                    renderWord(wordsContainer, item);
                 });
             }
-            
+
             // 事件监听
             searchBtn.addEventListener('click', searchWords);
-            searchInput.addEventListener('keyup', function(event) {
+            searchInput.addEventListener('keyup', function (event) {
                 if (event.key === 'Enter') {
                     searchWords();
                 }
             });
-            
+
             // 初始化页面
             renderGroupTabs();
         });
     </script>
 </body>
+
 </html>

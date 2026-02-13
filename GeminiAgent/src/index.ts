@@ -203,6 +203,7 @@ app.get('/', (req, res) => {
                 <button onclick="processMarkdown('pattern')" class="btn-primary" style="flex: 1; font-size: 10px;">Extract Patterns</button>
                 <button onclick="processMarkdown('common')" class="btn-primary" style="flex: 1; font-size: 10px;">Extract Common</button>
                 <button onclick="processArticle()" class="btn-primary" style="flex: 1; font-size: 10px;">Extract Article</button>
+                <button onclick="importJSON()" class="btn-primary" style="flex: 1; font-size: 10px; background-color: #673ab7;">Import JSON</button>
               </div>
             </div>
           </div>
@@ -461,6 +462,35 @@ app.get('/', (req, res) => {
           }
         }
 
+        async function importJSON() {
+          const content = document.getElementById('markdown-input').value;
+          if (!content) return logStatus('Please paste JSON data first', 'error');
+
+          logStatus('Importing JSON data...');
+          try {
+            const res = await fetch('/api/import/json', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content })
+            });
+            const result = await res.json();
+            if (result.success) {
+              logStatus('Imported successfully as ' + result.type + '!', 'success');
+              document.getElementById('markdown-input').value = '';
+              
+              if (result.type === 'article') {
+                loadArticlesUI();
+              } else {
+                loadLocalList(result.type);
+              }
+            } else {
+              logStatus('Import failed: ' + result.error, 'error');
+            }
+          } catch (err) {
+            logStatus('Network error: ' + err.message, 'error');
+          }
+        }
+
         // Init
         loadSidebar();
         loadLocalList('pattern');
@@ -630,6 +660,37 @@ app.post('/api/finalize-audio/:id', async (req: any, res: any) => {
   } catch (error: any) {
     console.error('Error finalizing audio:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+app.post('/api/import/json', async (req: any, res: any) => {
+  const { content, sessionId = 'manual-import' } = req.body;
+
+  if (!content) {
+    return res.status(400).json({ error: 'Content is required' });
+  }
+
+  try {
+    const data = JSON.parse(content);
+    let type = 'pattern';
+    if (data.sections) type = 'common';
+    else if (data.paragraphs) type = 'article';
+
+    if (type === 'article') {
+      saveArticle(data);
+      return res.json({ success: true, id: data.id, type });
+    }
+
+    const id = saveResult(sessionId, ['manual-import'], data, type);
+    res.json({
+      success: true,
+      id,
+      type,
+      data
+    });
+  } catch (error: any) {
+    console.error('Error importing JSON:', error);
+    res.status(400).json({ error: 'Invalid JSON: ' + error.message });
   }
 });
 

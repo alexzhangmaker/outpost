@@ -1230,6 +1230,22 @@
             measurementId: "G-QPHWRTH6BH"
         };
 
+        /**
+         * 与后端一致的 Firebase Key 清洗函数
+         */
+        function sanitizeFirebaseKey(key) {
+            if (!key) return key;
+            return key
+                .trim()
+                .replace(/^['"]|['"]$/g, '')
+                .replace(/\./g, '．')
+                .replace(/#/g, '＃')
+                .replace(/\$/g, '＄')
+                .replace(/\[/g, '［')
+                .replace(/\]/g, '］')
+                .replace(/\//g, '／');
+        }
+
         // 初始化Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -2392,7 +2408,8 @@
                 renderDictionaryDefinition(definition);
             } else {
                 // 如果不在缓存中，尝试从Firebase查询
-                database.ref(`thaiDictionary/${word}`).once('value')
+                const safeWord = typeof sanitizeFirebaseKey === 'function' ? sanitizeFirebaseKey(word) : word;
+                database.ref(`thaiDictionary/${safeWord}`).once('value')
                     .then((snapshot) => {
                         if (snapshot.exists()) {
                             const definition = snapshot.val();
