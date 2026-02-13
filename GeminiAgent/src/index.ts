@@ -61,12 +61,13 @@ app.get('/api/tts-proxy', async (req: any, res: any) => {
     if (sync && pKey && toneKey) {
       (async () => {
         try {
-          console.log(`[Background Sync] Starting for ${text} (${pKey}/${toneKey})`);
+          const modulePath = (req.query.modulePath as string) || 'thaiIPA';
+          console.log(`[Background Sync] Starting for ${text} (${modulePath}/practices/${pKey}/${toneKey})`);
           const fileName = `${text.replace(/\//g, '_')}_${toneKey}_${Date.now()}.mp3`;
-          const downloadURL = await uploadAudioToStorage(buffer, fileName, 'thaiIPA');
+          const downloadURL = await uploadAudioToStorage(buffer, fileName, modulePath);
 
-          const dbPath = `thaiIPA/practices/${pKey}/${toneKey}`;
-          await updateRealtimeDb(dbPath, { audioURL: downloadURL }); // Assuming saveToRealtimeDb can update
+          const dbPath = `${modulePath}/practices/${pKey}/${toneKey}`;
+          await updateRealtimeDb(dbPath, { audioURL: downloadURL });
           console.log(`[Background Sync] Success: ${downloadURL}`);
         } catch (err) {
           console.error(`[Background Sync] Failed:`, err);
@@ -84,12 +85,25 @@ app.get('/api/tts-proxy', async (req: any, res: any) => {
 });
 
 app.post('/api/thai-ipa/practices', async (req: any, res: any) => {
-  const data = req.body;
-  if (!data) return res.status(400).json({ error: 'Data is required' });
+  const { path, data } = req.body;
+
+  // Backward compatibility or if only data is sent
+  const targetPath = path || 'thaiIPA';
+  const practicesData = data || req.body;
+
+  if (!practicesData) return res.status(400).json({ error: 'Data is required' });
 
   try {
-    const dbPath = 'thaiIPA/practices';
-    await saveToRealtimeDb(dbPath, data);
+    const dbPath = targetPath.startsWith('/') ? targetPath.substring(1) : targetPath;
+
+    // If it's a full module (has title and practices), we might want to save the whole thing
+    if (practicesData.title && practicesData.practices) {
+      await updateRealtimeDb(dbPath, practicesData);
+    } else {
+      // Otherwise append to practices
+      await saveToRealtimeDb(`${dbPath}/practices`, practicesData);
+    }
+
     res.json({ success: true });
   } catch (error: any) {
     console.error('Firebase Save Error:', error);
