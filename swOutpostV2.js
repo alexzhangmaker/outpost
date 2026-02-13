@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getFirestore, collection, query, where, onSnapshot, doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const CACHE_NAME = 'outpost-v2-cache-v3';
+const CACHE_NAME = 'outpost-v2-cache-v4';
 const DB_NAME = 'OutpostDB';
 const DB_VERSION = 2;
 const STORE_NAME = 'todos';
@@ -78,7 +78,18 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-    event.waitUntil(clients.claim());
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Deleting old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim())
+    );
 });
 
 const syncFirestoreToIdb = (userId) => {
@@ -149,9 +160,12 @@ self.addEventListener('message', async (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    // Isolated matching: Only search the current valid cache version
     event.respondWith(
-        caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.match(event.request).then((response) => {
+                return response || fetch(event.request);
+            });
         })
     );
 });
