@@ -907,24 +907,36 @@
 
             // 更新同义词
             const synonymsContainer = document.getElementById('synonyms-container');
+            const synonymsSection = document.querySelector('.synonyms');
             synonymsContainer.innerHTML = '';
-            word.synonyms.slice(0, 3).forEach(synonym => {
-                const span = document.createElement('span');
-                span.className = 'synonym';
-                span.textContent = synonym;
-                synonymsContainer.appendChild(span);
-            });
+
+            if (word.synonyms && word.synonyms.length > 0) {
+                synonymsSection.style.display = 'block';
+                word.synonyms.slice(0, 3).forEach(synonym => {
+                    const span = document.createElement('span');
+                    span.className = 'synonym';
+                    span.textContent = synonym;
+                    synonymsContainer.appendChild(span);
+                });
+            } else {
+                synonymsSection.style.display = 'none';
+            }
 
             // 更新反义词
-            if (word.hasOwnProperty("antonyms") == true && word.antonyms != undefined) {
-                const antonymsContainer = document.getElementById('antonyms-container');
-                antonymsContainer.innerHTML = '';
+            const antonymsContainer = document.getElementById('antonyms-container');
+            const antonymsSection = document.querySelector('.antonyms');
+            antonymsContainer.innerHTML = '';
+
+            if (word.antonyms && word.antonyms.length > 0) {
+                antonymsSection.style.display = 'block';
                 word.antonyms.slice(0, 2).forEach(antonym => {
                     const span = document.createElement('span');
                     span.className = 'antonym';
                     span.textContent = antonym;
                     antonymsContainer.appendChild(span);
                 });
+            } else {
+                antonymsSection.style.display = 'none';
             }
 
             // 更新常用短语
@@ -1101,52 +1113,64 @@
                 };
                 */
                 try {
-                    // 定义需要的字段路径（支持嵌套，如 'thai.word'）
-                    const requiredPaths = [
+                    // 定义必需字段路径
+                    const criticalPaths = [
                         'thai.word',
                         'thai.pronunciation',
                         'definitions',
-                        'synonyms',
-                        'antonyms',
                         'common_phrases'
                     ];
+                    // 定义可选字段路径（缺失会上报但允许通过）
+                    const optionalPaths = [
+                        'synonyms',
+                        'antonyms'
+                    ];
 
-                    // 辅助函数：安全获取嵌套属性并判断是否存在（非 null / undefined）
+                    // 辅助函数：安全获取嵌套属性并判断是否存在
                     function hasPath(obj, path) {
                         return path.split('.').every(key => {
-                            if (obj == null) return false; // null 或 undefined 中断
+                            if (obj == null) return false;
                             obj = obj[key];
-                            return obj != null; // 允许 0, '', false 等 falsy 但存在的值
+                            return obj != null;
                         });
                     }
 
-                    // 检查所有必需路径是否存在
-                    let missingPaths = [];
-                    for (const path of requiredPaths) {
+                    // 检查必需字段
+                    let missingCritical = [];
+                    for (const path of criticalPaths) {
                         if (!hasPath(jsonWord, path)) {
-                            missingPaths.push(path);
+                            missingCritical.push(path);
                         }
                     }
-
-                    if (missingPaths.length > 0) {
-                        throw new Error(`Missing required property: ${missingPaths.join(', ')}`);
+                    if (missingCritical.length > 0) {
+                        throw new Error(`CRITICAL_MISSING: ${missingCritical.join(', ')}`);
                     }
 
-                    // 如果全部存在，构建对象
+                    // 检查可选字段并上报
+                    let missingOptional = [];
+                    for (const path of optionalPaths) {
+                        if (!hasPath(jsonWord, path)) {
+                            missingOptional.push(path);
+                        }
+                    }
+                    if (missingOptional.length > 0) {
+                        await reportDataError('INCOMPLETE_DATA', 'thaiDictionary', word, `Missing optional property: ${missingOptional.join(', ')}`);
+                    }
+
+                    // 全部存在或仅缺失可选字段，构建对象
                     let ankiWord = {
                         thai: jsonWord.thai.word,
                         pronunciation: jsonWord.thai.pronunciation,
                         definitions: jsonWord.definitions,
-                        synonyms: jsonWord.synonyms,
-                        antonyms: jsonWord.antonyms,
-                        common_phrases: jsonWord.common_phrases
+                        synonyms: jsonWord.synonyms || [], // 容错处理
+                        antonyms: jsonWord.antonyms || [],
+                        common_phrases: jsonWord.common_phrases || []
                     };
-                    // ✅ 后续使用 ankiWord ...
                     wordList.push(ankiWord);
+
                 } catch (error) {
                     console.error('Data validation failed:', error.message);
                     await reportDataError('INCOMPLETE_DATA', 'thaiDictionary', word, error.message);
-                    // 可在此处 fallback（如跳过、用默认值、提示用户等）
                     console.log(jsonWord);
                 }
             }
