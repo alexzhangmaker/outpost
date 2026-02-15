@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Explorer: Interative Reading & Writing</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-dim: #64748b;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --error: #ef4444;
+            --sidebar-width: 320px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-page);
+            color: var(--text-main);
+            overflow: hidden;
+            /* Prevent body scroll, use container scroll */
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Sidebar Toggle Container */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            transition: all 0.3s ease;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #ffffff;
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            transition: margin-left 0.3s ease, opacity 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .sidebar.hidden {
+            margin-left: calc(var(--sidebar-width) * -1);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            margin-bottom: 0.75rem;
+            background: #f1f5f9;
+        }
+
+        .nav-item:hover {
+            background: #e2e8f0;
+        }
+
+        .nav-item.active {
+            background: #eef2ff;
+            border-color: var(--primary);
+        }
+
+        .nav-item h4 {
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .nav-item p {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        /* Main Content Wrapper */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Toolbar */
+        .top-toolbar {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .btn-toggle {
+            background: var(--bg-page);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-toggle:hover {
+            background: #e2e8f0;
+        }
+
+        /* Fixed Top Section (Chart) */
+        .chart-section {
+            background: #fff;
+            padding: 1.5rem 2.5rem;
+            border-bottom: 2px solid var(--border);
+            flex-shrink: 0;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+
+        .chart-header {
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* Scrollable Bottom Section (Questions) */
+        .scrollable-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 2.5rem;
+            background: var(--bg-page);
+        }
+
+        /* Interactive Steps */
+        .steps-container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .step-block {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.5rem;
+            background: #e0e7ff;
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .step-title {
+            font-size: 1.25rem;
+            margin-bottom: 1.25rem;
+            color: var(--text-main);
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 0.5rem;
+        }
+
+        .question-item {
+            margin-bottom: 2rem;
+        }
+
+        .question-text {
+            font-weight: 500;
+            margin-bottom: 1rem;
+            font-size: 1.05rem;
+        }
+
+        .options-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .option-btn {
+            background: #fff;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary);
+            background: #f8fafc;
+        }
+
+        .option-btn.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .option-btn.correct {
+            border-color: var(--success);
+            background: #f0fdf4;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            border-color: var(--error);
+            background: #fef2f2;
+            color: var(--error);
+        }
+
+        /* Writing Tools */
+        .writing-card {
+            background: #fff;
+            border: 2px solid var(--primary);
+            padding: 2rem;
+            border-radius: 1rem;
+        }
+
+        .text-input {
+            width: 100%;
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            line-height: 1.6;
+            min-height: 150px;
+            margin-top: 1rem;
+            background: #f8fafc;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+
+        .token-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .token {
+            font-size: 0.8rem;
+            background: #f1f5f9;
+            padding: 0.3rem 0.7rem;
+            border-radius: 2rem;
+            border: 1px dashed var(--border);
+            color: var(--text-dim);
+        }
+
+        .btn-action {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: background 0.2s;
+        }
+
+        .btn-action:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Scrollbar styling */
+        .scrollable-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .scrollable-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo">ChartExplorer v1.1</div>
+
+            <div id="case-list">
+                <!-- Cases will be injected here -->
+            </div>
+
+            <div
+                style="margin-top: auto; padding: 1rem; background: #f8fafc; border-radius: 0.5rem; border: 1px solid var(--border);">
+                <p style="font-size: 0.75rem; color: var(--text-dim);">Reference: Developing Reading Skills</p>
+            </div>
+        </div>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <div class="top-toolbar">
+                <button class="btn-toggle" onclick="toggleSidebar()">
+                    <span id="toggle-icon">📂</span> <span id="toggle-text">Hide Menu</span>
+                </button>
+                <div id="case-title-small" style="margin-left: 1.5rem; font-weight: 600; color: var(--primary);"></div>
+            </div>
+
+            <!-- Fixed Chart Section -->
+            <div class="chart-section" id="chart-section">
+                <!-- Content injected by JS -->
+            </div>
+
+            <!-- Scrollable Questions Section -->
+            <div class="scrollable-content">
+                <div class="steps-container" id="steps-container">
+                    <!-- Steps injected by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CASES = [
+            {
+                id: 'tuna-global',
+                title: 'Pacific Bluefin Tuna',
+                subtitle: 'Historical Catches (1952–2020)',
+                description: 'Analyze country contributions to tuna fishing over 70 years.',
+                chartType: 'line',
+                labels: [1952, 1956, 1960, 1964, 1968, 1972, 1976, 1980, 1984, 1988, 1992, 1996, 2000, 2004, 2008, 2012, 2016, 2020],
+                datasets: [
+                    { label: 'Japan', data: [15000, 28000, 22000, 25000, 18000, 8000, 18000, 28000, 12000, 8000, 10000, 24000, 15000, 15000, 20000, 10000, 7000, 8000], fill: true, backgroundColor: 'rgba(79, 70, 229, 0.15)', borderColor: '#4f46e5', tension: 0.3 },
+                    { label: 'Mexico', data: [0, 0, 0, 0, 2000, 5000, 4000, 8000, 2000, 0, 2000, 4000, 10000, 12000, 8000, 5000, 4000, 3000], fill: true, backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: '#ef4444', tension: 0.3 },
+                    { label: 'USA', data: [3000, 12000, 5000, 8000, 2000, 1000, 2000, 3000, 1000, 2000, 1000, 2000, 1000, 1000, 1000, 1000, 1000, 1000], fill: true, backgroundColor: 'rgba(34, 197, 94, 0.15)', borderColor: '#22c55e', tension: 0.3 }
+                ],
+                steps: [
+                    {
+                        type: 'orient',
+                        title: '1. Orient & Familiarize',
+                        questions: [
+                            { q: 'What is the y-axis measuring?', options: ['Number of boats', 'Catch in metric tons', 'Profit in dollars'], correct: 1 },
+                            { q: 'Which country caught the most tuna in 1956?', options: ['Japan', 'USA', 'Mexico'], correct: 0 }
+                        ]
+                    },
+                    {
+                        type: 'trends',
+                        title: '2. Describing Patterns',
+                        questions: [
+                            { q: 'Which country showed a steady growth in its catch since 1990?', options: ['USA', 'Mexico', 'Japan'], correct: 1 },
+                            { q: 'Overall, the catch in 2020 compared to 1960 is...', options: ['Much higher', 'Slightly higher', 'Significantly lower'], correct: 2 }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'fish-production',
+                title: 'Global Fish Production',
+                subtitle: 'Wild Capture vs. Aquaculture (1950–2020)',
+                description: 'Explore the rise of fish farming.',
+                chartType: 'line',
+                labels: [1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020],
+                datasets: [
+                    { label: 'Wild Capture', data: [18, 35, 65, 70, 85, 90, 88, 90], borderColor: '#0ea5e9', tension: 0.2 },
+                    { label: 'Aquaculture', data: [1, 2, 5, 8, 15, 35, 60, 92], borderColor: '#10b981', tension: 0.2 }
+                ],
+                steps: [
+                    {
+                        type: 'orient',
+                        title: 'Data Comparison',
+                        questions: [
+                            { q: 'Until what year was Wild Capture significantly higher than Aquaculture?', options: ['1980', '2000', '2015'], correct: 2 }
+                        ]
+                    },
+                    {
+                        type: 'trends',
+                        title: 'Growth Analysis',
+                        questions: [
+                            { q: 'The Aquaculture trend can be described as...', options: ['Stable', 'Exponential Growth', 'Gradual Decline'], correct: 1 }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        let activeCaseId = CASES[0].id;
+        let chartInstance = null;
+        let sidebarVisible = true;
+
+        function toggleSidebar() {
+            sidebarVisible = !sidebarVisible;
+            const sidebar = document.getElementById('sidebar');
+            const toggleText = document.getElementById('toggle-text');
+            const toggleIcon = document.getElementById('toggle-icon');
+
+            if (sidebarVisible) {
+                sidebar.classList.remove('hidden');
+                toggleText.innerText = "Hide Menu";
+                toggleIcon.innerText = "📂";
+            } else {
+                sidebar.classList.add('hidden');
+                toggleText.innerText = "Show Menu";
+                toggleIcon.innerText = "📁";
+            }
+
+            // Allow time for CSS transition then resize chart
+            setTimeout(() => { if (chartInstance) chartInstance.resize(); }, 300);
+        }
+
+        function init() {
+            renderSidebar();
+            switchCase(activeCaseId);
+        }
+
+        function renderSidebar() {
+            const list = document.getElementById('case-list');
+            list.innerHTML = CASES.map(c => `
+                <div class="nav-item ${c.id === activeCaseId ? 'active' : ''}" onclick="switchCase('${c.id}')">
+                    <h4>${c.title}</h4>
+                    <p>${c.subtitle}</p>
+                </div>
+            `).join('');
+        }
+
+        function switchCase(id) {
+            activeCaseId = id;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            renderSidebar();
+
+            const c = CASES.find(x => x.id === id);
+
+            // Update Top Section (Fixed)
+            const chartSection = document.getElementById('chart-section');
+            chartSection.innerHTML = `
+                <div class="chart-header">
+                    <h2 style="font-size: 1.5rem; color: var(--primary);">${c.title}</h2>
+                    <p style="color: var(--text-dim); font-size: 0.9rem;">${c.subtitle} — ${c.description}</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            `;
+
+            document.getElementById('case-title-small').innerText = c.title;
+
+            // Update Scrollable Section
+            const stepsContainer = document.getElementById('steps-container');
+            stepsContainer.innerHTML = `
+                ${c.steps.map((step, sIdx) => `
+                    <div class="step-block">
+                        <span class="step-badge">Phase ${sIdx + 1}</span>
+                        <h3 class="step-title">${step.title}</h3>
+                        ${step.questions.map((q, qIdx) => `
+                            <div class="question-item">
+                                <p class="question-text">${qIdx + 1}. ${q.q}</p>
+                                <div class="options-list">
+                                    ${q.options.map((opt, oIdx) => `
+                                        <button class="option-btn" onclick="checkAnswer(this, ${oIdx}, ${q.correct})">${opt}</button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `).join('')}
+
+                <div class="step-block writing-card">
+                    <span class="step-badge" style="background:var(--primary); color:white;">Phase Final</span>
+                    <h3 class="step-title">3. Paragraph Construction</h3>
+                    <p>Describe the main trends shown in the graph above. Ensure you mention specific time periods and country differences.</p>
+                    <textarea class="text-input" placeholder="Start writing: According to the graph..."></textarea>
+                    
+                    <div class="token-cloud">
+                        <span class="token">According to the graph</span>
+                        <span class="token">remained stable</span>
+                        <span class="token">doubled</span>
+                        <span class="token">declined by</span>
+                        <span class="token">reached a peak</span>
+                        <span class="token">between 1952 and 1980</span>
+                    </div>
+                    <button class="btn-action">Submit Summary</button>
+                </div>
+            `;
+
+            renderChart(c);
+        }
+
+        function checkAnswer(btn, selectedIdx, correctIdx) {
+            const parent = btn.parentElement;
+            const buttons = parent.querySelectorAll('.option-btn');
+
+            buttons.forEach(b => b.classList.remove('selected', 'correct', 'wrong'));
+
+            if (selectedIdx === correctIdx) {
+                btn.classList.add('correct');
+            } else {
+                btn.classList.add('wrong');
+                buttons[correctIdx].classList.add('correct');
+            }
+        }
+
+        function renderChart(c) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: c.chartType,
+                data: {
+                    labels: c.labels,
+                    datasets: c.datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 12 } } },
+                        tooltip: { backgroundColor: 'white', titleColor: '#1e293b', bodyColor: '#475569', borderColor: '#e2e8f0', borderWidth: 1 }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { size: 10 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.onload = init;
+    </script>
+</body>
+
+</html>
