@@ -435,6 +435,110 @@
                         ]
                     }
                 ]
+            },
+            {
+                id: 'seafood-consumption',
+                title: 'Seafood Consumption',
+                subtitle: 'Annual Consumption per Capita (kg) by Region (2020)',
+                description: 'Compare how much seafood people eat in different parts of the world.',
+                chartType: 'bar',
+                labels: ['Asia', 'Europe', 'Oceania', 'North America', 'South America', 'Africa'],
+                datasets: [
+                    {
+                        label: 'Consumption (kg per person)',
+                        data: [24.5, 21.0, 20.2, 18.5, 9.8, 8.2],
+                        backgroundColor: [
+                            'rgba(79, 70, 229, 0.7)',
+                            'rgba(14, 165, 233, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(100, 116, 139, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }
+                ],
+                steps: [
+                    {
+                        type: 'orient',
+                        title: '1. Reading the Bars',
+                        questions: [
+                            { q: 'Which region has the highest seafood consumption per capita?', options: ['Europe', 'Asia', 'Oceania'], correct: 1 },
+                            { q: 'What is the approximate consumption in North America?', options: ['18.5 kg', '24.5 kg', '8.2 kg'], correct: 0 }
+                        ]
+                    },
+                    {
+                        type: 'trends',
+                        title: '2. Comparative Analysis',
+                        questions: [
+                            { q: 'The consumption in Asia is approximately _____ times that of Africa.', options: ['2', '3', '5'], correct: 1 },
+                            { q: 'Which two regions consume more than 20kg per person?', options: ['Asia & Europe', 'Africa & South America', 'All regions'], correct: 0 }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'fish-production-vocab',
+                title: 'Global Fish Production',
+                subtitle: 'Vocabulary Application (1950–2020)',
+                description: 'Complete the sentences using trend vocabulary.',
+                chartType: 'line',
+                labels: [1950, 1955, 1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020],
+                datasets: [
+                    { label: 'Total Production', data: [20, 28, 32, 50, 65, 70, 75, 100, 95, 120, 125, 140, 150, 170, 180], borderColor: '#1e293b', borderWidth: 2, fill: false },
+                    { label: 'Wild Capture', data: [20, 28, 30, 48, 60, 65, 68, 85, 80, 85, 95, 90, 90, 95, 90], backgroundColor: 'rgba(14, 165, 233, 0.7)', fill: true },
+                    { label: 'Aquaculture', data: [0, 0, 2, 2, 5, 5, 7, 15, 15, 35, 30, 50, 60, 75, 90], backgroundColor: 'rgba(234, 88, 12, 0.7)', fill: true }
+                ],
+                steps: [
+                    {
+                        type: 'sentence-completion',
+                        title: '1. Using the Word Bank',
+                        wordBank: ['decreased', 'doubled', 'increased', 'remained stable', 'tripled'],
+                        questions: [
+                            {
+                                q: 'According to the graph, production from fish farming _________ by about 20 million metric tons between 1995 and 2005.',
+                                options: ['decreased', 'doubled', 'increased', 'remained stable', 'tripled'],
+                                correct: 2
+                            },
+                            {
+                                q: 'Total fish production roughly _________ between 1985 and 2015.',
+                                options: ['decreased', 'doubled', 'increased', 'remained stable', 'tripled'],
+                                correct: 1
+                            },
+                            {
+                                q: 'The amount of fish caught in the wild _________ between 2005 and 2015.',
+                                options: ['decreased', 'doubled', 'increased', 'remained stable', 'tripled'],
+                                correct: 3
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'tuna-species',
+                title: 'Bluefin Tuna by Species',
+                subtitle: 'Describing Trends (2005–2009)',
+                description: 'Practice identifying and correcting sentences about specific species.',
+                chartType: 'line',
+                labels: ['2005', '2006', '2007', '2008', '2009'],
+                datasets: [
+                    { label: 'Atlantic bluefin', data: [40000, 35000, 38000, 28000, 23000], backgroundColor: 'rgba(124, 58, 237, 0.5)', fill: true },
+                    { label: 'Pacific bluefin', data: [31000, 26000, 21000, 25000, 22000], backgroundColor: 'rgba(52, 211, 153, 0.5)', fill: true },
+                    { label: 'Southern bluefin', data: [17000, 16000, 13000, 15000, 14000], backgroundColor: 'rgba(14, 165, 233, 0.5)', fill: true }
+                ],
+                steps: [
+                    {
+                        type: 'sentence-verification',
+                        title: '1. Fact Checking',
+                        questions: [
+                            { text: 'However, production of Southern bluefin tuna remained more or less stable.', isCorrect: true },
+                            { text: 'The graph shows global production for each species of bluefin tuna in metric tons between 2005 and 2009.', isCorrect: true },
+                            { text: 'In 2005, total bluefin production was almost 70,000 metric tons; by 2009, that number had fallen to about 60,000.', isCorrect: false, hint: 'Calculation error: 40k+31k+17k is near 88k, not 70k.' },
+                            { text: 'According to the graph, total production of bluefin tuna increased steadily between 2005 and 2009.', isCorrect: false, hint: 'It actually decreased from ~88k down to ~59k.' },
+                            { text: 'As for production level by species, both Atlantic and Pacific bluefin tuna showed some variation between 2005 and 2009.', isCorrect: true }
+                        ]
+                    }
+                ]
             }
         ];
 
@@ -505,23 +609,14 @@
                     <div class="step-block">
                         <span class="step-badge">Phase ${sIdx + 1}</span>
                         <h3 class="step-title">${step.title}</h3>
-                        ${step.questions.map((q, qIdx) => `
-                            <div class="question-item">
-                                <p class="question-text">${qIdx + 1}. ${q.q}</p>
-                                <div class="options-list">
-                                    ${q.options.map((opt, oIdx) => `
-                                        <button class="option-btn" onclick="checkAnswer(this, ${oIdx}, ${q.correct})">${opt}</button>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `).join('')}
+                        ${renderStepContent(step)}
                     </div>
                 `).join('')}
 
                 <div class="step-block writing-card">
                     <span class="step-badge" style="background:var(--primary); color:white;">Phase Final</span>
-                    <h3 class="step-title">3. Paragraph Construction</h3>
-                    <p>Describe the main trends shown in the graph above. Ensure you mention specific time periods and country differences.</p>
+                    <h3 class="step-title">Paragraph Construction</h3>
+                    <p>Describe the main trends shown in the graph above. Ensure you mention specific time periods and species differences.</p>
                     <textarea class="text-input" placeholder="Start writing: According to the graph..."></textarea>
                     
                     <div class="token-cloud">
@@ -530,13 +625,46 @@
                         <span class="token">doubled</span>
                         <span class="token">declined by</span>
                         <span class="token">reached a peak</span>
-                        <span class="token">between 1952 and 1980</span>
+                        <span class="token">between 2005 and 2009</span>
                     </div>
                     <button class="btn-action">Submit Summary</button>
                 </div>
             `;
 
             renderChart(c);
+        }
+
+        function renderStepContent(step) {
+            if (step.type === 'orient' || step.type === 'trends' || step.type === 'sentence-completion') {
+                return `
+                    ${step.wordBank ? `<div class="token-cloud" style="margin-bottom:1.5rem;"><p style="width:100%; font-size:0.8rem; color:var(--text-dim);">Word Bank:</p> ${step.wordBank.map(w => `<span class="token" style="background:#eef2ff; border-style:solid; color:var(--primary);">${w}</span>`).join('')}</div>` : ''}
+                    ${step.questions.map((q, qIdx) => `
+                        <div class="question-item">
+                            <p class="question-text">${qIdx + 1}. ${q.q}</p>
+                            <div class="options-list">
+                                ${q.options.map((opt, oIdx) => `
+                                    <button class="option-btn" onclick="checkAnswer(this, ${oIdx}, ${q.correct})">${opt}</button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            } else if (step.type === 'sentence-verification') {
+                return `
+                    <p style="margin-bottom:1rem; font-size:0.9rem; color:var(--text-dim);">Check the sentences that correctly describe the graph:</p>
+                    <div class="questions-grid">
+                        ${step.questions.map((q, qIdx) => `
+                            <div style="margin-bottom:1rem; padding:1rem; border:1px solid var(--border); border-radius:0.5rem; display:flex; gap:1rem; align-items:flex-start;">
+                                <input type="checkbox" style="width:20px; height:20px; margin-top:4px;" onchange="verifySentence(this, ${q.isCorrect}, '${q.hint || ''}')">
+                                <div>
+                                    <p style="font-size:1rem; line-height:1.4;">${q.text}</p>
+                                    <div class="feedback-msg" style="margin-top:0.5rem; font-size:0.85rem;"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
         }
 
         function checkAnswer(btn, selectedIdx, correctIdx) {
@@ -550,6 +678,22 @@
             } else {
                 btn.classList.add('wrong');
                 buttons[correctIdx].classList.add('correct');
+            }
+        }
+
+        function verifySentence(checkbox, isCorrect, hint) {
+            const feedback = checkbox.parentElement.querySelector('.feedback-msg');
+            feedback.style.display = 'block';
+            if (checkbox.checked) {
+                if (isCorrect) {
+                    feedback.innerText = "✓ Correct! This is an accurate description.";
+                    feedback.style.color = "var(--success)";
+                } else {
+                    feedback.innerText = "✗ Incorrect. " + (hint || "This statement is inaccurate.");
+                    feedback.style.color = "var(--error)";
+                }
+            } else {
+                feedback.style.display = 'none';
             }
         }
 

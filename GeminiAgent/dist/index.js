@@ -1,19 +1,25 @@
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { generate } from 'short-uuid';
-import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT } from './agent.js';
-import { saveMessage, getMessages, createSession, saveResult, getResults, updateResult, getResultById } from './database.js';
+import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT, thaiArticleSchema, THAI_ARTICLE_PROMPT, thaiWordLearningSchema, THAI_WORD_LEARNING_PROMPT } from './agent.js';
+import { saveMessage, getMessages, createSession, saveResult, getResults, updateResult, getResultById, saveArticle, getArticles, getArticleById, updateArticle } from './database.js';
 import { generateThaiAudio } from './tts.js';
-import { uploadAudioToStorage, saveToRealtimeDb, getFromRealtimeDb } from './firebase.js';
+import { saveToRealtimeDb, updateRealtimeDb, uploadAudioToStorage, getFromRealtimeDb, saveArticleToFirebase } from './firebase.js';
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
+app.use(cors());
 app.use(express.json());
+// Serve static files from the root outpost directory
+const rootDir = path.resolve(process.cwd(), '../');
+app.use(express.static(rootDir));
+console.log(`Serving static files from: ${rootDir}`);
 // Setup multer for image uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -29,9 +35,170 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 const port = process.env.PORT || 3000;
-app.get('/api/firebase/results', async (req, res) => {
+app.get('/api/tts-proxy', async (req, res) => {
+    const text = req.query.text;
+    const sync = req.query.sync === 'true';
+    const pKey = req.query.pKey;
+    const toneKey = req.query.toneKey;
+    if (!text)
+        return res.status(400).json({ error: 'Text is required' });
     try {
-        const data = await getFromRealtimeDb('sentencePatterns');
+        const targetUrl = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(text)}`;
+        const response = await fetch(targetUrl);
+        if (!response.ok) {
+            throw new Error(`Upstream TTS Proxy returned ${response.status}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        // If sync is requested, perform background tasks
+        if (sync && pKey && toneKey) {
+            (async () => {
+                try {
+                    const modulePath = req.query.modulePath || 'thaiIPA';
+                    console.log(`[Background Sync] Starting for ${text} (${modulePath}/practices/${pKey}/${toneKey})`);
+                    const fileName = `${text.replace(/\//g, '_')}_${toneKey}_${Date.now()}.mp3`;
+                    const downloadURL = await uploadAudioToStorage(buffer, fileName, modulePath);
+                    const dbPath = `${modulePath}/practices/${pKey}/${toneKey}`;
+                    await updateRealtimeDb(dbPath, { audioURL: downloadURL });
+                    console.log(`[Background Sync] Success: ${downloadURL}`);
+                }
+                catch (err) {
+                    console.error(`[Background Sync] Failed:`, err);
+                }
+            })();
+        }
+        res.set('Content-Type', 'audio/mpeg');
+        res.set('Access-Control-Allow-Origin', '*');
+        res.send(buffer);
+    }
+    catch (error) {
+        console.error('TTS Proxy Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+app.post('/api/thai-word-learning/generate', async (req, res) => {
+    const { word, sessionId = 'thai-word-learning' } = req.body;
+    if (!word)
+        return res.status(400).json({ error: 'Word is required' });
+    try {
+        createSession(sessionId);
+        // 1. Generate with Gemini
+        const result = await geminiAgent.generate([
+            {
+                role: 'user',
+                content: [
+                    { type: 'text', text: THAI_WORD_LEARNING_PROMPT },
+                    { type: 'text', text: word }
+                ],
+            },
+        ], {
+            structuredOutput: {
+                schema: thaiWordLearningSchema,
+            },
+        });
+        let data = result.object;
+        // 2. Save to local SQLite (Intermediate state)
+        const localId = saveResult(sessionId, ['gemini-generated'], data, 'thai_word_learning');
+        // 3. Process Audio (Async process for better UX? No, the user wants it done before saving to Firebase)
+        // Actually, for a single word, it takes some time but it's more stable to do it now.
+        const processAudio = async (text) => {
+            if (!text)
+                return null;
+            // Clean text for TTS (remove underscores for completion exercises)
+            const cleanText = text.replace(/_+/g, ' ').trim();
+            try {
+                const audioBuffer = await generateThaiAudio(cleanText);
+                const fileName = `${generate()}.mp3`;
+                return await uploadAudioToStorage(audioBuffer, fileName, 'ThaiWordsListen');
+            }
+            catch (err) {
+                console.error(`TTS Error for "${text}":`, err);
+                return null;
+            }
+        };
+        // Generate Audio for various fields
+        console.log(`Generating audio for word: ${data.word}`);
+        data.audioURL = await processAudio(data.word);
+        // Process Examples
+        for (const ex of data.example_sentences) {
+            console.log(`Generating audio for example: ${ex.id}`);
+            ex.audioURL = await processAudio(ex.sentence);
+        }
+        // Process Synonyms
+        for (const syn of data.synonyms) {
+            syn.audioURL = await processAudio(syn.word);
+        }
+        // Process Antonyms
+        for (const ant of data.antonyms) {
+            ant.audioURL = await processAudio(ant.word);
+        }
+        // Process Word Family
+        for (const family of data.word_family) {
+            family.audioURL = await processAudio(family.form);
+            if (family.example) {
+                family.example.audioURL = await processAudio(family.example.sentence);
+            }
+        }
+        // Process Exercises
+        for (const ex of data.exercises) {
+            if (ex.questions) {
+                for (const q of ex.questions) {
+                    if (q.sentence) {
+                        q.audioURL = await processAudio(q.sentence);
+                    }
+                }
+            }
+        }
+        // 4. Update local SQLite with final data (including audioURLs)
+        updateResult(Number(localId), data);
+        // 5. Save to Firebase ThaiWordsListen
+        // The path requested is ThaiWordsListen
+        await updateRealtimeDb(`ThaiWordsListen/${data.word}`, data);
+        res.json({ success: true, localId, data });
+    }
+    catch (error) {
+        console.error('Thai Word Learning Generate Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+app.get('/api/thai-word-learning/check/:word', async (req, res) => {
+    const { word } = req.params;
+    try {
+        const data = await getFromRealtimeDb(`ThaiWordsListen/${word}`);
+        res.json({ exists: !!data, data });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.post('/api/thai-ipa/practices', async (req, res) => {
+    const { path, data } = req.body;
+    // Backward compatibility or if only data is sent
+    const targetPath = path || 'thaiIPA';
+    const practicesData = data || req.body;
+    if (!practicesData)
+        return res.status(400).json({ error: 'Data is required' });
+    try {
+        const dbPath = targetPath.startsWith('/') ? targetPath.substring(1) : targetPath;
+        // If it's a full module (has title and practices), we might want to save the whole thing
+        if (practicesData.title && practicesData.practices) {
+            await updateRealtimeDb(dbPath, practicesData);
+        }
+        else {
+            // Otherwise append to practices
+            await saveToRealtimeDb(`${dbPath}/practices`, practicesData);
+        }
+        res.json({ success: true });
+    }
+    catch (error) {
+        console.error('Firebase Save Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+app.get('/api/firebase/results', async (req, res) => {
+    const path = req.query.path || 'sentencePatterns';
+    try {
+        const data = await getFromRealtimeDb(path);
         res.json({ results: data || {} });
     }
     catch (error) {
@@ -39,301 +206,14 @@ app.get('/api/firebase/results', async (req, res) => {
     }
 });
 app.get('/', (req, res) => {
-    res.send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>Gemini Agent Console</title>
-      <style>
-        :root {
-          --primary: #2c3e50;
-          --secondary: #34495e;
-          --accent: #3498db;
-          --light: #ecf0f1;
-          --border: #ddd;
-          --success: #27ae60;
-        }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* Layout */
-        .toolbar { background: var(--primary); color: white; padding: 0 20px; height: 60px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 100; }
-        .main-container { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 320px; background: var(--light); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
-        .content-area { flex: 1; display: flex; flex-direction: column; background: white; overflow: hidden; }
-
-        /* Sidebar Sections */
-        .sidebar-section { padding: 15px; border-bottom: 1px solid var(--border); }
-        .sidebar-section h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #7f8c8d; }
-        
-        /* Nav Items */
-        .nav-list { flex: 1; overflow-y: auto; }
-        .nav-item { padding: 12px 15px; border-bottom: 1px solid #e0e0e0; cursor: pointer; transition: background 0.2s; border-left: 4px solid transparent; }
-        .nav-item:hover { background: #e8ecef; }
-        .nav-item.active { background: white; border-left-color: var(--accent); }
-        .nav-item strong { display: block; font-size: 14px; color: var(--primary); margin-bottom: 4px; }
-        .nav-item small { color: #95a5a6; font-size: 11px; }
-
-        /* Content Area */
-        .editor-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .editor-container { flex: 1; padding: 20px; display: flex; flex-direction: column; }
-        textarea { flex: 1; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; padding: 15px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; line-height: 1.6; resize: none; background: #fafafa; }
-        
-        .actions { padding: 20px; border-top: 1px solid var(--border); display: flex; gap: 12px; }
-
-        /* Buttons */
-        button { padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; }
-        button:active { transform: translateY(1px); }
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-secondary { background: #95a5a6; color: white; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* Status & UI Info */
-        #status-bar { padding: 8px 20px; font-size: 12px; border-top: 1px solid var(--border); background: #f8f9fa; }
-        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #95a5a6; }
-        
-        /* Form Styling */
-        .upload-form input { margin-bottom: 10px; width: 100%; font-size: 12px; }
-      </style>
-    </head>
-    <body>
-      <div class="toolbar">
-        <h2 style="margin: 0; font-size: 1.3rem; letter-spacing: -0.5px;">Gemini Agent <span style="font-weight: 300; opacity: 0.8;">| Console</span></h2>
-        <div id="connection-status" style="font-size: 12px; opacity: 0.8;">● Connected</div>
-      </div>
-      
-      <div class="main-container">
-        <div class="sidebar">
-          <div class="sidebar-section">
-            <h3>Extraction Stage 1 (Images)</h3>
-            <form action="/api/process-images" method="post" enctype="multipart/form-data" class="upload-form">
-              <input type="file" name="images" multiple>
-              <button type="submit" class="btn-primary" style="width: 100%">Run Vision Analyzer</button>
-            </form>
-          </div>
-
-          <div class="sidebar-section">
-            <h3>Extraction Stage 1 (Text)</h3>
-            <div class="upload-form">
-              <textarea id="markdown-input" placeholder="Paste Markdown document here..." style="width: 100%; height: 80px; padding: 10px; font-size: 11px; margin-bottom: 8px; box-sizing: border-box;"></textarea>
-              <div style="display: flex; gap: 5px;">
-                <button onclick="processMarkdown('pattern')" class="btn-primary" style="flex: 1; font-size: 10px;">Extract Patterns</button>
-                <button onclick="processMarkdown('common')" class="btn-primary" style="flex: 1; font-size: 10px;">Extract Common</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="sidebar-section" style="background: #fff; padding: 10px;">
-            <button onclick="loadSidebar()" class="btn-secondary" style="width: 100%; font-size: 11px; padding: 6px;">Refresh Firebase List</button>
-          </div>
-          
-          <div class="sidebar-section">
-            <h3>Local Extraction Queue</h3>
-            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-              <button onclick="loadLocalList('pattern')" class="btn-secondary" style="flex: 1; font-size: 10px;">Patterns</button>
-              <button onclick="loadLocalList('common')" class="btn-secondary" style="flex: 1; font-size: 10px;">Common Sentences</button>
-            </div>
-            <div class="nav-list" id="sidebar-list">
-              <!-- Sidebar items will load here -->
-            </div>
-          </div>
-        </div>
-        
-        <div class="content-area">
-          <div id="editor-view" style="display:none; flex: 1; flex-direction: column;">
-            <div class="editor-header">
-              <h2 id="view-title" style="margin: 0; font-size: 1.1rem;">Edit Record</h2>
-              <div id="record-meta" style="font-size: 12px; color: #7f8c8d;"></div>
-            </div>
-            
-            <div class="editor-container">
-              <textarea id="json-editor" spellcheck="false"></textarea>
-            </div>
-            
-            <div class="actions">
-              <button id="btn-save" onclick="saveChanges()" class="btn-primary">Save Local Changes</button>
-              <button id="btn-finalize" onclick="finalizeRecord()" class="btn-success">Finalize & Sync to Cloud</button>
-            </div>
-          </div>
-          
-          <div id="empty-view" class="empty-state">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-            <p>Select a record to start editing</p>
-            <button onclick="loadLocalList()" class="btn-secondary" style="margin-top: 10px;">View Local Extraction Queue</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="status-bar">Ready</div>
-
-      <script>
-        let currentRecordId = null;
-        let isFirebase = false;
-
-        function logStatus(msg, type = 'info') {
-          const bar = document.getElementById('status-bar');
-          bar.innerText = msg;
-          bar.style.color = type === 'error' ? '#e74c3c' : (type === 'success' ? '#27ae60' : '#2c3e50');
-        }
-
-        async function loadSidebar() {
-          const list = document.getElementById('sidebar-list');
-          list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Fetching Firebase...</div>';
-          try {
-            const res = await fetch('/api/firebase/results');
-            const { results } = await res.json();
-            
-            if (Object.keys(results).length === 0) {
-              list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No cloud records found</div>';
-              return;
-            }
-
-            list.innerHTML = Object.keys(results).map(key => {
-              const item = results[key];
-              return \`
-                <div class="nav-item" onclick="selectRecord('\${key}', true, \${JSON.stringify(item).replace(/"/g, '&quot;')})">
-                  <strong>\${item.topic || 'Untitiled'}</strong>
-                  <small>FB: \${key}</small>
-                </div>
-              \`;
-            }).join('');
-          } catch (err) {
-            logStatus('Firebase load error: ' + err.message, 'error');
-            list.innerHTML = '<div style="padding: 20px; color: #e74c3c;">Failed to load Firebase list</div>';
-          }
-        }
-
-        async function loadLocalList(type = 'pattern') {
-          const list = document.getElementById('sidebar-list');
-          list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Fetching Local...</div>';
-          try {
-            const res = await fetch(\`/api/results?type=\${type}\`);
-            const { results } = await res.json();
-            
-            list.innerHTML = results.map(r => {
-              const data = JSON.parse(r.extractedData);
-              const title = type === 'pattern' ? (data.topic || 'Untitled') : (data.title || 'Untitled');
-              return \`
-                <div class="nav-item" onclick="selectRecord('\${r.id}', false, \${r.extractedData.replace(/"/g, '&quot;')}, '\${r.createdAt}', '\${r.type}')">
-                  <strong>\${title}</strong>
-                  <small>Local ID: \${r.id} | \${new Date(r.createdAt).toLocaleTimeString()}</small>
-                </div>
-              \`;
-            }).join('');
-          } catch (err) {
-            logStatus('Local load error: ' + err.message, 'error');
-          }
-        }
-
-        let currentRecordType = 'pattern';
-
-        function selectRecord(id, fromFirebase, data, timestamp = '', type = 'pattern') {
-          currentRecordId = id;
-          isFirebase = fromFirebase;
-          currentRecordType = type;
-          
-          document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-          event.currentTarget.classList.add('active');
-
-          document.getElementById('empty-view').style.display = 'none';
-          document.getElementById('editor-view').style.display = 'flex';
-          
-          document.getElementById('view-title').innerText = fromFirebase ? 'Cloud Record' : 'Local Draft';
-          document.getElementById('record-meta').innerText = (fromFirebase ? 'Firebase Key: ' : 'Local ID: ') + id + (timestamp ? ' | ' + timestamp : '');
-          
-          document.getElementById('json-editor').value = JSON.stringify(data, null, 2);
-          
-          // Disable cloud editing for now as requested (Phase 2 flow focus)
-          document.getElementById('btn-finalize').style.display = fromFirebase ? 'none' : 'inline-flex';
-          document.getElementById('btn-save').disabled = fromFirebase;
-          
-          logStatus('Loaded ' + (fromFirebase ? 'Cloud' : 'Local') + ' record: ' + id);
-        }
-
-        async function saveChanges() {
-          if (isFirebase) return;
-          
-          const saveBtn = document.getElementById('btn-save');
-          saveBtn.disabled = true;
-          logStatus('Saving...');
-          
-          try {
-            const data = JSON.parse(document.getElementById('json-editor').value);
-            const res = await fetch('/api/results/' + currentRecordId, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ extractedData: data })
-            });
-            const result = await res.json();
-            if (result.success) {
-              logStatus('Successfully saved to SQLite', 'success');
-            }
-          } catch (err) {
-            logStatus('Save error: ' + err.message, 'error');
-          } finally {
-            saveBtn.disabled = false;
-          }
-        }
-
-        async function finalizeRecord() {
-          if (isFirebase) return;
-          
-          const finalizeBtn = document.getElementById('btn-finalize');
-          finalizeBtn.disabled = true;
-          logStatus('Finalizing... (Generating Audio & Syncing to Firebase)');
-          
-          const endpoint = currentRecordType === 'pattern' ? '/api/finalize-audio/' : '/api/finalize-common-sentences/';
-          
-          try {
-            const res = await fetch(endpoint + currentRecordId, { method: 'POST' });
-            const result = await res.json();
-            if (result.success) {
-              logStatus('Finalized! Synced to Firebase.', 'success');
-              document.getElementById('json-editor').value = JSON.stringify(result.data, null, 2);
-              loadSidebar();
-            } else {
-              logStatus('Finalization failed: ' + result.error, 'error');
-            }
-          } catch (err) {
-            logStatus('System error: ' + err.message, 'error');
-          } finally {
-            finalizeBtn.disabled = false;
-          }
-        }
-
-        async function processMarkdown(type = 'pattern') {
-          const content = document.getElementById('markdown-input').value;
-          if (!content) return logStatus('Please paste some content first', 'error');
-
-          logStatus('Processing ' + type + ' extraction...');
-          const endpoint = type === 'pattern' ? '/api/extract/markdown' : '/api/extract/common-sentences';
-          try {
-            const res = await fetch(endpoint, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ content })
-            });
-            const result = await res.json();
-            if (result.success) {
-              logStatus('Processed successfully!', 'success');
-              document.getElementById('markdown-input').value = '';
-              loadLocalList(type);
-            } else {
-              logStatus('Extraction failed: ' + result.error, 'error');
-            }
-          } catch (err) {
-            logStatus('Network error: ' + err.message, 'error');
-          }
-        }
-
-        // Init
-        loadSidebar();
-        loadLocalList('pattern');
-      </script>
-    </body>
-    </html>
-  `);
+    res.json({
+        message: 'Gemini Agent Service is running.',
+        endpoints: [
+            '/api/thai-word-learning/generate',
+            '/api/articles/process',
+            '/api/history/:sessionId'
+        ]
+    });
 });
 app.post('/api/process-images', upload.array('images'), async (req, res) => {
     const files = req.files;
@@ -472,6 +352,35 @@ app.post('/api/finalize-audio/:id', async (req, res) => {
         res.status(500).json({ error: error.message || 'Internal server error' });
     }
 });
+app.post('/api/import/json', async (req, res) => {
+    const { content, sessionId = 'manual-import' } = req.body;
+    if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+    }
+    try {
+        const data = JSON.parse(content);
+        let type = 'pattern';
+        if (data.sections)
+            type = 'common';
+        else if (data.paragraphs)
+            type = 'article';
+        if (type === 'article') {
+            saveArticle(data);
+            return res.json({ success: true, id: data.id, type });
+        }
+        const id = saveResult(sessionId, ['manual-import'], data, type);
+        res.json({
+            success: true,
+            id,
+            type,
+            data
+        });
+    }
+    catch (error) {
+        console.error('Error importing JSON:', error);
+        res.status(400).json({ error: 'Invalid JSON: ' + error.message });
+    }
+});
 app.post('/api/extract/common-sentences', async (req, res) => {
     const { content, sessionId = 'default' } = req.body;
     if (!content) {
@@ -554,6 +463,97 @@ app.post('/api/finalize-common-sentences/:id', async (req, res) => {
     }
     catch (error) {
         console.error('Error finalizing common sentences:', error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+});
+// --- Thai Close Reading Article Endpoints ---
+// Step 1: Process text/markdown via Gemini and save to local SQLite
+app.post('/api/articles/process', async (req, res) => {
+    const { content } = req.body;
+    if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+    }
+    try {
+        console.log('Processing Thai article with Gemini...');
+        const result = await geminiAgent.generate([
+            {
+                role: 'user',
+                content: [
+                    { type: 'text', text: THAI_ARTICLE_PROMPT },
+                    { type: 'text', text: content }
+                ],
+            },
+        ], {
+            structuredOutput: {
+                schema: thaiArticleSchema,
+            },
+        });
+        const article = result.object;
+        article.status = 'pending_verification';
+        saveArticle(article);
+        res.json({
+            success: true,
+            data: article,
+        });
+    }
+    catch (error) {
+        console.error('Error processing article:', error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+});
+// List articles for verification
+app.get('/api/articles', async (req, res) => {
+    try {
+        const status = req.query.status;
+        const articles = getArticles(status);
+        res.json({ success: true, articles });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// Step 2: Finalize article - Generate TTS, Upload to Firebase Storage, Save to Firebase DB
+app.post('/api/articles/:id/finalize', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const record = getArticleById(id);
+        if (!record) {
+            return res.status(404).json({ error: 'Article not found' });
+        }
+        let article = JSON.parse(record.content);
+        console.log(`Finalizing article: ${article.title}`);
+        // Iterate through paragraphs and sentences for TTS
+        for (const paragraph of article.paragraphs) {
+            for (const sentence of paragraph.sentences) {
+                if (sentence.thai) {
+                    console.log(`Generating TTS for: ${sentence.thai.substring(0, 30)}...`);
+                    try {
+                        const audioBuffer = await generateThaiAudio(sentence.thai);
+                        const fileName = `${sentence.sentence_id}.mp3`;
+                        // Upload to Firebase Storage in 'audio' directory to match UI expectations
+                        await uploadAudioToStorage(audioBuffer, fileName, 'audio');
+                        // The audioURI in the JSON should match the path used by the UI (relative to storage bucket root)
+                        sentence.audioURI = `audio/${fileName}`;
+                    }
+                    catch (ttsError) {
+                        console.error(`TTS/Upload Error for "${sentence.thai}":`, ttsError);
+                    }
+                }
+            }
+        }
+        // Mark as completed and update local DB
+        article.status = 'completed';
+        updateArticle(id, article, 'completed');
+        // Save final JSON to Firebase Realtime Database
+        await saveArticleToFirebase(article);
+        console.log(`Article ${id} finalized and synced to Firebase.`);
+        res.json({
+            success: true,
+            data: article,
+        });
+    }
+    catch (error) {
+        console.error('Error finalizing article:', error);
         res.status(500).json({ error: error.message || 'Internal server error' });
     }
 });

@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Agent Console</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #3498db;
+            --light: #ecf0f1;
+            --border: #ddd;
+            --success: #27ae60;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layout */
+        .toolbar {
+            background: var(--primary);
+            color: white;
+            padding: 0 20px;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: var(--light);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            overflow: hidden;
+        }
+
+        /* Sidebar Sections */
+        .sidebar-section {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #7f8c8d;
+        }
+
+        /* Nav Items */
+        .nav-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #e8ecef;
+        }
+
+        .nav-item.active {
+            background: white;
+            border-left-color: var(--accent);
+        }
+
+        .nav-item strong {
+            display: block;
+            font-size: 14px;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .nav-item small {
+            color: #95a5a6;
+            font-size: 11px;
+        }
+
+        /* Content Area */
+        .editor-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        textarea {
+            flex: 1;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            background: #fafafa;
+        }
+
+        .actions {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Buttons */
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Status & UI Info */
+        #status-bar {
+            padding: 8px 20px;
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+            background: #f8f9fa;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #95a5a6;
+        }
+
+        /* Form Styling */
+        .upload-form input {
+            margin-bottom: 10px;
+            width: 100%;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toolbar">
+        <h2 style="margin: 0; font-size: 1.3rem; letter-spacing: -0.5px;">Gemini Agent <span
+                style="font-weight: 300; opacity: 0.8;">| Console</span></h2>
+        <div id="connection-status"
+            style="font-size: 12px; opacity: 0.8; display: flex; align-items: center; gap: 8px;">
+            <input type="text" id="api-base" value="http://localhost:3000"
+                style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; width: 150px;"
+                placeholder="API Base URL">
+            <span>● Connected</span>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <h3>Extraction Stage 1 (Images)</h3>
+                <p style="font-size: 11px; color: #7f8c8d; margin-bottom: 8px;">Note: Images must be processed through
+                    server directly.</p>
+                <form id="image-form" class="upload-form">
+                    <input type="file" name="images" id="image-files" multiple>
+                    <button type="button" onclick="uploadImages()" class="btn-primary" style="width: 100%">Run Vision
+                        Analyzer</button>
+                </form>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Extraction Stage 1 (Text)</h3>
+                <div class="upload-form">
+                    <textarea id="markdown-input" placeholder="Paste Markdown document here..."
+                        style="width: 100%; height: 80px; padding: 10px; font-size: 11px; margin-bottom: 8px; box-sizing: border-box;"></textarea>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="processMarkdown('pattern')" class="btn-primary"
+                            style="flex: 1; font-size: 10px;">Extract Patterns</button>
+                        <button onclick="processMarkdown('common')" class="btn-primary"
+                            style="flex: 1; font-size: 10px;">Extract Common</button>
+                        <button onclick="processArticle()" class="btn-primary" style="flex: 1; font-size: 10px;">Extract
+                            Article</button>
+                        <button onclick="importJSON()" class="btn-primary"
+                            style="flex: 1; font-size: 10px; background-color: #673ab7;">Import JSON</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Thai Word Learning</h3>
+                <div class="upload-form">
+                    <input type="text" id="thai-word-input" placeholder="Enter Thai word..."
+                        style="width: 100%; height: 36px; padding: 0 10px; font-size: 13px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box;">
+                    <button onclick="checkAndGenerateThaiWord()" class="btn-primary" style="width: 100%">Check &
+                        Generate</button>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Cloud Content</h3>
+                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                    <button onclick="loadSidebar('sentencePatterns')" class="btn-secondary"
+                        style="flex: 1; font-size: 10px;">Sentences</button>
+                    <button onclick="loadSidebar('ThaiWordsListen')" class="btn-secondary"
+                        style="flex: 1; font-size: 10px;">Thai Words</button>
+                    <button onclick="loadSidebar('ThaiCLoseReading')" class="btn-secondary"
+                        style="flex: 1; font-size: 10px;">Articles</button>
+                </div>
+                <button onclick="loadSidebar('sentencePatterns')" class="btn-secondary"
+                    style="width: 100%; font-size: 11px; padding: 6px; display: none;">Refresh Firebase List</button>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Local Extraction Queue</h3>
+                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                    <button onclick="loadLocalList('pattern')" class="btn-secondary"
+                        style="flex: 1; font-size: 10px;">Patterns</button>
+                    <button onclick="loadLocalList('common')" class="btn-secondary"
+                        style="flex: 1; font-size: 10px;">Common Sentences</button>
+                    <button onclick="loadArticlesUI()" class="btn-secondary"
+                        style="flex: 1; font-size: 10px;">Articles</button>
+                </div>
+                <div class="nav-list" id="sidebar-list">
+                    <!-- Sidebar items will load here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div id="editor-view" style="display:none; flex: 1; flex-direction: column;">
+                <div class="editor-header">
+                    <h2 id="view-title" style="margin: 0; font-size: 1.1rem;">Edit Record</h2>
+                    <div id="record-meta" style="font-size: 12px; color: #7f8c8d;"></div>
+                </div>
+
+                <div class="editor-container">
+                    <textarea id="json-editor" spellcheck="false"></textarea>
+                </div>
+
+                <div class="actions">
+                    <button id="btn-save" onclick="saveChanges()" class="btn-primary">Save Local Changes</button>
+                    <button id="btn-finalize" onclick="finalizeRecord()" class="btn-success">Finalize & Sync to
+                        Cloud</button>
+                </div>
+            </div>
+
+            <div id="empty-view" class="empty-state">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <p>Select a record to start editing</p>
+                <button onclick="loadLocalList()" class="btn-secondary" style="margin-top: 10px;">View Local Extraction
+                    Queue</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="status-bar">Ready</div>
+
+    <script>
+        let currentRecordId = null;
+        let isFirebase = false;
+        let lastResults = {};
+        let localStore = {};
+        let currentRecordType = 'pattern';
+
+        function getApiBase() {
+            let base = document.getElementById('api-base').value.trim();
+            if (!base) base = 'http://localhost:3000'; // Default if empty
+            if (base.endsWith('/')) base = base.slice(0, -1);
+            return base;
+        }
+
+        // Auto-detect if we're on port 3000
+        if (window.location.port === '3000' || window.location.port === '6001') {
+            const detected = window.location.origin;
+            const apiBaseInput = document.getElementById('api-base');
+            if (apiBaseInput.value.includes('localhost:3000')) {
+                // Keep default
+            } else if (window.location.port === '6001') {
+                // If user is on 6001, but server is on 3000, 
+                // we keep the manual config but warn in log
+                console.log("Current port is 6001, API might be on 3000.");
+            }
+        }
+
+        function logStatus(msg, type = 'info') {
+            const bar = document.getElementById('status-bar');
+            bar.innerText = msg;
+            bar.style.color = type === 'error' ? '#e74c3c' : (type === 'success' ? '#27ae60' : '#2c3e50');
+        }
+
+        async function loadSidebar(dbPath = 'sentencePatterns') {
+            const list = document.getElementById('sidebar-list');
+            list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Fetching Firebase...</div>';
+            try {
+                const res = await fetch(getApiBase() + '/api/firebase/results?path=' + encodeURIComponent(dbPath));
+                const data = await res.json();
+                const results = data.results || {};
+
+                if (Object.keys(results).length === 0) {
+                    list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No cloud records found</div>';
+                    return;
+                }
+
+                lastResults = results;
+                list.innerHTML = Object.keys(results).map(key => {
+                    const item = results[key];
+                    const title = item.word || item.topic || item.title || 'Untitled';
+                    return '<div class="nav-item" onclick="selectRecordRow(\'' + key + '\', true)">' +
+                        '<strong>' + title + '</strong>' +
+                        '<small>FB: ' + key + '</small>' +
+                        '</div>';
+                }).join('');
+            } catch (err) {
+                logStatus('Firebase load error: ' + err.message, 'error');
+                list.innerHTML = '<div style="padding: 20px; color: #e74c3c;">Failed to load Firebase list</div>';
+            }
+        }
+
+        function selectRecordRow(key, fromFirebase) {
+            const data = lastResults[key];
+            if (!data) return;
+            const finalData = (data.content && typeof data.content === 'string') ? JSON.parse(data.content) : data;
+            selectRecord(key, fromFirebase, finalData, data.createdAt || '');
+        }
+
+        async function checkAndGenerateThaiWord() {
+            const wordInput = document.getElementById('thai-word-input');
+            const word = wordInput.value.trim();
+            if (!word) return logStatus('Please enter a Thai word', 'error');
+
+            logStatus('Checking existence of "' + word + '"...');
+            try {
+                const checkRes = await fetch(getApiBase() + '/api/thai-word-learning/check/' + encodeURIComponent(word));
+                const { exists, data } = await checkRes.json();
+
+                if (exists) {
+                    logStatus('Word "' + word + '" already exists. Loading content...', 'success');
+                    selectRecord(word, true, data);
+                    return;
+                }
+
+                logStatus('Word "' + word + '" not found. Generating learning materials...');
+                const genRes = await fetch(getApiBase() + '/api/thai-word-learning/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word: word })
+                });
+
+                const genData = await genRes.json();
+                if (genData.success) {
+                    logStatus('Successfully generated "' + word + '"!', 'success');
+                    selectRecord(word, true, genData.data);
+                    loadSidebar('ThaiWordsListen');
+                } else {
+                    logStatus('Generation failed: ' + genData.error, 'error');
+                }
+            } catch (err) {
+                logStatus('Network error: ' + err.message, 'error');
+            }
+        }
+
+        async function loadArticlesUI() {
+            const list = document.getElementById('sidebar-list');
+            list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Fetching Articles...</div>';
+            try {
+                const res = await fetch(getApiBase() + '/api/articles');
+                const { articles } = await res.json();
+
+                list.innerHTML = articles.map(a => {
+                    localStore[a.id] = a;
+                    const data = JSON.parse(a.content);
+                    return '<div class="nav-item" onclick="selectLocalRecord(\'' + a.id + '\', \'article\')">' +
+                        '<strong>' + (data.title || 'Untitled Article') + '</strong>' +
+                        '<small>Article: ' + a.id + '</small>' +
+                        '</div>';
+                }).join('');
+            } catch (err) {
+                logStatus('Article load error: ' + err.message, 'error');
+            }
+        }
+
+        async function loadLocalList(type = 'pattern') {
+            const list = document.getElementById('sidebar-list');
+            list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Fetching Local...</div>';
+            try {
+                const res = await fetch(getApiBase() + '/api/results?type=' + type);
+                const { results } = await res.json();
+
+                list.innerHTML = results.map(r => {
+                    localStore[r.id] = r;
+                    const data = JSON.parse(r.extractedData);
+                    const title = type === 'pattern' ? (data.topic || 'Untitled') : (data.title || 'Untitled');
+                    return '<div class="nav-item" onclick="selectLocalRecord(\'' + r.id + '\', \'' + type + '\')">' +
+                        '<strong>' + title + '</strong>' +
+                        '<small>Local ID: ' + r.id + '</small>' +
+                        '</div>';
+                }).join('');
+            } catch (err) {
+                logStatus('Local load error: ' + err.message, 'error');
+            }
+        }
+
+        function selectLocalRecord(id, type) {
+            const r = localStore[id];
+            if (!r) return;
+            const data = JSON.parse(r.extractedData || r.content);
+            selectRecord(id, false, data, r.createdAt, type);
+        }
+
+        function selectRecord(id, fromFirebase, data, timestamp = '', type = 'pattern') {
+            currentRecordId = id;
+            isFirebase = fromFirebase;
+            currentRecordType = type;
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if (window.event && window.event.currentTarget) {
+                window.event.currentTarget.classList.add('active');
+            }
+
+            document.getElementById('empty-view').style.display = 'none';
+            document.getElementById('editor-view').style.display = 'flex';
+
+            document.getElementById('view-title').innerText = fromFirebase ? 'Cloud Record' : 'Local Draft';
+            document.getElementById('record-meta').innerText = (fromFirebase ? 'Firebase Key: ' : 'Local ID: ') + id + (timestamp ? ' | ' + timestamp : '');
+
+            document.getElementById('json-editor').value = JSON.stringify(data, null, 2);
+
+            document.getElementById('btn-finalize').style.display = fromFirebase ? 'none' : 'inline-flex';
+            document.getElementById('btn-save').disabled = fromFirebase;
+
+            logStatus('Loaded ' + (fromFirebase ? 'Cloud' : 'Local') + ' record: ' + id);
+        }
+
+        async function saveChanges() {
+            if (isFirebase) return;
+            const saveBtn = document.getElementById('btn-save');
+            saveBtn.disabled = true;
+            logStatus('Saving...');
+            try {
+                const data = JSON.parse(document.getElementById('json-editor').value);
+                const res = await fetch(getApiBase() + '/api/results/' + currentRecordId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ extractedData: data })
+                });
+                const result = await res.json();
+                if (result.success) logStatus('Successfully saved to SQLite', 'success');
+            } catch (err) {
+                logStatus('Save error: ' + err.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+            }
+        }
+
+        async function finalizeRecord() {
+            if (isFirebase) return;
+            const finalizeBtn = document.getElementById('btn-finalize');
+            finalizeBtn.disabled = true;
+            logStatus('Finalizing...');
+            let endpoint;
+            if (currentRecordType === 'pattern') endpoint = '/api/finalize-audio/';
+            else if (currentRecordType === 'common') endpoint = '/api/finalize-common-sentences/';
+            else if (currentRecordType === 'article') endpoint = '/api/articles/';
+            const suffix = currentRecordType === 'article' ? '/finalize' : '';
+            try {
+                const res = await fetch(getApiBase() + endpoint + currentRecordId + suffix, { method: 'POST' });
+                const result = await res.json();
+                if (result.success) {
+                    logStatus('Finalized! Synced to Firebase.', 'success');
+                    document.getElementById('json-editor').value = JSON.stringify(result.data, null, 2);
+                    loadSidebar();
+                } else logStatus('Finalization failed: ' + result.error, 'error');
+            } catch (err) {
+                logStatus('System error: ' + err.message, 'error');
+            } finally {
+                finalizeBtn.disabled = false;
+            }
+        }
+
+        async function processArticle() {
+            const content = document.getElementById('markdown-input').value;
+            if (!content) return logStatus('Please paste article content first', 'error');
+            logStatus('Processing Thai article extraction...');
+            try {
+                const res = await fetch(getApiBase() + '/api/articles/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    logStatus('Article processed successfully!', 'success');
+                    document.getElementById('markdown-input').value = '';
+                    loadArticlesUI();
+                } else logStatus('Extraction failed: ' + result.error, 'error');
+            } catch (err) {
+                logStatus('Network error: ' + err.message, 'error');
+            }
+        }
+
+        async function processMarkdown(type = 'pattern') {
+            const content = document.getElementById('markdown-input').value;
+            if (!content) return logStatus('Please paste some content first', 'error');
+            logStatus('Processing ' + type + ' extraction...');
+            const endpoint = type === 'pattern' ? '/api/extract/markdown' : '/api/extract/common-sentences';
+            try {
+                const res = await fetch(getApiBase() + endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    logStatus('Processed successfully!', 'success');
+                    document.getElementById('markdown-input').value = '';
+                    loadLocalList(type);
+                } else logStatus('Extraction failed: ' + result.error, 'error');
+            } catch (err) {
+                logStatus('Network error: ' + err.message, 'error');
+            }
+        }
+
+        async function importJSON() {
+            const content = document.getElementById('markdown-input').value;
+            if (!content) return logStatus('Please paste JSON data first', 'error');
+            logStatus('Importing JSON data...');
+            try {
+                const res = await fetch(getApiBase() + '/api/import/json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    logStatus('Imported successfully as ' + result.type + '!', 'success');
+                    document.getElementById('markdown-input').value = '';
+                    if (result.type === 'article') loadArticlesUI();
+                    else loadLocalList(result.type);
+                } else logStatus('Import failed: ' + result.error, 'error');
+            } catch (err) {
+                logStatus('Network error: ' + err.message, 'error');
+            }
+        }
+
+        async function uploadImages() {
+            const files = document.getElementById('image-files').files;
+            if (files.length === 0) return logStatus('Please select images first', 'error');
+            logStatus('Uploading images for processing...');
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('images', files[i]);
+            }
+            try {
+                const res = await fetch(getApiBase() + '/api/process-images', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await res.json();
+                if (result.success) {
+                    logStatus('Images processed! Check patterns list.', 'success');
+                    loadLocalList('pattern');
+                } else logStatus('Image processing failed: ' + result.error, 'error');
+            } catch (err) {
+                logStatus('Upload error: ' + err.message, 'error');
+            }
+        }
+
+        // Initialize with current location for convenience if on same host
+        if (window.location.protocol.startsWith('http')) {
+            document.getElementById('api-base').value = window.location.origin;
+        }
+
+        loadSidebar();
+        loadLocalList('pattern');
+    </script>
+</body>
+
+</html>
