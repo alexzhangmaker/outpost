@@ -10,22 +10,23 @@ import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT,
 import { saveMessage, getMessages, createSession, saveResult, getResults, updateResult, getResultById, saveArticle, getArticles, getArticleById, updateArticle } from './database.js';
 import { generateThaiAudio } from './tts.js';
 import { saveToRealtimeDb, updateRealtimeDb, uploadAudioToStorage, getFromRealtimeDb, saveArticleToFirebase } from './firebase.js';
-dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+// Load .env from the project root (one level up from src or dist)
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const app = express();
 app.use(cors());
 app.use(express.json());
 // Serve static files from the root outpost directory
-const rootDir = path.resolve(process.cwd(), '../');
+const rootDir = path.resolve(__dirname, '../../');
 app.use(express.static(rootDir));
 console.log(`Serving static files from: ${rootDir}`);
 // Setup multer for image uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = 'uploads/';
+        const uploadDir = path.resolve(__dirname, '../uploads/');
         if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
+            fs.mkdirSync(uploadDir, { recursive: true });
         }
         cb(null, uploadDir);
     },
@@ -80,9 +81,11 @@ app.post('/api/thai-word-learning/generate', async (req, res) => {
     const { word, sessionId = 'thai-word-learning' } = req.body;
     if (!word)
         return res.status(400).json({ error: 'Word is required' });
+    console.log(`[Generate] Starting generation for word: "${word}" in session: ${sessionId}`);
     try {
         createSession(sessionId);
         // 1. Generate with Gemini
+        console.log('[Generate] Step 1: Calling Gemini API...');
         const result = await geminiAgent.generate([
             {
                 role: 'user',
@@ -97,10 +100,11 @@ app.post('/api/thai-word-learning/generate', async (req, res) => {
             },
         });
         let data = result.object;
+        console.log('[Generate] Gemini returned data successfully');
         // 2. Save to local SQLite (Intermediate state)
         const localId = saveResult(sessionId, ['gemini-generated'], data, 'thai_word_learning');
-        // 3. Process Audio (Async process for better UX? No, the user wants it done before saving to Firebase)
-        // Actually, for a single word, it takes some time but it's more stable to do it now.
+        console.log(`[Generate] Step 2: Saved to local SQLite, id: ${localId}`);
+        // 3. Process Audio
         const processAudio = async (text) => {
             if (!text)
                 return null;
@@ -112,53 +116,61 @@ app.post('/api/thai-word-learning/generate', async (req, res) => {
                 return await uploadAudioToStorage(audioBuffer, fileName, 'ThaiWordsListen');
             }
             catch (err) {
-                console.error(`TTS Error for "${text}":`, err);
+                console.error(`[Generate] TTS Error for "${text}":`, err);
                 return null;
             }
         };
-        // Generate Audio for various fields
-        console.log(`Generating audio for word: ${data.word}`);
+        console.log(`[Generate] Step 3: Generating audio for word and examples...`);
         data.audioURL = await processAudio(data.word);
+        console.log(`[Generate] Word audio: ${data.audioURL}`);
         // Process Examples
         for (const ex of data.example_sentences) {
-            console.log(`Generating audio for example: ${ex.id}`);
             ex.audioURL = await processAudio(ex.sentence);
+            console.log(`[Generate] Example audio (${ex.id}): ${ex.audioURL}`);
         }
         // Process Synonyms
-        for (const syn of data.synonyms) {
+        for (const [idx, syn] of data.synonyms.entries()) {
             syn.audioURL = await processAudio(syn.word);
+            console.log(`[Generate] Synonym audio (${idx}): ${syn.audioURL}`);
         }
         // Process Antonyms
-        for (const ant of data.antonyms) {
+        for (const [idx, ant] of data.antonyms.entries()) {
             ant.audioURL = await processAudio(ant.word);
+            console.log(`[Generate] Antonym audio (${idx}): ${ant.audioURL}`);
         }
         // Process Word Family
-        for (const family of data.word_family) {
+        for (const [idx, family] of data.word_family.entries()) {
             family.audioURL = await processAudio(family.form);
+            console.log(`[Generate] Word family audio (${idx}): ${family.audioURL}`);
             if (family.example) {
                 family.example.audioURL = await processAudio(family.example.sentence);
+                console.log(`[Generate] Word family example audio (${idx}): ${family.example.audioURL}`);
             }
         }
         // Process Exercises
-        for (const ex of data.exercises) {
+        for (const [eIdx, ex] of data.exercises.entries()) {
             if (ex.questions) {
-                for (const q of ex.questions) {
+                for (const [qIdx, q] of ex.questions.entries()) {
                     if (q.sentence) {
                         q.audioURL = await processAudio(q.sentence);
+                        console.log(`[Generate] Exercise ${eIdx} Question ${qIdx} audio: ${q.audioURL}`);
                     }
                 }
             }
         }
+        console.log('[Generate] Audio processing complete');
         // 4. Update local SQLite with final data (including audioURLs)
         updateResult(Number(localId), data);
+        console.log('[Generate] Step 4: Final local update complete');
         // 5. Save to Firebase ThaiWordsListen
-        // The path requested is ThaiWordsListen
+        console.log('[Generate] Step 5: Updating Firebase Realtime DB...');
         await updateRealtimeDb(`ThaiWordsListen/${data.word}`, data);
+        console.log('[Generate] Firebase update complete');
         res.json({ success: true, localId, data });
     }
     catch (error) {
-        console.error('Thai Word Learning Generate Error:', error);
-        res.status(500).json({ error: error.message });
+        console.error('[Generate] FATAL ERROR:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 });
 app.get('/api/thai-word-learning/check/:word', async (req, res) => {
@@ -169,6 +181,67 @@ app.get('/api/thai-word-learning/check/:word', async (req, res) => {
     }
     catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+app.post('/api/thai-word-learning/fix-audio', async (req, res) => {
+    const { word } = req.body;
+    if (!word)
+        return res.status(400).json({ error: 'Word is required' });
+    console.log(`[FixAudio] Starting audio repair for word: "${word}"`);
+    try {
+        const data = await getFromRealtimeDb(`ThaiWordsListen/${word}`);
+        if (!data)
+            return res.status(404).json({ error: 'Word not found in Firebase' });
+        const processAudio = async (text) => {
+            if (!text)
+                return null;
+            const cleanText = text.replace(/_+/g, ' ').trim();
+            try {
+                const audioBuffer = await generateThaiAudio(cleanText);
+                const fileName = `${generate()}.mp3`;
+                return await uploadAudioToStorage(audioBuffer, fileName, 'ThaiWordsListen');
+            }
+            catch (err) {
+                console.error(`[FixAudio] TTS Error for "${text}":`, err);
+                return null;
+            }
+        };
+        if (!data.audioURL) {
+            data.audioURL = await processAudio(data.word);
+        }
+        for (const ex of data.example_sentences) {
+            if (!ex.audioURL)
+                ex.audioURL = await processAudio(ex.sentence);
+        }
+        for (const syn of data.synonyms) {
+            if (!syn.audioURL)
+                syn.audioURL = await processAudio(syn.word);
+        }
+        for (const ant of data.antonyms) {
+            if (!ant.audioURL)
+                ant.audioURL = await processAudio(ant.word);
+        }
+        for (const family of data.word_family) {
+            if (!family.audioURL)
+                family.audioURL = await processAudio(family.form);
+            if (family.example && !family.example.audioURL) {
+                family.example.audioURL = await processAudio(family.example.sentence);
+            }
+        }
+        for (const ex of data.exercises) {
+            if (ex.questions) {
+                for (const q of ex.questions) {
+                    if (q.sentence && !q.audioURL)
+                        q.audioURL = await processAudio(q.sentence);
+                }
+            }
+        }
+        await updateRealtimeDb(`ThaiWordsListen/${data.word}`, data);
+        res.json({ success: true, data });
+    }
+    catch (error) {
+        console.error('[FixAudio] FATAL ERROR:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 });
 app.post('/api/thai-ipa/practices', async (req, res) => {

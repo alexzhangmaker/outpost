@@ -485,9 +485,16 @@
             }
 
             playAudio(url) {
-                if (!url) return;
-                const audio = new Audio(url);
-                audio.play();
+                if (!url || url === 'undefined' || url === 'null') {
+                    console.warn('Audio URL is missing or invalid:', url);
+                    return;
+                }
+                try {
+                    const audio = new Audio(url);
+                    audio.play().catch(err => console.error('Audio playback failed:', err));
+                } catch (err) {
+                    console.error('Failed to create Audio object:', err);
+                }
             }
 
             createExplanationView(word) {

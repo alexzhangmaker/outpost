@@ -53,6 +53,7 @@ export const thaiArticleSchema = z.object({
 });
 export const thaiWordLearningSchema = z.object({
     word: z.string().describe('输入的泰语单词'),
+    audioURL: z.string().optional().describe('单词音频URL'),
     level: z.string().describe('固定值：\'A2 to B1\''),
     translation: z.object({
         chinese: z.string().describe('中文翻译'),
@@ -72,6 +73,7 @@ export const thaiWordLearningSchema = z.object({
     example_sentences: z.array(z.object({
         id: z.number().describe('从1开始的整数'),
         sentence: z.string().describe('泰语例句，确保句中其他词汇主要为A2水平'),
+        audioURL: z.string().optional().describe('例句音频URL'),
         translation: z.string().describe('中文翻译'),
         context: z.enum(['literal', 'figurative']).describe('取值：\'literal\' 或 \'figurative\''),
         analysis: z.string().describe('语境分析说明'),
@@ -79,22 +81,26 @@ export const thaiWordLearningSchema = z.object({
     })),
     synonyms: z.array(z.object({
         word: z.string().describe('近义词'),
+        audioURL: z.string().optional().describe('近义词音频URL'),
         part_of_speech: z.string().describe('词性'),
         meaning: z.string().describe('中文含义'),
         usage_notes: z.string().describe('用法辨析说明'),
     })),
     antonyms: z.array(z.object({
         word: z.string().describe('反义词'),
+        audioURL: z.string().optional().describe('反义词音频URL'),
         part_of_speech: z.string().describe('词性'),
         meaning: z.string().describe('中文含义'),
         usage_notes: z.string().describe('用法说明'),
     })),
     word_family: z.array(z.object({
         form: z.string().describe('派生词形式'),
+        audioURL: z.string().optional().describe('派生词音频URL'),
         part_of_speech: z.string().describe('词性'),
         meaning: z.string().describe('中文含义'),
         example: z.object({
             sentence: z.string().describe('泰语例句，确保句中其他词汇主要为A2水平'),
+            audioURL: z.string().optional().describe('派生词例句音频URL'),
             translation: z.string().describe('中文翻译'),
         }),
     })),
@@ -106,6 +112,7 @@ export const thaiWordLearningSchema = z.object({
         questions: z.array(z.object({
             question: z.string().optional().describe('问题文本'),
             sentence: z.string().optional().describe('练习中的泰语句子'),
+            audioURL: z.string().optional().describe('练习句子音频URL'),
             options: z.array(z.string()).optional().describe('选择题选项（如适用）'),
             answer: z.string().optional().describe('参考答案或判断标准'),
             explanation: z.string().optional().describe('解析'),
@@ -113,7 +120,7 @@ export const thaiWordLearningSchema = z.object({
         word_limit: z.string().optional().describe('写作练习的字数限制'),
         prompt: z.string().optional().describe('写作练习的提示'),
     })),
-    cultural_notes: z.string().describe('与文化背景相关的说明，不少于50字'),
+    cultural_notes: z.string().optional().describe('与文化背景相关的说明，不少于50字'),
 });
 const THAI_VISION_PROMPT = `**Role:** 你是一位精通泰语、中文和英语的语言学专家，擅长将泰语教学材料转换为结构化的 JSON 数据。
 

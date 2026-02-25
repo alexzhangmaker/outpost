@@ -312,7 +312,7 @@
                            <p class="text-sm text-slate-500 pl-5 font-medium leading-relaxed">${section.sectionDescription}</p>
                         </div>
                         <div class="grid grid-cols-1 gap-8 pl-5">
-                            ${(section.categories || []).map(cat => `
+                            ${(section.categories || []).map((cat, cIdx) => `
                                 <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                                     <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-center justify-between">
                                         <div class="flex flex-col">
@@ -324,12 +324,12 @@
                                         </div>
                                     </div>
                                     <div class="p-6 divide-y divide-slate-100">
-                                        ${(cat.sentences || []).map(sent => `
+                                        ${(cat.sentences || []).map((sent, sentIdx) => `
                                             <div class="py-4 first:pt-0 last:pb-0 group">
                                                 <div class="flex justify-between items-start gap-6">
                                                     <div class="flex-1 space-y-1.5">
                                                         <p class="text-lg font-bold text-slate-900 leading-snug group-hover:text-emerald-700 transition-colors">${sent.thai}</p>
-                                                        <p class="text-sm text-slate-500 font-medium">${sent.chinese}</p>
+                                                        <p contenteditable="true" onblur="updateTranslation(this, ${sIdx}, ${cIdx}, ${sentIdx})" class="text-sm text-slate-500 font-medium focus:text-emerald-600 focus:bg-emerald-50 px-1 rounded outline-none transition-all">${sent.chinese}</p>
                                                     </div>
                                                     ${sent.audioPath ? `
                                                         <button onclick="playAudio('${sent.audioPath}')" class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-90">
@@ -393,6 +393,38 @@
         window.playAudio = (url) => {
             const audio = new Audio(url);
             audio.play().catch(e => console.error('Audio play failed:', e));
+        };
+
+        window.updateTranslation = async (el, sIdx, cIdx, sentIdx) => {
+            if (!state.selectedId) return;
+            const newTranslation = el.innerText.trim();
+            const item = state.items[state.selectedId];
+
+            // Check if it's actually different
+            if (item.sections[sIdx].categories[cIdx].sentences[sentIdx].chinese === newTranslation) return;
+
+            // Update local state first (pessimistic update for the UI if needed, but here we just update memory)
+            item.sections[sIdx].categories[cIdx].sentences[sentIdx].chinese = newTranslation;
+
+            try {
+                // Flash effect to show activity
+                el.classList.add('bg-emerald-100/50');
+
+                // Save to Firebase
+                await set(ref(db, `commonSentences/${state.selectedId}/sections/${sIdx}/categories/${cIdx}/sentences/${sentIdx}/chinese`), newTranslation);
+
+                // Success feedback
+                el.classList.remove('bg-emerald-100/50');
+                el.classList.add('bg-green-100/30');
+                setTimeout(() => el.classList.remove('bg-green-100/30'), 1000);
+
+                // Sync the Raw JSON view if it's open
+                document.getElementById('json-textarea').value = JSON.stringify(item, null, 2);
+            } catch (err) {
+                console.error('Failed to update translation:', err);
+                el.classList.add('bg-red-100/50');
+                alert('Failed to save translation. Please check your connection.');
+            }
         };
 
         lucide.createIcons();

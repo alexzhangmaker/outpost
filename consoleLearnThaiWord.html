@@ -175,6 +175,21 @@
                             </div>
                             <div id="detail-tags" class="flex gap-2"></div>
                         </div>
+                        <div class="flex-1 max-w-sm mx-8">
+                            <div class="relative group">
+                                <input type="text" id="quick-add-input"
+                                    class="w-full pl-5 pr-12 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-800 transition-all thai-text"
+                                    placeholder="快速添加单词 (Enter)"
+                                    onkeydown="if(event.key === 'Enter') app.quickAddWord()">
+                                <button onclick="app.quickAddWord()"
+                                    class="absolute right-2 top-2 bottom-2 px-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                            d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                         <div class="text-right">
                             <p id="detail-count" class="text-2xl font-black text-indigo-600 leading-none">0</p>
                             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 mb-4">Total
@@ -327,6 +342,10 @@
                 onValue(ref(db, 'learnThaiWordSets'), (snapshot) => {
                     this.sets = snapshot.val() || {};
                     this.renderSidebar();
+                    // Reactively update current view if set membership changes
+                    if (this.currentSetId && this.sets[this.currentSetId]) {
+                        this.selectSet(this.currentSetId);
+                    }
                 });
 
                 // Listen to all words for existence check
@@ -390,8 +409,13 @@
                             <div class="flex justify-between items-start mb-4">
                                 <span class="thai-text text-3xl font-black text-slate-800">${word}</span>
                                 ${exists ? `
-                                    <div class="bg-green-100 text-green-600 p-1.5 rounded-xl">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                    <div class="flex gap-2">
+                                        <button onclick="app.fixAudio('${word}')" class="text-slate-400 hover:text-indigo-600 p-1.5 bg-slate-100 rounded-xl transition-all" title="修复音频">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        </button>
+                                        <div class="bg-green-100 text-green-600 p-1.5 rounded-xl">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                        </div>
                                     </div>
                                 ` : `
                                     <button onclick="app.generateWord('${word}')" class="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-200 hover:scale-110 active:scale-95 transition-all">
@@ -446,6 +470,34 @@
                     }
                 } catch (err) {
                     status.innerHTML = `<svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg><span class="text-sm font-bold">错误: ${err.message}</span>`;
+                    setTimeout(() => status.remove(), 4000);
+                }
+            }
+
+            async fixAudio(word) {
+                const status = document.createElement('div');
+                status.className = "fixed bottom-8 right-8 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 z-[200]";
+                status.innerHTML = `
+                    <div class="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-sm font-bold">正在修复 "${word}" 的音频...</span>
+                `;
+                document.body.appendChild(status);
+
+                try {
+                    const res = await fetch(`${this.getApiBase()}/api/thai-word-learning/fix-audio`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ word })
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                        status.innerHTML = `<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg><span class="text-sm font-bold">"${word}" 音频修复成功!</span>`;
+                        setTimeout(() => status.remove(), 2000);
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (err) {
+                    status.innerHTML = `<svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg><span class="text-sm font-bold">修复失败: ${err.message}</span>`;
                     setTimeout(() => status.remove(), 4000);
                 }
             }
@@ -522,6 +574,34 @@
             viewInApp() {
                 if (this.currentSetId) {
                     window.open(`appLearnThaiWords.html?setId=${this.currentSetId}`, '_blank');
+                }
+            }
+
+            async quickAddWord() {
+                const input = document.getElementById('quick-add-input');
+                const word = input.value.trim();
+                if (!word || !this.currentSetId) return;
+
+                const setData = this.sets[this.currentSetId];
+                const words = [...(setData.words || [])];
+
+                if (words.includes(word)) {
+                    input.value = '';
+                    return alert('该单词已在分组中');
+                }
+
+                words.push(word);
+
+                try {
+                    await set(ref(db, `learnThaiWordSets/${this.currentSetId}`), {
+                        ...setData,
+                        words,
+                        updatedAt: Date.now()
+                    });
+                    input.value = '';
+                    // The onValue listener will handle the UI refresh
+                } catch (err) {
+                    alert('添加失败: ' + err.message);
                 }
             }
         }
