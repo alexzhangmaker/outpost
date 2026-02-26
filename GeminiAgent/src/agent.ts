@@ -69,7 +69,7 @@ export const thaiWordLearningSchema = z.object({
     ipa: z.string().describe('IPA国际音标标注'),
   }),
   meanings: z.array(z.object({
-    type: z.enum(['literal', 'figurative']).describe('取值：\'literal\' 或 \'figurative\''),
+    type: z.string().describe('词义类型，通常为 \'literal\' (本义) 或 \'figurative\' (引申义)'),
     definition: z.string().describe('中文定义'),
     thai_definition: z.string().describe('泰语定义'),
     keywords: z.array(z.string()).describe('关键词数组'),
@@ -80,7 +80,7 @@ export const thaiWordLearningSchema = z.object({
     sentence: z.string().describe('泰语例句，确保句中其他词汇主要为A2水平'),
     audioURL: z.string().optional().describe('例句音频URL'),
     translation: z.string().describe('中文翻译'),
-    context: z.enum(['literal', 'figurative']).describe('取值：\'literal\' 或 \'figurative\''),
+    context: z.string().describe('语境类型，通常为 \'literal\' 或 \'figurative\''),
     analysis: z.string().describe('语境分析说明'),
     vocabulary_note: z.string().optional().describe('可选，如有必要解释句中可能出现的稍难词汇'),
   })),
@@ -336,9 +336,9 @@ export const THAI_WORD_LEARNING_PROMPT = `## 角色设定
 请遵循以下规则生成内容：
 
 ### 1. 词义分析 (meanings)
-- **literal (本义)**：描述该词的物理属性，指物体的弹性、伸缩性
-- **figurative (引申义)**：描述抽象概念，指人的灵活性、变通性，或政策的弹性空间
-- **必须同时包含 literal 和 figurative 两个含义**
+- **词义类型 (type)**：通常包括 **literal (本义)** 和 **figurative (引申义)**。
+- 如果单词具有多种语境，请尽可能同时包含本义和引申义。
+- 如果单词含义较单一（如纯功能词），则提供主要的词义即可，不强求拆分。
 
 ### 2. 发音标注 (phonetic)
 - 使用 **IPA (国际音标)** 标注发音
@@ -381,6 +381,11 @@ export const THAI_WORD_LEARNING_PROMPT = `## 角色设定
 
 所有练习句子同样遵循A2词汇为主的原则。
 
+**特别警告 (针对练习生成)：**
+- \`sentence\` 字段必须**只包含泰语原文**，禁止包含翻译、括号、或 "(literal/figurative?)" 等标记。
+- 每个字段的内容必须精炼，禁止重复输出相同内容（防止模型进入循环）。
+- 翻译应放在 \`explanation\` 或其他指定的翻译字段中，而非 \`sentence\`。
+
 ### 8. 文化注释 (cultural_notes)
 - 不少于50字
 - 探讨该词与泰国文化、思维方式、社会价值观的关联
@@ -408,7 +413,7 @@ export const THAI_WORD_LEARNING_PROMPT = `## 角色设定
 export const geminiAgent = new Agent({
   id: 'GeminiAgent',
   name: 'GeminiAgent',
-  instructions: THAI_VISION_PROMPT,
+  instructions: '你是一个精通泰语、中文和英语的语言专家。',
   model: {
     id: 'google/gemini-2.0-flash',
   },

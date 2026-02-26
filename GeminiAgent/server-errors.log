@@ -1,0 +1,26 @@
+
+[2026-02-25T10:02:18.184Z] Word: โดยเฉพาะอย่างยิ่ง
+Error: Structured output validation failed
+✖ Required
+
+Stack: Error: Structured output validation failed
+✖ Required
+
+    at ObjectFormatHandler.validateValue (file:///Users/zhangqing/Documents/GitHub/outpost/GeminiAgent/node_modules/@mastra/core/dist/chunk-5HDIPOLV.js:2057:20)
+    at ObjectFormatHandler.validateAndTransformFinal (file:///Users/zhangqing/Documents/GitHub/outpost/GeminiAgent/node_modules/@mastra/core/dist/chunk-5HDIPOLV.js:2167:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.transform (file:///Users/zhangqing/Documents/GitHub/outpost/GeminiAgent/node_modules/@mastra/core/dist/chunk-5HDIPOLV.js:2350:25)
+    at async transformStreamDefaultControllerPerformTransform (node:internal/webstreams/transformstream:527:12)
+
+[2026-02-25T10:06:28.967Z] Word: โดยเฉพาะอย่างยิ่ง
+Error: Structured output validation failed
+✖ Required
+
+Stack: Error: Structured output validation failed
+✖ Required
+
+    at ObjectFormatHandler.validateValue (file:///Users/zhangqing/Documents/GitHub/outpost/GeminiAgent/node_modules/@mastra/core/dist/chunk-5HDIPOLV.js:2057:20)
+    at ObjectFormatHandler.validateAndTransformFinal (file:///Users/zhangqing/Documents/GitHub/outpost/GeminiAgent/node_modules/@mastra/core/dist/chunk-5HDIPOLV.js:2167:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.transform (file:///Users/zhangqing/Documents/GitHub/outpost/GeminiAgent/node_modules/@mastra/core/dist/chunk-5HDIPOLV.js:2350:25)
+    at async transformStreamDefaultControllerPerformTransform (node:internal/webstreams/transformstream:527:12)

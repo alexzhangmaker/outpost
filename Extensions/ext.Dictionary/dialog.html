@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Thai Dictionary Assistant</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      color: #1c1e21;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .tabs {
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #65676b;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: #1877f2;
+      border-bottom: 3px solid #1877f2;
+    }
+
+    /* Window Controls */
+    .window-controls {
+      display: flex;
+      align-items: center;
+      padding-right: 10px;
+      gap: 5px;
+    }
+
+    .win-btn {
+      cursor: pointer;
+      padding: 5px 8px;
+      border-radius: 4px;
+      color: #65676b;
+      font-size: 16px;
+      user-select: none;
+      transition: all 0.2s;
+    }
+
+    .win-btn:hover {
+      background: #f0f2f5;
+      color: #1c1e21;
+    }
+
+    .win-btn.active {
+      color: #1877f2;
+      background: #e7f3ff;
+    }
+
+    .win-btn.close:hover {
+      background: #fa383e;
+      color: #fff;
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Dictionary View */
+    .input-grp {
+      margin-bottom: 15px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 80px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      resize: none;
+      box-sizing: border-box;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    select {
+      flex: 1;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+
+    button.action-btn {
+      padding: 8px 20px;
+      background: #1877f2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #result-box {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      min-height: 100px;
+      white-space: pre-wrap;
+    }
+
+    /* Settings View */
+    .setting-item {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    .save-status {
+      margin-top: 10px;
+      color: green;
+      font-size: 14px;
+      display: none;
+    }
+
+    /* TTS Buttons */
+    .tts-btn {
+      display: none;
+      cursor: pointer;
+      margin-left: 8px;
+      padding: 4px 8px;
+      background: #e7f3ff;
+      color: #1877f2;
+      border-radius: 4px;
+      font-size: 12px;
+      border: 1px solid #d0e7ff;
+      transition: all 0.2s;
+      vertical-align: middle;
+      user-select: none;
+    }
+
+    .tts-btn:hover {
+      background: #1877f2;
+      color: #fff;
+    }
+
+    .tts-btn.show {
+      display: inline-block;
+    }
+
+    .result-container {
+      position: relative;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    /* Host List Styles */
+    .host-list {
+      margin-top: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 5px;
+    }
+
+    .host-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 10px;
+      background: #f8f9fa;
+      margin-bottom: 5px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .host-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .remove-host {
+      color: #dc3545;
+      cursor: pointer;
+      font-weight: bold;
+      padding: 0 5px;
+    }
+
+    .remove-host:hover {
+      color: #a71d2a;
+    }
+
+    /* Cloud Sync Styles */
+    .select-col {
+      width: 40px;
+      text-align: center;
+    }
+
+    .panel-actions {
+      display: none;
+      justify-content: flex-end;
+      padding: 10px 0;
+      border-top: 1px solid #eee;
+    }
+
+    .sync-btn {
+      background: #1877f2;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .sync-btn:hover {
+      background: #166fe5;
+    }
+
+    .sync-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .sync-btn.success {
+      background: #28a745;
+    }
+
+    /* Auth Box */
+    .auth-box {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+
+    /* Sidepanel Adaptation */
+    @media (max-width: 400px) {
+      .tabs {
+        flex-wrap: wrap;
+      }
+
+      .tab-btn {
+        padding: 10px 5px;
+        font-size: 13px;
+      }
+
+      .window-controls {
+        display: none !important;
+      }
+
+      .content-area {
+        padding: 15px;
+      }
+    }
+
+    /* Explicitly hide controls if we detect sidepanel via body class */
+    body.is-sidepanel .window-controls {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="tabs">
+      <button id="tab-dict" class="tab-btn active">Dictionary</button>
+      <button id="tab-history" class="tab-btn">History</button>
+      <button id="tab-dict-cache" class="tab-btn">Dict Cache</button>
+      <button id="tab-settings" class="tab-btn">Settings</button>
+      <button id="tab-account" class="tab-btn">Account</button>
+      <button id="tab-debug" class="tab-btn">Debug</button>
+      <div class="window-controls">
+        <div id="sticky-btn" class="win-btn" title="Keep Window Open">📌</div>
+        <div id="close-btn" class="win-btn close" title="Close Window">✖</div>
+      </div>
+    </div>
+    <div class="content-area">
+      <!-- Dictionary Tab -->
+      <div id="content-dict" class="tab-content active">
+        <div class="input-grp">
+          <!-- New Thai Input Widget Container -->
+          <div id="thai-widget-container" style="margin-bottom: 15px;"></div>
+          <!-- Deprecated old textarea, kept for compatibility if needed -->
+          <textarea id="text-input" style="display: none;" placeholder="Enter text to translate..."></textarea>
+        </div>
+        <div class="controls">
+          <select id="lang-pair">
+            <option value="th-en">Thai -> English</option>
+            <option value="th-zh">Thai -> Chinese</option>
+            <option value="en-th">English -> Thai</option>
+          </select>
+          <button id="translate-btn" class="action-btn">Translate</button>
+        </div>
+        <div class="result-container">
+          <div class="result-header">
+            <span style="font-weight: 600;">Result:</span>
+            <div id="result-tts-btn" class="tts-btn">🔊 Play</div>
+          </div>
+          <div id="result-box">Result will appear here...</div>
+        </div>
+      </div>
+
+      <!-- History Tab -->
+      <div id="content-history" class="tab-content">
+        <div id="history-container">
+          <!-- History items will be injected here -->
+        </div>
+      </div>
+
+      <!-- Dict Cache Tab -->
+      <div id="content-dict-cache" class="tab-content">
+        <div class="setting-item">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;">Dictionary Cache</h3>
+            <button id="reload-dict-btn" class="action-btn" style="padding: 6px 12px; font-size: 13px;">Reload from
+              Cloud</button>
+          </div>
+          <div id="dict-stats" style="color: #65676b; font-size: 14px; margin-bottom: 15px;">
+            Loading statistics...
+          </div>
+          <div class="input-grp" style="display: flex; gap: 8px; margin-bottom: 15px;">
+            <input type="text" id="dict-search-input" placeholder="Search word in cache..." style="flex: 1;">
+            <button id="dict-search-btn" class="action-btn" style="padding: 8px 15px;">Search</button>
+          </div>
+          <div id="dict-results" class="host-list" style="max-height: 400px;">
+            <!-- Dictionary search results will be injected here -->
+          </div>
+
+          <div id="audit-queue-section" style="margin-top: 20px; border-top: 2px solid #eee; padding-top: 15px;">
+            <h3
+              style="font-size: 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+              Audit Queue
+              <span id="audit-count"
+                style="font-size: 12px; font-weight: normal; background: #eee; padding: 2px 6px; border-radius: 10px;">0</span>
+            </h3>
+            <div id="audit-list" class="host-list" style="max-height: 300px; overflow-y: auto;">
+              <div style="text-align:center;color:#999;padding:10px;">No items pending audit.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="content-settings" class="tab-content">
+        <div class="setting-item">
+          <label for="api-key">Google Cloud API Key</label>
+          <input type="password" id="api-key" placeholder="Enter your Google API key">
+        </div>
+        <div class="setting-item" style="margin-top: 10px;">
+          <label for="gemini-api-key">Gemini API Key</label>
+          <input type="password" id="gemini-api-key" placeholder="Enter Gemini-2.0-flash API Key">
+        </div>
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+        <div class="setting-item">
+          <label>Auxiliary Reading Websites</label>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="new-host" placeholder="Host (e.g. news.sanook.com)" style="flex: 1;">
+              <input type="text" id="new-selector" placeholder="Selector (e.g. body)" style="flex: 1;">
+            </div>
+            <button id="add-host" class="action-btn" style="width: 100%;">Add Website Configuration</button>
+          </div>
+          <div id="host-list" class="host-list">
+            <!-- Host list will be injected here -->
+          </div>
+        </div>
+
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+
+        <div class="setting-item">
+          <label>Firebase Configuration (RTDB)</label>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <input type="text" id="fb-api-key" placeholder="Firebase API Key">
+            <input type="text" id="fb-auth-domain" placeholder="Auth Domain (e.g. projectname.firebaseapp.com)">
+            <input type="text" id="fb-project-id" placeholder="Project ID">
+            <input type="text" id="fb-db-url" placeholder="Database URL (e.g. https://projectname.firebaseio.com)">
+            <button id="save-fb-settings" class="action-btn" style="width: 100%;">Save Firebase Settings</button>
+          </div>
+          <div id="fb-save-msg" class="save-status">Firebase settings saved!</div>
+        </div>
+
+        <button id="save-settings" class="action-btn">Save Google API Key</button>
+        <div id="save-msg" class="save-status">Settings saved successfully!</div>
+
+        <hr style="margin: 20px 0; border: 0; border-top: 2px solid #ddd;">
+
+        <div class="setting-item">
+          <label>Backup & Recovery</label>
+          <p style="font-size: 13px; color: #65676b; margin-bottom: 10px;">Export your settings to a JSON file or import
+            them from a backup.</p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button id="export-settings-btn" class="action-btn"
+              style="flex: 1; min-width: 100px; background: #6c757d;">Export
+              Settings</button>
+            <button id="import-settings-btn" class="action-btn"
+              style="flex: 1; min-width: 100px; background: #6c757d;">Import
+              Settings</button>
+            <button id="restore-cloud-btn" class="action-btn"
+              style="flex: 1; min-width: 100px; background: #17a2b8;">Restore from Cloud</button>
+          </div>
+          <input type="file" id="import-file-input" style="display: none;" accept=".json">
+        </div>
+      </div>
+
+      <!-- Account Tab -->
+      <div id="content-account" class="tab-content">
+        <div id="auth-unlogged" class="auth-box">
+          <p style="text-align: center; color: #65676b; margin-bottom: 20px;">Sign in to sync your data across devices.
+          </p>
+          <button id="google-signin-btn" class="action-btn"
+            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff; color: #1c1e21; border: 1px solid #ddd;">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18">
+            Sign in with Google
+          </button>
+        </div>
+        <div id="auth-logged" class="auth-box" style="display: none;">
+          <div
+            style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #ddd;">
+            <img id="user-photo" src="" style="width: 50px; height: 50px; border-radius: 50%; background: #eee;">
+            <div>
+              <div id="user-name" style="font-weight: 600; font-size: 16px;">User Name</div>
+              <div id="user-email" style="color: #65676b; font-size: 14px;">user@example.com</div>
+            </div>
+          </div>
+          <button id="signout-btn" class="action-btn" style="width: 100%; background: #f0f2f5; color: #1c1e21;">Sign
+            Out</button>
+        </div>
+      </div>
+
+      <!-- Debug Tab -->
+      <div id="content-debug" class="tab-content">
+        <div class="setting-item">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;">Lifecycle Logs</h3>
+            <div style="display: flex; gap: 8px;">
+              <button id="refresh-logs-btn" class="action-btn"
+                style="padding: 6px 12px; font-size: 13px;">Refresh</button>
+              <button id="clear-logs-btn" class="action-btn"
+                style="padding: 6px 12px; font-size: 13px; background: #dc3545;">Clear</button>
+            </div>
+          </div>
+          <p style="font-size: 12px; color: #65676b; margin-bottom: 10px;">
+            These logs record extension events (startup, install, errors). Useful for debugging why the extension might
+            disappear.
+          </p>
+          <div id="log-container"
+            style="background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto;">
+            Loading logs...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* History Specific Styles */
+    .accordion {
+      background-color: #fff;
+      color: #444;
+      cursor: pointer;
+      padding: 12px 15px;
+      width: 100%;
+      text-align: left;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      outline: none;
+      transition: 0.4s;
+      margin-bottom: 5px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .accordion:hover {
+      background-color: #f1f1f1;
+    }
+
+    .accordion:after {
+      content: '\02795';
+      /* Plus sign */
+      font-size: 13px;
+      color: #777;
+    }
+
+    .accordion.active:after {
+      content: "\2796";
+      /* Minus sign */
+    }
+
+    .panel {
+      padding: 0 15px;
+      background-color: white;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease-out;
+      border-left: 1px solid #ddd;
+      border-right: 1px solid #ddd;
+      margin-bottom: 10px;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+
+    .history-table th,
+    .history-table td {
+      border: 1px solid #eee;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .history-table th {
+      background-color: #f8f9fa;
+      color: #65676b;
+    }
+  </style>
+
+  <script src="thai-input-widgetV3.js"></script>
+  <script type="module" src="dialog.js"></script>
+</body>
+
+</html>

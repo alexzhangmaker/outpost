@@ -1,0 +1,11 @@
+﻿Rank,Word,Frequency,POS
+"1","จังหวัด","province",""
+"2","เขต","district (Bangkok)",""
+"3","แขวง","sub-district (Bangkok)",""
+"2","อำเภอ","district (outside Bangkok)",""
+"3","ตำบล","sub-district (outside Bangkok)",""
+"3","หมู่บ้าน","village",""
+"1","เมือง","city",""
+"3","ซอย","lane",""
+"2","ถนน","street",""
+"3","คลอง","canal",""

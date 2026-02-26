@@ -1,0 +1,84 @@
+{
+  "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6lTetyxI+OaquQsIeFBPOkhgUSoUqwx7wTd96OvAn4MX4vy43w2SK+4eK4jFPFxqnk3GAxxdD9lpwh0tRWX0vAoFpj1HJ7apq38MxgRprkbrMTgoTFTFyzKoWldHA084EAsg4iHVRccBHAwpwC+DKcaa5Itc8Y7D5mluie9vG6FCNJW4GqS9xPmcrPbU2P7pwgp/RqkLbfUMsooh6meedkpXkzofUg9cKgdGmKJxewcwNJKd+ia1HeADaA366id3NQesTlyHS07xeU0T08EcbkX6BDv3CJ0/C/iViE2oU8rzV/X0urT03k1e8P98e1zKKjTMthRFH8J8swROLlsTNQIDAQAB",
+  "name": "Thai Dictionary Assistant",
+  "version": "1.0",
+  "description": "Thai-English-Chinese dictionary assistant with on-page translation.",
+  "permissions": [
+    "system.display",
+    "storage",
+    "scripting",
+    "sidePanel",
+    "identity",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://translation.googleapis.com/*",
+    "https://identitytoolkit.googleapis.com/*",
+    "https://*.firebaseio.com/*",
+    "https://*.googleusercontent.com/*",
+    "https://googleapi-w56agazoha-uc.a.run.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Open Thai Dictionary",
+    "default_icon": {
+      "16": "icon16.png",
+      "32": "icon32.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "dialog.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "commands": {
+    "open-dictionary-dialog": {
+      "suggested_key": {
+        "default": "Alt+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Open Thai Dictionary Dialog"
+    }
+  },
+  "side_panel": {
+    "default_path": "dialog.html"
+  },
+  "oauth2": {
+    "client_id": "724993324937-b5qdbskdr8tpsp9u8s801n5nd8qffmg4.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "openid"
+    ]
+  }
+}

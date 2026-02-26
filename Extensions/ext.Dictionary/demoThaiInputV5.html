@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>集成示例</title>
+</head>
+<body>
+
+    <h1>我的泰语学习网站</h1>
+    
+    <div id="my-thai-widget" style="width: 500px; margin: 20px;"></div>
+
+    <script src="thai-input-widgetV3.js"></script>
+
+   <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('my-thai-widget');
+        
+        // 检查元素是否存在，防止报错
+        if (container) {
+            const thaiWidget = new ThaiSmartInput(container);
+        } else {
+            console.error("未找到容器元素！请检查 ID 是否正确。");
+        }
+    });
+</script>
+
+</body>
+</html>

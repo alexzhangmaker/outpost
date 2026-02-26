@@ -110,13 +110,24 @@ app.post('/api/thai-word-learning/generate', async (req, res) => {
                 return null;
             // Clean text for TTS (remove underscores for completion exercises)
             const cleanText = text.replace(/_+/g, ' ').trim();
+            // Safety check: TTS has a limit, and we want to avoid processing garbage/loops
+            if (cleanText.length > 500) {
+                console.warn(`[Generate] Skipping TTS for excessively long text (${cleanText.length} chars): "${cleanText.substring(0, 100)}..."`);
+                return null;
+            }
+            // Basic repetition check (e.g. if a phrase is repeated more than 3 times)
+            const sentences = cleanText.split(/[。.]/);
+            if (sentences.length > 10) {
+                console.warn(`[Generate] Skipping TTS for potentially looping text (too many sentences): "${cleanText.substring(0, 100)}..."`);
+                return null;
+            }
             try {
                 const audioBuffer = await generateThaiAudio(cleanText);
                 const fileName = `${generate()}.mp3`;
                 return await uploadAudioToStorage(audioBuffer, fileName, 'ThaiWordsListen');
             }
             catch (err) {
-                console.error(`[Generate] TTS Error for "${text}":`, err);
+                console.error(`[Generate] TTS Error for "${cleanText.substring(0, 50)}...":`, err);
                 return null;
             }
         };
@@ -170,6 +181,8 @@ app.post('/api/thai-word-learning/generate', async (req, res) => {
     }
     catch (error) {
         console.error('[Generate] FATAL ERROR:', error);
+        const errorLog = `\n[${new Date().toISOString()}] Word: ${word}\nError: ${error.message}\nStack: ${error.stack}\n`;
+        fs.appendFileSync(path.resolve(__dirname, '../server-errors.log'), errorLog);
         res.status(500).json({ error: error.message, stack: error.stack });
     }
 });

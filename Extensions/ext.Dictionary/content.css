@@ -1,0 +1,66 @@
+/* content.css */
+.thai-dict-toolbar {
+  position: absolute;
+  z-index: 999999;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  overflow: hidden;
+  border: 1px solid #ddd;
+  padding: 2px 6px;
+  max-width: 500px;
+  transition: opacity 0.2s;
+}
+
+.thai-dict-toolbar-actions {
+  display: flex;
+  padding: 2px;
+  gap: 2px;
+  border-right: 1px solid #eee;
+  margin-right: 6px;
+  padding-right: 6px;
+}
+
+.thai-dict-icon-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s;
+  font-size: 16px;
+  user-select: none;
+}
+
+.thai-dict-icon-btn:hover {
+  background: #e7f3ff;
+}
+
+.thai-dict-result-area {
+  padding: 4px 8px;
+  font-size: 13px;
+  line-height: 1.2;
+  color: #1c1e21;
+  display: none;
+  background: white;
+  white-space: nowrap;
+  max-width: 350px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thai-dict-result-area.show {
+  display: inline-block;
+}
+
+.thai-dict-loading {
+  color: #65676b;
+  font-style: italic;
+  font-size: 12px;
+}
