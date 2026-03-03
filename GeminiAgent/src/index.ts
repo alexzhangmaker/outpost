@@ -7,7 +7,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { generate } from 'short-uuid';
 
-import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT, thaiArticleSchema, THAI_ARTICLE_PROMPT, thaiWordLearningSchema, THAI_WORD_LEARNING_PROMPT } from './agent.js';
+import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT, thaiArticleSchema, THAI_ARTICLE_PROMPT, thaiWordLearningSchema, THAI_WORD_LEARNING_PROMPT, thaiConsonantSchema, THAI_CONSONANT_PROMPT } from './agent.js';
 import { saveMessage, getMessages, createSession, saveResult, getResults, updateResult, getResultById, saveArticle, getArticles, getArticleById, updateArticle } from './database.js';
 import { generateThaiAudio } from './tts.js';
 import { saveToRealtimeDb, updateRealtimeDb, uploadAudioToStorage, getFromRealtimeDb, saveArticleToFirebase } from './firebase.js';
@@ -85,6 +85,53 @@ app.get('/api/tts-proxy', async (req: any, res: any) => {
     res.send(buffer);
   } catch (error: any) {
     console.error('TTS Proxy Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/thai-consonant/generate', async (req: any, res: any) => {
+  const { word } = req.body;
+
+  if (!word) return res.status(400).json({ error: 'Word is required' });
+
+  try {
+    console.log(`[Consonant Gen] Generating data for word: "${word}"`);
+
+    // 1. Generate IPA and Meaning via Gemini
+    const result = await (geminiAgent as any).generate(
+      [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: THAI_CONSONANT_PROMPT },
+            { type: 'text', text: word }
+          ],
+        },
+      ],
+      {
+        structuredOutput: {
+          schema: thaiConsonantSchema,
+        },
+      },
+    );
+
+    const data = result.object;
+
+    // 2. Generate Audio
+    console.log(`[Consonant Gen] Generating audio for word: "${word}"`);
+    const audioBuffer = await generateThaiAudio(word);
+    const audioId = generate();
+    const fileName = `consonant_${audioId}.mp3`;
+    const audioUrl = await uploadAudioToStorage(audioBuffer, fileName, 'audioConsonants');
+
+    data.audioURL = audioUrl;
+
+    res.json({
+      success: true,
+      data: data,
+    });
+  } catch (error: any) {
+    console.error('[Consonant Gen] Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -320,6 +367,22 @@ app.post('/api/thai-ipa/practices', async (req: any, res: any) => {
   }
 });
 
+app.post('/api/firebase/set', async (req: any, res: any) => {
+  const { path, data } = req.body;
+  if (!path || data === undefined) return res.status(400).json({ error: 'Path and data are required' });
+
+  try {
+    const dbPath = path.startsWith('/') ? path.substring(1) : path;
+    const { getDatabase } = await import('./firebase.js');
+    const adminDb = getDatabase();
+    await adminDb.ref(dbPath).set(data);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Firebase Proxy Set Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/firebase/results', async (req: any, res: any) => {
   const path = req.query.path as string || 'sentencePatterns';
   try {
@@ -335,6 +398,8 @@ app.get('/', (req, res) => {
     message: 'Gemini Agent Service is running.',
     endpoints: [
       '/api/thai-word-learning/generate',
+      '/api/thai-consonant/generate',
+      '/api/firebase/set',
       '/api/articles/process',
       '/api/history/:sessionId'
     ]

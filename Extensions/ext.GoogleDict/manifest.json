@@ -1,0 +1,35 @@
+{
+    "manifest_version": 3,
+    "name": "Google Dict Collector",
+    "version": "1.0",
+    "description": "Collect Google Translate history into a persistent sidepanel.",
+    "permissions": [
+        "sidePanel",
+        "storage"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://translate.google.com/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "css": [
+                "content.css"
+            ]
+        }
+    ],
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    },
+    "action": {
+        "default_title": "Open Side Panel"
+    },
+    "icons": {
+        "128": "icon.png"
+    }
+}

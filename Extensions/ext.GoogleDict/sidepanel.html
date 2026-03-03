@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Dict Collector</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --bg: #f8f9fa;
+            --surface: #ffffff;
+            --text: #202124;
+            --text-secondary: #5f6368;
+            --border: #dadce0;
+            --accent: rgba(26, 115, 232, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            padding: 16px;
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin: 0;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .search-container {
+            padding: 12px 16px;
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        #list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .translation-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: relative;
+            border: 1px solid transparent;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .translation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: var(--border);
+        }
+
+        .lang-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .source-text {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            word-break: break-word;
+        }
+
+        .target-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            word-break: break-word;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #dadce0;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            transition: color 0.2s, background-color 0.2s;
+        }
+
+        .delete-btn:hover {
+            color: #d93025;
+            background-color: rgba(217, 48, 37, 0.1);
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: #9aa0a6;
+            margin-top: 12px;
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            margin-top: 100px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #dadce0;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #bdc1c6;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Google Dict</h1>
+        <div id="stats" style="font-size: 12px; color: var(--text-secondary);"></div>
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search collected words...">
+    </div>
+
+    <div id="list-container">
+        <!-- Items dynamically injected here -->
+    </div>
+
+    <script src="db.js"></script>
+    <script src="sidepanel.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰语辅音 IPA 标注练习 - Thai Consonants Practice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+
+        .thai-text {
+            font-family: 'Sarabun', "Noto Sans Thai", sans-serif;
+        }
+
+        .ipa-text {
+            font-family: 'Charis SIL', 'Gentium Plus', 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
+
+        .glass-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .glass-table th {
+            background: rgba(241, 245, 249, 0.5);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 2px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .glass-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+            transition: background 0.2s ease;
+        }
+
+        .glass-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .glass-table tr:hover td {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .word-tag {
+            background: rgba(99, 102, 241, 0.1);
+            color: #4f46e5;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: 2px;
+        }
+
+        .word-tag:hover {
+            background: rgba(99, 102, 241, 0.2);
+            transform: scale(1.05);
+        }
+
+        .btn-add {
+            color: #94a3b8;
+            transition: all 0.2s;
+        }
+
+        .btn-add:hover {
+            color: #6366f1;
+            transform: rotate(90deg);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .loading-pulse {
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+
+<body class="py-12 px-4 md:px-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-12 text-center">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">泰语辅音 IPA 标注练习</h1>
+            <p class="text-lg text-gray-600 font-medium">系统化辅音练习 • Gemini 智能解析 • Firebase 云端同步</p>
+        </header>
+
+        <!-- Dynamic Tables Container -->
+        <div id="tables-container" class="space-y-12">
+            <!-- Loading Spinner -->
+            <div class="flex justify-center items-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set, update, push } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Local Cache for Audio
+        const audioCache = localforage.createInstance({ name: "consonant_audio_cache" });
+        let currentAudio = null;
+
+        // Constants
+        const DB_PATH = "practice_consonants";
+        const LOCAL_API_BASE = "http://localhost:6660/api";
+
+        // Initial Data Structure (if DB is empty)
+        const INITIAL_DATA = [
+            {
+                id: "bilabials",
+                title: "1. 双唇音与唇齿音 (Bilabials & Labiodental)",
+                subtitle: "侧重于双唇接触或唇齿接触的发音特征。",
+                columns: ["辅音 (IPA)", "泰语单词", "意思", "国际音标", "更多泰语单词例子"],
+                rows: [
+                    { ipa: "[p]", word: "ปาน", meaning: "胎记 (birthmark)", word_ipa: "/pā:n/", extra: [] },
+                    { ipa: "[pʰ]", word: "พาน", meaning: "挑衅/好斗的 (belligerent)", word_ipa: "/pʰā:n/", extra: [] },
+                    { ipa: "[b]", word: "บาน", meaning: "盛开 (to bloom)", word_ipa: "/bā:n/", extra: [] },
+                    { ipa: "[m]", word: "มาร", meaning: "魔鬼 (demon)", word_ipa: "/mā:n/", extra: [] },
+                    { ipa: "[f]", word: "ฝาน", meaning: "切片 (to slice)", word_ipa: "/fǎ:n/", extra: [] }
+                ]
+            },
+            {
+                id: "alveolars",
+                title: "2. 齿龈音与硬腭音 (Alveolars & Palatals)",
+                subtitle: "涉及舌尖与齿龈，或舌身与硬腭的接触。",
+                columns: ["辅音 (IPA)", "泰语单词", "意思", "国际音标", "更多泰语单词例子"],
+                rows: [
+                    { ipa: "[t]", word: "ตาล", meaning: "糖棕/棕榈 (sugar palm)", word_ipa: "/tā:n/", extra: [] },
+                    { ipa: "[tʰ]", word: "ทาน", meaning: "施舍 (alms)", word_ipa: "/tʰā:n/", extra: [] },
+                    { ipa: "[d]", word: "ด้าน", meaning: "麻木/老茧 (calloused)", word_ipa: "/dā:n/", extra: [] },
+                    { ipa: "[n]", word: "นาน", meaning: "久 (long time)", word_ipa: "/nā:n/", extra: [] },
+                    { ipa: "[s]", word: "สาน", meaning: "编织 (weave)", word_ipa: "/sǎ:n/", extra: ["ศาล (court)"] },
+                    { ipa: "[r]", word: "ร้าน", meaning: "商店 (shop)", word_ipa: "/rā:n/", extra: [] },
+                    { ipa: "[l]", word: "ลาน", meaning: "百万 (million - 实际上为 ล้าน)", word_ipa: "/lā:n/", extra: [] },
+                    { ipa: "[tɕ]", word: "จาน", meaning: "盘子 (dish)", word_ipa: "/tɕā:n/", extra: [] },
+                    { ipa: "[tɕʰ]", word: "ชาน", meaning: "渣滓 (trash/refuse)", word_ipa: "/tɕʰā:n/", extra: [] }
+                ]
+            },
+            {
+                id: "velars",
+                title: "3. 软腭音、声门音与半元音 (Velars, Glottal & Semivowels)",
+                subtitle: "软腭音、喉音以及两个半元音的对比练习。",
+                columns: ["辅音 (IPA)", "泰语单词", "意思", "国际音标", "更多泰语单词例子"],
+                rows: [
+                    { ipa: "[k]", word: "กาน", meaning: "砍/修剪 (cut/trim)", word_ipa: "/kā:n/", extra: ["การ (act)"] },
+                    { ipa: "[kʰ]", word: "คาน", meaning: "梁/杆 (shaft)", word_ipa: "/kʰā:n/", extra: [] },
+                    { ipa: "[ŋ]", word: "งาน", meaning: "工作 (work)", word_ipa: "/ŋā:n/", extra: [] },
+                    { ipa: "[w]", word: "วาน", meaning: "播种 (to sow)", word_ipa: "/wā:n/", extra: [] },
+                    { ipa: "[j]", word: "ยาน", meaning: "松弛/下垂 (sagging)", word_ipa: "/jā:n/", extra: [] },
+                    { ipa: "[ʔ]", word: "อาน", meaning: "鞍 (saddle)", word_ipa: "/ʔā:n/", extra: ["อ่าน (read)"] },
+                    { ipa: "[h]", word: "หาร", meaning: "除/分割 (to divide)", word_ipa: "/hǎ:n/", extra: [] }
+                ]
+            },
+            {
+                id: "plosives",
+                title: "4. 塞音与塞擦音 (Plosives & Affricates)",
+                subtitle: "这类辅音的关键在于区分清/浊以及送气 (Aspiration) 特征。",
+                columns: ["辅音 (IPA)", "泰语字母", "泰语单词", "国际音标", "英语意思", "更多泰语单词例子"],
+                rows: [
+                    { ipa: "[b]", letter: "บ", word: "บา", word_ipa: "/bā:/", meaning: "bar", extra: ["บัน", "บิด"] },
+                    { ipa: "[pʰ]", letter: "พ", word: "พา", word_ipa: "/pʰā:/", meaning: "take along", extra: ["พัน", "ผิด"] },
+                    { ipa: "[p]", letter: "ป", word: "ปา", word_ipa: "/pā:/", meaning: "throw", extra: ["ไป", "ปิด"] },
+                    { ipa: "[d]", letter: "ด", word: "ดี", word_ipa: "/dī:/", meaning: "good", extra: ["ตาย", "ดัก"] },
+                    { ipa: "[tʰ]", letter: "ท", word: "ที", word_ipa: "/tʰī:/", meaning: "time / turn", extra: ["ทาย", "ถัก"] },
+                    { ipa: "[t]", letter: "ต", word: "ตี", word_ipa: "/tī:/", meaning: "hit", extra: ["ตาย", "ตัก"] },
+                    { ipa: "[kʰ]", letter: "ค", word: "ไข่", word_ipa: "/kʰàj/", meaning: "egg", extra: ["คำ", "ขน"] },
+                    { ipa: "[k]", letter: "ก", word: "ไก่", word_ipa: "/kàj/", meaning: "chicken", extra: ["กำ", "กบ"] },
+                    { ipa: "[tɕʰ]", letter: "ช", word: "ชาน", word_ipa: "/tɕʰā:n/", meaning: "terrace", extra: ["ชาม", "ชิน"] },
+                    { ipa: "[tɕ]", letter: "จ", word: "จาน", word_ipa: "/tɕā:n/", meaning: "dish", extra: ["จ่า", "จาม"] },
+                    { ipa: "[ʔ]", letter: "อ", word: "อ่อน", word_ipa: "/ʔɔ̀:n/", meaning: "soft / weak", extra: ["เลอะ", "เตะ"] }
+                ]
+            },
+            {
+                id: "fricatives",
+                title: "5. 摩擦音、响音与流音 (Fricatives, Nasals & Approximants)",
+                subtitle: "注意泰语中 [r] 与 [l] 的规范发音区别，以及软腭鼻音 [ŋ] 作为声母时的发音。",
+                columns: ["辅音 (IPA)", "泰语字母", "示例单词", "国际音标", "英语意思", "更多泰语单词例子"],
+                rows: [
+                    { ipa: "[f]", letter: "ฟ", word: "ฟัน", word_ipa: "/fān/", meaning: "tooth", extra: ["ฝัน", "ฝาง"] },
+                    { ipa: "[s]", letter: "ซ / ส", word: "ชา", word_ipa: "/sā:/", meaning: "(za)", extra: ["สัน", "สาง"] },
+                    { ipa: "[h]", letter: "ฮ / ห", word: "ฮา", word_ipa: "/hā:/", meaning: "laughter", extra: ["หัน", "หาง"] },
+                    { ipa: "[m]", letter: "ม", word: "มา", word_ipa: "/mā:/", meaning: "come", extra: ["ม้า", "มุ่ง"] },
+                    { ipa: "[n]", letter: "น", word: "นา", word_ipa: "/nā:/", meaning: "field", extra: ["น้า", "เนิน"] },
+                    { ipa: "[ŋ]", letter: "ง", word: "งา", word_ipa: "/ŋā:/", meaning: "sesame", extra: ["ง้า", "เงิน"] },
+                    { ipa: "[l]", letter: "ล", word: "ลัก", word_ipa: "/lák/", meaning: "steal", extra: ["เลา", "ล่าง"] },
+                    { ipa: "[r]", letter: "ร", word: "รัก", word_ipa: "/rák/", meaning: "love", extra: ["เรา", "ร่าง"] },
+                    { ipa: "[w]", letter: "ว", word: "วา", word_ipa: "/wā:/", meaning: "fathom", extra: ["วัง", "วาว"] },
+                    { ipa: "[j]", letter: "ย", word: "ยา", word_ipa: "/jā:/", meaning: "medicine", extra: ["ยัง", "ยาว"] }
+                ]
+            },
+            {
+                id: "finals",
+                title: "6. 词尾辅音 (Final Consonants)",
+                subtitle: "泰语结尾塞音 [p, t, k] 必须表现为无声除阻 (No audible release)。",
+                columns: ["辅音 (IPA)", "泰语字母", "英语发音参考", "示例单词", "翻译", "更多泰语单词例子"],
+                rows: [
+                    { ipa: "[-p]", letter: "พ / บ", word: "job", example_word: "กับ", word_ipa: "/kàp/", meaning: "和/与", extra: ["เก็บ", "กบ"] },
+                    { ipa: "[-t]", letter: "ท / ด", word: "jot", example_word: "ปิด", word_ipa: "/pìt/", meaning: "关闭", extra: ["กัด", "กริต"] },
+                    { ipa: "[-k]", letter: "ค / ก", word: "jock", example_word: "จาก", word_ipa: "/tɕā:k/", meaning: "来自", extra: ["นอก", "ฟอก"] },
+                    { ipa: "[-m]", letter: "ม", word: "tim", example_word: "กาม", word_ipa: "/kā:m/", meaning: "欲", extra: ["คม", "จาม"] },
+                    { ipa: "[-n]", letter: "น", word: "tin", example_word: "วัน", word_ipa: "/wān/", meaning: "日/天", extra: ["จุน", "เมิน"] },
+                    { ipa: "[-ŋ]", letter: "ง", word: "ting", example_word: "กุ้ง", word_ipa: "/kûŋ/", meaning: "虾", extra: ["วัง", "ฟัง"] }
+                ]
+            }
+        ];
+
+        let state = [];
+
+        // App Initialization
+        const init = () => {
+            const dbRef = ref(db, DB_PATH);
+            onValue(dbRef, async (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    console.log("No data found, initializing with defaults via backend...");
+                    try {
+                        await fetch(`${LOCAL_API_BASE}/firebase/set`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ path: DB_PATH, data: INITIAL_DATA })
+                        });
+                        console.log("Initialization successful");
+                    } catch (err) {
+                        console.error("Initialization failed:", err);
+                    }
+                } else {
+                    state = data;
+                    render();
+                }
+            });
+        };
+
+        // UI Rendering
+        window.render = () => {
+            const container = document.getElementById("tables-container");
+            container.innerHTML = "";
+
+            state.forEach((table, tIdx) => {
+                const tableSection = document.createElement("section");
+                tableSection.className = "glass-panel rounded-3xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500";
+
+                let html = `
+                    <div class="p-8 border-b border-white/50 bg-white/30">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">${table.title}</h2>
+                        <p class="text-gray-600 text-sm font-medium">${table.subtitle}</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full glass-table">
+                            <thead>
+                                <tr>
+                                    ${table.columns.map(col => `<th>${col}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                table.rows.forEach((row, rIdx) => {
+                    html += `<tr>`;
+
+                    if (table.id === 'finals') {
+                        // Table 6: Final Consonants (6 Columns)
+                        // Headers: ["辅音 (IPA)", "泰语字母", "英语发音参考", "示例单词", "翻译", "更多泰语单词例子"]
+                        html += `
+                            <td class="ipa-text font-bold text-indigo-600">${row.ipa}</td>
+                            <td class="thai-text text-xl font-bold">${row.letter}</td>
+                            <td class="text-gray-500 italic">${row.word}</td>
+                            <td class="thai-text text-lg cursor-pointer hover:text-indigo-600 transition-colors" onclick="play('${row.example_word}')">
+                                <div>${row.example_word}</div>
+                                <div class="ipa-text text-gray-400 text-xs font-normal">${row.word_ipa}</div>
+                            </td>
+                            <td class="text-gray-700">${row.meaning}</td>
+                            <td>${renderExtraWords(row.extra, tIdx, rIdx)}</td>
+                        `;
+                    } else if (table.columns.length === 5) {
+                        // Tables 1, 2, 3: New Phonetic Groups (5 Columns)
+                        // Headers: ["辅音 (IPA)", "泰语单词", "意思", "国际音标", "更多泰语单词例子"]
+                        html += `
+                            <td class="ipa-text font-bold text-indigo-600">${row.ipa}</td>
+                            <td class="thai-text text-lg cursor-pointer hover:text-indigo-600 transition-colors" onclick="play('${row.word}')">${row.word}</td>
+                            <td class="text-gray-700">${row.meaning}</td>
+                            <td class="ipa-text text-gray-400 text-sm">${row.word_ipa}</td>
+                            <td>${renderExtraWords(row.extra, tIdx, rIdx)}</td>
+                        `;
+                    } else {
+                        // Tables 4, 5: Original Phonetic Groups (6 Columns)
+                        // Headers: ["辅音 (IPA)", "泰语字母", "泰语单词", "国际音标", "英语意思", "更多泰语单词例子"]
+                        html += `
+                            <td class="ipa-text font-bold text-indigo-600">${row.ipa}</td>
+                            <td class="thai-text text-xl font-bold">${row.letter}</td>
+                            <td class="thai-text text-lg cursor-pointer hover:text-indigo-600 transition-colors" onclick="play('${row.word}')">${row.word}</td>
+                            <td class="ipa-text text-gray-400 text-sm">${row.word_ipa}</td>
+                            <td class="text-gray-700">${row.meaning}</td>
+                            <td>${renderExtraWords(row.extra, tIdx, rIdx)}</td>
+                        `;
+                    }
+                    html += `</tr>`;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                tableSection.innerHTML = html;
+                container.appendChild(tableSection);
+            });
+        };
+
+        const renderExtraWords = (extraArr = [], tIdx, rIdx) => {
+            let html = `<div class="flex flex-wrap items-center gap-1">`;
+            extraArr.forEach(word => {
+                // word can be string or object {word, ipa, meaning, audioURL}
+                const wordText = typeof word === 'object' ? word.word : word;
+                const ipaText = typeof word === 'object' ? word.ipa : '';
+                const meaningText = typeof word === 'object' ? word.meaning : '';
+
+                html += `
+                    <div class="word-tag" 
+                         onclick="play('${wordText}', ${JSON.stringify(word).replace(/"/g, '&quot;')})" 
+                         title="${ipaText} ${meaningText}">
+                        <span class="thai-text">${wordText}</span>
+                    </div>
+                `;
+            });
+            html += `
+                <button onclick="addWord(${tIdx}, ${rIdx})" class="btn-add ml-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                </button>
+            </div>`;
+            return html;
+        };
+
+        // Audio Logic
+        window.play = async (word, wordObj = null) => {
+            const cacheKey = `audio_${word}`;
+
+            try {
+                // 1. Local Cache
+                const cached = await audioCache.getItem(cacheKey);
+                if (cached) {
+                    playBlob(cached);
+                    return;
+                }
+
+                // 2. wordObj has URL
+                if (wordObj && wordObj.audioURL) {
+                    console.log("Playing from remote URL:", wordObj.audioURL);
+                    const resp = await fetch(wordObj.audioURL);
+                    const blob = await resp.blob();
+                    await audioCache.setItem(cacheKey, blob);
+                    playBlob(blob);
+                    return;
+                }
+
+                // 3. Fallback to TTS Proxy / Local Agent
+                console.log("Fetching audio from server...");
+                const resp = await fetch(`${LOCAL_API_BASE}/tts-proxy?text=${encodeURIComponent(word)}`);
+                if (!resp.ok) throw new Error("Audio generation failed");
+                const blob = await resp.blob();
+                await audioCache.setItem(cacheKey, blob);
+                playBlob(blob);
+
+            } catch (err) {
+                console.error("Audio error:", err);
+                alert("播放失败: " + err.message);
+            }
+        };
+
+        const playBlob = (blob) => {
+            if (currentAudio) currentAudio.pause();
+            const url = URL.createObjectURL(blob);
+            currentAudio = new Audio(url);
+            currentAudio.play();
+        };
+
+        // Add Word Logic
+        window.addWord = async (tIdx, rIdx) => {
+            const word = prompt("请输入要添加的泰语单词 (Add Thai Word):");
+            if (!word || !word.trim()) return;
+
+            const trimmedWord = word.trim();
+
+            // UI Feedback
+            const container = document.getElementById("tables-container");
+            const loadingOverlay = document.createElement("div");
+            loadingOverlay.className = "fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center";
+            loadingOverlay.innerHTML = `
+                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mb-4"></div>
+                <div class="text-indigo-900 font-bold text-xl loading-pulse">Gemini 正在解析并生成发音...</div>
+            `;
+            document.body.appendChild(loadingOverlay);
+
+            try {
+                // Call GeminiAgent to get IPA, Meaning and Audio
+                const response = await fetch(`${LOCAL_API_BASE}/thai-consonant/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word: trimmedWord })
+                });
+
+                if (!response.ok) throw new Error("Agent 请求失败，请确保 GeminiAgent 正在运行。");
+
+                const result = await response.json();
+                if (!result.success) throw new Error(result.error || "生成失败");
+
+                const newWordData = result.data; // {word, ipa, meaning, audioURL}
+
+                // Update State and Firebase via Backend Proxy
+                if (!state[tIdx].rows[rIdx].extra) state[tIdx].rows[rIdx].extra = [];
+                state[tIdx].rows[rIdx].extra.push(newWordData);
+
+                const savePath = `${DB_PATH}/${tIdx}/rows/${rIdx}/extra`;
+                await fetch(`${LOCAL_API_BASE}/firebase/set`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: savePath, data: state[tIdx].rows[rIdx].extra })
+                });
+
+                render();
+            } catch (err) {
+                console.error(err);
+                alert("添加失败: " + err.message);
+            } finally {
+                loadingOverlay.remove();
+            }
+        };
+
+        // Initialize on load
+        document.addEventListener("DOMContentLoaded", init);
+    </script>
+</body>
+
+</html>

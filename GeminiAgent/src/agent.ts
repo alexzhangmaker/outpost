@@ -128,6 +128,12 @@ export const thaiWordLearningSchema = z.object({
   cultural_notes: z.string().optional().describe('与文化背景相关的说明，不少于50字'),
 });
 
+export const thaiConsonantSchema = z.object({
+  word: z.string().describe('输入的泰语单词'),
+  ipa: z.string().describe('单词的准确IPA音标标注，例如 [kʰa:]'),
+  meaning: z.string().describe('单词的简洁中文释义'),
+});
+
 const THAI_VISION_PROMPT = `**Role:** 你是一位精通泰语、中文和英语的语言学专家，擅长将泰语教学材料转换为结构化的 JSON 数据。
 
 **Task:** 请分析上传的图片，提取其中的泰语句型教学内容，并严格按照提供的 JSON 格式输出。
@@ -409,6 +415,19 @@ export const THAI_WORD_LEARNING_PROMPT = `## 角色设定
 ---
 
 请为以下泰语单词生成教学材料：`;
+
+export const THAI_CONSONANT_PROMPT = `**Role:** 你是一位精通泰语和中文的语言学专家，专门负责为泰语初学者提供准确的单词音标标注和释义。
+
+**Task:** 为输入的泰语单词提供准确的国际音标 (IPA) 标注和简洁的中文释义。
+
+**Output Format:** 严格按照指定的 JSON Schema 格式输出。
+
+**Requirements:**
+1. **IPA 标注**: 提供标准且准确的泰语 IPA 音标。
+2. **中文释义**: 提供最常用且简洁的中文含义。
+3. **数据纯净**: 仅返回符合 Schema 的 JSON 对象，不要有任何额外的解释文本。
+
+请为以下泰语单词生成数据：`;
 
 export const geminiAgent = new Agent({
   id: 'GeminiAgent',

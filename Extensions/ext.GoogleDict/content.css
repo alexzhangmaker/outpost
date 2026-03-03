@@ -1,0 +1,29 @@
+.google-dict-collect-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5f6368;
+  transition: background-color 0.2s, color 0.2s, opacity 0.2s;
+  margin-right: 4px;
+  opacity: 0;
+  /* Hidden by default */
+}
+
+/* Show on hover of the history item */
+.vvNkBd:hover .google-dict-collect-btn {
+  opacity: 1;
+}
+
+.google-dict-collect-btn:hover {
+  background-color: rgba(60, 64, 67, .08);
+  color: #1a73e8;
+}
+
+.google-dict-collect-btn svg {
+  pointer-events: none;
+}
