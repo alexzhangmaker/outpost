@@ -128,6 +128,28 @@ export const thaiWordLearningSchema = z.object({
   cultural_notes: z.string().optional().describe('与文化背景相关的说明，不少于50字'),
 });
 
+export const vocabularyListSchema = z.object({
+  words: z.array(z.object({
+    thai: z.string().describe('The Thai word'),
+    ipa: z.string().describe('The IPA pronunciation of the word'),
+    translation: z.string().describe('The English translation of the word'),
+    example: z.string().describe('A simple Thai example sentence using the word'),
+    exampleTranslation: z.string().describe('The English translation of the example sentence'),
+  })),
+});
+
+export const VOCABULARY_LIST_PROMPT = `You are a Thai language teaching expert. 
+Generate a comprehensive vocabulary list based on the provided input words. 
+
+For each word, provide:
+1. The Thai word itself.
+2. Accurate IPA pronunciation.
+3. Common English translations (separate multiple meanings with ' / ').
+4. A simple, natural-sounding Thai example sentence (suitable for A2 learners).
+5. A clear English translation of that example sentence.
+
+Ensure the output is a structured JSON object according to the schema.`;
+
 export const thaiConsonantSchema = z.object({
   word: z.string().describe('输入的泰语单词'),
   ipa: z.string().describe('单词的准确IPA音标标注，例如 [kʰa:]'),

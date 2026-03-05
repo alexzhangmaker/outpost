@@ -7,7 +7,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { generate } from 'short-uuid';
 
-import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT, thaiArticleSchema, THAI_ARTICLE_PROMPT, thaiWordLearningSchema, THAI_WORD_LEARNING_PROMPT, thaiConsonantSchema, THAI_CONSONANT_PROMPT } from './agent.js';
+import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT, thaiArticleSchema, THAI_ARTICLE_PROMPT, thaiWordLearningSchema, THAI_WORD_LEARNING_PROMPT, thaiConsonantSchema, THAI_CONSONANT_PROMPT, vocabularyListSchema, VOCABULARY_LIST_PROMPT } from './agent.js';
 import { saveMessage, getMessages, createSession, saveResult, getResults, updateResult, getResultById, saveArticle, getArticles, getArticleById, updateArticle } from './database.js';
 import { generateThaiAudio } from './tts.js';
 import { saveToRealtimeDb, updateRealtimeDb, uploadAudioToStorage, getFromRealtimeDb, saveArticleToFirebase } from './firebase.js';
@@ -399,11 +399,54 @@ app.get('/', (req, res) => {
     endpoints: [
       '/api/thai-word-learning/generate',
       '/api/thai-consonant/generate',
+      '/api/vocabulary/generate',
+      '/api/chat',
       '/api/firebase/set',
       '/api/articles/process',
       '/api/history/:sessionId'
     ]
   });
+});
+
+app.post('/api/chat', async (req: any, res: any) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ error: 'Message is required' });
+
+  try {
+    const result = await (geminiAgent as any).generate(message);
+    res.json({ reply: result.text });
+  } catch (error: any) {
+    console.error('Chat Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/vocabulary/generate', async (req: any, res: any) => {
+  const { words } = req.body;
+  if (!words) return res.status(400).json({ error: 'Words list is required' });
+
+  try {
+    const result = await (geminiAgent as any).generate(
+      [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: VOCABULARY_LIST_PROMPT },
+            { type: 'text', text: words }
+          ],
+        },
+      ],
+      {
+        structuredOutput: {
+          schema: vocabularyListSchema,
+        },
+      },
+    );
+    res.json({ success: true, data: result.object });
+  } catch (error: any) {
+    console.error('Vocabulary Gen Error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.post('/api/process-images', upload.array('images'), async (req: any, res: any) => {
