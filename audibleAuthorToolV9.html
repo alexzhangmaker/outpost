@@ -97,6 +97,20 @@
                 transform: translateX(-100%);
             }
         }
+
+        /* Sidebar item active state */
+        .sidebar-item-active {
+            background-color: #eff6ff !important;
+            /* blue-50 */
+            border-left: 4px solid #3b82f6 !important;
+            /* blue-500 */
+        }
+
+        .sidebar-item-active h5 {
+            color: #1d4ed8 !important;
+            /* blue-700 */
+            font-weight: 700 !important;
+        }
     </style>
 </head>
 
@@ -1053,8 +1067,9 @@
                         });
 
                         courseGroup.items.forEach(data => {
+                            const isActive = currentProjectId === data.key;
                             const itemRow = document.createElement('div');
-                            itemRow.className = "flex items-center justify-between p-3 pl-12 hover:bg-blue-50 border-b border-slate-50 last:border-0 cursor-pointer transition group/item";
+                            itemRow.className = `flex items-center justify-between p-3 pl-12 hover:bg-blue-50 border-b border-slate-50 last:border-0 cursor-pointer transition group/item ${isActive ? 'sidebar-item-active' : ''}`;
                             itemRow.innerHTML = `
                                 <div class="flex-1 pr-4">
                                     <h5 class="text-sm font-medium text-slate-700 group-hover/item:text-blue-700 truncate">${data.title || 'Untitled'}</h5>
@@ -1076,9 +1091,17 @@
                             const openBtn = itemRow.querySelector('.open-item-btn');
                             const deleteBtn = itemRow.querySelector('.delete-item-btn');
 
+                            const setActiveItem = () => {
+                                // Clear other highlights
+                                document.querySelectorAll('.sidebar-item-active').forEach(el => el.classList.remove('sidebar-item-active'));
+                                // Set new highlight
+                                itemRow.classList.add('sidebar-item-active');
+                                loadAudibleData(data, data.key);
+                            };
+
                             openBtn.addEventListener('click', (e) => {
                                 e.stopPropagation();
-                                loadAudibleData(data, data.key);
+                                setActiveItem();
                                 if (window.innerWidth < 768) sidebar.classList.add('collapsed');
                             });
 
@@ -1114,7 +1137,7 @@
                             });
 
                             itemRow.addEventListener('click', () => {
-                                loadAudibleData(data, data.key);
+                                setActiveItem();
                                 if (window.innerWidth < 768) sidebar.classList.add('collapsed');
                             });
                             content.appendChild(itemRow);
