@@ -104,6 +104,29 @@
                     添加练习组 (JSON)
                 </button>
             </div>
+
+            <!-- API Configuration Chip -->
+            <div class="mt-6 flex justify-center">
+                <div
+                    class="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5 border border-slate-200 group relative">
+                    <span class="text-[10px] font-black text-slate-400 uppercase">Agent API</span>
+                    <input type="text" id="api-base-input"
+                        class="bg-transparent border-none text-xs font-bold text-slate-700 w-32 focus:ring-0"
+                        placeholder="API Base URL">
+                    <button onclick="updateApiBase()"
+                        class="p-1 hover:bg-slate-200 rounded transition-colors text-slate-400 hover:text-indigo-600">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div
+                        class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white shadow-xl rounded-xl p-3 border border-slate-100 text-[10px] text-slate-400 hidden group-hover:block z-50">
+                        指向您的 GeminiAgent 服务。修改后将保存至本地。
+                    </div>
+                </div>
+            </div>
+
             <div class="mt-6 flex justify-center gap-4">
                 <button id="nav-tones" onclick="switchModule('/thaiIPA')"
                     class="px-4 py-2 rounded-full text-sm font-medium transition-all bg-indigo-100 text-indigo-700 border-2 border-indigo-200">
@@ -158,6 +181,36 @@
         });
 
         let currentModulePath = '/thaiIPA';
+        const LOCAL_STORAGE_KEY = 'gemini_agent_api_base';
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Priority: 1. URL param, 2. localStorage, 3. Default
+        let API_BASE_URL = urlParams.get('api') || localStorage.getItem(LOCAL_STORAGE_KEY) || "http://localhost:6660/api";
+
+        // Normalize
+        if (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+        if (API_BASE_URL === '/api' && !window.location.protocol.startsWith('http')) {
+            API_BASE_URL = "http://localhost:6660/api"; // Default fallback
+        }
+
+        console.log(`Using API Base: ${API_BASE_URL}`);
+
+        // Initialize UI
+        document.addEventListener('DOMContentLoaded', () => {
+            const apiInput = document.getElementById('api-base-input');
+            if (apiInput) {
+                apiInput.value = API_BASE_URL;
+                apiInput.onkeydown = (e) => { if (e.key === 'Enter') updateApiBase(); };
+            }
+        });
+
+        window.updateApiBase = () => {
+            const newBase = document.getElementById('api-base-input').value.trim();
+            if (!newBase) return;
+            localStorage.setItem(LOCAL_STORAGE_KEY, newBase);
+            location.reload(); // Reload to apply everywhere
+        };
+
         const toneKeys = ['midTone', 'lowTone', 'fallingTone', 'highTone', 'risingTone'];
         let currentAudio = null;
 
@@ -351,17 +404,23 @@
                 statusEl.textContent = "生成音频中...";
                 const cleanWord = word.split('/')[0].trim();
 
-                // 将 pKey 和 toneKey 传给后端，由后端完成云端同步
-                const audioBlob = await generateTTS(cleanWord, pKey, toneKey);
+                try {
+                    // 将 pKey 和 toneKey 传给后端，由后端完成云端同步
+                    const audioBlob = await generateTTS(cleanWord, pKey, toneKey);
 
-                // 先播放并存入本地缓存
-                await audioCache.setItem(cacheKey, audioBlob);
-                playBlob(audioBlob);
-                statusEl.textContent = "已就绪";
+                    // 先播放并存入本地缓存
+                    await audioCache.setItem(cacheKey, audioBlob);
+                    playBlob(audioBlob);
+                    statusEl.textContent = "已就绪";
+                } catch (e) {
+                    console.warn("TTS failed, trying Web Speech fallback...");
+                    playWebSpeech(cleanWord);
+                    statusEl.textContent = "Web Speech";
+                }
 
                 // 2秒后清除状态
                 setTimeout(() => {
-                    if (statusEl.textContent === "已就绪") statusEl.textContent = "";
+                    if (statusEl.textContent === "已就绪" || statusEl.textContent === "Web Speech") statusEl.textContent = "";
                 }, 2000);
                 return;
 
@@ -381,6 +440,17 @@
             currentAudio.play();
         }
 
+        function playWebSpeech(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH';
+            const voices = window.speechSynthesis.getVoices();
+            const thaiVoice = voices.find(v => v.lang.startsWith('th'));
+            if (thaiVoice) utterance.voice = thaiVoice;
+            window.speechSynthesis.speak(utterance);
+        }
+
         async function clearAudioCache() {
             try {
                 await audioCache.clear();
@@ -395,13 +465,11 @@
             }
         }
 
-        // Google TTS Proxy (Forwarded via local GeminiAgent to bypass CORS)
-        const LOCAL_TTS_PROXY = "http://localhost:6660/api/tts-proxy";
         /**
          * 使用 local GeminiAgent Proxy 生成音频 (绕过跨域限制，并可选触发云端同步)
          */
         async function generateTTS(text, pKey = null, toneKey = null) {
-            let url = `${LOCAL_TTS_PROXY}?text=${encodeURIComponent(text)}`;
+            let url = `${API_BASE_URL}/tts-proxy?text=${encodeURIComponent(text)}`;
             if (pKey && toneKey) {
                 const modulePath = currentModulePath.startsWith('/') ? currentModulePath.substring(1) : currentModulePath;
                 url += `&sync=true&pKey=${encodeURIComponent(pKey)}&toneKey=${encodeURIComponent(toneKey)}&modulePath=${encodeURIComponent(modulePath)}`;
@@ -458,7 +526,7 @@
 
                 saveBtn.disabled = true;
                 // We send the path to the backend so it knows where to save
-                const response = await fetch("http://localhost:6660/api/thai-ipa/practices", {
+                const response = await fetch(`${API_BASE_URL}/thai-ipa/practices`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

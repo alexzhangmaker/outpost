@@ -282,14 +282,27 @@
         class ThaiSetManager {
             constructor() {
                 this.user = null;
+                this.LOCAL_STORAGE_KEY = 'gemini_agent_api_base';
                 this.sets = {};
                 this.currentSetId = null;
                 this.allWordData = {}; // Cache of ThaiWordsListen
 
-                // Set default API base to current origin if running on a server
-                if (window.location.protocol.startsWith('http')) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const initialBase = urlParams.get('api') || localStorage.getItem(this.LOCAL_STORAGE_KEY);
+
+                if (initialBase) {
+                    document.getElementById('api-base').value = initialBase;
+                } else if (window.location.protocol.startsWith('http')) {
                     document.getElementById('api-base').value = window.location.origin;
+                    if (window.location.origin.includes('.github.io')) {
+                        document.getElementById('api-base').value += '/api';
+                    }
                 }
+
+                // Sync UI changes to localStorage
+                document.getElementById('api-base').addEventListener('input', (e) => {
+                    localStorage.setItem(this.LOCAL_STORAGE_KEY, e.target.value.trim());
+                });
 
                 this.initAuth();
             }
@@ -326,14 +339,26 @@
 
             getApiBase() {
                 let base = document.getElementById('api-base').value.trim();
-                // Default to current origin if empty
+
+                // 1. If input is empty, try URL param or localStorage
+                if (!base) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    base = urlParams.get('api') || localStorage.getItem(this.LOCAL_STORAGE_KEY);
+                }
+
+                // 2. Fallbacks
                 if (!base && window.location.protocol.startsWith('http')) {
                     base = window.location.origin;
+                    if (base.includes('.github.io')) base += '/api'; // common pattern
                 } else if (!base) {
                     base = 'http://localhost:3000';
                 }
 
                 if (base.endsWith('/')) base = base.slice(0, -1);
+
+                // Sync to localStorage
+                if (base) localStorage.setItem(this.LOCAL_STORAGE_KEY, base);
+
                 return base;
             }
 

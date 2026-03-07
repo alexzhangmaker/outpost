@@ -133,13 +133,37 @@
         </div>
 
         <div class="flex items-center gap-6">
-            <div id="phase-toggle" class="bg-gray-100 p-1 rounded-2xl flex items-center shadow-inner">
-                <button onclick="setPhase('study')" id="btn-study"
-                    class="px-6 py-2 rounded-xl text-sm font-semibold transition-all active-phase">学习阶段</button>
-                <button onclick="setPhase('review')" id="btn-review"
-                    class="px-6 py-2 rounded-xl text-sm font-semibold transition-all">复习阶段</button>
+            <!-- Tab Navigation -->
+            <div class="flex gap-1 bg-gray-100 p-1 rounded-xl">
+                <button id="btn-study" onclick="setPhase('study')"
+                    class="px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white shadow-sm text-indigo-600">
+                    深度学习
+                </button>
+                <button id="btn-review" onclick="setPhase('review')"
+                    class="px-4 py-2 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-700">
+                    拼写挑战
+                </button>
             </div>
 
+            <!-- API Configuration Chip -->
+            <div
+                class="hidden sm:flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5 border border-slate-200 group relative">
+                <span class="text-[10px] font-black text-slate-400 uppercase">Agent API</span>
+                <input type="text" id="api-base-input"
+                    class="bg-transparent border-none text-xs font-bold text-slate-700 w-32 focus:ring-0"
+                    placeholder="API Base URL">
+                <button onclick="updateApiBase()"
+                    class="p-1 hover:bg-slate-200 rounded transition-colors text-slate-400 hover:text-indigo-600">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7">
+                        </path>
+                    </svg>
+                </button>
+                <div
+                    class="absolute top-full right-0 mt-2 w-48 bg-white shadow-xl rounded-xl p-3 border border-slate-100 text-[10px] text-slate-400 hidden group-hover:block z-50">
+                    指向您的 GeminiAgent 服务。修改后将保存至本地。
+                </div>
+            </div>
             <div class="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div class="text-right">
                     <p id="user-name" class="text-sm font-bold text-gray-800">Please Login</p>
@@ -359,6 +383,36 @@
         const provider = new GoogleAuthProvider();
 
         // --- Data & State ---
+        const LOCAL_STORAGE_KEY = 'gemini_agent_api_base';
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Priority: 1. URL param, 2. localStorage, 3. Default
+        let API_BASE_URL = urlParams.get('api') || localStorage.getItem(LOCAL_STORAGE_KEY) || "/api";
+
+        // Normalize
+        if (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+        if (API_BASE_URL === '/api' && !window.location.protocol.startsWith('http')) {
+            API_BASE_URL = "http://localhost:3000"; // Fallback for file://
+        }
+
+        console.log(`Using API Base: ${API_BASE_URL}`);
+
+        // Initialize UI
+        document.addEventListener('DOMContentLoaded', () => {
+            const apiInput = document.getElementById('api-base-input');
+            if (apiInput) {
+                apiInput.value = API_BASE_URL;
+                apiInput.onkeydown = (e) => { if (e.key === 'Enter') updateApiBase(); };
+            }
+        });
+
+        window.updateApiBase = () => {
+            const newBase = document.getElementById('api-base-input').value.trim();
+            if (!newBase) return;
+            localStorage.setItem(LOCAL_STORAGE_KEY, newBase);
+            location.reload(); // Reload to apply everywhere
+        };
+
         const MOCK_WORDS = [
             {
                 thai: "ยืดหยุ่น",
@@ -514,7 +568,7 @@
             btn.innerHTML = '<div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div> 正在通过 Gemini 智能生成...';
 
             try {
-                const resp = await fetch(`${LOCAL_API_BASE}/vocabulary/generate`, {
+                const resp = await fetch(`${API_BASE_URL}/vocabulary/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ words: wordsList })
@@ -756,7 +810,7 @@ JSON Response format:
   "overallFeedback": "string"
 } (Response must ONLY be the JSON object)`;
 
-                const resp = await fetch(`${LOCAL_API_BASE}/chat`, {
+                const resp = await fetch(`${API_BASE_URL}/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: prompt })
@@ -844,25 +898,58 @@ JSON Response format:
         window.play = async function (text, url) {
             const cacheKey = `audio_${text}`;
             try {
+                // 1. Try local cache
                 const cached = await audioCache.getItem(cacheKey);
                 if (cached) {
                     playBlob(cached);
                     return;
                 }
-                const resp = await fetch(`${LOCAL_API_BASE}/tts-proxy?text=${encodeURIComponent(text)}`);
-                if (!resp.ok) throw new Error("Audio fail");
-                const blob = await resp.blob();
-                await audioCache.setItem(cacheKey, blob);
-                playBlob(blob);
-            } catch (err) {
-                console.error(err);
+
+                // 2. Try Server Proxy
+                try {
+                    const resp = await fetch(`${API_BASE_URL}/tts-proxy?text=${encodeURIComponent(text)}`);
+                    if (resp.ok) {
+                        const blob = await resp.blob();
+                        await audioCache.setItem(cacheKey, blob);
+                        playBlob(blob);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Server TTS Proxy failed, trying fallback...");
+                }
+
+                // 3. Try provided URL (Google TTS)
                 if (url) {
                     if (currentAudio) currentAudio.pause();
                     currentAudio = new Audio(url);
-                    currentAudio.play();
+                    await currentAudio.play();
+                    return;
                 }
+
+                throw new Error("No available audio source");
+
+            } catch (err) {
+                console.warn("Audio playback failed, attempting Web Speech API fallback:", err);
+                playWebSpeech(text);
             }
         };
+
+        function playWebSpeech(text) {
+            if (!window.speechSynthesis) return;
+
+            // Cancel any ongoing speech
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH'; // Force Thai
+
+            // Try to find a Thai voice
+            const voices = window.speechSynthesis.getVoices();
+            const thaiVoice = voices.find(v => v.lang.startsWith('th'));
+            if (thaiVoice) utterance.voice = thaiVoice;
+
+            window.speechSynthesis.speak(utterance);
+        }
 
         function playBlob(blob) {
             if (currentAudio) currentAudio.pause();

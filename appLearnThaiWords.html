@@ -160,6 +160,26 @@
                         class="text-indigo-600">Console</span></h1>
             </div>
 
+            <!-- API Configuration Chip -->
+            <div
+                class="hidden md:flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5 border border-slate-200 group relative">
+                <span class="text-[10px] font-black text-slate-400 uppercase">Agent API</span>
+                <input type="text" id="api-base-input"
+                    class="bg-transparent border-none text-xs font-bold text-slate-700 w-32 focus:ring-0"
+                    placeholder="API Base URL">
+                <button onclick="window.appInstance.updateApiBase()"
+                    class="p-1 hover:bg-slate-200 rounded transition-colors text-slate-400 hover:text-indigo-600">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7">
+                        </path>
+                    </svg>
+                </button>
+                <div
+                    class="absolute top-full right-0 mt-2 w-48 bg-white shadow-xl rounded-xl p-3 border border-slate-100 text-[10px] text-slate-400 hidden group-hover:block z-50">
+                    指向您的 GeminiAgent 服务。修改后将保存至本地。
+                </div>
+            </div>
+
             <div class="flex items-center gap-6">
                 <!-- User Profile -->
                 <div class="flex items-center gap-3">
@@ -300,9 +320,36 @@
                 this.allWords = {};
                 this.filteredList = [];
                 this.user = null;
+                this.LOCAL_STORAGE_KEY = 'gemini_agent_api_base';
+                const urlParams = new URLSearchParams(window.location.search);
+
+                // Priority: 1. URL param, 2. localStorage, 3. Default
+                this.API_BASE_URL = urlParams.get('api') || localStorage.getItem(this.LOCAL_STORAGE_KEY) || "http://localhost:6660/api";
+
+                // Normalize
+                if (this.API_BASE_URL.endsWith('/')) this.API_BASE_URL = this.API_BASE_URL.slice(0, -1);
+                if (this.API_BASE_URL === '/api' && !window.location.protocol.startsWith('http')) {
+                    this.API_BASE_URL = "http://localhost:6660/api"; // Default fallback
+                }
+
+                console.log(`Using API Base: ${this.API_BASE_URL}`);
+
+                // Initialize UI
+                const apiInput = document.getElementById('api-base-input');
+                if (apiInput) {
+                    apiInput.value = this.API_BASE_URL;
+                    apiInput.onkeydown = (e) => { if (e.key === 'Enter') this.updateApiBase(); };
+                }
 
                 this.initAuth();
                 this.initSidebarSearch();
+            }
+
+            updateApiBase() {
+                const newBase = document.getElementById('api-base-input').value.trim();
+                if (!newBase) return;
+                localStorage.setItem(this.LOCAL_STORAGE_KEY, newBase);
+                location.reload(); // Reload to apply everywhere
             }
 
             initAuth() {
@@ -489,12 +536,34 @@
                     console.warn('Audio URL is missing or invalid:', url);
                     return;
                 }
+
+                // If URL is from localhost proxy, replace with configurable API_BASE_URL
+                let finalUrl = url;
+                if (url.includes('localhost:6660/api')) {
+                    finalUrl = url.replace('http://localhost:6660/api', this.API_BASE_URL);
+                }
+
                 try {
-                    const audio = new Audio(url);
-                    audio.play().catch(err => console.error('Audio playback failed:', err));
+                    const audio = new Audio(finalUrl);
+                    audio.play().catch(err => {
+                        console.warn('Audio playback failed, attempting Web Speech fallback:', err);
+                        this.playWebSpeech(this.wordData.word);
+                    });
                 } catch (err) {
                     console.error('Failed to create Audio object:', err);
+                    this.playWebSpeech(this.wordData.word);
                 }
+            }
+
+            playWebSpeech(text) {
+                if (!window.speechSynthesis) return;
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'th-TH';
+                const voices = window.speechSynthesis.getVoices();
+                const thaiVoice = voices.find(v => v.lang.startsWith('th'));
+                if (thaiVoice) utterance.voice = thaiVoice;
+                window.speechSynthesis.speak(utterance);
             }
 
             createExplanationView(word) {
@@ -778,11 +847,11 @@
                     input.classList.remove('border-green-500', 'bg-green-50', 'ring-green-100');
                 }
             }
+
         }
 
         // Global app instance
-        const app = new ThaiLearningApp();
-        window.app = app;
+        window.appInstance = new ThaiLearningApp();
     </script>
 </body>
 

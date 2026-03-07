@@ -116,9 +116,31 @@
 
 <body class="py-12 px-4 md:px-8">
     <div class="max-w-7xl mx-auto">
-        <header class="mb-12 text-center">
+        <header class="mb-12 text-center relative">
             <h1 class="text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">泰语辅音 IPA 标注练习</h1>
             <p class="text-lg text-gray-600 font-medium">系统化辅音练习 • Gemini 智能解析 • Firebase 云端同步</p>
+
+            <!-- API Configuration Chip -->
+            <div class="mt-6 flex justify-center">
+                <div
+                    class="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5 border border-slate-200 group relative">
+                    <span class="text-[10px] font-black text-slate-400 uppercase">Agent API</span>
+                    <input type="text" id="api-base-input"
+                        class="bg-transparent border-none text-xs font-bold text-slate-700 w-32 focus:ring-0"
+                        placeholder="API Base URL">
+                    <button onclick="updateApiBase()"
+                        class="p-1 hover:bg-slate-200 rounded transition-colors text-slate-400 hover:text-indigo-600">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div
+                        class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white shadow-xl rounded-xl p-3 border border-slate-100 text-[10px] text-slate-400 hidden group-hover:block z-50">
+                        指向您的 GeminiAgent 服务。修改后将保存至本地。
+                    </div>
+                </div>
+            </div>
         </header>
 
         <!-- Dynamic Tables Container -->
@@ -153,7 +175,35 @@
 
         // Constants
         const DB_PATH = "practice_consonants";
-        const LOCAL_API_BASE = "http://localhost:6660/api";
+        const LOCAL_STORAGE_KEY = 'gemini_agent_api_base';
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Priority: 1. URL param, 2. localStorage, 3. Default
+        let API_BASE_URL = urlParams.get('api') || localStorage.getItem(LOCAL_STORAGE_KEY) || "http://localhost:6660/api";
+
+        // Normalize
+        if (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+        if (API_BASE_URL === '/api' && !window.location.protocol.startsWith('http')) {
+            API_BASE_URL = "http://localhost:6660/api"; // Default fallback
+        }
+
+        console.log(`Using API Base: ${API_BASE_URL}`);
+
+        // Initialize UI
+        document.addEventListener('DOMContentLoaded', () => {
+            const apiInput = document.getElementById('api-base-input');
+            if (apiInput) {
+                apiInput.value = API_BASE_URL;
+                apiInput.onkeydown = (e) => { if (e.key === 'Enter') updateApiBase(); };
+            }
+        });
+
+        window.updateApiBase = () => {
+            const newBase = document.getElementById('api-base-input').value.trim();
+            if (!newBase) return;
+            localStorage.setItem(LOCAL_STORAGE_KEY, newBase);
+            location.reload(); // Reload to apply everywhere
+        };
 
         // Initial Data Structure (if DB is empty)
         const INITIAL_DATA = [
@@ -265,7 +315,7 @@
                 if (!data) {
                     console.log("No data found, initializing with defaults via backend...");
                     try {
-                        await fetch(`${LOCAL_API_BASE}/firebase/set`, {
+                        await fetch(`${API_BASE_URL}/firebase/set`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ path: DB_PATH, data: INITIAL_DATA })
@@ -408,17 +458,36 @@
 
                 // 3. Fallback to TTS Proxy / Local Agent
                 console.log("Fetching audio from server...");
-                const resp = await fetch(`${LOCAL_API_BASE}/tts-proxy?text=${encodeURIComponent(word)}`);
-                if (!resp.ok) throw new Error("Audio generation failed");
-                const blob = await resp.blob();
-                await audioCache.setItem(cacheKey, blob);
-                playBlob(blob);
+                try {
+                    const resp = await fetch(`${API_BASE_URL}/tts-proxy?text=${encodeURIComponent(word)}`);
+                    if (resp.ok) {
+                        const blob = await resp.blob();
+                        await audioCache.setItem(cacheKey, blob);
+                        playBlob(blob);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Server TTS Proxy failed, trying fallback...");
+                }
+
+                throw new Error("No available audio source");
 
             } catch (err) {
-                console.error("Audio error:", err);
-                alert("播放失败: " + err.message);
+                console.warn("Audio error, attempting Web Speech API fallback:", err);
+                playWebSpeech(word);
             }
         };
+
+        function playWebSpeech(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH';
+            const voices = window.speechSynthesis.getVoices();
+            const thaiVoice = voices.find(v => v.lang.startsWith('th'));
+            if (thaiVoice) utterance.voice = thaiVoice;
+            window.speechSynthesis.speak(utterance);
+        }
 
         const playBlob = (blob) => {
             if (currentAudio) currentAudio.pause();
@@ -446,7 +515,7 @@
 
             try {
                 // Call GeminiAgent to get IPA, Meaning and Audio
-                const response = await fetch(`${LOCAL_API_BASE}/thai-consonant/generate`, {
+                const response = await fetch(`${API_BASE_URL}/thai-consonant/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ word: trimmedWord })
@@ -464,7 +533,7 @@
                 state[tIdx].rows[rIdx].extra.push(newWordData);
 
                 const savePath = `${DB_PATH}/${tIdx}/rows/${rIdx}/extra`;
-                await fetch(`${LOCAL_API_BASE}/firebase/set`, {
+                await fetch(`${API_BASE_URL}/firebase/set`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ path: savePath, data: state[tIdx].rows[rIdx].extra })
