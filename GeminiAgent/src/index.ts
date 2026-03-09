@@ -89,6 +89,44 @@ app.get('/api/tts-proxy', async (req: any, res: any) => {
   }
 });
 
+app.get('/api/tts/generate', async (req: any, res: any) => {
+  const text = req.query.text as string;
+  const modulePath = (req.query.modulePath as string) || 'ThaiTones';
+
+  if (!text) return res.status(400).json({ error: 'Text is required' });
+
+  try {
+    console.log(`[TTS Gen] Generating audio for: "${text}" into ${modulePath}`);
+    const audioBuffer = await generateThaiAudio(text);
+    const fileName = `${text.replace(/\//g, '_')}_${Date.now()}.mp3`;
+    const downloadURL = await uploadAudioToStorage(audioBuffer, fileName, modulePath);
+
+    res.json({
+      success: true,
+      text: text,
+      audioURL: downloadURL
+    });
+  } catch (error: any) {
+    console.error('[TTS Gen] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/thai-tones/save', async (req: any, res: any) => {
+  const { data } = req.body;
+
+  if (!data) return res.status(400).json({ error: 'Data is required' });
+
+  try {
+    console.log('[Thai Tones] Proxying save to Firebase...');
+    await updateRealtimeDb('thaiTones/data', data);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('[Thai Tones] Save Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/thai-consonant/generate', async (req: any, res: any) => {
   const { word } = req.body;
 

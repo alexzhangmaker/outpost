@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Tones Practice | 泰语五声调练习</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Serif+Thai:wght@400;700&family=Noto+Sans+Thai:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-glass: rgba(255, 255, 255, 0.7);
+            --border-glass: rgba(255, 255, 255, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans Thai', sans-serif;
+            background: radial-gradient(circle at top left, #f8fafc, #e2e8f0);
+            min-height: 100vh;
+        }
+
+        .thai-text {
+            font-family: 'Noto Serif Thai', 'Noto Sans Thai', serif;
+        }
+
+        .glass-panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        .tone-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tone-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
+        }
+
+        .play-btn-active {
+            animation: pulse-indigo 2s infinite;
+        }
+
+        @keyframes pulse-indigo {
+            0% {
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+            }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header
+            class="glass-panel rounded-[2rem] p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-xl shadow-indigo-500/20">
+                    声
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800 tracking-tight">Thai Tones <span
+                            class="text-indigo-600">Mastery</span></h1>
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">泰语五声调对比练习</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- API Config Chip -->
+                <div
+                    class="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5 border border-slate-200 group relative">
+                    <span class="text-[10px] font-black text-slate-400 uppercase">Agent API</span>
+                    <input type="text" id="api-base-input"
+                        class="bg-transparent border-none text-xs font-bold text-slate-700 w-32 focus:ring-0"
+                        placeholder="API Base URL">
+                    <button onclick="updateApiBase()"
+                        class="p-1 hover:bg-slate-200 rounded transition-colors text-slate-400 hover:text-indigo-600">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div
+                        class="absolute top-full right-0 mt-2 w-48 bg-white shadow-xl rounded-xl p-3 border border-slate-100 text-[10px] text-slate-400 hidden group-hover:block z-50">
+                        指向您的 GeminiAgent 服务。修改后将保存至本地。
+                    </div>
+                </div>
+
+                <!-- Admin Mode Toggle -->
+                <button id="admin-toggle" onclick="toggleAdmin()"
+                    class="px-4 py-2 rounded-xl text-xs font-bold transition-all border-2 border-slate-200 text-slate-500 hover:bg-slate-50">
+                    管理模式: OFF
+                </button>
+            </div>
+        </header>
+
+        <!-- Admin Actions -->
+        <div id="admin-panel" class="hidden mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button onclick="syncAllAudio()"
+                class="glass-panel p-4 rounded-2xl flex items-center justify-center gap-3 text-indigo-600 font-bold hover:bg-indigo-50 transition-all border-indigo-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                    </path>
+                </svg>
+                同步所有音频 (Sync Audio)
+                <span id="sync-progress" class="text-[10px] bg-indigo-100 px-2 py-0.5 rounded-full hidden">0/0</span>
+            </button>
+            <button onclick="saveToDatabase()"
+                class="glass-panel p-4 rounded-2xl flex items-center justify-center gap-3 text-emerald-600 font-bold hover:bg-emerald-50 transition-all border-emerald-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                    </path>
+                </svg>
+                保存数据到 Firebase (RTDB)
+            </button>
+        </div>
+
+        <!-- Tone Sections -->
+        <div id="tones-grid" class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-12">
+            <!-- Columns for 5 Tones -->
+            <div id="col-midTone" class="flex flex-col gap-4">
+                <div class="p-4 bg-slate-800 rounded-2xl text-white">
+                    <h3 class="font-black text-sm uppercase tracking-widest">Mid Tone (0)</h3>
+                    <p class="text-[10px] text-slate-400">平声 (Mid/Flat)</p>
+                </div>
+                <div class="words-container space-y-3"></div>
+            </div>
+            <div id="col-lowTone" class="flex flex-col gap-4">
+                <div class="p-4 bg-blue-600 rounded-2xl text-white">
+                    <h3 class="font-black text-sm uppercase tracking-widest">Low Tone (1)</h3>
+                    <p class="text-[10px] text-blue-200">低声 (Low)</p>
+                </div>
+                <div class="words-container space-y-3"></div>
+            </div>
+            <div id="col-fallingTone" class="flex flex-col gap-4">
+                <div class="p-4 bg-emerald-600 rounded-2xl text-white">
+                    <h3 class="font-black text-sm uppercase tracking-widest">Falling Tone (2)</h3>
+                    <p class="text-[10px] text-emerald-200">落声 (Falling)</p>
+                </div>
+                <div class="words-container space-y-3"></div>
+            </div>
+            <div id="col-highTone" class="flex flex-col gap-4">
+                <div class="p-4 bg-orange-600 rounded-2xl text-white">
+                    <h3 class="font-black text-sm uppercase tracking-widest">High Tone (3)</h3>
+                    <p class="text-[10px] text-orange-200">高声 (High)</p>
+                </div>
+                <div class="words-container space-y-3"></div>
+            </div>
+            <div id="col-risingTone" class="flex flex-col gap-4">
+                <div class="p-4 bg-indigo-600 rounded-2xl text-white">
+                    <h3 class="font-black text-sm uppercase tracking-widest">Rising Tone (4)</h3>
+                    <p class="text-[10px] text-indigo-200">升声 (Rising)</p>
+                </div>
+                <div class="words-container space-y-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Progress Tracker (Bottom) -->
+    <div id="audio-tracker" class="fixed bottom-6 right-6 flex flex-col items-end pointer-events-none gap-2"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Firebase Config (Placeholder or retrieved from env)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB_...",
+            authDomain: "outpost-dictionary-116208.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-dictionary-116208",
+            storageBucket: "outpost-dictionary-116208.appspot.com",
+            messagingSenderId: "...",
+            appId: "..."
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- Constants & State ---
+        const LOCAL_STORAGE_KEY = 'gemini_agent_api_base';
+        const urlParams = new URLSearchParams(window.location.search);
+        let API_BASE_URL = urlParams.get('api') || localStorage.getItem(LOCAL_STORAGE_KEY) || "http://localhost:3000/api";
+        if (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
+        let isAdmin = false;
+        let tonesData = {
+            "midTone": [
+                { "thai": "คา", "IPA": "/kʰāː/", "meaning": "滞留/卡住", "source": "Slide 5" },
+                { "thai": "ดี", "IPA": "/dīː/", "meaning": "好", "level": "A2" },
+                { "thai": "กิน", "IPA": "/kīn/", "meaning": "吃", "level": "A2" },
+                { "thai": "去", "thai": "ไป", "IPA": "/pāj/", "meaning": "去", "level": "A2" },
+                { "thai": "มา", "IPA": "/māː/", "meaning": "来", "level": "A2" },
+                { "thai": "ตา", "IPA": "/tāː/", "meaning": "眼睛/外公", "level": "A2" },
+                { "thai": "ดู", "IPA": "/dūː/", "meaning": "看", "level": "A2" },
+                { "thai": "เรียน", "IPA": "/rīan/", "meaning": "学习", "level": "A2" },
+                { "thai": "เคน", "IPA": "/kʰēːn/", "meaning": "肯（人名/常用音节）", "level": "A2" },
+                { "thai": "แกง", "IPA": "/kɛ̄ːŋ/", "meaning": "咖喱", "level": "A2" }
+            ].map(w => ({ ...w, thai: w.thai.trim() })),
+            "lowTone": [
+                { "thai": "ข่า", "IPA": "/kʰàː/", "meaning": "南姜", "source": "Slide 6" },
+                { "thai": "ไก่", "IPA": "/kàj/", "meaning": "鸡", "level": "A2" },
+                { "thai": "เด็ก", "IPA": "/dèk/", "meaning": "孩子", "level": "A2" },
+                { "thai": "บาท", "IPA": "/bàːt/", "meaning": "泰铢", "level": "A2" },
+                { "thai": "เจ็บ", "IPA": "/t͡ɕèp/", "meaning": "疼/痛", "level": "A2" },
+                { "thai": "ผัก", "IPA": "/pʰàk/", "meaning": "蔬菜", "level": "A2" },
+                { "thai": "จด", "IPA": "/t͡ɕòt/", "meaning": "记录", "level": "A2" },
+                { "thai": "กะ", "IPA": "/kàʔ/", "meaning": "和/与", "level": "A2" },
+                { "thai": "สิบ", "IPA": "/sìp/", "meaning": "十", "level": "A2" },
+                { "thai": "โกรธ", "IPA": "/kròːt/", "meaning": "生气", "level": "A2" }
+            ].map(w => ({ ...w, thai: w.thai.trim() })),
+            "fallingTone": [
+                { "thai": "ข้า", "IPA": "/kʰâː/", "meaning": "我 (古语/方言)", "source": "Slide 7" },
+                { "thai": "ค่า", "IPA": "/kʰâː/", "meaning": "价值/价格", "source": "Slide 7" },
+                { "thai": "บ้าน", "IPA": "/bâːn/", "meaning": "家", "level": "A2" },
+                { "thai": "ข้าว", "IPA": "/kʰâːw/", "meaning": "米饭", "level": "A2" },
+                { "thai": "เล่น", "IPA": "/lên/", "meaning": "玩", "level": "A2" },
+                { "thai": "พูด", "IPA": "/pʰûːt/", "meaning": "说话", "level": "A2" },
+                { "thai": "ใกล้", "IPA": "/klâj/", "meaning": "近", "level": "A2" },
+                { "thai": "หน้า", "IPA": "/nâː/", "meaning": "脸/面/季节", "level": "A2" },
+                { "thai": "帮助", "thai": "ช่วย", "IPA": "/t͡ɕʰûaj/", "meaning": "帮助", "level": "A2" },
+                { "thai": "ถ้า", "IPA": "/tʰâː/", "meaning": "如果", "level": "A2" }
+            ].map(w => ({ ...w, thai: w.thai.trim() })),
+            "highTone": [
+                { "thai": "ค้า", "IPA": "/kʰáː/", "meaning": "贸易", "source": "Slide 8" },
+                { "thai": "รัก", "IPA": "/rák/", "meaning": "爱", "level": "A2" },
+                { "thai": "ร้อน", "IPA": "/rɔ́ːn/", "meaning": "热", "level": "A2" },
+                { "thai": "น้ำ", "IPA": "/nám/", "meaning": "水", "level": "A2" },
+                { "thai": "รถ", "IPA": "/rót/", "meaning": "车", "level": "A2" },
+                { "thai": "รู้", "IPA": "/rúː/", "meaning": "知道", "level": "A2" },
+                { "thai": "น้อง", "IPA": "/nɔ́ːŋ/", "meaning": "弟妹", "level": "A2" },
+                { "thai": "เช้า", "IPA": "/t͡ɕʰáːw/", "meaning": "早晨", "level": "A2" },
+                { "thai": "ช้าง", "IPA": "/t͡ɕʰáːŋ/", "meaning": "大象", "level": "A2" },
+                { "thai": "เล็็ก", "IPA": "/lék/", "meaning": "小", "level": "A2" }
+            ].map(w => ({ ...w, thai: w.thai.trim() })),
+            "risingTone": [
+                { "thai": "ขา", "IPA": "/kʰǎː/", "meaning": "腿", "source": "Slide 9" },
+                { "thai": "หมา", "IPA": "/mǎː/", "meaning": "狗", "level": "A2" },
+                { "thai": "สวย", "IPA": "/sǔaj/", "meaning": "漂亮", "level": "A2" },
+                { "thai": "ขาว", "IPA": "/kʰǎːw/", "meaning": "白色", "level": "A2" },
+                { "thai": "หมอ", "IPA": "/mɔ̌ː/", "meaning": "医生", "level": "A2" },
+                { "thai": "ถาม", "IPA": "/tʰǎːm/", "meaning": "问", "level": "A2" },
+                { "thai": "ฝน", "IPA": "/fǒn/", "meaning": "雨", "level": "A2" },
+                { "thai": "เขียว", "IPA": "/kʰǐaw/", "meaning": "绿色", "level": "A2" },
+                { "thai": "หนาว", "IPA": "/nǎːw/", "meaning": "冷", "level": "A2" },
+                { "thai": "เสียง", "IPA": "/sǐaŋ/", "meaning": "声音", "level": "A2" }
+            ].map(w => ({ ...w, thai: w.thai.trim() }))
+        };
+
+        let currentAudio = null;
+
+        /**
+         * Initialize App
+         */
+        window.onload = () => {
+            // Load from DB if exists, otherwise use local defaults
+            const tonesRef = ref(db, 'thaiTones/data');
+            onValue(tonesRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    tonesData = data;
+                    console.log("Data loaded from Firebase RTDB");
+                }
+                renderAll();
+            });
+
+            // Init API Input
+            const apiInput = document.getElementById('api-base-input');
+            if (apiInput) {
+                apiInput.value = API_BASE_URL;
+                apiInput.onkeydown = (e) => { if (e.key === 'Enter') updateApiBase(); };
+            }
+        };
+
+        /**
+         * Render All Tones
+         */
+        function renderAll() {
+            Object.keys(tonesData).forEach(toneKey => {
+                const container = document.querySelector(`#col-${toneKey} .words-container`);
+                if (!container) return;
+
+                container.innerHTML = tonesData[toneKey].map((word, idx) => `
+                    <div id="word-${toneKey}-${idx}" 
+                         onclick="playWord('${toneKey}', ${idx})"
+                         class="tone-card glass-panel p-4 rounded-3xl cursor-pointer select-none group relative border-white/40">
+                        <div class="flex flex-col gap-1.5">
+                            <span class="thai-text text-3xl font-bold text-slate-800">${word.thai}</span>
+                            <span class="text-sm font-bold text-indigo-500 uppercase tracking-wide">${word.IPA}</span>
+                            <span class="text-xs text-slate-500 font-medium">${word.meaning}</span>
+                        </div>
+                        
+                        ${word.audioURL ? `
+                            <div class="absolute top-4 right-4 text-emerald-500 opacity-20 group-hover:opacity-100 transition-opacity">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path></svg>
+                            </div>
+                        ` : `
+                            <div class="absolute top-4 right-4 text-slate-300 opacity-20 group-hover:opacity-100 transition-opacity">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                            </div>
+                        `}
+                    </div>
+                `).join('');
+            });
+        }
+
+        /**
+         * Play Audio
+         */
+        window.playWord = async (toneKey, idx) => {
+            const word = tonesData[toneKey][idx];
+            const card = document.getElementById(`word-${toneKey}-${idx}`);
+
+            // UI Feedback
+            card.classList.add('ring-4', 'ring-indigo-100', 'bg-white');
+            setTimeout(() => card.classList.remove('ring-4', 'ring-indigo-100', 'bg-white'), 500);
+
+            // 1. Storage URL
+            if (word.audioURL) {
+                playAudioFile(word.audioURL);
+                return;
+            }
+
+            // 2. TTS Proxy
+            const proxyUrl = `${API_BASE_URL}/tts-proxy?text=${encodeURIComponent(word.thai)}`;
+            playAudioFile(proxyUrl);
+        };
+
+        function playAudioFile(url) {
+            if (currentAudio) currentAudio.pause();
+            currentAudio = new Audio(url);
+            currentAudio.play().catch(err => {
+                console.error("Audio Playback Error:", err);
+                // Fallback to Web Speech API
+                const utterance = new SpeechSynthesisUtterance(currentAudio.src.split('text=')[1] || "");
+                utterance.lang = 'th-TH';
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+
+        /**
+         * Admin: Toggle Mode
+         */
+        window.toggleAdmin = () => {
+            isAdmin = !isAdmin;
+            const btn = document.getElementById('admin-toggle');
+            const panel = document.getElementById('admin-panel');
+
+            if (isAdmin) {
+                btn.innerText = "管理模式: ON";
+                btn.classList.replace('text-slate-500', 'text-indigo-600');
+                btn.classList.replace('border-slate-200', 'border-indigo-600');
+                panel.classList.remove('hidden');
+            } else {
+                btn.innerText = "管理模式: OFF";
+                btn.classList.replace('text-indigo-600', 'text-slate-500');
+                btn.classList.replace('border-indigo-600', 'border-slate-200');
+                panel.classList.add('hidden');
+            }
+        };
+
+        /**
+         * Admin: Sync All Audio
+         */
+        window.syncAllAudio = async () => {
+            const wordsToSync = [];
+            Object.keys(tonesData).forEach(toneKey => {
+                tonesData[toneKey].forEach((word, idx) => {
+                    if (!word.audioURL) wordsToSync.push({ toneKey, idx, thai: word.thai });
+                });
+            });
+
+            if (wordsToSync.length === 0) {
+                alert("所有音频已同步！");
+                return;
+            }
+
+            const progressEl = document.getElementById('sync-progress');
+            progressEl.classList.remove('hidden');
+            progressEl.innerText = `0/${wordsToSync.length}`;
+
+            let successCount = 0;
+            for (let i = 0; i < wordsToSync.length; i++) {
+                const item = wordsToSync[i];
+                try {
+                    const response = await fetch(`${API_BASE_URL}/tts/generate?text=${encodeURIComponent(item.thai)}&modulePath=ThaiTones`);
+                    const result = await response.json();
+
+                    if (result.success) {
+                        tonesData[item.toneKey][item.idx].audioURL = result.audioURL;
+                        successCount++;
+                        progressEl.innerText = `${successCount}/${wordsToSync.length}`;
+                        renderAll(); // Incremental UI update
+                    }
+                } catch (err) {
+                    console.error(`Failed to sync "${item.thai}":`, err);
+                }
+            }
+
+            alert(`同步完成！成功: ${successCount}, 失败: ${wordsToSync.length - successCount}`);
+        };
+
+        /**
+         * Admin: Save to Realtime DB
+         */
+        window.saveToDatabase = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/thai-tones/save`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: tonesData })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert("已成功通过代理保存至 Firebase Realtime Database!");
+                } else {
+                    throw new Error(result.error || "Unknown error");
+                }
+            } catch (err) {
+                console.error("Save Error:", err);
+                alert("保存失败: " + err.message);
+            }
+        };
+
+        /**
+         * API Config
+         */
+        window.updateApiBase = () => {
+            const newBase = document.getElementById('api-base-input').value.trim();
+            if (!newBase) return;
+            localStorage.setItem(LOCAL_STORAGE_KEY, newBase);
+            location.reload();
+        };
+
+    </script>
+</body>
+
+</html>
