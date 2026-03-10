@@ -724,19 +724,78 @@
 
         // --- 10. SW & DB Initialization ---
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./swOutpostV2.js', { type: 'module' })
-                .then(async (registration) => {
-                    console.log('SW Registered');
-                    await initDB();
-                    if (navigator.serviceWorker.controller) {
-                        sendToSW('INIT_FIREBASE', { config: firebaseConfig });
-                    } else {
-                        navigator.serviceWorker.oncontrollerchange = () => {
-                            sendToSW('INIT_FIREBASE', { config: firebaseConfig });
-                        };
+            const swCode = `
+                importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
+                importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js');
+
+                let db;
+                let userId;
+                const CACHE_NAME = 'outpost-v2-cache-v1';
+                const ASSETS = [
+                    './appOutpostV2.html',
+                    'https://cdn.tailwindcss.com?plugins=forms,container-queries',
+                    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+                    'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
+                ];
+
+                self.addEventListener('install', (event) => {
+                    event.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+                    self.skipWaiting();
+                });
+
+                self.addEventListener('activate', (event) => {
+                    event.waitUntil(self.clients.claim());
+                });
+
+                self.addEventListener('fetch', (event) => {
+                    if (event.request.method !== 'GET') return;
+                    event.respondWith(
+                        caches.match(event.request).then(cached => {
+                            return cached || fetch(event.request).then(res => {
+                                if (event.request.url.startsWith('http')) {
+                                    const resClone = res.clone();
+                                    caches.open(CACHE_NAME).then(c => c.put(event.request, resClone));
+                                }
+                                return res;
+                            });
+                        })
+                    );
+                });
+
+                self.addEventListener('message', async (event) => {
+                    const { type, payload } = event.data;
+                    if (type === 'INIT_FIREBASE') {
+                        if (!firebase.apps.length) {
+                             firebase.initializeApp(payload.config);
+                        }
+                        db = firebase.database();
+                    } else if (type === 'SET_USER') {
+                        userId = payload.userId;
+                    } else if (['ADD_TODO', 'UPDATE_TODO', 'DELETE_TODO'].includes(type) && db && userId) {
+                        const path = \`todos/\${userId}/\${payload.id}\`;
+                        if (type === 'ADD_TODO') db.ref(path).set(payload.data);
+                        else if (type === 'UPDATE_TODO') db.ref(path).update(payload.data);
+                        else if (type === 'DELETE_TODO') db.ref(path).remove();
                     }
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+
+            navigator.serviceWorker.register(swUrl)
+                .then(async (registration) => {
+                    console.log('SW Registered via Blob');
+                    await initDB();
+                    const notifySW = () => {
+                        if (navigator.serviceWorker.controller) {
+                            sendToSW('INIT_FIREBASE', { config: firebaseConfig });
+                            if (currentUser) sendToSW('SET_USER', { userId: currentUser.uid });
+                        }
+                    };
+                    if (navigator.serviceWorker.controller) notifySW();
+                    else navigator.serviceWorker.oncontrollerchange = notifySW;
                 })
-                .catch(err => console.log('SW Fail', err));
+                .catch(err => console.error('SW Fail', err));
 
             navigator.serviceWorker.addEventListener('message', (event) => {
                 if (event.data.type === 'SYNC_COMPLETE') {
