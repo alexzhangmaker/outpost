@@ -156,13 +156,16 @@
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
         }
 
-        .chart-header {
-            margin-bottom: 1rem;
-        }
-
         .chart-container {
             height: 300px;
             position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .chart-header {
+            max-width: 900px;
+            margin: 0 auto 1rem auto;
         }
 
         /* Scrollable Bottom Section (Questions) */
@@ -319,6 +322,48 @@
             background: var(--primary-dark);
         }
 
+        /* Reading Test Styles */
+        .inline-select {
+            appearance: none;
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 0.2rem 1.5rem 0.2rem 0.6rem;
+            border-radius: 0.25rem;
+            font-size: 0.95rem;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            margin: 0 0.25rem;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.4rem center;
+            background-size: 1em;
+            max-width: 250px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        .inline-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .inline-select.correct {
+            background-color: #f0fdf4;
+            border-color: var(--success);
+            color: var(--success);
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322c55e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        }
+
+        .inline-select.wrong {
+            background-color: #fef2f2;
+            border-color: var(--error);
+            color: var(--error);
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        }
+
         /* Scrollbar styling */
         .scrollable-content::-webkit-scrollbar {
             width: 8px;
@@ -331,6 +376,64 @@
         .scrollable-content::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 10px;
+        }
+
+        /* Print Styles */
+        @media print {
+            body, .app-container, .main-wrapper, .scrollable-content {
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                background: white !important;
+                display: block !important;
+            }
+            
+            .sidebar, .top-toolbar, .writing-card, .btn-action {
+                display: none !important;
+            }
+
+            .main-wrapper {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .chart-section {
+                border-bottom: none;
+                box-shadow: none;
+                padding: 0;
+            }
+
+            .scrollable-content {
+                padding: 0;
+            }
+
+            .step-block {
+                box-shadow: none;
+                border: none;
+                padding: 1rem 0;
+                page-break-inside: avoid;
+            }
+
+            .inline-select {
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                background-image: none !important;
+                border: none;
+                border-bottom: 1px solid #000;
+                border-radius: 0;
+                padding: 0 0.5rem;
+                min-width: 80px;
+                color: #000;
+            }
+
+            /* Force background colors and colors to print */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
         }
     </style>
 </head>
@@ -359,6 +462,9 @@
                     <span id="toggle-icon">📂</span> <span id="toggle-text">Hide Menu</span>
                 </button>
                 <div id="case-title-small" style="margin-left: 1.5rem; font-weight: 600; color: var(--primary);"></div>
+                <button class="btn-toggle" style="margin-left: auto;" onclick="window.print()">
+                    <span>🖨️</span> <span>Print</span>
+                </button>
             </div>
 
             <!-- Fixed Chart Section -->
@@ -377,6 +483,151 @@
 
     <script>
         const CASES = [
+            {
+                id: 'household-recycling',
+                title: 'Household Recycling Rates',
+                subtitle: 'Malaysia, Thailand, Cambodia (2016-2022)',
+                description: 'Study the graph and choose the best answer to fill in each blank.',
+                chartType: 'line',
+                labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
+                datasets: [
+                    { label: 'Malaysia', data: [30, 40, 50, 60, 55, 65, 75], borderColor: '#1e293b', backgroundColor: '#1e293b', tension: 0, pointStyle: 'rect', pointRadius: 6 },
+                    { label: 'Thailand', data: [20, 28, 35, 45, 50, 58, 40], borderColor: '#4f46e5', backgroundColor: '#4f46e5', tension: 0, pointStyle: 'rectRot', pointRadius: 6 },
+                    { label: 'Cambodia', data: [10, 15, 12, 15, 18, 20, 16], borderColor: '#10b981', backgroundColor: '#10b981', tension: 0, pointStyle: 'star', pointRadius: 6 }
+                ],
+                steps: [
+                    {
+                        type: 'reading-test',
+                        title: 'Reading Comprehension Cloze Test',
+                        text: "The graph shows {0}. It can be seen that the rates of household recycling among the three countries showed some variation. From 2016 to 2019, with a 10 percent increase each year, {1}. After a slight fall in 2020, it continued to rise until reaching its highest point at around 75 percent in 2022. A similar trend could be seen from the graph. {2}. Without any decline, it peaked at nearly 60 percent in 2021. After that, {3}. Both Thailand's and Malaysia's household recycling rates showed some significant changes throughout the years. However, {4}. It ranged from only around 10 percent to 20 percent. Among the three countries, the household recycling rate of Malaysia in 2022 was the highest.",
+                        options: [
+                            "Malaysia's recycling rate rose steadily",
+                            "the rate fell sharply to 40 percent in 2022",
+                            "Cambodia's recycling rate remained more or less stable",
+                            "Thailand's recycling rate grew steadily between 2016 and 2021",
+                            "the household recycling rates in three southeast Asian countries between 2016 and 2022"
+                        ],
+                        answers: [4, 0, 3, 1, 2],
+                        blankStartNumber: 31
+                    }
+                ]
+            },
+            {
+                id: 'tech-adoption',
+                title: 'Technology Adoption Rates',
+                subtitle: 'Smartphones, Tablets, Smartwatches (2018-2024)',
+                description: 'Study the graph and choose the best answer to fill in each blank.',
+                chartType: 'line',
+                labels: ['2018', '2019', '2020', '2021', '2022', '2023', '2024'],
+                datasets: [
+                    { label: 'Smartphones', data: [70, 78, 85, 90, 92, 95, 96], borderColor: '#1e293b', backgroundColor: '#1e293b', tension: 0, pointStyle: 'rect', pointRadius: 6 },
+                    { label: 'Tablets', data: [40, 45, 55, 60, 62, 63, 65], borderColor: '#4f46e5', backgroundColor: '#4f46e5', tension: 0, pointStyle: 'rectRot', pointRadius: 6 },
+                    { label: 'Smartwatches', data: [10, 15, 20, 30, 42, 50, 60], borderColor: '#10b981', backgroundColor: '#10b981', tension: 0, pointStyle: 'star', pointRadius: 6 }
+                ],
+                steps: [
+                    {
+                        type: 'reading-test',
+                        title: 'Reading Comprehension Cloze Test',
+                        text: "The graph illustrates {0} over a period of seven years. Overall, it is clear that {1}. Smartphones remained the most popular device throughout the period, starting at 70 percent in 2018 and {2}. Meanwhile, the adoption rate for tablets saw moderate growth, particularly between 2019 and 2021 where {3}. The most striking trend, however, belongs to smartwatches. While only 10 percent of the population used them in 2018, {4}, reaching 60 percent by 2024.",
+                        options: [
+                            "it increased significantly to 60 percent by 2020",
+                            "their adoption rate surged impressively",
+                            "the percentage of people using three different types of technology devices",
+                            "reaching a near-universal adoption rate of 96 percent by 2024",
+                            "all three devices saw an upward trend in usage",
+                            "it jumped from 45 percent to 60 percent",
+                        ],
+                        answers: [2, 4, 3, 5, 1],
+                        blankStartNumber: 1
+                    }
+                ]
+            },
+            {
+                id: 'urban-population',
+                title: 'Urban Population Trends',
+                subtitle: 'Region A, Region B, Region C (2000-2030)',
+                description: 'Study the graph and choose the best answer to fill in each blank.',
+                chartType: 'line',
+                labels: ['2000', '2005', '2010', '2015', '2020', '2025 (est)', '2030 (est)'],
+                datasets: [
+                    { label: 'Region A', data: [40, 48, 55, 62, 70, 75, 80], borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: 0, pointStyle: 'circle', pointRadius: 6 },
+                    { label: 'Region B', data: [75, 78, 80, 82, 85, 87, 88], borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0, pointStyle: 'triangle', pointRadius: 6 },
+                    { label: 'Region C', data: [20, 25, 32, 42, 52, 65, 75], borderColor: '#ec4899', backgroundColor: '#ec4899', tension: 0, pointStyle: 'rectRounded', pointRadius: 6 }
+                ],
+                steps: [
+                    {
+                        type: 'reading-test',
+                        title: 'Reading Comprehension Cloze Test',
+                        text: "The line chart provides information about {0} across three regions from 2000, with projections up to 2030. It is immediately apparent that Region B {1}. In 2000, 75 percent of Region B's population lived in cities, and this figure is projected to rise slowly to 88 percent by 2030. In contrast, Region A {2}. Its urban population started at 40 percent and is expected to exactly double by 2030. The most dramatic change can be seen in Region C. {3}. However, it experienced rapid urbanization, particularly from 2015 onwards, and {4}.",
+                        options: [
+                            "is projected to catch up with Region A by 2030",
+                            "the proportion of people living in urban areas",
+                            "Starting as the least urbanized region at just 20 percent",
+                            "has consistently had the highest rate of urbanization",
+                            "experienced a steady and consistent increase throughout the period",
+                        ],
+                        answers: [1, 3, 4, 2, 0],
+                        blankStartNumber: 6
+                    }
+                ]
+            },
+            {
+                id: 'renewable-energy',
+                title: 'Renewable Energy Generation',
+                subtitle: 'Solar, Wind, Hydroelectric (2010-2022)',
+                description: 'Study the graph and choose the best answer to fill in each blank.',
+                chartType: 'line',
+                labels: ['2010', '2012', '2014', '2016', '2018', '2020', '2022'],
+                datasets: [
+                    { label: 'Hydroelectric', data: [65, 66, 64, 67, 68, 67, 69], borderColor: '#0ea5e9', backgroundColor: '#0ea5e9', tension: 0.2, pointStyle: 'circle', pointRadius: 6 },
+                    { label: 'Wind', data: [15, 22, 35, 48, 62, 75, 90], borderColor: '#14b8a6', backgroundColor: '#14b8a6', tension: 0.2, pointStyle: 'rect', pointRadius: 6 },
+                    { label: 'Solar', data: [2, 5, 12, 28, 50, 72, 110], borderColor: '#eab308', backgroundColor: '#eab308', tension: 0.2, pointStyle: 'triangle', pointRadius: 6 }
+                ],
+                steps: [
+                    {
+                        type: 'reading-test',
+                        title: 'Reading Comprehension Cloze Test',
+                        text: "The chart compares the amount of electricity generated from {0} between 2010 and 2022. While hydroelectric power {1}, solar and wind power saw massive expansions. In 2010, hydroelectricity was by far the leading source, producing 65 terawatt-hours. This figure {2} over the entire 12-year period. Wind power generation steadily accelerated, overtaking hydroelectricity in around 2019 and reaching 90 terawatt-hours by 2022. Similarly, solar power {3}. Although it produced a negligible 2 terawatt-hours in 2010, {4}, eventually becoming the top renewable energy source in 2022.",
+                        options: [
+                            "fluctuated slightly but remained relatively constant",
+                            "it witnessed exponential growth in subsequent years",
+                            "remained the dominant energy source until 2018",
+                            "started very low but grew at the fastest rate overall",
+                            "three different renewable sources",
+                        ],
+                        answers: [4, 2, 0, 3, 1],
+                        blankStartNumber: 11
+                    }
+                ]
+            },
+            {
+                id: 'coffee-consumption',
+                title: 'Coffee vs. Tea Consumption',
+                subtitle: 'Weekly Cups per Person in Country X (1990-2020)',
+                description: 'Study the graph and choose the best answer to fill in each blank.',
+                chartType: 'line',
+                labels: ['1990', '1995', '2000', '2005', '2010', '2015', '2020'],
+                datasets: [
+                    { label: 'Tea', data: [15, 14, 12, 10, 8, 6, 5], borderColor: '#22c55e', backgroundColor: '#22c55e', tension: 0.3, pointStyle: 'circle', pointRadius: 6 },
+                    { label: 'Coffee', data: [3, 4, 7, 9, 11, 14, 16], borderColor: '#8b5cf6', backgroundColor: '#8b5cf6', tension: 0.3, pointStyle: 'rect', pointRadius: 6 }
+                ],
+                steps: [
+                    {
+                        type: 'reading-test',
+                        title: 'Reading Comprehension Cloze Test',
+                        text: "The graph illustrates the shifting preferences for {0} per person in Country X from 1990 to 2020. The most prominent feature of the graph is that {1} over the 30-year timeframe. In 1990, tea was highly popular, with the average person drinking 15 cups per week. However, {2}. By 2020, consumption had fallen to just 5 cups per week. Conversely, coffee was relatively unpopular initially, standing at just 3 cups per week. Over the decades, {3}. The two trends intersected around 2008, {4}.",
+                        options: [
+                            "tea consumption steadily declined year by year",
+                            "the popularity of the two beverages completely reversed",
+                            "tea and coffee consumption measured in weekly cups",
+                            "after which coffee officially surpassed tea as the preferred beverage",
+                            "its popularity grew consistently without any downward fluctuations",
+                        ],
+                        answers: [2, 1, 0, 4, 3],
+                        blankStartNumber: 16
+                    }
+                ]
+            },
             {
                 id: 'tuna-global',
                 title: 'Pacific Bluefin Tuna',
@@ -664,6 +915,40 @@
                         `).join('')}
                     </div>
                 `;
+            } else if (step.type === 'reading-test') {
+                let paragraphHtml = step.text;
+                let startNum = step.blankStartNumber || 1;
+                
+                for(let i=0; i<step.answers.length; i++) {
+                    let selectHtml = `<select class="inline-select" onchange="checkInlineAnswer(this, ${step.answers[i]})">
+                        <option value="">${startNum + i}) Choose...</option>
+                        ${step.options.map((opt, oIdx) => `<option value="${oIdx}">${opt}</option>`).join('')}
+                    </select>`;
+                    paragraphHtml = paragraphHtml.replace(`{${i}}`, selectHtml);
+                }
+
+                return `
+                    <div class="reading-test-container">
+                        <p class="reading-paragraph" style="line-height: 2.2; font-size: 1.05rem; margin-bottom: 1.5rem; color: var(--text-main);">${paragraphHtml}</p>
+                        <div class="options-reference" style="background:#f8fafc; padding:1.5rem; border-radius:0.5rem; border:1px solid var(--border);">
+                            <h4 style="margin-bottom:1rem; color:var(--text-main); font-size: 1rem;">Options Reference:</h4>
+                            <ol style="margin-left: 1.5rem; color:var(--text-dim); line-height: 1.8;">
+                                ${step.options.map(opt => `<li>${opt}</li>`).join('')}
+                            </ol>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function checkInlineAnswer(selectElement, correctIdx) {
+            selectElement.classList.remove('correct', 'wrong');
+            if (selectElement.value === "") return;
+            
+            if (parseInt(selectElement.value) === correctIdx) {
+                selectElement.classList.add('correct');
+            } else {
+                selectElement.classList.add('wrong');
             }
         }
 
