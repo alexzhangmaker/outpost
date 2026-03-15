@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastering Grammar: Verb + ing</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-dim: #64748b;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --error: #ef4444;
+            --sidebar-width: 320px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-page);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Sidebar Toggle Container */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            transition: all 0.3s ease;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #ffffff;
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            transition: margin-left 0.3s ease, opacity 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .sidebar.hidden {
+            margin-left: calc(var(--sidebar-width) * -1);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        #nav-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            min-height: 0;
+            padding-right: 0.5rem;
+            margin-right: -0.5rem;
+        }
+
+        #nav-list::-webkit-scrollbar { width: 6px; }
+        #nav-list::-webkit-scrollbar-track { background: transparent; }
+        #nav-list::-webkit-scrollbar-thumb { background: rgba(203, 213, 225, 0.7); border-radius: 10px; }
+        #nav-list::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.9); }
+
+        .nav-item {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            margin-bottom: 0.75rem;
+            background: #f1f5f9;
+        }
+
+        .nav-item:hover {
+            background: #e2e8f0;
+        }
+
+        .nav-item.active {
+            background: #eef2ff;
+            border-color: var(--primary);
+        }
+        
+        .nav-item.test-nav {
+            background: linear-gradient(to right, #eef2ff, #faf5ff);
+            border: 1px dashed var(--primary);
+        }
+
+        .nav-item h4 {
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .nav-item p {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 0.25rem;
+        }
+
+        /* Main Content Wrapper */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Toolbar */
+        .top-toolbar {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .btn-toggle {
+            background: var(--bg-page);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-toggle:hover {
+            background: #e2e8f0;
+        }
+
+        /* Fixed Top Section (Rule Explanation) */
+        .rule-section {
+            background: #fff;
+            padding: 2rem 3rem;
+            border-bottom: 2px solid var(--border);
+            flex-shrink: 0;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+
+        .rule-header {
+            margin-bottom: 0.5rem;
+            font-size: 1.75rem;
+            color: var(--primary);
+        }
+
+        .rule-description {
+            color: var(--text-dim);
+            font-size: 1rem;
+            line-height: 1.6;
+            max-width: 800px;
+        }
+        
+        .rule-examples {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-pill {
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            font-family: monospace;
+            border: 1px solid var(--border);
+        }
+
+        /* Scrollable Bottom Section (Exercises) */
+        .scrollable-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 3rem;
+            background: var(--bg-page);
+        }
+        
+        .scrollable-content::-webkit-scrollbar { width: 8px; }
+        .scrollable-content::-webkit-scrollbar-track { background: #f1f5f9; }
+        .scrollable-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Exercise Grid */
+        .exercise-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .verb-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .verb-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .verb-base {
+            font-size: 1.5rem;
+            font-family: 'Outfit';
+            font-weight: 600;
+            color: var(--text-main);
+            text-align: center;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .verb-input {
+            width: 100%;
+            padding: 0.75rem;
+            padding-right: 2.5rem;
+            border: 2px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 1.1rem;
+            font-family: monospace;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .verb-input:focus {
+            border-color: var(--primary);
+        }
+
+        .verb-input.correct {
+            border-color: var(--success);
+            background: #f0fdf4;
+            color: var(--success);
+        }
+
+        .verb-input.wrong {
+            border-color: var(--error);
+            background: #fef2f2;
+            color: var(--error);
+        }
+
+        .status-icon {
+            position: absolute;
+            right: 0.75rem;
+            font-size: 1.25rem;
+            display: none;
+        }
+        
+        /* Sentence Grid */
+        .sentence-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .sentence-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-size: 1.15rem;
+            line-height: 2;
+            color: var(--text-main);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .sentence-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .sentence-input-group {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            width: 140px;
+            margin: 0 0.5rem;
+        }
+
+        .sentence-input-group .verb-input {
+            width: 100%;
+            padding: 0.5rem;
+            padding-right: 2rem;
+            font-size: 1rem;
+        }
+
+        .sentence-input-group .status-icon {
+            right: 0.5rem;
+            font-size: 1.1rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .sentence-text {
+            vertical-align: middle;
+        }
+
+        /* Comprehensive Test Styles */
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .test-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .test-list {
+            display:flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .test-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem;
+        }
+
+        .test-num {
+            width: 30px;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .test-base {
+            width: 100px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .test-input-wrapper {
+            flex-grow: 1;
+            position: relative;
+        }
+        
+        .test-correction {
+            color: var(--error);
+            font-size: 0.9rem;
+            font-family: monospace;
+            margin-top: 0.25rem;
+            display: none;
+            font-weight: 600;
+        }
+
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 2.5rem;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-dark);
+        }
+        
+        #test-score-banner {
+            display: none;
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo">GrammarExplorer v1.0</div>
+            
+            <div id="nav-list">
+                <!-- Categories injected by JS -->
+            </div>
+
+            <div style="margin-top: auto; padding: 1rem; background: #f8fafc; border-radius: 0.5rem; border: 1px solid var(--border);">
+                <p style="font-size: 0.75rem; color: var(--text-dim);">Topic: Verb + ing Rules</p>
+            </div>
+        </div>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <div class="top-toolbar">
+                <button class="btn-toggle" onclick="toggleSidebar()">
+                    <span id="toggle-icon">📂</span> <span id="toggle-text">Hide Menu</span>
+                </button>
+                <div id="toolbar-title" style="margin-left: 1.5rem; font-weight: 600; color: var(--primary);">General Rule</div>
+            </div>
+
+            <!-- Fixed Rule Section -->
+            <div class="rule-section" id="rule-section">
+                <!-- Content injected by JS -->
+            </div>
+
+            <!-- Scrollable Content Section -->
+            <div class="scrollable-content" id="main-content">
+                <!-- Exercises or Test injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const RULES = [
+            {
+                id: 'rule-general',
+                title: 'Rule 1: General Rule',
+                subtitle: 'Most verbs: add -ing',
+                description: 'For most verbs in English, you simply add "-ing" to the base form of the verb.',
+                examples: ['sleep → sleeping', 'think → thinking', 'remember → remembering'],
+                verbs: ['play', 'work', 'go', 'read', 'eat', 'sleep', 'help', 'think', 'remember', 'watch', 'stand', 'talk']
+            },
+            {
+                id: 'rule-silent-e',
+                title: 'Rule 2: Silent "e"',
+                subtitle: 'Drop the "e", add -ing',
+                description: 'If a verb ends with a consonant followed by -e: Drop the -e and add -ing.',
+                examples: ['memorize → memorizing', 'store → storing', 'use → using'],
+                verbs: ['make', 'write', 'dance', 'memorize', 'store', 'use', 'take', 'give', 'live', 'leave', 'drive', 'smile']
+            },
+            {
+                id: 'rule-ie',
+                title: 'Rule 3: Ending in "ie"',
+                subtitle: 'Change "ie" to "y", add -ing',
+                description: 'If a verb ends in "ie", change the "ie" to "y" before adding "-ing". (There are only a few common verbs that follow this rule).',
+                examples: ['die → dying', 'lie → lying', 'tie → tying'],
+                verbs: ['die', 'lie', 'tie', 'untie', 'vie']
+            },
+            {
+                id: 'rule-cvc-1',
+                title: 'Rule 4: 1-Syllable CVC',
+                subtitle: 'Double final consonant',
+                description: 'One-syllable verbs ending with a consonant + vowel + consonant: Double the final consonant and add -ing. (Exceptions: verbs that end in -w, -x, or -y; for example, say → saying)',
+                examples: ['get → getting', 'stop → stopping', 'put → putting'],
+                verbs: ['get', 'stop', 'put', 'run', 'swim', 'sit', 'cut', 'win', 'plan', 'shop']
+            },
+            {
+                id: 'rule-cvc-2',
+                title: 'Rule 5: 2-Syllable Stressed',
+                subtitle: 'Double final consonant',
+                description: 'Two-syllable verbs ending with a consonant + vowel + consonant, where the second syllable is stressed: Double the final consonant and add -ing.',
+                examples: ['admit → admitting', 'begin → beginning', 'prefer → preferring'],
+                verbs: ['admit', 'begin', 'prefer', 'occur', 'commit', 'submit', 'forget', 'refer']
+            },
+            {
+                id: 'rule-by-gerund',
+                title: 'Writing: By + Gerund',
+                subtitle: 'Express Cause and Effect',
+                description: 'There are many ways to show cause-and-effect relationships in your writing. One way to do this is with a "by + gerund phrase". It expresses how to reach a result.',
+                examples: ['By exercising regularly, you can improve your memory.'],
+                type: 'sentences',
+                sentences: [
+                    {
+                        parts: [
+                            { type: 'text', val: "You can keep your brain healthy by " },
+                            { type: 'input', verb: "eat" },
+                            { type: 'text', val: " foods high in antioxidants, " },
+                            { type: 'input', verb: "exercise" },
+                            { type: 'text', val: " regularly, and " },
+                            { type: 'input', verb: "get" },
+                            { type: 'text', val: " enough sleep." }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { type: 'text', val: "She learned the language effectively by " },
+                            { type: 'input', verb: "read" },
+                            { type: 'text', val: " books, " },
+                            { type: 'input', verb: "listen" },
+                            { type: 'text', val: " to English podcasts, and " },
+                            { type: 'input', verb: "talk" },
+                            { type: 'text', val: " to native speakers." }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { type: 'text', val: "They prepared for the marathon by " },
+                            { type: 'input', verb: "run" },
+                            { type: 'text', val: " 10 miles a day, " },
+                            { type: 'input', verb: "eat" },
+                            { type: 'text', val: " a healthy diet, and " },
+                            { type: 'input', verb: "rest" },
+                            { type: 'text', val: " well over the weekends." }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { type: 'text', val: "By " },
+                            { type: 'input', verb: "admit" },
+                            { type: 'text', val: " your mistakes, " },
+                            { type: 'input', verb: "apologize" },
+                            { type: 'text', val: " sincerely, and " },
+                            { type: 'input', verb: "try" },
+                            { type: 'text', val: " to fix the problem, you show great maturity." }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { type: 'text', val: "He managed to avoid the morning traffic jam by " },
+                            { type: 'input', verb: "leave" },
+                            { type: 'text', val: " early." }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { type: 'text', val: "We can protect the environment by " },
+                            { type: 'input', verb: "recycle" },
+                            { type: 'text', val: " plastic, " },
+                            { type: 'input', verb: "reduce" },
+                            { type: 'text', val: " energy use, and " },
+                            { type: 'input', verb: "plant" },
+                            { type: 'text', val: " trees." }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // Store active state
+        let activeNavId = RULES[0].id;
+        let sidebarVisible = true;
+        let isTestMode = false;
+        
+        // Helper to get correct gerund spelling
+        function getGerund(base) {
+            // Rule 3: ie -> y + ing
+            if (base.endsWith('ie')) {
+                return base.slice(0, -2) + 'ying';
+            }
+            // Rule 2: silent e
+            if (base.endsWith('e') && !base.endsWith('ee')) {
+                // exceptions like see -> seeing, agree -> agreeing
+                return base.slice(0, -1) + 'ing';
+            }
+            // Rule 4: single syllable CVC roughly (excluding w, x, y)
+            const vowels = ['a','e','i','o','u'];
+            const last = base.charAt(base.length-1);
+            const secondLast = base.charAt(base.length-2);
+            const thirdLast = base.charAt(base.length-3);
+            
+            // Heuristic for known CVC list to avoid complex syllable counting logic
+            const cvcList = ['run', 'swim', 'stop', 'sit', 'get', 'put', 'cut', 'win', 'beg', 'plan', 'shop', 'forget', 'admit', 'begin', 'prefer', 'occur', 'commit', 'submit', 'refer'];
+            
+            if (cvcList.includes(base)) {
+                if(base === 'forget') return 'forgetting';
+                return base + last + 'ing';
+            }
+
+            // Rule 1: general
+            if(base === 'see') return 'seeing';
+            if(base === 'agree') return 'agreeing';
+            return base + 'ing';
+        }
+
+        // Initialize App
+        function init() {
+            renderSidebar();
+            switchRule(activeNavId);
+        }
+
+        // UI Interactions
+        function toggleSidebar() {
+            sidebarVisible = !sidebarVisible;
+            const sidebar = document.getElementById('sidebar');
+            const toggleText = document.getElementById('toggle-text');
+            const toggleIcon = document.getElementById('toggle-icon');
+
+            if (sidebarVisible) {
+                sidebar.classList.remove('hidden');
+                toggleText.innerText = "Hide Menu";
+                toggleIcon.innerText = "📂";
+            } else {
+                sidebar.classList.add('hidden');
+                toggleText.innerText = "Show Menu";
+                toggleIcon.innerText = "📁";
+            }
+        }
+
+        function renderSidebar() {
+            const list = document.getElementById('nav-list');
+            let html = RULES.map(r => `
+                <div class="nav-item ${r.id === activeNavId && !isTestMode ? 'active' : ''}" onclick="switchRule('${r.id}')">
+                    <h4>${r.title}</h4>
+                    <p>${r.subtitle}</p>
+                </div>
+            `).join('');
+
+            html += `
+                <div class="nav-item test-nav ${isTestMode ? 'active' : ''}" onclick="startComprehensiveTest()" style="margin-top: 2rem;">
+                    <h4>🏆 Comprehensive Test</h4>
+                    <p>Mix of all rules (20 words)</p>
+                </div>
+            `;
+            list.innerHTML = html;
+        }
+
+        function switchRule(id) {
+            isTestMode = false;
+            activeNavId = id;
+            renderSidebar();
+            
+            const rule = RULES.find(r => r.id === id);
+            document.getElementById('toolbar-title').innerText = rule.title;
+
+            const ruleSection = document.getElementById('rule-section');
+            ruleSection.innerHTML = `
+                <h2 class="rule-header">${rule.title}</h2>
+                <p class="rule-description">${rule.description}</p>
+                <div class="rule-examples">
+                    ${rule.examples.map(ex => `<span class="example-pill">${ex}</span>`).join('')}
+                </div>
+            `;
+
+            const mainContent = document.getElementById('main-content');
+            if (rule.type === 'sentences') {
+                mainContent.innerHTML = `
+                    <div class="sentence-list">
+                        ${rule.sentences.map((s, idx) => generateSentenceCard(s, idx)).join('')}
+                    </div>
+                `;
+            } else {
+                mainContent.innerHTML = `
+                    <div class="exercise-grid">
+                        ${rule.verbs.map(v => generateVerbCard(v)).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        function generateSentenceCard(s, idx) {
+            let content = `<span class="sentence-text">${idx + 1}. </span>`;
+            s.parts.forEach(part => {
+                if (part.type === 'text') {
+                    content += `<span class="sentence-text">${part.val}</span>`;
+                } else if (part.type === 'input') {
+                    const correctAns = getGerund(part.verb);
+                    content += `
+                    <div class="sentence-input-group">
+                        <input type="text" class="verb-input" placeholder="${part.verb} + ing" data-answer="${correctAns}" oninput="validateInline(this)">
+                        <span class="status-icon">✅</span>
+                    </div>`;
+                }
+            });
+            return `
+                <div class="sentence-card">
+                    ${content}
+                </div>
+            `;
+        }
+
+        function generateVerbCard(verb) {
+            const correctAns = getGerund(verb);
+            return `
+                <div class="verb-card">
+                    <div class="verb-base">${verb}</div>
+                    <div class="input-group">
+                        <input type="text" class="verb-input" placeholder="add -ing" data-answer="${correctAns}" oninput="validateInline(this)">
+                        <span class="status-icon">✅</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function validateInline(input) {
+            const answer = input.getAttribute('data-answer');
+            const val = input.value.trim().toLowerCase();
+            const icon = input.nextElementSibling;
+            
+            input.classList.remove('correct', 'wrong');
+            icon.style.display = 'none';
+
+            if (val === '') return;
+
+            if (val === answer) {
+                input.classList.add('correct');
+                icon.innerText = '✅';
+                icon.style.display = 'block';
+                input.disabled = true; // lock it in
+            } else if (val.length >= answer.length) {
+                 // only show error if they typed enough letters
+                input.classList.add('wrong');
+                icon.innerText = '❌';
+                icon.style.display = 'block';
+            }
+        }
+        
+        // Comprehensive Test Logic
+        let testWords = [];
+        
+        function startComprehensiveTest() {
+            isTestMode = true;
+            renderSidebar();
+            document.getElementById('toolbar-title').innerText = "Comprehensive Evaluation";
+            
+            document.getElementById('rule-section').innerHTML = `
+                <h2 class="rule-header">Final Test: Verb + ing</h2>
+                <p class="rule-description">Write the correct '-ing' form for the following 20 randomly selected verbs. These verbs use a mix of all four rules. You will not receive immediate feedback until you click the submit button.</p>
+            `;
+
+            // Gather all verbs and shuffle
+            let allVerbs = RULES.flatMap(r => {
+                if (r.type === 'sentences') {
+                    return r.sentences.flatMap(s => s.parts.filter(p => p.type === 'input').map(p => p.verb));
+                }
+                return r.verbs || [];
+            });
+            allVerbs = [...new Set(allVerbs)];
+            allVerbs = allVerbs.sort(() => 0.5 - Math.random()).slice(0, 20);
+            testWords = allVerbs;
+
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="test-container">
+                    <div id="test-score-banner"></div>
+                    <div class="test-list">
+                        ${testWords.map((v, idx) => `
+                            <div class="test-item">
+                                <span class="test-num">${idx + 1}.</span>
+                                <span class="test-base">${v}</span>
+                                <div class="test-input-wrapper">
+                                    <input type="text" class="verb-input test-input" data-answer="${getGerund(v)}" placeholder="Type answer...">
+                                    <div class="test-correction"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn-submit" onclick="submitTest()">Submit Test</button>
+                </div>
+            `;
+        }
+        
+        function submitTest() {
+            const inputs = document.querySelectorAll('.test-input');
+            let score = 0;
+            
+            inputs.forEach(input => {
+                const answer = input.getAttribute('data-answer');
+                const val = input.value.trim().toLowerCase();
+                const correctionDiv = input.nextElementSibling;
+                
+                input.disabled = true;
+                
+                if (val === answer) {
+                    score++;
+                    input.classList.add('correct');
+                    input.classList.remove('wrong');
+                } else {
+                    input.classList.add('wrong');
+                    input.classList.remove('correct');
+                    correctionDiv.innerText = `Correct answer: ${answer}`;
+                    correctionDiv.style.display = 'block';
+                }
+            });
+            
+            const percent = (score / 20) * 100;
+            const banner = document.getElementById('test-score-banner');
+            banner.style.display = 'block';
+            
+            if(percent >= 90) {
+                banner.innerText = `Excellent! You scored ${score}/20 (${percent}%) 🌟`;
+                banner.style.backgroundColor = '#f0fdf4';
+                banner.style.color = 'var(--success)';
+                banner.style.border = '2px solid var(--success)';
+            } else if (percent >= 70) {
+                banner.innerText = `Good Job! You scored ${score}/20 (${percent}%) 👍`;
+                banner.style.backgroundColor = '#fef3c7';
+                banner.style.color = 'var(--accent)';
+                banner.style.border = '2px solid var(--accent)';
+            } else {
+                banner.innerText = `Keep Practicing! You scored ${score}/20 (${percent}%) 📚`;
+                banner.style.backgroundColor = '#fef2f2';
+                banner.style.color = 'var(--error)';
+                banner.style.border = '2px solid var(--error)';
+            }
+            
+            // Scroll to top of test
+            document.querySelector('.scrollable-content').scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

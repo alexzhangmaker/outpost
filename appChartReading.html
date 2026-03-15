@@ -109,6 +109,31 @@
             color: var(--text-dim);
         }
 
+        #case-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            min-height: 0;
+            padding-right: 0.5rem;
+            margin-right: -0.5rem;
+        }
+
+        #case-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #case-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #case-list::-webkit-scrollbar-thumb {
+            background: rgba(203, 213, 225, 0.7);
+            border-radius: 10px;
+        }
+
+        #case-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.9);
+        }
+
         /* Main Content Wrapper */
         .main-wrapper {
             flex-grow: 1;
@@ -431,7 +456,6 @@
             /* Force background colors and colors to print */
             * {
                 -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
         }
@@ -601,6 +625,63 @@
                 ]
             },
             {
+                id: 'internet-access',
+                title: 'High-Speed Internet Access',
+                subtitle: 'Urban, Suburban, Rural Areas (2010-2022)',
+                description: 'Study the graph and choose the best answer to fill in each blank.',
+                chartType: 'line',
+                labels: ['2010', '2012', '2014', '2016', '2018', '2020', '2022'],
+                datasets: [
+                    { label: 'Urban', data: [75, 80, 85, 88, 92, 95, 98], borderColor: '#ec4899', backgroundColor: '#ec4899', tension: 0.1, pointStyle: 'circle', pointRadius: 6 },
+                    { label: 'Suburban', data: [60, 65, 72, 78, 85, 90, 95], borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.1, pointStyle: 'rect', pointRadius: 6 },
+                    { label: 'Rural', data: [15, 20, 25, 30, 45, 65, 80], borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: 0.1, pointStyle: 'triangle', pointRadius: 6 }
+                ],
+                steps: [
+                    {
+                        type: 'reading-test',
+                        title: 'Reading Comprehension Cloze Test',
+                        text: "Data concerning the spread of high-speed internet across three geographic areas is outlined for the period 2010 to 2022. Urban areas {0} throughout the entire 12-year window, starting strong at 75 percent and remaining the group with the most access. Conversely, rural areas represented {1} in 2010, at merely 15 percent. However, the most notable feature of the graph is that rural regions displayed {2}, particularly taking off after 2016 to reach 80 percent by the end. Meanwhile, suburban regions sat comfortably in the middle and experienced {3}. By 2022, the gap between the regions had narrowed, though urban areas still possessed {4}.",
+                        options: [
+                            "the absolute lowest level of connectivity",
+                            "the highest rate of access",
+                            "a very steady and moderate rate of expansion",
+                            "the highest peak value recorded overall",
+                            "the fastest and steepest rate of growth overall",
+                        ],
+                        answers: [1, 0, 4, 2, 3],
+                        blankStartNumber: 31
+                    }
+                ]
+            },
+            {
+                id: 'smartphone-os',
+                title: 'Global Smartphone OS Market Share',
+                subtitle: 'Android vs iOS (2012-2022)',
+                description: 'Study the graph and choose the best answer to fill in each blank.',
+                chartType: 'line',
+                labels: ['2012', '2014', '2016', '2018', '2020', '2022'],
+                datasets: [
+                    { label: 'Android', data: [68, 80, 85, 85, 84, 86], borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.1, pointStyle: 'rect', pointRadius: 6 },
+                    { label: 'iOS', data: [19, 15, 14, 15, 16, 14], borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.1, pointStyle: 'circle', pointRadius: 6 }
+                ],
+                steps: [
+                    {
+                        type: 'reading-test',
+                        title: 'Reading Comprehension Cloze Test',
+                        text: "The graph illustrates changes in the global market share of the two leading smartphone operating systems between 2012 and 2022. Overall, the most prominent feature is that {0}. At the start of the period in 2012, {1}, compared to iOS's 19 percent. Over the next four years, {2}, hitting 85 percent in 2016 before stabilizing. During this same exact initial growth period for its rival, {3}, dropping slightly to 14 percent. Despite minor fluctuations in the latter half of the decade, the massive initial gap established by 2016 remained virtually unchanged, meaning {4}.",
+                        options: [
+                            "the gap between the two systems widened significantly in the first few years",
+                            "iOS experienced a minor but steady decline in its market share",
+                            "neither operating system managed to gain a definitive advantage",
+                            "Android's share surged rapidly to completely dominate the market",
+                            "Android was already holding a strong majority with 68 percent of the market",
+                        ],
+                        answers: [0, 4, 3, 1, 2],
+                        blankStartNumber: 36
+                    }
+                ]
+            },
+            {
                 id: 'coffee-consumption',
                 title: 'Coffee vs. Tea Consumption',
                 subtitle: 'Weekly Cups per Person in Country X (1990-2020)',
@@ -625,6 +706,64 @@
                         ],
                         answers: [2, 1, 0, 4, 3],
                         blankStartNumber: 16
+                    }
+                ]
+            },
+            {
+                id: 'social-media-usage',
+                title: 'Daily Social Media Usage',
+                subtitle: 'Platform A, Platform B, Platform C (2018-2024)',
+                description: 'Study the graph and choose the best answer to fill in each blank.',
+                chartType: 'line',
+                labels: ['2018', '2019', '2020', '2021', '2022', '2023', '2024'],
+                datasets: [
+                    { label: 'Platform A', data: [85, 80, 75, 70, 65, 60, 55], borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0, pointStyle: 'circle', pointRadius: 6 },
+                    { label: 'Platform B', data: [30, 45, 60, 75, 82, 88, 92], borderColor: '#ec4899', backgroundColor: '#ec4899', tension: 0, pointStyle: 'triangle', pointRadius: 6 },
+                    { label: 'Platform C', data: [10, 15, 25, 45, 60, 70, 75], borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: 0, pointStyle: 'rectRounded', pointRadius: 6 }
+                ],
+                steps: [
+                    {
+                        type: 'reading-test',
+                        title: 'Reading Comprehension Cloze Test',
+                        text: "The line graph provides data on the average daily usage rates of three social media platforms between 2018 and 2024. Most notably, the percentage of users for Platform A {0}. In 2018, it was the market leader at 85 percent, but by 2024, its usage had dropped strictly to just over half the population. On the other hand, Platform B {1}. Starting at 30 percent, it overtook Platform A around early 2021 and peaked at {2} by 2024. Finally, Platform C began as the least popular option at exactly 10 percent in 2018. However, an acceleration occurred after 2019, where {3}. By the end of the period, Platform C {4}.",
+                        options: [
+                            "experienced a steady, consistent decline across all seven years",
+                            "just over 90 percent",
+                            "saw explosive and continuous growth over the entire period",
+                            "had successfully surpassed Platform A, reaching exactly 75 percent",
+                            "its usage surged from 15 percent to exactly 45 percent over two years",
+                        ],
+                        answers: [0, 2, 1, 4, 3],
+                        blankStartNumber: 21
+                    }
+                ]
+            },
+            {
+                id: 'commute-modes',
+                title: 'Student Commute Distances',
+                subtitle: 'Walking, Cycling, Public Transit (2015-2022)',
+                description: 'Study the graph and choose the best answer to fill in each blank.',
+                chartType: 'line',
+                labels: ['2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022'],
+                datasets: [
+                    { label: 'Walking', data: [90, 85, 80, 75, 55, 45, 48, 50], borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.2, pointStyle: 'circle', pointRadius: 6 },
+                    { label: 'Cycling', data: [70, 65, 60, 52, 35, 25, 28, 30], borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: 0.2, pointStyle: 'triangle', pointRadius: 6 },
+                    { label: 'Public Transit', data: [45, 40, 35, 28, 15, 8, 10, 12], borderColor: '#8b5cf6', backgroundColor: '#8b5cf6', tension: 0.2, pointStyle: 'rectRounded', pointRadius: 6 }
+                ],
+                steps: [
+                    {
+                        type: 'reading-test',
+                        title: 'Reading Comprehension Cloze Test',
+                        text: "The graph clearly illustrates the daily commute distances traveled by students using three different methods between 2015 and 2022. The most significant feature of this chart is that {0} regardless of the method chosen. Looking closely at the period from 2015 to 2018, {1}. Walking remained the most common method, decreasing steadily from 90 to 75 kilometers, while cycling and public transit followed an identical downward trajectory. A major turning point occurred in 2019, when {2}. In 2020, they hit their lowest points before {3}. By 2022, despite slight recoveries, it was evident that {4}.",
+                        options: [
+                            "reversing the trend and showing a slight upward recovery",
+                            "all three modes of transportation experienced a sudden and steep decline",
+                            "the total distance traveled by all three modes dropped simultaneously",
+                            "the overall pattern of use for all three modes remained remarkably similar",
+                            "all three modes ended noticeably lower than where they started in 2015",
+                        ],
+                        answers: [3, 2, 1, 0, 4],
+                        blankStartNumber: 26
                     }
                 ]
             },
