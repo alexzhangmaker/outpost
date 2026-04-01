@@ -193,6 +193,33 @@
             margin: 0 auto 1rem auto;
         }
 
+        /* Virtual Set Square Tool */
+        .estimation-ruler {
+            position: absolute;
+            background: rgba(16, 185, 129, 0.15); /* Light trace green */
+            border-bottom: 2px dashed var(--secondary);
+            border-left: 2px dashed var(--secondary);
+            width: 150px;
+            height: 150px;
+            z-index: 50;
+            cursor: move;
+            display: none;
+            top: 50px;
+            left: 50px;
+            user-select: none;
+        }
+        
+        .estimation-ruler::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 15px;
+            height: 15px;
+            border-top: 2px solid var(--secondary);
+            border-right: 2px solid var(--secondary);
+        }
+
         /* Scrollable Bottom Section (Questions) */
         .scrollable-content {
             flex-grow: 1;
@@ -929,6 +956,30 @@
                         ]
                     }
                 ]
+            },
+            {
+                id: 'y-axis-estimation',
+                title: 'No Gridlines: Estimating Heights',
+                subtitle: 'Renewable vs Fossil Fuel Growth (2000-2020)',
+                description: 'Use the virtual set square to align the data points and estimate their values.',
+                chartType: 'line',
+                hideYGrid: true,
+                labels: ['2000', '2005', '2010', '2015', '2020'],
+                datasets: [
+                    { label: 'Fossil Fuels', data: [850, 920, 880, 810, 760], borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: 0.1, pointStyle: 'rect', pointRadius: 6 },
+                    { label: 'Renewables', data: [150, 280, 470, 650, 820], borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.1, pointStyle: 'circle', pointRadius: 6 }
+                ],
+                steps: [
+                    {
+                        type: 'estimation',
+                        title: '1. Using the Set Square',
+                        questions: [
+                            { q: 'Estimate the value of Renewables in 2010.', target: 470, tolerance: 40 },
+                            { q: 'Estimate the value of Fossil Fuels in 2015.', target: 810, tolerance: 40 },
+                            { q: 'Estimate the value of Renewables at the end of the period (2020).', target: 820, tolerance: 40 }
+                        ]
+                    }
+                ]
             }
         ];
 
@@ -959,6 +1010,35 @@
         function init() {
             renderSidebar();
             switchCase(activeCaseId);
+            
+            // Global listeners for the draggable ruler
+            document.addEventListener('mousemove', (e) => {
+                if (!isDraggingRuler) return;
+                const ruler = document.getElementById('estimation-ruler');
+                const container = document.querySelector('.chart-container');
+                if(!ruler || !container) return;
+    
+                const dx = e.clientX - rulerStartX;
+                const dy = e.clientY - rulerStartY;
+                
+                let newLeft = rulerStartLeft + dx;
+                let newTop = rulerStartTop + dy;
+    
+                const rect = container.getBoundingClientRect();
+                if(newLeft < 0) newLeft = 0;
+                if(newTop < 0) newTop = 0;
+                if(newLeft + ruler.offsetWidth > rect.width) newLeft = rect.width - ruler.offsetWidth;
+                if(newTop + ruler.offsetHeight > rect.height) newTop = rect.height - ruler.offsetHeight;
+    
+                ruler.style.left = newLeft + 'px';
+                ruler.style.top = newTop + 'px';
+            });
+    
+            document.addEventListener('mouseup', () => {
+                isDraggingRuler = false;
+                const ruler = document.getElementById('estimation-ruler');
+                if(ruler) ruler.style.cursor = 'move';
+            });
         }
 
         function renderSidebar() {
@@ -985,8 +1065,9 @@
                     <h2 style="font-size: 1.5rem; color: var(--primary);">${c.title}</h2>
                     <p style="color: var(--text-dim); font-size: 0.9rem;">${c.subtitle} — ${c.description}</p>
                 </div>
-                <div class="chart-container">
+                <div class="chart-container" style="position:relative; overflow:hidden;">
                     <canvas id="mainChart"></canvas>
+                    <div id="estimation-ruler" class="estimation-ruler"></div>
                 </div>
             `;
 
@@ -1022,6 +1103,7 @@
             `;
 
             renderChart(c);
+            initDraggableRuler();
         }
 
         function renderStepContent(step) {
@@ -1038,6 +1120,22 @@
                             </div>
                         </div>
                     `).join('')}
+                `;
+            } else if (step.type === 'estimation') {
+                return `
+                    <p style="margin-bottom:1rem; font-size:0.9rem; color:var(--text-dim);">Use the transparent set square tool on the chart to help align data points, then estimate the target values.</p>
+                    <div class="questions-grid">
+                        ${step.questions.map((q, qIdx) => `
+                            <div class="question-item" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
+                                <p class="question-text">${qIdx + 1}. ${q.q}</p>
+                                <div style="display:flex; gap:1rem; align-items:center;">
+                                    <input type="number" id="est-input-${qIdx}" style="padding:0.6rem; border:2px solid var(--border); border-radius:0.5rem; width:150px; outline:none;" placeholder="Numerical Value">
+                                    <button class="btn-action" style="padding:0.6rem 1.5rem; border:none; border-radius:0.5rem; background:var(--primary); color:white; cursor:pointer;" onclick="checkEstimationAnswer(this, 'est-input-${qIdx}', ${q.target}, ${q.tolerance})">Check Estimate</button>
+                                </div>
+                                <div class="feedback-msg" style="margin-top:0.5rem; font-size:0.95rem; display:none; line-height:1.5;"></div>
+                            </div>
+                        `).join('')}
+                    </div>
                 `;
             } else if (step.type === 'sentence-verification') {
                 return `
@@ -1077,6 +1175,56 @@
                         </div>
                     </div>
                 `;
+            }
+        }
+
+        let isDraggingRuler = false;
+        let rulerStartX = 0, rulerStartY = 0, rulerStartLeft = 0, rulerStartTop = 0;
+        
+        function initDraggableRuler() {
+            const ruler = document.getElementById('estimation-ruler');
+            if(!ruler) return;
+            
+            const c = CASES.find(x => x.id === activeCaseId);
+            const hasEstimation = c && c.steps.some(s => s.type === 'estimation');
+            if (hasEstimation) {
+                ruler.style.display = 'block';
+            } else {
+                ruler.style.display = 'none';
+                return;
+            }
+
+            ruler.addEventListener('mousedown', (e) => {
+                isDraggingRuler = true;
+                ruler.style.cursor = 'grabbing';
+                rulerStartX = e.clientX;
+                rulerStartY = e.clientY;
+                rulerStartLeft = ruler.offsetLeft;
+                rulerStartTop = ruler.offsetTop;
+            });
+        }
+        
+        function checkEstimationAnswer(btn, inputId, target, tolerance) {
+            const input = document.getElementById(inputId);
+            const feedback = btn.parentElement.nextElementSibling;
+            const val = parseFloat(input.value);
+            feedback.style.display = 'block';
+
+            if (isNaN(val)) {
+                feedback.innerText = "Please enter a valid number.";
+                feedback.style.color = "var(--error)";
+                input.style.borderColor = "var(--error)";
+                return;
+            }
+
+            if (Math.abs(val - target) <= tolerance) {
+                feedback.innerText = `✓ Excellent! The exact value is ${target}. Your estimate (${val}) is within the acceptable tolerance (±${tolerance}).`;
+                feedback.style.color = "var(--success)";
+                input.style.borderColor = "var(--success)";
+            } else {
+                feedback.innerText = `✗ Incorrect. Your estimate is too far off. The actual value was ${target}. Make sure you align the set square perfectly horizontal!`;
+                feedback.style.color = "var(--error)";
+                input.style.borderColor = "var(--error)";
             }
         }
 
@@ -1141,7 +1289,7 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { color: '#f1f5f9' },
+                            grid: { color: '#f1f5f9', display: !c.hideYGrid },
                             ticks: { font: { size: 10 } }
                         },
                         x: {
