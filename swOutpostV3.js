@@ -177,5 +177,8 @@ self.addEventListener('message', async (event) => {
         } else if (type === 'DELETE_TODO') {
             firebaseDb.ref(path).remove();
         }
+    } else if (type === 'MANUAL_SYNC') {
+        isSyncing = false;
+        syncWithFirebase();
     }
 });

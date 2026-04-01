@@ -155,14 +155,44 @@
             </div>
         </header>
 
-        <main id="todo-list" class="flex-1 overflow-y-auto px-4 pt-3 pb-20 space-y-2 scrollbar-hide">
-            <!-- Skeleton Loader -->
-            <div id="todo-skeleton" class="space-y-2">
-                <div class="h-20 w-full rounded-lg skeleton opacity-50"></div>
-                <div class="h-20 w-full rounded-lg skeleton opacity-30"></div>
-                <div class="h-20 w-full rounded-lg skeleton opacity-10"></div>
+        <main id="todo-list-container" class="flex-1 overflow-hidden relative">
+            <div id="ptr-indicator" class="h-0 flex items-center justify-center overflow-hidden transition-all duration-300 text-slate-400">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined !text-xl animate-spin" id="ptr-icon">sync</span>
+                    <span class="text-sm font-medium" id="ptr-text">下拉刷新</span>
+                </div>
+            </div>
+            <div id="todo-list" class="h-full overflow-y-auto px-4 pt-3 pb-20 space-y-2 scrollbar-hide">
+                <!-- Skeleton Loader -->
+                <div id="todo-skeleton" class="space-y-2">
+                    <div class="h-20 w-full rounded-lg skeleton opacity-50"></div>
+                    <div class="h-20 w-full rounded-lg skeleton opacity-30"></div>
+                    <div class="h-20 w-full rounded-lg skeleton opacity-10"></div>
+                </div>
             </div>
         </main>
+
+        <!-- Calendar View -->
+        <div id="calendar-view" class="hidden flex-1 overflow-y-auto px-4 pt-4 pb-24 bg-background-light dark:bg-background-dark">
+            <header class="flex items-center justify-between mb-6">
+                <button id="prev-month" class="p-2 text-slate-500 hover:text-primary"><span class="material-symbols-outlined">chevron_left</span></button>
+                <h3 id="calendar-month-title" class="text-xl font-bold text-slate-900 dark:text-white">2024年3月</h3>
+                <button id="next-month" class="p-2 text-slate-500 hover:text-primary"><span class="material-symbols-outlined">chevron_right</span></button>
+            </header>
+            <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-400 mb-2">
+                <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+            </div>
+            <div id="calendar-grid" class="grid grid-cols-7 gap-y-4">
+                <!-- Calendar Days injected here -->
+            </div>
+            <div id="calendar-filter-indicator" class="mt-8 hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <span id="filter-date-label" class="text-sm font-bold text-slate-500">2024年3月15日 的任务</span>
+                    <button id="clear-filter" class="text-xs text-primary font-bold">查看全部</button>
+                </div>
+                <div id="filtered-todo-list" class="space-y-2"></div>
+            </div>
+        </div>
 
         <nav
             class="absolute bottom-0 left-0 right-0 z-20 mx-auto max-w-lg border-t border-slate-200 bg-white/80 backdrop-blur-sm dark:border-slate-800 dark:bg-background-dark/80 pb-[env(safe-area-inset-bottom)]">
@@ -441,21 +471,37 @@
         };
 
         // --- 5. Render Logic ---
-        const renderTodos = async () => {
-            const todos = await getAllTodos();
-            todos.sort((a, b) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt));
+        let currentFilterDate = null;
 
-            if (todos.length === 0) {
-                els.todoList.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-20 text-slate-400">
-                        <span class="material-symbols-outlined !text-5xl opacity-50 mb-4">calendar_today</span>
-                        <p>暂无任务，开始添加吧！</p>
+        const renderTodos = async (filterDate = null) => {
+            currentFilterDate = filterDate;
+            const todos = await getAllTodos();
+            let filtered = todos;
+
+            if (filterDate) {
+                const dateStr = filterDate.toISOString().split('T')[0];
+                filtered = filtered.filter(t => {
+                    if (!t.dueOn) return false;
+                    const d = (t.dueOn.seconds !== undefined) ? new Date(t.dueOn.seconds * 1000) : new Date(t.dueOn);
+                    return d.toISOString().split('T')[0] === dateStr;
+                });
+            }
+
+            filtered.sort((a, b) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt));
+
+            const listEl = filterDate ? document.getElementById('filtered-todo-list') : els.todoList;
+            if (!listEl) return;
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 text-slate-400">
+                        <p class="text-sm">暂无任务</p>
                     </div>
                 `;
                 return;
             }
 
-            els.todoList.innerHTML = todos.map(todo => {
+            listEl.innerHTML = filtered.map(todo => {
                 const isCompleted = todo.status === 'completed';
                 const opacityClass = isCompleted ? 'opacity-60 bg-slate-50 dark:bg-slate-900/40' : 'bg-white dark:bg-emerald-950/40';
                 const textDecoration = isCompleted ? 'line-through text-slate-500' : 'text-slate-800 dark:text-slate-100';
@@ -491,6 +537,53 @@
                     </div>
                 </div>`;
             }).join('');
+        };
+
+        // --- Calendar Engine ---
+        let calYear = new Date().getFullYear();
+        let calMonth = new Date().getMonth();
+
+        const renderCalendar = async () => {
+            const grid = document.getElementById('calendar-grid');
+            const title = document.getElementById('calendar-month-title');
+            title.textContent = `${calYear}年${calMonth + 1}月`;
+
+            const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0 is Sun
+            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+            const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1; // Adjust to Mon starting
+
+            const todos = await getAllTodos();
+            const dateMap = {};
+            todos.forEach(t => {
+                if (t.dueOn) {
+                    const d = (t.dueOn.seconds !== undefined) ? new Date(t.dueOn.seconds * 1000) : new Date(t.dueOn);
+                    const key = d.toISOString().split('T')[0];
+                    dateMap[key] = (dateMap[key] || 0) + 1;
+                }
+            });
+
+            let html = '';
+            for (let i = 0; i < adjustedFirstDay; i++) {
+                html += '<div></div>';
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(calYear, calMonth, d);
+                const dateKey = dateObj.toISOString().split('T')[0];
+                const hasTask = dateMap[dateKey];
+                const isToday = dateKey === today;
+
+                html += `
+                    <div onclick="window.appActions.selectDate('${dateKey}')" 
+                        class="relative flex flex-col items-center justify-center p-2 cursor-pointer rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <span class="text-sm font-medium ${isToday ? 'bg-primary text-white w-7 h-7 flex items-center justify-center rounded-full' : 'text-slate-700 dark:text-slate-200'}">${d}</span>
+                        ${hasTask ? `<div class="absolute bottom-1 w-1 h-1 bg-primary rounded-full"></div>` : ''}
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
         };
 
         // --- 6. Data Actions & SW Communication ---
@@ -541,8 +634,15 @@
 
                 const tx = idb.transaction(STORE_NAME, 'readwrite');
                 tx.objectStore(STORE_NAME).put(newTodo);
-                renderTodos();
+                renderTodos(currentFilterDate);
+                renderCalendar();
                 sendToSW('ADD_TODO', { id, data: newTodo });
+            },
+            selectDate: (dateKey) => {
+                const date = new Date(dateKey);
+                document.getElementById('filter-date-label').textContent = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 的任务`;
+                document.getElementById('calendar-filter-indicator').classList.remove('hidden');
+                renderTodos(date);
             }
         };
 
@@ -657,9 +757,75 @@
             });
 
             els.settingsView.classList.toggle('hidden', viewName !== 'settings');
-            els.todoListContainer.classList.toggle('hidden', viewName === 'settings');
-            if (viewName === 'home') renderTodos();
+            const listContainer = document.getElementById('todo-list-container');
+            const calView = document.getElementById('calendar-view');
+
+            listContainer.classList.toggle('hidden', viewName === 'settings' || viewName === 'calendar');
+            calView.classList.toggle('hidden', viewName !== 'calendar');
+
+            if (viewName === 'home') {
+                document.getElementById('calendar-filter-indicator').classList.add('hidden');
+                renderTodos();
+            } else if (viewName === 'calendar') {
+                renderCalendar();
+            }
         };
+
+        // --- Pull-To-Refresh Logic ---
+        let startY = 0;
+        let lastY = 0;
+        let isPulling = false;
+        const ptrInd = document.getElementById('ptr-indicator');
+        const ptrText = document.getElementById('ptr-text');
+        const ptrIcon = document.getElementById('ptr-icon');
+
+        const handleTouchStart = (e) => {
+            if (els.todoList.scrollTop === 0) {
+                startY = e.touches[0].pageY;
+                isPulling = true;
+                ptrInd.style.transition = 'none';
+            }
+        };
+
+        const handleTouchMove = (e) => {
+            if (!isPulling) return;
+            const y = e.touches[0].pageY;
+            const diff = y - startY;
+            if (diff > 0) {
+                e.preventDefault();
+                const height = Math.min(diff * 0.4, 60);
+                ptrInd.style.height = `${height}px`;
+                ptrInd.style.opacity = height / 60;
+                ptrText.textContent = height >= 60 ? '松开立即刷新' : '下拉刷新';
+                ptrIcon.style.transform = `rotate(${height * 6}deg)`;
+            } else {
+                isPulling = false;
+            }
+        };
+
+        const handleTouchEnd = () => {
+            if (!isPulling) return;
+            const height = parseInt(ptrInd.style.height);
+            ptrInd.style.transition = 'height 0.3s ease, opacity 0.3s ease';
+            if (height >= 60) {
+                ptrText.textContent = '读取中...';
+                ptrIcon.classList.add('animate-spin');
+                sendToSW('MANUAL_SYNC');
+                setTimeout(() => {
+                    ptrInd.style.height = '0px';
+                    ptrInd.style.opacity = '0';
+                    ptrIcon.classList.remove('animate-spin');
+                }, 1500);
+            } else {
+                ptrInd.style.height = '0px';
+                ptrInd.style.opacity = '0';
+            }
+            isPulling = false;
+        };
+
+        els.todoList.addEventListener('touchstart', handleTouchStart, { passive: false });
+        els.todoList.addEventListener('touchmove', handleTouchMove, { passive: false });
+        els.todoList.addEventListener('touchend', handleTouchEnd);
 
         // --- 9. Event Listeners ---
         els.loginBtn.addEventListener('click', handleLogin);
@@ -686,6 +852,21 @@
         });
         els.modalCloseBtn.addEventListener('click', () => els.shareModal.classList.add('hidden'));
 
+        document.getElementById('prev-month').addEventListener('click', () => {
+            calMonth--;
+            if (calMonth < 0) { calMonth = 11; calYear--; }
+            renderCalendar();
+        });
+        document.getElementById('next-month').addEventListener('click', () => {
+            calMonth++;
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            renderCalendar();
+        });
+        document.getElementById('clear-filter').addEventListener('click', () => {
+            document.getElementById('calendar-filter-indicator').classList.add('hidden');
+            renderTodos();
+        });
+
         // --- 10. SW Initialization & Messaging ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./swOutpostV3.js')
@@ -705,7 +886,8 @@
             navigator.serviceWorker.addEventListener('message', (event) => {
                 if (event.data.type === 'SYNC_COMPLETE') {
                     console.log('App: Sync complete received');
-                    renderTodos();
+                    renderTodos(currentFilterDate);
+                    renderCalendar();
                 }
             });
         }
