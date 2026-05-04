@@ -577,10 +577,10 @@ class AIServiceWorker {
     async getApiKey() {
         try {
             const config = await this.storage.getItem('DeepSeek_API_Config');
-            //return "sk-687556a7509a4799a20aa9566dd94ec3" ;
-            return config?.value?.apiKey || "sk-687556a7509a4799a20aa9566dd94ec3";
+            // return ""; // 之前硬编码的密钥已移除
+            return config?.value?.apiKey || "";
         } catch (error) {
-            return "sk-687556a7509a4799a20aa9566dd94ec3";
+            return "";
         }
     }
 
