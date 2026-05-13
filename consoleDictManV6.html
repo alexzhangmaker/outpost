@@ -1094,6 +1094,14 @@
                         </svg>
                         打印输出
                     </button>
+                    <button class="action-btn" id="handwriting-practice-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        手写练习
+                    </button>
                 </div>
 
                 <!-- 词汇卡片容器 -->
@@ -1448,6 +1456,7 @@
             createQuizBtn.addEventListener('click', createQuiz);
             exportExcelBtn.addEventListener('click', exportToExcel);
             printOutputBtn.addEventListener('click', printOutput);
+            document.getElementById('handwriting-practice-btn').addEventListener('click', gotoHandwriting);
 
             // 绑定模态对话框事件
             dictionaryModalClose.addEventListener('click', closeDictionaryModal);
@@ -2879,6 +2888,15 @@
         function printOutput() {
             showStatus('打印输出功能开发中...', 'info');
             // TODO: 实现打印输出的功能
+        }
+
+        // 跳转到手写练习
+        function gotoHandwriting() {
+            if (!currentWordsetId) {
+                showStatus('请先选择一个词汇集', 'error');
+                return;
+            }
+            window.open(`appHandWriting.html?id=${currentWordsetId}`, '_blank');
         }
 
         // 导出为Excel

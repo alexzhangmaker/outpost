@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>泰语场景对话练习 - 智能学习 App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* 头部 */
+        .scene-header {
+            background: white;
+            border-radius: 32px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        .scene-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .scene-title-en {
+            font-size: 1rem;
+            color: #718096;
+            margin-bottom: 12px;
+        }
+
+        .scene-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 0.85rem;
+            color: #4a5568;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: #edf2f7;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        /* 导航标签 */
+        .part-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: white;
+            padding: 12px;
+            border-radius: 48px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn {
+            padding: 10px 24px;
+            border: none;
+            background: transparent;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #4a5568;
+        }
+
+        .tab-btn:hover {
+            background: #f7fafc;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 2px 8px rgba(102,126,234,0.3);
+        }
+
+        /* 内容卡片 */
+        .part-content {
+            background: white;
+            border-radius: 32px;
+            padding: 32px;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.15);
+            min-height: 500px;
+        }
+
+        .part-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .part-title-en {
+            color: #718096;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        /* 对话样式 */
+        .dialog-line {
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 20px;
+            background: #f7fafc;
+            transition: all 0.2s;
+        }
+
+        .dialog-line:hover {
+            background: #edf2f7;
+            transform: translateX(4px);
+        }
+
+        .role-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .text-th {
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: #2d3748;
+            margin: 8px 0;
+            
+            font-family: "Noto Serif Thai", serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            font-variation-settings:"wdth" 100;
+        }
+
+        .text-en {
+            color: #718096;
+            margin-bottom: 8px;
+            font-family: "Roboto", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            font-variation-settings:"wdth" 100;
+        }
+
+        .audio-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+
+        .audio-btn:hover {
+            background: #38a169;
+            transform: scale(0.95);
+        }
+
+        /* 词汇/语法网格 */
+        .grid-items {
+            display: grid;
+            gap: 16px;
+        }
+
+        .vocab-card, .grammar-card {
+            background: #f7fafc;
+            border-radius: 20px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .vocab-card:hover, .grammar-card:hover {
+            background: #edf2f7;
+            transform: translateY(-2px);
+        }
+
+        .word-th {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .word-en {
+            font-size: 0.9rem;
+            color: #667eea;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .explanation {
+            color: #4a5568;
+            font-size: 0.9rem;
+            margin: 8px 0;
+        }
+
+        .grammar-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .example {
+            background: white;
+            padding: 12px;
+            border-radius: 12px;
+            margin-top: 12px;
+        }
+
+        /* 替换练习样式 */
+        .drill-card {
+            background: #f7fafc;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .template-box {
+            background: #fff5f0;
+            padding: 16px;
+            border-radius: 16px;
+            margin: 12px 0;
+            border-left: 4px solid #ed8936;
+        }
+
+        .substitution-item {
+            display: inline-block;
+            background: #edf2f7;
+            padding: 6px 12px;
+            border-radius: 20px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .substitution-item:hover {
+            background: #cbd5e0;
+            transform: scale(0.95);
+        }
+
+        .drilled-sentence {
+            background: #c6f6d5;
+            padding: 16px;
+            border-radius: 16px;
+            margin-top: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 32px;
+            color: #4a5568;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 640px) {
+            .part-content {
+                padding: 20px;
+            }
+            .text-th {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div id="app"></div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 场景 JSON 数据（直接嵌入，无需外部文件）
+        // 你可以根据需要修改这个数据结构
+        // ============================================================
+        const sceneData = {
+            "scene": {
+                "id": "restaurant_001",
+                "title": "在餐厅点餐",
+                "title_en": "Ordering at a Restaurant",
+                "difficulty": "beginner",
+                "estimatedTime": "15 min",
+                "parts": [
+                    {
+                        "partType": "standardDialog",
+                        "partId": "dialog_001",
+                        "title": "标准对话",
+                        "title_en": "Standard Dialog",
+                        "roles": [
+                            { "roleId": "customer", "name": "顾客", "name_en": "Customer" },
+                            { "roleId": "waiter", "name": "服务员", "name_en": "Waiter" }
+                        ],
+                        "script": [
+                            {
+                                "lineId": 1,
+                                "role": "waiter",
+                                "textTh": "สวัสดีค่ะ ทานอะไรดีคะ",
+                                "textEn": "Hello, what would you like to eat?",
+                                "audioUrlTh": "",
+                                "audioUrlEn": ""
+                            },
+                            {
+                                "lineId": 2,
+                                "role": "customer",
+                                "textTh": "ขอดูเมนูก่อนได้ไหมครับ",
+                                "textEn": "Can I see the menu first?",
+                                "audioUrlTh": "",
+                                "audioUrlEn": ""
+                            },
+                            {
+                                "lineId": 3,
+                                "role": "waiter",
+                                "textTh": "ได้เลยค่ะ นี่คือเมนู",
+                                "textEn": "Sure, here is the menu",
+                                "audioUrlTh": "",
+                                "audioUrlEn": ""
+                            },
+                            {
+                                "lineId": 4,
+                                "role": "customer",
+                                "textTh": "ขอผัดไทยจานหนึ่งครับ",
+                                "textEn": "I'd like one plate of Pad Thai",
+                                "audioUrlTh": "",
+                                "audioUrlEn": ""
+                            },
+                            {
+                                "lineId": 5,
+                                "role": "waiter",
+                                "textTh": "รับทราบค่ะ อร่อยแน่นอน",
+                                "textEn": "Got it, it's delicious for sure",
+                                "audioUrlTh": "",
+                                "audioUrlEn": ""
+                            }
+                        ]
+                    },
+                    {
+                        "partType": "vocabulary",
+                        "partId": "vocab_001",
+                        "title": "核心词汇",
+                        "title_en": "Key Vocabulary",
+                        "items": [
+                            {
+                                "wordId": 1,
+                                "wordTh": "เมนู",
+                                "wordEn": "menu",
+                                "explanationTh": "รายการอาหารและเครื่องดื่ม",
+                                "explanationEn": "list of food and drinks",
+                                "audioUrlTh": "",
+                                "audioUrlEn": ""
+                            },
+                            {
+                                "wordId": 2,
+                                "wordTh": "ผัดไทย",
+                                "wordEn": "Pad Thai",
+                                "explanationTh": "อาหารไทยชื่อดัง ทำจากเส้นจันทร์",
+                                "explanationEn": "famous Thai noodle dish",
+                                "audioUrlTh": "",
+                                "audioUrlEn": ""
+                            },
+                            {
+                                "wordId": 3,
+                                "wordTh": "อร่อย",
+                                "wordEn": "delicious",
+                                "explanationTh": "รสชาติดี น่ากิน",
+                                "explanationEn": "having a good taste",
+                                "audioUrlTh": "",
+                                "audioUrlEn": ""
+                            },
+                            {
+                                "wordId": 4,
+                                "wordTh": "ขอดู",
+                                "wordEn": "can I see",
+                                "explanationTh": "ขออนุญาตดูหรือตรวจสอบ",
+                                "explanationEn": "politely ask to look at something",
+                                "audioUrlTh": "",
+                                "audioUrlEn": ""
+                            }
+                        ]
+                    },
+                    {
+                        "partType": "grammar",
+                        "partId": "grammar_001",
+                        "title": "语法要点",
+                        "title_en": "Grammar Points",
+                        "items": [
+                            {
+                                "grammarId": 1,
+                                "title": "礼貌语气词 ค่ะ/ครับ",
+                                "title_en": "Polite Particles 'kha/khrap'",
+                                "explanationTh": "คำลงท้ายเพื่อแสดงความสุภาพ โดยผู้หญิงใช้ ค่ะ ผู้ชายใช้ ครับ",
+                                "explanationEn": "Particles added to show politeness. Female use 'kha', male use 'khrap'",
+                                "exampleTh": "สวัสดี**ค่ะ** (ผู้หญิงพูด)",
+                                "exampleEn": "Hello (female speaker)",
+                                "exampleAudioUrlTh": "",
+                                "exampleAudioUrlEn": ""
+                            },
+                            {
+                                "grammarId": 2,
+                                "title": "量词用法",
+                                "title_en": "Classifiers",
+                                "explanationTh": "ในภาษาไทย เวลานับสิ่งของต้องใช้ลักษณนามตามชนิดของสิ่งนั้น",
+                                "explanationEn": "Thai requires specific counters/classifiers when quantifying nouns",
+                                "exampleTh": "ผัดไทย **หนึ่งจาน**",
+                                "exampleEn": "one plate of Pad Thai",
+                                "exampleAudioUrlTh": "",
+                                "exampleAudioUrlEn": ""
+                            }
+                        ]
+                    },
+                    {
+                        "partType": "substitutionDrills",
+                        "partId": "drill_001",
+                        "title": "替换练习",
+                        "title_en": "Substitution Drills",
+                        "description": "使用模板和替换词进行对话练习",
+                        "description_en": "Practice using the template and substitution words",
+                        "drills": [
+                            {
+                                "drillId": 1,
+                                "template": {
+                                    "role": "customer",
+                                    "textTh": "ขอ{{food}}หนึ่ง{{classifier}}ครับ",
+                                    "textEn": "I'd like one {{classifier}} of {{food}}",
+                                    "audioUrlTh": "",
+                                    "audioUrlEn": ""
+                                },
+                                "substitutions": [
+                                    {
+                                        "itemId": "sub1",
+                                        "slotName": "food",
+                                        "valueTh": "ข้าวผัด",
+                                        "valueEn": "fried rice",
+                                        "audioUrlTh": "",
+                                        "audioUrlEn": ""
+                                    },
+                                    {
+                                        "itemId": "sub2",
+                                        "slotName": "classifier",
+                                        "valueTh": "จาน",
+                                        "valueEn": "plate",
+                                        "audioUrlTh": "",
+                                        "audioUrlEn": ""
+                                    }
+                                ],
+                                "drilledSentence": {
+                                    "textTh": "ขอข้าวผัดหนึ่งจานครับ",
+                                    "textEn": "I'd like one plate of fried rice",
+                                    "audioUrlTh": "",
+                                    "audioUrlEn": ""
+                                }
+                            },
+                            {
+                                "drillId": 2,
+                                "template": {
+                                    "role": "customer",
+                                    "textTh": "ขอ{{beverage}}หนึ่ง{{classifier}}ครับ",
+                                    "textEn": "I'd like one {{classifier}} of {{beverage}}",
+                                    "audioUrlTh": "",
+                                    "audioUrlEn": ""
+                                },
+                                "substitutions": [
+                                    {
+                                        "itemId": "sub3",
+                                        "slotName": "beverage",
+                                        "valueTh": "น้ำส้ม",
+                                        "valueEn": "orange juice",
+                                        "audioUrlTh": "",
+                                        "audioUrlEn": ""
+                                    },
+                                    {
+                                        "itemId": "sub4",
+                                        "slotName": "classifier",
+                                        "valueTh": "แก้ว",
+                                        "valueEn": "glass",
+                                        "audioUrlTh": "",
+                                        "audioUrlEn": ""
+                                    }
+                                ],
+                                "drilledSentence": {
+                                    "textTh": "ขอน้ำส้มหนึ่งแก้วครับ",
+                                    "textEn": "I'd like one glass of orange juice",
+                                    "audioUrlTh": "",
+                                    "audioUrlEn": ""
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        // ---------- 全局变量 ----------
+        let currentPartIndex = 0;
+
+        // ---------- 初始化渲染 ----------
+        function renderApp() {
+            const scene = sceneData.scene;
+            const appDiv = document.getElementById('app');
+            
+            if (!scene) {
+                appDiv.innerHTML = '<div class="loading">❌ 场景数据加载失败</div>';
+                return;
+            }
+            
+            appDiv.innerHTML = `
+                <div class="scene-header">
+                    <div class="scene-title">${scene.title}</div>
+                    <div class="scene-title-en">${scene.title_en || ''}</div>
+                    <div class="scene-meta">
+                        <span class="badge">📊 ${scene.difficulty === 'beginner' ? '入门' : scene.difficulty}</span>
+                        <span class="badge">⏱️ ${scene.estimatedTime || '15分钟'}</span>
+                        <span class="badge">🎤 点击按钮朗读 (泰/英)</span>
+                    </div>
+                </div>
+                <div class="part-tabs" id="partTabs"></div>
+                <div class="part-content" id="partContent"></div>
+            `;
+            
+            renderTabs();
+            renderPartContent(currentPartIndex);
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById('partTabs');
+            const parts = sceneData.scene.parts;
+            
+            const partTitles = {
+                'standardDialog': '💬 标准对话',
+                'vocabulary': '📖 核心词汇',
+                'grammar': '🎯 语法要点',
+                'substitutionDrills': '🔄 替换练习'
+            };
+            
+            tabsContainer.innerHTML = parts.map((part, idx) => {
+                const title = partTitles[part.partType] || part.title || `Part ${idx+1}`;
+                return `<button class="tab-btn ${idx === currentPartIndex ? 'active' : ''}" data-index="${idx}">${title}</button>`;
+            }).join('');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    currentPartIndex = parseInt(btn.dataset.index);
+                    renderTabs();
+                    renderPartContent(currentPartIndex);
+                });
+            });
+        }
+
+        function renderPartContent(partIndex) {
+            const part = sceneData.scene.parts[partIndex];
+            const contentContainer = document.getElementById('partContent');
+            
+            if (!part) {
+                contentContainer.innerHTML = '<div>未找到内容</div>';
+                return;
+            }
+            
+            switch(part.partType) {
+                case 'standardDialog':
+                    contentContainer.innerHTML = renderStandardDialog(part);
+                    break;
+                case 'vocabulary':
+                    contentContainer.innerHTML = renderVocabulary(part);
+                    break;
+                case 'grammar':
+                    contentContainer.innerHTML = renderGrammar(part);
+                    break;
+                case 'substitutionDrills':
+                    contentContainer.innerHTML = renderSubstitutionDrills(part);
+                    break;
+                default:
+                    contentContainer.innerHTML = '<div>未知的 Part 类型</div>';
+            }
+            
+            bindAudioEvents();
+            bindDrillEvents();
+        }
+        
+        function renderStandardDialog(part) {
+            const roles = part.roles || [];
+            const script = part.script || [];
+            const roleMap = {};
+            roles.forEach(role => { roleMap[role.roleId] = { name: role.name, name_en: role.name_en }; });
+            
+            const dialogHtml = script.map(line => {
+                const role = roleMap[line.role] || { name: line.role, name_en: line.role };
+                return `
+                    <div class="dialog-line">
+                        <div class="role-badge">${role.name} (${role.name_en})</div>
+                        <div class="text-th">${line.textTh}</div>
+                        <div class="text-en">${line.textEn}</div>
+                        <div>
+                            <button class="audio-btn" data-text="${line.textTh.replace(/"/g, '&quot;')}" data-lang="th">🔊 泰语朗读</button>
+                            <button class="audio-btn" data-text="${line.textEn.replace(/"/g, '&quot;')}" data-lang="en">🔊 英语朗读</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            return `<div><div class="part-title">${part.title}</div><div class="part-title-en">${part.title_en || ''}</div>${dialogHtml}</div>`;
+        }
+        
+        function renderVocabulary(part) {
+            const items = part.items || [];
+            const vocabHtml = items.map(item => `
+                <div class="vocab-card">
+                    <div class="word-th">${item.wordTh}</div>
+                    <div class="word-en">${item.wordEn}</div>
+                    <div class="explanation">📖 ${item.explanationTh}</div>
+                    <div class="explanation">🇬🇧 ${item.explanationEn}</div>
+                    <div>
+                        <button class="audio-btn" data-text="${item.wordTh.replace(/"/g, '&quot;')}" data-lang="th">🔊 泰语发音</button>
+                        <button class="audio-btn" data-text="${item.wordEn.replace(/"/g, '&quot;')}" data-lang="en">🔊 英语发音</button>
+                    </div>
+                </div>
+            `).join('');
+            return `<div><div class="part-title">${part.title}</div><div class="part-title-en">${part.title_en || ''}</div><div class="grid-items">${vocabHtml}</div></div>`;
+        }
+        
+        function renderGrammar(part) {
+            const items = part.items || [];
+            const grammarHtml = items.map(gram => `
+                <div class="grammar-card">
+                    <div class="grammar-title">📌 ${gram.title}</div>
+                    <div class="grammar-title">🎯 ${gram.title_en || ''}</div>
+                    <div class="explanation">${gram.explanationTh}</div>
+                    <div class="explanation">${gram.explanationEn}</div>
+                    <div class="example">
+                        <div class="text-th">${gram.exampleTh}</div>
+                        <div class="text-en">${gram.exampleEn}</div>
+                        <button class="audio-btn" data-text="${gram.exampleTh.replace(/"/g, '&quot;')}" data-lang="th">🔊 泰语例句朗读</button>
+                        <button class="audio-btn" data-text="${gram.exampleEn.replace(/"/g, '&quot;')}" data-lang="en">🔊 英语例句朗读</button>
+                    </div>
+                </div>
+            `).join('');
+            return `<div><div class="part-title">${part.title}</div><div class="part-title-en">${part.title_en || ''}</div><div class="grid-items">${grammarHtml}</div></div>`;
+        }
+        
+        function renderSubstitutionDrills(part) {
+            const drills = part.drills || [];
+            const drillsHtml = drills.map(drill => {
+                let templateDisplay = drill.template.textTh;
+                (drill.substitutions || []).forEach(sub => {
+                    templateDisplay = templateDisplay.replace(`{{${sub.slotName}}}`, `<strong style="color:#ed8936">${sub.valueTh}</strong>`);
+                });
+                
+                const subsHtml = (drill.substitutions || []).map(sub => `
+                    <span class="substitution-item" data-slot="${sub.slotName}" data-value-th="${sub.valueTh}" data-value-en="${sub.valueEn}">
+                        ${sub.valueTh} (${sub.valueEn})
+                    </span>
+                `).join('');
+                
+                return `
+                    <div class="drill-card">
+                        <div><strong>📝 模板句式</strong></div>
+                        <div class="template-box">
+                            <div class="text-th">${templateDisplay}</div>
+                            <div class="text-en">${drill.template.textEn}</div>
+                            <button class="audio-btn" data-text="${drill.template.textTh.replace(/"/g, '&quot;')}" data-lang="th">🔊 模板朗读 (泰)</button>
+                            <button class="audio-btn" data-text="${drill.template.textEn.replace(/"/g, '&quot;')}" data-lang="en">🔊 模板朗读 (英)</button>
+                        </div>
+                        <div><strong>🔄 点击替换词练习：</strong></div>
+                        <div>${subsHtml}</div>
+                        <div class="drilled-sentence">
+                            <div><strong>✨ 完整练习句子：</strong></div>
+                            <div class="text-th">${drill.drilledSentence.textTh}</div>
+                            <div class="text-en">${drill.drilledSentence.textEn}</div>
+                            <button class="audio-btn" data-text="${drill.drilledSentence.textTh.replace(/"/g, '&quot;')}" data-lang="th">🔊 完整句朗读 (泰)</button>
+                            <button class="audio-btn" data-text="${drill.drilledSentence.textEn.replace(/"/g, '&quot;')}" data-lang="en">🔊 完整句朗读 (英)</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            return `<div><div class="part-title">${part.title}</div><div class="part-title-en">${part.title_en || ''}</div>${drillsHtml}</div>`;
+        }
+        
+        // 音频播放：使用 Web Speech API（完全本地，无需音频文件）
+        function speakText(text, lang) {
+            if (!text) return;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang === 'th' ? 'th-TH' : 'en-US';
+                utterance.rate = 0.85;
+                utterance.pitch = 1.0;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("您的浏览器不支持语音合成");
+            }
+        }
+        
+        function bindAudioEvents() {
+            document.querySelectorAll('.audio-btn').forEach(btn => {
+                btn.removeEventListener('click', audioClickHandler);
+                btn.addEventListener('click', audioClickHandler);
+            });
+        }
+        
+        function audioClickHandler(e) {
+            const btn = e.currentTarget;
+            const text = btn.dataset.text;
+            const lang = btn.dataset.lang;
+            if (text) speakText(text, lang);
+        }
+        
+        function bindDrillEvents() {
+            document.querySelectorAll('.substitution-item').forEach(item => {
+                item.removeEventListener('click', drillClickHandler);
+                item.addEventListener('click', drillClickHandler);
+            });
+        }
+        
+        function drillClickHandler(e) {
+            const target = e.currentTarget;
+            const valueTh = target.dataset.valueTh;
+            const valueEn = target.dataset.valueEn;
+            // 朗读替换词
+            if (valueTh) speakText(valueTh, 'th');
+            console.log(`💡 替换词: ${valueTh} (${valueEn})`);
+        }
+        
+        // 启动应用
+        renderApp();
+    </script>
+</body>
+</html>

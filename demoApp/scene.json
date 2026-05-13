@@ -1,0 +1,221 @@
+{
+  "id": "restaurant_001",
+  "title": "在餐厅点餐",
+  "title_en": "Ordering at a Restaurant",
+  "difficulty": "beginner",
+  "estimatedTime": "15 min",
+  "parts": [
+    {
+      "partType": "standardDialog",
+      "partId": "dialog_001",
+      "title": "标准对话",
+      "title_en": "Standard Dialog",
+      "roles": [
+        {
+          "roleId": "customer",
+          "name": "顾客",
+          "name_en": "Customer"
+        },
+        {
+          "roleId": "waiter",
+          "name": "服务员",
+          "name_en": "Waiter"
+        }
+      ],
+      "script": [
+        {
+          "lineId": 1,
+          "role": "waiter",
+          "textTh": "สวัสดีค่ะ ทานอะไรดีคะ",
+          "textEn": "Hello, what would you like to eat?",
+          "audioUrlTh": "",
+          "audioUrlEn": ""
+        },
+        {
+          "lineId": 2,
+          "role": "customer",
+          "textTh": "ขอดูเมนูก่อนได้ไหมครับ",
+          "textEn": "Can I see the menu first?",
+          "audioUrlTh": "",
+          "audioUrlEn": ""
+        },
+        {
+          "lineId": 3,
+          "role": "waiter",
+          "textTh": "ได้เลยค่ะ นี่คือเมนู",
+          "textEn": "Sure, here is the menu",
+          "audioUrlTh": "",
+          "audioUrlEn": ""
+        },
+        {
+          "lineId": 4,
+          "role": "customer",
+          "textTh": "ขอผัดไทยจานหนึ่งครับ",
+          "textEn": "I'd like one plate of Pad Thai",
+          "audioUrlTh": "",
+          "audioUrlEn": ""
+        },
+        {
+          "lineId": 5,
+          "role": "waiter",
+          "textTh": "รับทราบค่ะ อร่อยแน่นอน",
+          "textEn": "Got it, it's delicious for sure",
+          "audioUrlTh": "",
+          "audioUrlEn": ""
+        }
+      ]
+    },
+    {
+      "partType": "vocabulary",
+      "partId": "vocab_001",
+      "title": "核心词汇",
+      "title_en": "Key Vocabulary",
+      "items": [
+        {
+          "wordId": 1,
+          "wordTh": "เมนู",
+          "wordEn": "menu",
+          "explanationTh": "รายการอาหารและเครื่องดื่ม",
+          "explanationEn": "list of food and drinks",
+          "audioUrlTh": "",
+          "audioUrlEn": ""
+        },
+        {
+          "wordId": 2,
+          "wordTh": "ผัดไทย",
+          "wordEn": "Pad Thai",
+          "explanationTh": "อาหารไทยชื่อดัง ทำจากเส้นจันทร์",
+          "explanationEn": "famous Thai noodle dish",
+          "audioUrlTh": "",
+          "audioUrlEn": ""
+        },
+        {
+          "wordId": 3,
+          "wordTh": "อร่อย",
+          "wordEn": "delicious",
+          "explanationTh": "รสชาติดี น่ากิน",
+          "explanationEn": "having a good taste",
+          "audioUrlTh": "",
+          "audioUrlEn": ""
+        },
+        {
+          "wordId": 4,
+          "wordTh": "ขอดู",
+          "wordEn": "can I see",
+          "explanationTh": "ขออนุญาตดูหรือตรวจสอบ",
+          "explanationEn": "politely ask to look at something",
+          "audioUrlTh": "",
+          "audioUrlEn": ""
+        }
+      ]
+    },
+    {
+      "partType": "grammar",
+      "partId": "grammar_001",
+      "title": "语法要点",
+      "title_en": "Grammar Points",
+      "items": [
+        {
+          "grammarId": 1,
+          "title": "礼貌语气词 ค่ะ/ครับ",
+          "title_en": "Polite Particles 'kha/khrap'",
+          "explanationTh": "คำลงท้ายเพื่อแสดงความสุภาพ โดยผู้หญิงใช้ ค่ะ ผู้ชายใช้ ครับ",
+          "explanationEn": "Particles added to show politeness. Female use 'kha', male use 'khrap'",
+          "exampleTh": "สวัสดี**ค่ะ** (ผู้หญิงพูด)",
+          "exampleEn": "Hello (female speaker)",
+          "exampleAudioUrlTh": "",
+          "exampleAudioUrlEn": ""
+        },
+        {
+          "grammarId": 2,
+          "title": "量词用法",
+          "title_en": "Classifiers",
+          "explanationTh": "ในภาษาไทย เวลานับสิ่งของต้องใช้ลักษณนามตามชนิดของสิ่งนั้น",
+          "explanationEn": "Thai requires specific counters/classifiers when quantifying nouns",
+          "exampleTh": "ผัดไทย **หนึ่งจาน**",
+          "exampleEn": "one plate of Pad Thai",
+          "exampleAudioUrlTh": "",
+          "exampleAudioUrlEn": ""
+        }
+      ]
+    },
+    {
+      "partType": "substitutionDrills",
+      "partId": "drill_001",
+      "title": "替换练习",
+      "title_en": "Substitution Drills",
+      "description": "使用模板和替换词进行对话练习",
+      "description_en": "Practice using the template and substitution words",
+      "drills": [
+        {
+          "drillId": 1,
+          "template": {
+            "role": "customer",
+            "textTh": "ขอ{{food}}หนึ่ง{{classifier}}ครับ",
+            "textEn": "I'd like one {{classifier}} of {{food}}",
+            "audioUrlTh": "",
+            "audioUrlEn": ""
+          },
+          "substitutions": [
+            {
+              "itemId": "sub1",
+              "slotName": "food",
+              "valueTh": "ข้าวผัด",
+              "valueEn": "fried rice",
+              "audioUrlTh": "",
+              "audioUrlEn": ""
+            },
+            {
+              "itemId": "sub2",
+              "slotName": "classifier",
+              "valueTh": "จาน",
+              "valueEn": "plate",
+              "audioUrlTh": "",
+              "audioUrlEn": ""
+            }
+          ],
+          "drilledSentence": {
+            "textTh": "ขอข้าวผัดหนึ่งจานครับ",
+            "textEn": "I'd like one plate of fried rice",
+            "audioUrlTh": "",
+            "audioUrlEn": ""
+          }
+        },
+        {
+          "drillId": 2,
+          "template": {
+            "role": "customer",
+            "textTh": "ขอ{{beverage}}หนึ่ง{{classifier}}ครับ",
+            "textEn": "I'd like one {{classifier}} of {{beverage}}",
+            "audioUrlTh": "",
+            "audioUrlEn": ""
+          },
+          "substitutions": [
+            {
+              "itemId": "sub3",
+              "slotName": "beverage",
+              "valueTh": "น้ำส้ม",
+              "valueEn": "orange juice",
+              "audioUrlTh": "",
+              "audioUrlEn": ""
+            },
+            {
+              "itemId": "sub4",
+              "slotName": "classifier",
+              "valueTh": "แก้ว",
+              "valueEn": "glass",
+              "audioUrlTh": "",
+              "audioUrlEn": ""
+            }
+          ],
+          "drilledSentence": {
+            "textTh": "ขอน้ำส้มหนึ่งแก้วครับ",
+            "textEn": "I'd like one glass of orange juice",
+            "audioUrlTh": "",
+            "audioUrlEn": ""
+          }
+        }
+      ]
+    }
+  ]
+}

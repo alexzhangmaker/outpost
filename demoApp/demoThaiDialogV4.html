@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>泰语智能学习系统 - 自适应学习闭环</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .app-container { max-width: 1000px; margin: 0 auto; }
+        
+        /* 头部进度栏 */
+        .progress-header {
+            background: white;
+            border-radius: 32px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .scene-title { font-size: 1.5rem; font-weight: 700; color: #1a202c; }
+        .scene-title-en { font-size: 0.9rem; color: #718096; margin-bottom: 12px; }
+        .overall-progress {
+            background: #edf2f7;
+            border-radius: 20px;
+            height: 12px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+        .overall-progress-fill {
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            width: 0%;
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 20px;
+        }
+        .stats-row {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .stat-card {
+            background: #f7fafc;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .stat-value { font-weight: 700; color: #2d3748; margin-right: 6px; }
+        
+        /* 导航标签 */
+        .part-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: white;
+            padding: 12px;
+            border-radius: 48px;
+        }
+        .tab-btn {
+            padding: 10px 24px;
+            border: none;
+            background: transparent;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #4a5568;
+        }
+        .tab-btn.active { background: #667eea; color: white; box-shadow: 0 2px 8px rgba(102,126,234,0.3); }
+        .tab-btn.locked { opacity: 0.5; cursor: not-allowed; background: #e2e8f0; color: #a0aec0; }
+        .tab-btn.locked.active { background: #a0aec0; }
+        
+        /* 内容卡片 */
+        .part-content {
+            background: white;
+            border-radius: 32px;
+            padding: 32px;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.15);
+            min-height: 500px;
+        }
+        
+        /* 对话样式 */
+        .dialog-line {
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 20px;
+            background: #f7fafc;
+            transition: all 0.2s;
+        }
+        .role-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .text-th { font-size: 1.3rem; font-weight: 500; color: #2d3748; margin: 8px 0; }
+        .text-en { color: #718096; margin-bottom: 8px; }
+        
+        /* 测验样式 */
+        .quiz-card, .vocab-card, .grammar-card, .drill-card {
+            background: #f7fafc;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .question-text { font-weight: 600; margin-bottom: 12px; }
+        .option { display: block; margin: 8px 0; padding: 10px; background: white; border-radius: 12px; cursor: pointer; }
+        .option.selected { background: #c6f6d5; border-left: 4px solid #38a169; }
+        .feedback { margin-top: 12px; padding: 10px; border-radius: 12px; }
+        .feedback.correct { background: #c6f6d5; color: #22543d; }
+        .feedback.wrong { background: #fed7d7; color: #742a2a; }
+        
+        .audio-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-top: 8px;
+            margin-right: 8px;
+        }
+        .submit-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+        .next-btn {
+            background: #38a169;
+            margin-left: 12px;
+        }
+        .retry-btn {
+            background: #ed8936;
+        }
+        .locked-message {
+            text-align: center;
+            padding: 40px;
+            color: #a0aec0;
+        }
+        .success-badge {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            margin-left: 10px;
+        }
+        @media (max-width: 640px) {
+            .part-content { padding: 20px; }
+            .text-th { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div id="app"></div>
+</div>
+
+<script>
+    // ============================================================
+    // 场景 JSON 数据（包含学习评价结构）
+    // ============================================================
+    const sceneData = {
+        "id": "restaurant_001",
+        "title": "在餐厅点餐",
+        "title_en": "Ordering at a Restaurant",
+        "difficulty": "beginner",
+        "estimatedTime": "15 min",
+        "learningSettings": {
+            "passingScore": 70,
+            "maxAttempts": 3,
+            "requireAllPartsPassed": true
+        },
+        "parts": [
+            {
+                "partType": "standardDialog",
+                "partId": "dialog_001",
+                "title": "标准对话",
+                "title_en": "Standard Dialog",
+                "learningCriteria": { "requiredScore": 70, "maxRetries": 3 },
+                "activities": [
+                    {
+                        "activityId": "listen_comprehension",
+                        "type": "quiz",
+                        "title": "听力理解测验",
+                        "weight": 0.6,
+                        "passingScore": 70,
+                        "questions": [
+                            {
+                                "id": "q1",
+                                "type": "multiple_choice",
+                                "text": "服务员第一句话说的是什么？",
+                                "options": ["欢迎光临", "想吃什么", "请坐", "看菜单"],
+                                "correctAnswer": 1,
+                                "points": 10,
+                                "audioHint": "สวัสดีค่ะ ทานอะไรดีคะ"
+                            },
+                            {
+                                "id": "q2",
+                                "type": "multiple_choice",
+                                "text": "顾客想要什么？",
+                                "options": ["炒饭", "泰式炒河粉", "冬阴功", "绿咖喱"],
+                                "correctAnswer": 1,
+                                "points": 10
+                            }
+                        ]
+                    },
+                    {
+                        "activityId": "role_understanding",
+                        "type": "quiz",
+                        "title": "对话理解",
+                        "weight": 0.4,
+                        "passingScore": 60,
+                        "questions": [
+                            {
+                                "id": "r1",
+                                "type": "multiple_choice",
+                                "text": "服务员对食物的评价是什么？",
+                                "options": ["太辣", "很美味", "太贵", "没有了"],
+                                "correctAnswer": 1,
+                                "points": 10
+                            }
+                        ]
+                    }
+                ],
+                "roles": [
+                    { "roleId": "customer", "name": "顾客", "name_en": "Customer" },
+                    { "roleId": "waiter", "name": "服务员", "name_en": "Waiter" }
+                ],
+                "script": [
+                    { "lineId": 1, "role": "waiter", "textTh": "สวัสดีค่ะ ทานอะไรดีคะ", "textEn": "Hello, what would you like to eat?" },
+                    { "lineId": 2, "role": "customer", "textTh": "ขอดูเมนูก่อนได้ไหมครับ", "textEn": "Can I see the menu first?" },
+                    { "lineId": 3, "role": "waiter", "textTh": "ได้เลยค่ะ นี่คือเมนู", "textEn": "Sure, here is the menu" },
+                    { "lineId": 4, "role": "customer", "textTh": "ขอผัดไทยจานหนึ่งครับ", "textEn": "I'd like one plate of Pad Thai" },
+                    { "lineId": 5, "role": "waiter", "textTh": "รับทราบค่ะ อร่อยแน่นอน", "textEn": "Got it, it's delicious for sure" }
+                ]
+            },
+            {
+                "partType": "vocabulary",
+                "partId": "vocab_001",
+                "title": "核心词汇",
+                "title_en": "Key Vocabulary",
+                "learningCriteria": { "requiredScore": 70, "maxRetries": 2 },
+                "activities": [
+                    {
+                        "activityId": "vocab_quiz",
+                        "type": "quiz",
+                        "title": "词汇测验",
+                        "weight": 1.0,
+                        "passingScore": 70,
+                        "questions": [
+                            {
+                                "id": "v1",
+                                "type": "multiple_choice",
+                                "text": "'เมนู' 是什么意思？",
+                                "options": ["米饭", "菜单", "好吃", "盘子"],
+                                "correctAnswer": 1,
+                                "points": 10
+                            },
+                            {
+                                "id": "v2",
+                                "type": "multiple_choice",
+                                "text": "'อร่อย' 是什么意思？",
+                                "options": ["难吃", "辣", "好吃", "甜"],
+                                "correctAnswer": 2,
+                                "points": 10
+                            }
+                        ]
+                    }
+                ],
+                "items": [
+                    { "wordId": 1, "wordTh": "เมนู", "wordEn": "menu", "explanationTh": "รายการอาหาร", "explanationEn": "list of food" },
+                    { "wordId": 2, "wordTh": "ผัดไทย", "wordEn": "Pad Thai", "explanationTh": "อาหารไทย", "explanationEn": "Thai noodle dish" },
+                    { "wordId": 3, "wordTh": "อร่อย", "wordEn": "delicious", "explanationTh": "รสชาติดี", "explanationEn": "good taste" }
+                ]
+            },
+            {
+                "partType": "substitutionDrills",
+                "partId": "drill_001",
+                "title": "替换练习",
+                "title_en": "Substitution Drills",
+                "learningCriteria": { "requiredScore": 80, "maxRetries": 3 },
+                "activities": [
+                    {
+                        "activityId": "drill_practice",
+                        "type": "interactive",
+                        "title": "句型替换练习",
+                        "weight": 1.0,
+                        "passingScore": 80,
+                        "drillConfig": { "showFeedback": true, "requireAllVariations": true }
+                    }
+                ],
+                "drills": [
+                    {
+                        "drillId": 1,
+                        "template": { "textTh": "ขอ{{food}}หนึ่ง{{classifier}}ครับ", "textEn": "I'd like one {{classifier}} of {{food}}" },
+                        "substitutions": [
+                            { "slotName": "food", "valueTh": "ข้าวผัด", "valueEn": "fried rice" },
+                            { "slotName": "classifier", "valueTh": "จาน", "valueEn": "plate" }
+                        ],
+                        "drilledSentence": { "textTh": "ขอข้าวผัดหนึ่งจานครับ", "textEn": "I'd like one plate of fried rice" }
+                    }
+                ]
+            }
+        ]
+    };
+
+    // ============================================================
+    // 学习进度存储（localStorage）
+    // ============================================================
+    let learningProgress = {
+        userId: "local_user",
+        sceneId: "restaurant_001",
+        overallScore: 0,
+        parts: {},
+        currentPartId: "dialog_001",
+        currentActivityIndex: 0,
+        completionStatus: "in_progress"
+    };
+
+    function loadProgress() {
+        const saved = localStorage.getItem("thai_learning_progress");
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                learningProgress = { ...learningProgress, ...parsed };
+            } catch(e) {}
+        }
+        // 初始化每个 part 的进度
+        sceneData.parts.forEach(part => {
+            if (!learningProgress.parts[part.partId]) {
+                learningProgress.parts[part.partId] = {
+                    status: part.partId === "dialog_001" ? "available" : "locked",
+                    score: 0,
+                    attempts: 0,
+                    activities: {}
+                };
+                part.activities.forEach(act => {
+                    learningProgress.parts[part.partId].activities[act.activityId] = {
+                        status: "locked",
+                        score: 0,
+                        attempts: 0,
+                        answers: {}
+                    };
+                });
+                if (part.partId === "dialog_001") {
+                    const firstAct = part.activities[0];
+                    if (firstAct) learningProgress.parts[part.partId].activities[firstAct.activityId].status = "available";
+                }
+            }
+        });
+        saveProgress();
+    }
+
+    function saveProgress() {
+        localStorage.setItem("thai_learning_progress", JSON.stringify(learningProgress));
+    }
+
+    // 评估活动并更新状态
+    function evaluateActivity(partId, activityId, score, answers = {}) {
+        const part = sceneData.parts.find(p => p.partId === partId);
+        const activity = part.activities.find(a => a.activityId === activityId);
+        const partProgress = learningProgress.parts[partId];
+        const actProgress = partProgress.activities[activityId];
+        
+        actProgress.score = score;
+        actProgress.attempts += 1;
+        actProgress.answers = answers;
+        
+        const isPassed = score >= activity.passingScore;
+        actProgress.status = isPassed ? "passed" : "failed";
+        
+        // 更新 part 总分
+        let totalScore = 0;
+        let totalWeight = 0;
+        part.activities.forEach(act => {
+            const actProg = partProgress.activities[act.activityId];
+            if (actProg.status === "passed") {
+                totalScore += actProg.score * act.weight;
+                totalWeight += act.weight;
+            }
+        });
+        partProgress.score = totalWeight > 0 ? (totalScore / totalWeight) : 0;
+        
+        // 判断 part 是否完成
+        const allActivitiesPassed = part.activities.every(act => 
+            partProgress.activities[act.activityId].status === "passed"
+        );
+        
+        if (allActivitiesPassed && partProgress.score >= part.learningCriteria.requiredScore) {
+            partProgress.status = "passed";
+            // 解锁下一个 part
+            const currentIndex = sceneData.parts.findIndex(p => p.partId === partId);
+            const nextPart = sceneData.parts[currentIndex + 1];
+            if (nextPart && learningProgress.parts[nextPart.partId].status === "locked") {
+                learningProgress.parts[nextPart.partId].status = "available";
+                // 解锁下一个 part 的第一个活动
+                const nextFirstAct = nextPart.activities[0];
+                if (nextFirstAct) {
+                    learningProgress.parts[nextPart.partId].activities[nextFirstAct.activityId].status = "available";
+                }
+            }
+        }
+        
+        saveProgress();
+        return { isPassed, partStatus: partProgress.status };
+    }
+
+    function getCurrentActivity() {
+        const part = sceneData.parts.find(p => p.partId === learningProgress.currentPartId);
+        if (!part) return null;
+        const activity = part.activities[learningProgress.currentActivityIndex];
+        return { part, activity, index: learningProgress.currentActivityIndex };
+    }
+
+    function moveToNextActivity() {
+        const current = getCurrentActivity();
+        if (!current) return false;
+        
+        const partProgress = learningProgress.parts[current.part.partId];
+        const currentActProg = partProgress.activities[current.activity.activityId];
+        
+        if (currentActProg.status !== "passed") return false;
+        
+        // 移动到下一个活动
+        if (learningProgress.currentActivityIndex + 1 < current.part.activities.length) {
+            learningProgress.currentActivityIndex++;
+            const nextAct = current.part.activities[learningProgress.currentActivityIndex];
+            if (partProgress.activities[nextAct.activityId].status === "locked") {
+                partProgress.activities[nextAct.activityId].status = "available";
+            }
+            saveProgress();
+            return true;
+        } else {
+            // 当前 part 所有活动完成，自动跳转到下一个可用的 part
+            const currentPartIndex = sceneData.parts.findIndex(p => p.partId === learningProgress.currentPartId);
+            for (let i = currentPartIndex + 1; i < sceneData.parts.length; i++) {
+                const nextPart = sceneData.parts[i];
+                if (learningProgress.parts[nextPart.partId].status === "available") {
+                    learningProgress.currentPartId = nextPart.partId;
+                    learningProgress.currentActivityIndex = 0;
+                    saveProgress();
+                    return true;
+                }
+            }
+            // 所有 part 都完成了
+            learningProgress.completionStatus = "completed";
+            saveProgress();
+            return true;
+        }
+    }
+
+    // ============================================================
+    // UI 渲染
+    // ============================================================
+    let currentPartIndex = 0;
+
+    function renderApp() {
+        const appDiv = document.getElementById('app');
+        const overallProgress = calculateOverallProgress();
+        
+        appDiv.innerHTML = `
+            <div class="progress-header">
+                <div class="scene-title">${sceneData.title}</div>
+                <div class="scene-title-en">${sceneData.title_en}</div>
+                <div class="overall-progress">
+                    <div class="overall-progress-fill" style="width: ${overallProgress}%"></div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-card"><span class="stat-value">📊 ${Math.round(overallProgress)}%</span> 总体进度</div>
+                    <div class="stat-card"><span class="stat-value">⭐ ${getPassedPartsCount()}/${sceneData.parts.length}</span> 关卡完成</div>
+                    <div class="stat-card"><span class="stat-value">🔥 ${getStreak()}</span> 连续学习</div>
+                </div>
+            </div>
+            <div class="part-tabs" id="partTabs"></div>
+            <div class="part-content" id="partContent"></div>
+        `;
+        
+        renderTabs();
+        renderPartContent(currentPartIndex);
+    }
+    
+    function calculateOverallProgress() {
+        let total = 0;
+        sceneData.parts.forEach(part => {
+            const prog = learningProgress.parts[part.partId];
+            if (prog.status === "passed") total += 100;
+            else if (prog.status === "available") total += (prog.score || 0) * 0.5;
+        });
+        return total / sceneData.parts.length;
+    }
+    
+    function getPassedPartsCount() {
+        return sceneData.parts.filter(p => learningProgress.parts[p.partId]?.status === "passed").length;
+    }
+    
+    function getStreak() {
+        return 3; // 示例，可以从 localStorage 读取真实打卡记录
+    }
+    
+    function renderTabs() {
+        const container = document.getElementById('partTabs');
+        container.innerHTML = sceneData.parts.map((part, idx) => {
+            const status = learningProgress.parts[part.partId]?.status || "locked";
+            const isActive = idx === currentPartIndex;
+            let label = "";
+            if (part.partType === "standardDialog") label = "💬 对话";
+            else if (part.partType === "vocabulary") label = "📖 词汇";
+            else label = "🔄 练习";
+            if (status === "passed") label += " ✓";
+            
+            return `<button class="tab-btn ${isActive ? 'active' : ''} ${status === 'locked' ? 'locked' : ''}" 
+                        data-index="${idx}" ${status === 'locked' ? 'disabled' : ''}>
+                        ${label}
+                    </button>`;
+        }).join('');
+        
+        document.querySelectorAll('.tab-btn:not([disabled])').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentPartIndex = parseInt(btn.dataset.index);
+                renderApp();
+            });
+        });
+    }
+    
+    function renderPartContent(partIndex) {
+        const part = sceneData.parts[partIndex];
+        const partProgress = learningProgress.parts[part.partId];
+        const container = document.getElementById('partContent');
+        
+        if (partProgress.status === "locked") {
+            container.innerHTML = `<div class="locked-message">🔒 请先完成前面的关卡 🔒</div>`;
+            return;
+        }
+        
+        // 显示当前活动
+        const currentActivity = part.activities[learningProgress.currentActivityIndex];
+        const actProgress = partProgress.activities[currentActivity.activityId];
+        
+        if (actProgress.status === "passed") {
+            // 显示完成状态和下一步按钮
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div style="font-size: 3rem;">🎉</div>
+                    <h3>恭喜完成「${currentActivity.title}」！</h3>
+                    <p>得分: ${actProgress.score} / ${currentActivity.passingScore}+</p>
+                    <button class="submit-btn next-btn" id="nextActivityBtn">➡️ 继续下一项</button>
+                </div>
+            `;
+            document.getElementById('nextActivityBtn')?.addEventListener('click', () => {
+                moveToNextActivity();
+                renderApp();
+            });
+            return;
+        }
+        
+        // 渲染活动内容
+        if (currentActivity.type === "quiz") {
+            renderQuiz(part, currentActivity, container);
+        } else if (currentActivity.type === "interactive") {
+            renderDrill(part, currentActivity, container);
+        } else {
+            // 默认显示对话内容供学习
+            renderDialogContent(part, container);
+        }
+    }
+    
+    function renderQuiz(part, activity, container) {
+        let userAnswers = {};
+        
+        const questionsHtml = activity.questions.map((q, idx) => `
+            <div class="quiz-card" data-qid="${q.id}">
+                <div class="question-text">${idx+1}. ${q.text}</div>
+                ${q.options ? q.options.map((opt, optIdx) => `
+                    <label class="option">
+                        <input type="radio" name="q_${q.id}" value="${optIdx}"> ${opt}
+                    </label>
+                `).join('') : ''}
+                ${q.audioHint ? `<button class="audio-btn" data-text="${q.audioHint}" data-lang="th">🔊 听提示</button>` : ''}
+            </div>
+        `).join('');
+        
+        container.innerHTML = `
+            <div class="part-title">${activity.title}</div>
+            <div class="part-title-en">达标要求: ${activity.passingScore}分</div>
+            ${questionsHtml}
+            <button class="submit-btn" id="submitQuizBtn">📝 提交答案</button>
+            <div id="quizFeedback"></div>
+        `;
+        
+        // 绑定音频
+        document.querySelectorAll('.audio-btn').forEach(btn => {
+            btn.addEventListener('click', () => speakText(btn.dataset.text, btn.dataset.lang));
+        });
+        
+        document.getElementById('submitQuizBtn').addEventListener('click', () => {
+            let totalScore = 0;
+            let maxScore = 0;
+            activity.questions.forEach(q => {
+                const selected = document.querySelector(`input[name="q_${q.id}"]:checked`);
+                const isCorrect = selected && parseInt(selected.value) === q.correctAnswer;
+                if (isCorrect) totalScore += q.points;
+                maxScore += q.points;
+                userAnswers[q.id] = selected ? parseInt(selected.value) : -1;
+            });
+            const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+            const finalScore = percentage;
+            
+            const feedbackDiv = document.getElementById('quizFeedback');
+            const isPassed = finalScore >= activity.passingScore;
+            feedbackDiv.innerHTML = `
+                <div class="feedback ${isPassed ? 'correct' : 'wrong'}">
+                    <strong>得分: ${Math.round(finalScore)} / ${activity.passingScore}</strong><br>
+                    ${isPassed ? '✅ 恭喜达标！可以进入下一项' : '📚 未达标，请再练习一次'}
+                </div>
+                ${isPassed ? '<button class="submit-btn next-btn" id="continueBtn">➡️ 继续</button>' : '<button class="submit-btn retry-btn" id="retryBtn">🔄 重新测验</button>'}
+            `;
+            
+            const result = evaluateActivity(part.partId, activity.activityId, finalScore, userAnswers);
+            
+            if (isPassed) {
+                document.getElementById('continueBtn')?.addEventListener('click', () => {
+                    moveToNextActivity();
+                    renderApp();
+                });
+            } else {
+                document.getElementById('retryBtn')?.addEventListener('click', () => {
+                    renderQuiz(part, activity, container);
+                });
+            }
+        });
+    }
+    
+    function renderDrill(part, activity, container) {
+        const drill = part.drills[0];
+        let selectedSub = null;
+        
+        container.innerHTML = `
+            <div class="part-title">${activity.title}</div>
+            <div class="drill-card">
+                <div class="text-th">模板: ${drill.template.textTh}</div>
+                <div class="text-en">${drill.template.textEn}</div>
+                <div style="margin: 16px 0;"><strong>请选择正确的替换词：</strong></div>
+                ${drill.substitutions.map(sub => `
+                    <button class="audio-btn sub-option" data-value="${sub.valueTh}" data-slot="${sub.slotName}">${sub.valueTh} (${sub.valueEn})</button>
+                `).join('')}
+                <div id="drillResult" style="margin-top: 20px;"></div>
+                <button class="submit-btn" id="submitDrillBtn" style="display:none;">✅ 提交练习</button>
+            </div>
+        `;
+        
+        let builtSentence = drill.template.textTh;
+        document.querySelectorAll('.sub-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const value = btn.dataset.value;
+                const slot = btn.dataset.slot;
+                builtSentence = drill.template.textTh.replace(`{{${slot}}}`, value);
+                document.getElementById('drillResult').innerHTML = `
+                    <div class="feedback correct">你构建的句子: <strong>${builtSentence}</strong></div>
+                `;
+                document.getElementById('submitDrillBtn').style.display = 'inline-block';
+                selectedSub = value;
+            });
+        });
+        
+        document.getElementById('submitDrillBtn')?.addEventListener('click', () => {
+            const isCorrect = builtSentence === drill.drilledSentence.textTh;
+            const score = isCorrect ? 100 : 50;
+            const result = evaluateActivity(part.partId, activity.activityId, score, { builtSentence });
+            
+            document.getElementById('drillResult').innerHTML = `
+                <div class="feedback ${isCorrect ? 'correct' : 'wrong'}">
+                    ${isCorrect ? '✅ 完全正确！句子结构掌握得很好' : '⚠️ 再试试看，注意替换词的位置'}
+                    <br>正确句子: ${drill.drilledSentence.textTh}
+                </div>
+                ${score >= activity.passingScore ? '<button class="submit-btn next-btn" id="continueDrillBtn">➡️ 继续</button>' : '<button class="submit-btn retry-btn" id="retryDrillBtn">🔄 再试一次</button>'}
+            `;
+            
+            if (score >= activity.passingScore) {
+                document.getElementById('continueDrillBtn')?.addEventListener('click', () => {
+                    moveToNextActivity();
+                    renderApp();
+                });
+            } else {
+                document.getElementById('retryDrillBtn')?.addEventListener('click', () => {
+                    renderDrill(part, activity, container);
+                });
+            }
+        });
+    }
+    
+    function renderDialogContent(part, container) {
+        const roles = part.roles || [];
+        const roleMap = {};
+        roles.forEach(r => { roleMap[r.roleId] = r.name; });
+        
+        const dialogHtml = (part.script || []).map(line => `
+            <div class="dialog-line">
+                <div class="role-badge">${roleMap[line.role] || line.role}</div>
+                <div class="text-th">${line.textTh}</div>
+                <div class="text-en">${line.textEn}</div>
+                <button class="audio-btn" data-text="${line.textTh}" data-lang="th">🔊 泰语朗读</button>
+                <button class="audio-btn" data-text="${line.textEn}" data-lang="en">🔊 英语朗读</button>
+            </div>
+        `).join('');
+        
+        container.innerHTML = `
+            <div class="part-title">${part.title}</div>
+            <div class="part-title-en">先学习对话，然后完成测验</div>
+            ${dialogHtml}
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="submit-btn" id="startQuizBtn">开始测验 →</button>
+            </div>
+        `;
+        
+        document.querySelectorAll('.audio-btn').forEach(btn => {
+            btn.addEventListener('click', () => speakText(btn.dataset.text, btn.dataset.lang));
+        });
+        
+        document.getElementById('startQuizBtn')?.addEventListener('click', () => {
+            // 强制开始测验（如果有未开始的测验）
+            renderApp();
+        });
+    }
+    
+    function speakText(text, lang) {
+        if (!text) return;
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang === 'th' ? 'th-TH' : 'en-US';
+            utterance.rate = 0.85;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+    
+    // 启动应用
+    loadProgress();
+    renderApp();
+</script>
+</body>
+</html>

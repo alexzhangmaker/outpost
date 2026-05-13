@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Handwriting Master - Worksheet & Assessment</title>
+    <!-- Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@300;400;600&display=swap">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tesseract.js for Local OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+        }
+
+        .thai-text {
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        /* Print styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+            .print-container {
+                display: block !important;
+                width: 100%;
+            }
+            .worksheet-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+            .worksheet-table th, .worksheet-table td {
+                border: 1px solid #000;
+                padding: 12px;
+                text-align: left;
+            }
+            .handwriting-box {
+                height: 60px;
+                background-image: linear-gradient(#ccc 1px, transparent 1px);
+                background-size: 100% 20px;
+                position: relative;
+            }
+            .worksheet-header {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+        }
+
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-dots:after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <nav class="no-print glass-card fixed top-0 left-0 right-0 z-50 px-6 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">T</div>
+            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-pink-600">Thai Handwriting Master</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="hidden md:flex space-x-6 text-sm font-medium mr-4">
+                <button onclick="showSection('config')" class="hover:text-indigo-600 transition-colors">Configuration</button>
+                <button onclick="showSection('worksheet')" class="hover:text-indigo-600 transition-colors">Worksheet</button>
+                <button onclick="showSection('assessment')" class="hover:text-indigo-600 transition-colors">AI Grading</button>
+            </div>
+            <button onclick="toggleSettingsModal()" class="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-600" title="Settings">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-12 px-4 md:px-8 max-w-6xl mx-auto">
+        
+        <!-- Configuration Section -->
+        <section id="config-section" class="fade-in mb-8 no-print">
+            <div class="glass-card p-6 rounded-2xl">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Step 1: Input Thai Word Data
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-500 mb-2">JSON Data (Word Definitions)</label>
+                        <textarea id="json-input" rows="12" class="w-full p-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-xs" placeholder='[{"thai": "สวัสดี", "definition": "Hello", "synonym": "ทักทาย"}]'></textarea>
+                        <div class="mt-2 flex space-x-2">
+                            <button onclick="loadSampleData()" class="text-xs text-indigo-600 hover:underline">Load Sample Data</button>
+                            <button onclick="clearData()" class="text-xs text-slate-500 hover:underline">Clear</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-col space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-500 mb-2">LLM Provider</label>
+                            <select id="llm-provider" onchange="toggleProviderFields()" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                                <option value="gemini">Google Gemini (Recommended)</option>
+                                <option value="openai">OpenAI / DeepSeek (Compatible)</option>
+                            </select>
+                        </div>
+
+                        <div id="api-url-container">
+                            <label class="block text-sm font-medium text-slate-500 mb-2">API Base URL (Optional for Gemini)</label>
+                            <input type="text" id="api-url" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm" placeholder="https://api.deepseek.com/v1">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-500 mb-2">Model Name</label>
+                            <div class="flex space-x-2">
+                                <input type="text" id="model-name" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm" value="gemini-1.5-flash-latest">
+                                <button onclick="checkModels()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-slate-600 transition-colors" title="Check available models for your key">
+                                    Check
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-500 mb-2">API Key</label>
+                            <input type="password" id="api-key" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm" placeholder="Paste your API key here...">
+                        </div>
+
+                        <div class="flex items-center space-x-2 py-2">
+                            <input type="checkbox" id="use-local-ocr" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded">
+                            <label for="use-local-ocr" class="text-xs text-slate-600 font-medium">Use Local OCR (Required for DeepSeek/Text-only models)</label>
+                        </div>
+
+                        <div class="pt-4 flex flex-col space-y-3">
+                            <button onclick="generateWorksheet()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-95">
+                                Generate Worksheet
+                            </button>
+                            <button id="mobile-only-btn" onclick="showSection('assessment')" class="w-full md:hidden border-2 border-indigo-600 text-indigo-600 font-bold py-3 px-6 rounded-xl transition-all active:scale-95">
+                                Go to AI Grading
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Worksheet Section -->
+        <section id="worksheet-section" class="fade-in mb-8 hidden print:block">
+            <div class="glass-card p-8 rounded-2xl print:shadow-none print:border-none print:p-0">
+                <div class="flex justify-between items-center mb-6 no-print">
+                    <h2 class="text-lg font-semibold flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Step 2: Preview & Print
+                    </h2>
+                    <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold py-2 px-4 rounded-lg flex items-center shadow-md">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        Print Worksheet
+                    </button>
+                </div>
+
+                <div id="worksheet-content" class="print-container">
+                    <!-- Dynamic Content -->
+                    <div class="worksheet-header text-center">
+                        <h1 class="text-3xl font-bold thai-text mb-2">ใบงานฝึกเขียนภาษาไทย (Thai Handwriting Practice)</h1>
+                        <p class="text-slate-500 text-sm">ชื่อ-นามสกุล (Name): __________________________________ วันที่ (Date): ____________</p>
+                    </div>
+                    <table class="worksheet-table mt-8 w-full">
+                        <thead>
+                            <tr class="bg-slate-100">
+                                <th class="w-12 text-center">#</th>
+                                <th class="w-1/3">Definition / Synonym</th>
+                                <th>Handwriting Practice</th>
+                            </tr>
+                        </thead>
+                        <tbody id="worksheet-body">
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Assessment Section -->
+        <section id="assessment-section" class="fade-in mb-8 hidden no-print">
+            <div class="glass-card p-6 rounded-2xl">
+                <h2 class="text-lg font-semibold mb-6 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Step 3: AI Grading Assessment
+                </h2>
+                
+                <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-12 bg-slate-50/30 hover:bg-slate-50/60 transition-colors group cursor-pointer relative overflow-hidden" id="upload-container">
+                    <input type="file" id="photo-input" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 cursor-pointer z-10">
+                    <div class="text-center group-hover:scale-105 transition-transform">
+                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        </div>
+                        <p class="font-semibold text-slate-700">Take a Photo or Upload Worksheet</p>
+                        <p class="text-xs text-slate-500 mt-1">Capture your completed handwriting for AI analysis</p>
+                    </div>
+                </div>
+
+                <div id="preview-area" class="mt-6 hidden">
+                    <div class="relative rounded-xl overflow-hidden shadow-lg max-w-sm mx-auto">
+                        <img id="image-preview" src="#" alt="Preview" class="w-full">
+                        <button onclick="removeImage()" class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full shadow-md hover:bg-red-600 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <button id="grade-btn" onclick="gradeHandwriting()" class="bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-700 hover:to-pink-700 text-white font-bold py-3 px-8 rounded-xl shadow-xl transition-all active:scale-95 disabled:opacity-50">
+                            Grade My Handwriting
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Result Area -->
+                <div id="result-area" class="mt-12 hidden">
+                    <div class="border-t pt-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold">Assessment Results</h3>
+                            <div id="total-score" class="text-4xl font-black text-indigo-600">8/10</div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="error-list">
+                            <!-- Error items injected here -->
+                        </div>
+
+                        <div id="summary-text" class="mt-8 p-4 bg-indigo-50 text-indigo-800 rounded-xl text-sm italic">
+                            "Excellent work! You have a great handle on the basic strokes. Focus more on the tone marks in the third word."
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[110] flex items-center justify-center hidden">
+        <div class="glass-card w-full max-w-md p-8 rounded-3xl fade-in mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    Persistence Settings
+                </h2>
+                <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-slate-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <p class="text-sm text-slate-500 mb-6">Your API configuration will be stored securely in your browser's local IndexedDB and loaded automatically next time.</p>
+
+            <div class="space-y-4">
+                <button onclick="saveSettingsToDB()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    Save All Settings to DB
+                </button>
+                <button onclick="clearSettingsFromDB()" class="w-full border-2 border-slate-200 text-slate-500 hover:border-red-200 hover:text-red-500 font-bold py-3 px-6 rounded-xl transition-all active:scale-95 text-sm">
+                    Clear Stored Settings
+                </button>
+            </div>
+
+            <div id="settings-status" class="mt-4 text-center text-xs font-medium text-emerald-600 hidden">
+                Settings saved successfully!
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center hidden">
+        <div class="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 font-semibold text-slate-700 loading-dots">AI is analyzing your handwriting</p>
+    </div>
+
+    <script>
+        // --- Firebase Config ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6MZ_p5lVuy8TMAqiuV6IRx9fggV44lQs",
+            authDomain: "outpost-8d74e.firebaseapp.com",
+            databaseURL: "https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/",
+            projectId: "outpost-8d74e",
+            storageBucket: "outpost-8d74e.firebasestorage.app",
+            messagingSenderId: "724993324937",
+            appId: "1:724993324937:web:ce6c7e6b06489331c79358",
+            measurementId: "G-QPHWRTH6BH"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        function sanitizeFirebaseKey(key) {
+            if (!key) return key;
+            return key.trim().replace(/\./g, '．').replace(/#/g, '＃').replace(/\$/g, '＄').replace(/\[/g, '［').replace(/\]/g, '］').replace(/\//g, '／');
+        }
+
+        // --- State Management ---
+        let currentData = [];
+        let selectedFile = null;
+
+        const sections = {
+            config: document.getElementById('config-section'),
+            worksheet: document.getElementById('worksheet-section'),
+            assessment: document.getElementById('assessment-section')
+        };
+
+        const settingsModal = document.getElementById('settings-modal');
+
+        function toggleSettingsModal() {
+            settingsModal.classList.toggle('hidden');
+        }
+
+        function showSection(name) {
+            Object.values(sections).forEach(s => s.classList.add('hidden'));
+            sections[name].classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- IndexedDB Logic ---
+        const DB_NAME = 'HandwritingAppDB';
+        const STORE_NAME = 'settings';
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveSettingsToDB() {
+            const config = {
+                provider: document.getElementById('llm-provider').value,
+                apiUrl: document.getElementById('api-url').value,
+                modelName: document.getElementById('model-name').value,
+                apiKey: document.getElementById('api-key').value,
+                useLocalOcr: document.getElementById('use-local-ocr').checked
+            };
+
+            try {
+                const db = await openDB();
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put(config, 'config');
+                
+                const status = document.getElementById('settings-status');
+                status.classList.remove('hidden');
+                setTimeout(() => {
+                    status.classList.add('hidden');
+                    toggleSettingsModal();
+                }, 1500);
+            } catch (err) {
+                console.error("DB Error:", err);
+                alert("Failed to save settings: " + err.message);
+            }
+        }
+
+        async function loadSettingsFromDB() {
+            try {
+                const db = await openDB();
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const config = await new Promise((resolve) => {
+                    const req = tx.objectStore(STORE_NAME).get('config');
+                    req.onsuccess = () => resolve(req.result);
+                });
+
+                if (config) {
+                    document.getElementById('llm-provider').value = config.provider || 'gemini';
+                    document.getElementById('api-url').value = config.apiUrl || '';
+                    document.getElementById('model-name').value = config.modelName || 'gemini-1.5-flash';
+                    document.getElementById('api-key').value = config.apiKey || '';
+                    document.getElementById('use-local-ocr').checked = config.useLocalOcr || false;
+                    toggleProviderFields(); // Update UI visibility
+                }
+            } catch (err) {
+                console.warn("No stored settings found or DB error:", err);
+            }
+        }
+
+        async function clearSettingsFromDB() {
+            if (!confirm("Are you sure you want to clear all stored settings?")) return;
+            try {
+                const db = await openDB();
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).delete('config');
+                alert("Settings cleared.");
+                location.reload();
+            } catch (err) {
+                alert("Failed to clear settings: " + err.message);
+            }
+        }
+
+        function toggleProviderFields() {
+            const provider = document.getElementById('llm-provider').value;
+            const modelInput = document.getElementById('model-name');
+            const urlInput = document.getElementById('api-url');
+            const ocrCheckbox = document.getElementById('use-local-ocr');
+
+            if (provider === 'gemini') {
+                ocrCheckbox.checked = false;
+                if (!modelInput.value || modelInput.value.includes('deepseek')) {
+                    modelInput.value = 'gemini-1.5-flash-latest';
+                }
+            } else {
+                if (!urlInput.value) urlInput.value = 'https://api.deepseek.com/v1';
+                if (!modelInput.value || modelInput.value.includes('gemini')) {
+                    modelInput.value = 'deepseek-chat';
+                }
+                if (urlInput.value.includes('deepseek')) {
+                    ocrCheckbox.checked = true;
+                }
+            }
+        }
+
+        // --- Data Handling ---
+        function loadSampleData() {
+            const sample = [
+                {"thai": "สวัสดี", "definition": "Hello", "synonym": "ทักทาย"},
+                {"thai": "ขอบคุณ", "definition": "Thank you", "synonym": "ขอบใจ"},
+                {"thai": "โรงเรียน", "definition": "School", "synonym": "สถานศึกษา"},
+                {"thai": "ภาษาไทย", "definition": "Thai Language", "synonym": ""},
+                {"thai": "นักเรียน", "definition": "Student", "synonym": "ผู้เรียน"},
+                {"thai": "ความรัก", "definition": "Love", "synonym": "ความเมตตา"},
+                {"thai": "ท้องฟ้า", "definition": "Sky", "synonym": "นภากาศ"},
+                {"thai": "อาหาร", "definition": "Food", "synonym": "โภชนาการ"}
+            ];
+            document.getElementById('json-input').value = JSON.stringify(sample, null, 2);
+        }
+
+        function clearData() {
+            document.getElementById('json-input').value = '';
+        }
+
+        // --- Worksheet Generation ---
+        function generateWorksheet() {
+            const input = document.getElementById('json-input').value;
+            try {
+                currentData = JSON.parse(input);
+                if (!Array.isArray(currentData)) throw new Error("JSON must be an array");
+                
+                renderTable(currentData);
+                showSection('worksheet');
+            } catch (e) {
+                alert("Invalid JSON format: " + e.message);
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('worksheet-body');
+            tbody.innerHTML = '';
+            
+            data.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const defText = item.synonym ? `${item.definition} (${item.synonym})` : item.definition;
+                
+                tr.innerHTML = `
+                    <td class="text-center font-medium">${index + 1}</td>
+                    <td class="text-slate-600 font-medium">${defText}</td>
+                    <td>
+                        <div class="handwriting-box"></div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Image Handling ---
+        const photoInput = document.getElementById('photo-input');
+        const uploadContainer = document.getElementById('upload-container');
+        const previewArea = document.getElementById('preview-area');
+        const imagePreview = document.getElementById('image-preview');
+
+        photoInput.onchange = function(e) {
+            if (e.target.files && e.target.files[0]) {
+                selectedFile = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = function(re) {
+                    imagePreview.src = re.target.result;
+                    uploadContainer.classList.add('hidden');
+                    previewArea.classList.remove('hidden');
+                };
+                reader.readAsDataURL(selectedFile);
+            }
+        };
+
+        function removeImage() {
+            selectedFile = null;
+            photoInput.value = '';
+            uploadContainer.classList.remove('hidden');
+            previewArea.classList.add('hidden');
+            document.getElementById('result-area').classList.add('hidden');
+        }
+
+        // --- AI Grading ---
+        async function gradeHandwriting() {
+            const provider = document.getElementById('llm-provider').value;
+            const apiKey = document.getElementById('api-key').value;
+            const modelName = document.getElementById('model-name').value;
+            const apiBaseUrl = document.getElementById('api-url').value;
+            const useLocalOcr = document.getElementById('use-local-ocr').checked;
+
+            if (!apiKey) {
+                alert("Please enter your API Key in the Configuration section first.");
+                showSection('config');
+                return;
+            }
+
+            if (!selectedFile) {
+                alert("Please upload or take a photo of your worksheet first.");
+                return;
+            }
+
+            const loading = document.getElementById('loading-overlay');
+            const loadingText = loading.querySelector('p');
+            loading.classList.remove('hidden');
+
+            try {
+                let assessment;
+                const base64Image = await blobToBase64(selectedFile);
+                const imageData = base64Image.split(',')[1];
+                const mimeType = selectedFile.type;
+
+                if (useLocalOcr) {
+                    loadingText.textContent = "Performing Local OCR (Thai)...";
+                    const ocrResult = await Tesseract.recognize(selectedFile, 'tha', {
+                        logger: m => console.log(m)
+                    });
+                    const studentText = ocrResult.data.text;
+                    console.log("OCR Result:", studentText);
+
+                    loadingText.textContent = "AI is grading based on OCR text...";
+                    const textPrompt = `
+                        You are an expert Thai language teacher. 
+                        A student has handwritten some Thai words. Here is the OCR result of their work (Note: OCR might have slight errors):
+                        --- OCR TEXT ---
+                        ${studentText}
+                        ----------------
+
+                        Compare this work with the Standard Answer JSON provided below. 
+                        Identify errors and calculate a score.
+                        Standard Answers: ${JSON.stringify(currentData)}
+
+                        Output your response ONLY as a JSON object with this structure:
+                        {
+                            "score": number,
+                            "total": number,
+                            "summary": "string",
+                            "errors": [
+                                { "index": number, "expected": "string", "actual": "string", "mistake": "string" }
+                            ]
+                        }
+                    `;
+
+                    if (provider === 'gemini') {
+                        assessment = await callGemini(apiKey, modelName, textPrompt);
+                    } else {
+                        assessment = await callOpenAICompatible(apiKey, apiBaseUrl, modelName, textPrompt);
+                    }
+                } else {
+                    loadingText.textContent = "AI is analyzing your handwriting (Vision)...";
+                    const visionPrompt = `
+                        You are an expert Thai language teacher. 
+                        I am providing a JSON array of Thai word objects (standard answers) and an image of a student's handwritten work.
+                        The student's worksheet follows the exact order of the JSON array.
+                        Standard Answers: ${JSON.stringify(currentData)}
+
+                        Your task:
+                        1. Perform OCR on the handwritten Thai words in the image.
+                        2. Compare each handwritten word with the 'thai' field in the corresponding JSON object.
+                        3. Calculate a total score (1 point per correct word).
+                        4. Identify specific errors: misspelled characters, wrong tone marks, or missing parts.
+                        5. Provide a summary comment.
+
+                        Output your response ONLY as a JSON object with this structure:
+                        {
+                            "score": number,
+                            "total": number,
+                            "summary": "string",
+                            "errors": [
+                                { "index": number, "expected": "string", "actual": "string", "mistake": "string" }
+                            ]
+                        }
+                    `;
+
+                    if (provider === 'gemini') {
+                        assessment = await callGemini(apiKey, modelName, visionPrompt, imageData, mimeType);
+                    } else {
+                        assessment = await callOpenAICompatible(apiKey, apiBaseUrl, modelName, visionPrompt, base64Image);
+                    }
+                }
+
+                displayResults(assessment);
+            } catch (err) {
+                console.error(err);
+                let msg = err.message;
+                if (msg.includes("blocked")) {
+                    msg += "\n\nTip: This often happens due to regional restrictions, API key limitations, or if your Google Cloud project has disabled the service. Please check Google AI Studio to ensure your API Key is active and unrestricted.";
+                }
+                alert("AI Assessment failed: " + msg);
+            } finally {
+                loading.classList.add('hidden');
+                loadingText.textContent = "AI is analyzing your handwriting";
+            }
+        }
+
+        async function callGemini(apiKey, model, prompt, imageData = null, mimeType = null) {
+            const baseUrl = document.getElementById('api-url').value || 'https://generativelanguage.googleapis.com';
+            const url = `${baseUrl.replace(/\/$/, '')}/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            const parts = [{ text: prompt }];
+            if (imageData && mimeType) {
+                parts.push({ inline_data: { mime_type: mimeType, data: imageData } });
+            }
+
+            const payload = {
+                contents: [{ parts: parts }]
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorMsg = `API Error (${response.status})`;
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMsg = errorJson.error?.message || errorMsg;
+                } catch (e) {
+                    errorMsg = errorText || errorMsg;
+                }
+                throw new Error(errorMsg);
+            }
+
+            const result = await response.json();
+            const text = result.candidates[0].content.parts[0].text;
+            return JSON.parse(text.replace(/```json|```/g, '').trim());
+        }
+
+        async function callOpenAICompatible(apiKey, baseUrl, model, prompt, base64Image = null) {
+            const url = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
+            const content = [{ type: "text", text: prompt }];
+            
+            if (base64Image) {
+                content.push({
+                    type: "image_url",
+                    image_url: { url: base64Image }
+                });
+            }
+
+            const payload = {
+                model: model,
+                messages: [{ role: "user", content: content }]
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorMsg = `API Error (${response.status})`;
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMsg = errorJson.error?.message || errorMsg;
+                } catch (e) {
+                    errorMsg = errorText || errorMsg;
+                }
+                if (response.status === 401) errorMsg = "Authentication Failed: Please check if your API Key is correct and has not been disabled.";
+                throw new Error(errorMsg);
+            }
+
+            const result = await response.json();
+            const text = result.choices[0].message.content;
+            return JSON.parse(text.replace(/```json|```/g, '').trim());
+        }
+
+        function displayResults(data) {
+            const resultArea = document.getElementById('result-area');
+            const scoreEl = document.getElementById('total-score');
+            const errorList = document.getElementById('error-list');
+            const summaryEl = document.getElementById('summary-text');
+
+            scoreEl.textContent = `${data.score}/${data.total}`;
+            summaryEl.textContent = `"${data.summary}"`;
+            
+            errorList.innerHTML = '';
+            if (data.errors && data.errors.length > 0) {
+                data.errors.forEach(err => {
+                    const item = document.createElement('div');
+                    item.className = 'p-4 rounded-xl bg-red-50 border border-red-100 flex items-start space-x-3';
+                    item.innerHTML = `
+                        <div class="mt-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold shrink-0">${err.index + 1}</div>
+                        <div>
+                            <p class="text-sm font-bold text-red-800">Word #${err.index + 1}: ${err.mistake}</p>
+                            <p class="text-xs text-red-600 mt-1">Expected: <span class="thai-text">${err.expected}</span> | AI detected: <span class="thai-text">${err.actual}</span></p>
+                        </div>
+                    `;
+                    errorList.appendChild(item);
+                });
+            } else {
+                errorList.innerHTML = '<div class="col-span-full p-8 text-center text-slate-400 italic">No errors found! Perfect score.</div>';
+            }
+
+            resultArea.classList.remove('hidden');
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function checkModels() {
+            const apiKey = document.getElementById('api-key').value;
+            if (!apiKey) return alert("Please enter an API Key first.");
+            
+            const baseUrl = document.getElementById('api-url').value || 'https://generativelanguage.googleapis.com';
+            const url = `${baseUrl.replace(/\/$/, '')}/v1beta/models?key=${apiKey}`;
+            
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                if (result.error) throw new Error(result.error.message);
+                
+                const modelList = result.models.map(m => m.name.replace('models/', '')).join('\n');
+                alert("Available models for your key:\n\n" + modelList);
+            } catch (err) {
+                alert("Failed to fetch models: " + err.message);
+            }
+        }
+
+        async function loadWordsetFromFirebase(wordsetId) {
+            const loading = document.getElementById('loading-overlay');
+            const loadingText = loading.querySelector('p');
+            loading.classList.remove('hidden');
+            loadingText.textContent = "Loading vocabulary set from Firebase...";
+
+            try {
+                const snapshot = await database.ref(`thaiWordList/${wordsetId}`).once('value');
+                if (!snapshot.exists()) throw new Error("Word set not found");
+                
+                const wordset = snapshot.val();
+                const wordList = wordset.words || [];
+                const finalData = [];
+
+                for (const word of wordList) {
+                    const safeWord = sanitizeFirebaseKey(word);
+                    const dictSnap = await database.ref(`thaiDictionary/${safeWord}`).once('value');
+                    let def = "N/A";
+                    let syn = "";
+
+                    if (dictSnap.exists()) {
+                        const data = dictSnap.val();
+                        if (data.definitions && data.definitions.length > 0) {
+                            def = data.definitions[0].zh || data.definitions[0].en || "N/A";
+                        }
+                        if (data.synonyms) {
+                            syn = data.synonyms.join(', ');
+                        }
+                    }
+                    finalData.push({ thai: word, definition: def, synonym: syn });
+                }
+
+                document.getElementById('json-input').value = JSON.stringify(finalData, null, 2);
+                generateWorksheet();
+            } catch (err) {
+                alert("Failed to load word set: " + err.message);
+                loadSampleData();
+            } finally {
+                loading.classList.add('hidden');
+                loadingText.textContent = "AI is analyzing your handwriting";
+            }
+        }
+
+        // Initialize with sample data and load settings
+        window.onload = () => {
+            loadSettingsFromDB();
+            
+            const params = new URLSearchParams(window.location.search);
+            const wordsetId = params.get('id');
+            if (wordsetId) {
+                loadWordsetFromFirebase(wordsetId);
+            } else {
+                loadSampleData();
+            }
+        };
+    </script>
+</body>
+</html>
