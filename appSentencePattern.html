@@ -80,6 +80,9 @@
         </div>
 
         <div class="flex items-center gap-4">
+            <button onclick="toggleSettingsModal()" class="p-2 text-slate-500 hover:text-blue-600 transition" title="LLM Configuration">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+            </button>
             <div id="user-info"
                 class="hidden flex items-center gap-3 px-3 py-1.5 bg-slate-50 rounded-full border border-slate-200">
                 <img id="user-avatar" src="" class="w-6 h-6 rounded-full border border-slate-300">
@@ -98,8 +101,11 @@
         <!-- Sidebar Navigation -->
         <aside class="w-80 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 shrink-0">
             <div
-                class="p-5 border-b border-slate-800 flex justify-between items-center text-xs font-bold uppercase tracking-widest text-slate-500">
-                Digital Library
+                class="p-5 border-b border-slate-800 flex justify-between items-center">
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Digital Library</span>
+                <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-lg transition" title="Create New Patterns">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                </button>
             </div>
             <nav id="nav-list" class="flex-1 overflow-y-auto custom-scroll py-4 space-y-1 px-3">
                 <!-- Navigation items dynamically loaded -->
@@ -210,10 +216,125 @@
         </main>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-200">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-800">LLM Configuration</h3>
+                <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Provider</label>
+                        <select id="llm-provider" onchange="toggleProviderFields()" class="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:border-blue-500 outline-none">
+                            <option value="gemini">Google Gemini</option>
+                            <option value="openai">OpenAI Compatible (DeepSeek, etc.)</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Model Name</label>
+                        <input id="model-name" type="text" placeholder="gemini-1.5-flash" class="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:border-blue-500 outline-none">
+                    </div>
+                </div>
+                <div id="api-url-group" class="space-y-1 hidden">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Base API URL</label>
+                    <input id="api-url" type="text" placeholder="https://api.deepseek.com/v1" class="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:border-blue-500 outline-none">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">LLM API Key</label>
+                    <div class="relative">
+                        <input id="api-key" type="password" placeholder="sk-..." class="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:border-blue-500 outline-none pr-24">
+                        <button onclick="checkModels()" class="absolute right-2 top-1.5 text-[10px] font-bold bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition text-slate-600">Check</button>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Google TTS API Key</label>
+                    <input id="tts-api-key" type="password" placeholder="Cloud API Key..." class="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:border-blue-500 outline-none">
+                </div>
+                <div id="settings-status" class="hidden text-center p-2 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-lg animate-pulse">
+                    Settings Saved to Local Storage!
+                </div>
+            </div>
+            <div class="p-6 bg-slate-50 flex justify-end gap-3 border-t border-slate-100">
+                <button onclick="clearSettingsFromDB()" class="px-4 py-2 text-red-500 font-bold text-sm hover:underline">Clear Local Storage</button>
+                <div class="flex-1"></div>
+                <button onclick="saveSettingsToDB()" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Pattern Modal -->
+    <div id="create-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-600 p-2 rounded-xl text-white">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 leading-none">AI Pattern Generator</h3>
+                        <p class="text-xs text-slate-400 mt-1">Convert text articles into structured sentence patterns</p>
+                    </div>
+                </div>
+                <button onclick="closeCreateModal()" class="text-slate-400 hover:text-slate-600 p-2"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div class="flex-1 flex overflow-hidden">
+                <!-- Input Column -->
+                <div class="w-1/2 border-r border-slate-100 p-8 overflow-y-auto custom-scroll space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">Lesson Topic</label>
+                            <input id="create-topic" type="text" placeholder="e.g., Ordering Food" class="w-full border border-slate-200 p-3 rounded-xl text-sm focus:border-blue-500 outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">Lesson ID</label>
+                            <input id="create-session" type="text" placeholder="e.g., L24" class="w-full border border-slate-200 p-3 rounded-xl text-sm focus:border-blue-500 outline-none">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Article Content (Thai Text)</label>
+                        <textarea id="create-article" placeholder="Paste your lesson text here..." class="w-full h-80 border border-slate-200 p-4 rounded-xl text-sm focus:border-blue-500 outline-none resize-none" spellcheck="false"></textarea>
+                    </div>
+                    <button id="btn-generate" onclick="generatePatternsFromText()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition shadow-xl flex items-center justify-center gap-3">
+                        <i data-lucide="zap" class="w-5 h-5 text-yellow-400"></i>
+                        Analyze with AI
+                    </button>
+                </div>
+
+                <!-- Preview Column -->
+                <div class="w-1/2 bg-slate-50/50 p-8 overflow-y-auto custom-scroll flex flex-col">
+                    <div class="flex justify-between items-center mb-4 shrink-0">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Generated JSON Result</label>
+                        <span id="gen-status" class="text-[10px] font-bold text-blue-600 hidden">Generating...</span>
+                    </div>
+                    <div class="flex-1 bg-slate-900 rounded-2xl p-4 shadow-inner relative overflow-hidden">
+                        <textarea id="create-preview-json" class="w-full h-full bg-transparent text-emerald-400 font-mono text-[11px] border-none focus:ring-0 resize-none" spellcheck="false" readonly></textarea>
+                        <div id="gen-loader" class="hidden absolute inset-0 bg-slate-900/80 flex flex-col items-center justify-center text-white backdrop-blur-sm">
+                            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-400 mb-4"></div>
+                            <p class="text-xs font-bold tracking-widest text-emerald-400 animate-pulse">PROCESSING ARTICLE...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-white shrink-0">
+                <button onclick="closeCreateModal()" class="px-6 py-2.5 text-slate-500 font-bold text-sm hover:underline">Cancel</button>
+                <div id="audio-process-status" class="hidden flex items-center gap-2 text-xs font-bold text-blue-600 animate-pulse">
+                    <i data-lucide="mic" class="w-4 h-4"></i>
+                    <span id="audio-status-text">Processing Audio...</span>
+                </div>
+                <button id="btn-save-generated" onclick="processAndSavePattern()" class="hidden bg-emerald-600 text-white px-10 py-2.5 rounded-xl font-bold shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition active:scale-95">Synthesize Audio & Save</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -230,6 +351,25 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
+        const storage = getStorage(app);
+
+        // --- IndexedDB Configuration ---
+        const DB_NAME = 'SentencePatternDB';
+        const STORE_NAME = 'LLMSettings';
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
 
         // --- App State ---
         let state = {
@@ -423,7 +563,298 @@
         };
 
         lucide.createIcons();
-    </script>
+
+        // --- LLM Settings Management ---
+        window.toggleSettingsModal = () => document.getElementById('settings-modal').classList.toggle('hidden');
+
+        window.toggleProviderFields = () => {
+            const provider = document.getElementById('llm-provider').value;
+            const urlGroup = document.getElementById('api-url-group');
+            if (provider === 'openai') {
+                urlGroup.classList.remove('hidden');
+            } else {
+                urlGroup.classList.add('hidden');
+            }
+        };
+
+        window.saveSettingsToDB = async () => {
+            const config = {
+                provider: document.getElementById('llm-provider').value,
+                apiUrl: document.getElementById('api-url').value,
+                modelName: document.getElementById('model-name').value,
+                apiKey: document.getElementById('api-key').value,
+                ttsApiKey: document.getElementById('tts-api-key').value
+            };
+            try {
+                const db = await openDB();
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put(config, 'config');
+                const status = document.getElementById('settings-status');
+                status.classList.remove('hidden');
+                setTimeout(() => {
+                    status.classList.add('hidden');
+                    toggleSettingsModal();
+                }, 1500);
+            } catch (err) {
+                alert("Failed to save settings: " + err.message);
+            }
+        };
+
+        async function loadSettingsFromDB() {
+            try {
+                const db = await openDB();
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const config = await new Promise((resolve) => {
+                    const req = tx.objectStore(STORE_NAME).get('config');
+                    req.onsuccess = () => resolve(req.result);
+                });
+                if (config) {
+                    document.getElementById('llm-provider').value = config.provider || 'gemini';
+                    document.getElementById('api-url').value = config.apiUrl || '';
+                    document.getElementById('model-name').value = config.modelName || 'gemini-1.5-flash';
+                    document.getElementById('api-key').value = config.apiKey || '';
+                    document.getElementById('tts-api-key').value = config.ttsApiKey || '';
+                    toggleProviderFields();
+                }
+            } catch (err) { console.warn("No stored settings found."); }
+        }
+
+        window.clearSettingsFromDB = async () => {
+            if (!confirm("Clear all stored LLM settings?")) return;
+            const db = await openDB();
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).delete('config');
+            alert("Settings cleared.");
+            location.reload();
+        };
+
+        window.checkModels = async () => {
+            const apiKey = document.getElementById('api-key').value;
+            if (!apiKey) return alert("Enter API Key first.");
+            const baseUrl = document.getElementById('api-url').value || 'https://generativelanguage.googleapis.com';
+            const url = `${baseUrl.replace(/\/$/, '')}/v1beta/models?key=${apiKey}`;
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                if (result.error) throw new Error(result.error.message);
+                const modelList = result.models.map(m => m.name.replace('models/', '')).join('\n');
+                alert("Available Gemini models:\n\n" + modelList);
+            } catch (err) { alert("Failed to fetch models: " + err.message); }
+        };
+
+        // --- Pattern Generation Logic ---
+        window.openCreateModal = () => document.getElementById('create-modal').classList.remove('hidden');
+        window.closeCreateModal = () => {
+            if (confirm("Discard changes?")) document.getElementById('create-modal').classList.add('hidden');
+        };
+
+        window.generatePatternsFromText = async () => {
+            const topic = document.getElementById('create-topic').value;
+            const session = document.getElementById('create-session').value;
+            const article = document.getElementById('create-article').value;
+            if (!topic || !article) return alert("Please provide both Topic and Article content.");
+
+            const db = await openDB();
+            const config = await new Promise((resolve) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const req = tx.objectStore(STORE_NAME).get('config');
+                req.onsuccess = () => resolve(req.result);
+            });
+            if (!config || !config.apiKey) return alert("Configure LLM settings first!");
+
+            const loader = document.getElementById('gen-loader');
+            const status = document.getElementById('gen-status');
+            const saveBtn = document.getElementById('btn-save-generated');
+            const preview = document.getElementById('create-preview-json');
+            
+            loader.classList.remove('hidden');
+            status.classList.remove('hidden');
+            saveBtn.classList.add('hidden');
+            preview.value = "";
+
+            const prompt = `
+                You are a Thai language expert. Extract common sentence patterns from the following Thai lesson text.
+                Topic: ${topic}
+                Lesson/Session: ${session}
+                Text: ${article}
+
+                For each sentence pattern found, identify:
+                1. The grammar rule/logic.
+                2. The structural format (e.g., Subject + Verb + Object).
+                3. Typical usage scenario.
+                4. 2-3 Example sentences in Thai with English translations.
+
+                Output ONLY a JSON object in this format:
+                {
+                    "topic": "${topic}",
+                    "definition": "Short overall description of this lesson's grammar focus",
+                    "grammar": "Detailed summary of grammar rules found in the text",
+                    "sessionId": "${session}",
+                    "patterns": [
+                        {
+                            "format": "Pattern structure",
+                            "usage": "When to use it",
+                            "examples": [
+                                { "thai": "Thai sentence", "english": "English translation" }
+                            ]
+                        }
+                    ]
+                }
+            `;
+
+            try {
+                let result;
+                if (config.provider === 'gemini') {
+                    result = await callGemini(config.apiKey, config.modelName, prompt, config.apiUrl);
+                } else {
+                    result = await callOpenAICompatible(config.apiKey, config.modelName, prompt, config.apiUrl);
+                }
+                preview.value = JSON.stringify(result, null, 2);
+                saveBtn.classList.remove('hidden');
+            } catch (err) {
+                alert("Generation failed: " + err.message);
+            } finally {
+                loader.classList.add('hidden');
+                status.classList.add('hidden');
+            }
+        };
+
+        async function callGemini(apiKey, model, prompt, proxyUrl) {
+            const baseUrl = proxyUrl || 'https://generativelanguage.googleapis.com';
+            const url = `${baseUrl.replace(/\/$/, '')}/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const data = await response.json();
+            const text = data.candidates[0].content.parts[0].text;
+            return JSON.parse(text.replace(/```json|```/g, '').trim());
+        }
+
+        async function callOpenAICompatible(apiKey, model, prompt, apiUrl) {
+            const response = await fetch(`${apiUrl.replace(/\/$/, '')}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({ model: model, messages: [{ role: "user", content: prompt }] })
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const data = await response.json();
+            const text = data.choices[0].message.content;
+            return JSON.parse(text.replace(/```json|```/g, '').trim());
+        }
+
+        window.processAndSavePattern = async () => {
+            const jsonStr = document.getElementById('create-preview-json').value;
+            if (!jsonStr) return;
+
+            const dbConn = await openDB();
+            const config = await new Promise((resolve) => {
+                const tx = dbConn.transaction(STORE_NAME, 'readonly');
+                const req = tx.objectStore(STORE_NAME).get('config');
+                req.onsuccess = () => resolve(req.result);
+            });
+
+            if (!config || !config.ttsApiKey) {
+                if (!confirm("Google TTS API Key is missing. Save without audio?")) return;
+                return saveGeneratedPattern();
+            }
+
+            const statusArea = document.getElementById('audio-process-status');
+            const statusText = document.getElementById('audio-status-text');
+            const saveBtn = document.getElementById('btn-save-generated');
+            
+            try {
+                const data = JSON.parse(jsonStr);
+                statusArea.classList.remove('hidden');
+                saveBtn.disabled = true;
+                saveBtn.innerText = "Synthesizing...";
+
+                let totalSentences = 0;
+                data.patterns.forEach(p => totalSentences += p.examples.length);
+                let currentCount = 0;
+
+                for (let p of data.patterns) {
+                    for (let ex of p.examples) {
+                        currentCount++;
+                        statusText.innerText = `Synthesizing Audio (${currentCount}/${totalSentences}): ${ex.thai.substring(0, 10)}...`;
+                        
+                        try {
+                            const audioBase64 = await callGoogleTTS(ex.thai, config.ttsApiKey);
+                            const fileName = `audio/patterns/${Date.now()}_${Math.random().toString(36).substr(2, 5)}.mp3`;
+                            const downloadUrl = await uploadAudioToFirebase(audioBase64, fileName);
+                            ex.audioThai = downloadUrl;
+                        } catch (ttsErr) {
+                            console.error("TTS Failed for:", ex.thai, ttsErr);
+                            // Continue without audio for this one
+                        }
+                    }
+                }
+
+                // Final save
+                data.createdAt = new Date().toISOString();
+                const newId = `pattern-${Date.now()}`;
+                await set(ref(db, `sentencePatterns/${newId}`), data);
+                alert("Processed with Audio and Saved Successfully!");
+                document.getElementById('create-modal').classList.add('hidden');
+            } catch (err) {
+                alert("Processing failed: " + err.message);
+            } finally {
+                statusArea.classList.add('hidden');
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Synthesize Audio & Save";
+            }
+        };
+
+        async function callGoogleTTS(text, apiKey) {
+            const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+            const payload = {
+                input: { text: text },
+                voice: { languageCode: 'th-TH', name: 'th-TH-Standard-A' },
+                audioConfig: { audioEncoding: 'MP3' }
+            };
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const result = await response.json();
+            return result.audioContent; // Base64
+        }
+
+        async function uploadAudioToFirebase(base64Data, path) {
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'audio/mp3' });
+
+            const audioRef = sRef(storage, path);
+            await uploadBytes(audioRef, blob);
+            return await getDownloadURL(audioRef);
+        }
+
+        window.saveGeneratedPattern = async () => {
+            const jsonStr = document.getElementById('create-preview-json').value;
+            if (!jsonStr) return;
+            try {
+                const data = JSON.parse(jsonStr);
+                data.createdAt = new Date().toISOString();
+                const newId = `pattern-${Date.now()}`;
+                await set(ref(db, `sentencePatterns/${newId}`), data);
+                alert("Saved successfully!");
+                document.getElementById('create-modal').classList.add('hidden');
+            } catch (err) { alert("Save failed: " + err.message); }
+        };
+
+        // Initialize with sample data and load settings
+        window.onload = () => {
+            loadSettingsFromDB();
+        };
 </body>
 
 </html>
