@@ -618,6 +618,14 @@
                 </div>
                 <!-- Status Notification Bar -->
                 <div id="status-notification" class="status-notification"></div>
+                
+                <!-- API Configuration Chip -->
+                <div style="display: flex; align-items: center; gap: 8px; background: #eee; padding: 5px 10px; border-radius: 8px; font-size: 10px;">
+                    <span style="font-weight: 800; color: #666; text-transform: uppercase;">Agent API</span>
+                    <input type="text" id="api-base-input" style="background: transparent; border: none; font-size: 10px; width: 150px; outline: none; font-family: monospace;" placeholder="http://localhost:6660/api">
+                    <button onclick="updateApiBase()" style="border: none; background: #ddd; padding: 2px 5px; border-radius: 4px; cursor: pointer;">Save</button>
+                </div>
+
                 <button id="idBTNPlayer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" class="svgBTN" viewBox="0 0 32 32">
                         <path fill="#000000"
@@ -771,12 +779,33 @@
         // --- API Configuration ---
         const LOCAL_STORAGE_KEY = 'gemini_agent_api_base';
         let API_BASE_URL = localStorage.getItem(LOCAL_STORAGE_KEY);
+        
         if (!API_BASE_URL) {
-            // 优先检测当前 host，如果是 file:// 则指向 6660
-            const isLocalFile = window.location.protocol === 'file:';
-            API_BASE_URL = isLocalFile ? "http://localhost:6660/api" : "/api";
+            // 如果是 GitHub Pages (https)，默认指向 localhost 6660
+            // 如果是本地 http，则尝试相对路径 /api
+            const isHttps = window.location.protocol === 'https:';
+            API_BASE_URL = isHttps ? "http://localhost:6660/api" : "/api";
         }
         console.log("Using GeminiAgent API Base:", API_BASE_URL);
+
+        window.updateApiBase = () => {
+            const input = document.getElementById('api-base-input');
+            const newVal = input.value.trim();
+            if (newVal) {
+                localStorage.setItem(LOCAL_STORAGE_KEY, newVal);
+                alert("API 地址已更新，正在刷新页面...");
+                location.reload();
+            }
+        };
+
+        // Initialize API Input UI
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('api-base-input');
+            if (input) {
+                input.value = API_BASE_URL;
+                input.onkeydown = (e) => { if (e.key === 'Enter') updateApiBase(); };
+            }
+        });
 
         // Listen for Auth
         auth.onAuthStateChanged((user) => {
@@ -1405,7 +1434,12 @@
             input.placeholder = "正在评测...";
 
             try {
-                const resp = await fetch('http://localhost:3001/evaluate', {
+                // 使用与 GeminiAgent 类似的逻辑，允许通过 localStorage 配置 MeanCheck 端口
+                const meanCheckBase = localStorage.getItem('mean_check_api_base') || API_BASE_URL.replace('6660', '3001');
+                const evaluateUrl = `${meanCheckBase}/evaluate`.replace(/\/+/g, '/').replace(':/', '://');
+                console.log("Evaluating meaning at:", evaluateUrl);
+
+                const resp = await fetch(evaluateUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ studentInput, standardMeanings })
