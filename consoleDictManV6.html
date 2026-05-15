@@ -332,9 +332,16 @@
 
         .classification-form {
             display: grid;
-            grid-template-columns: 80px 160px 1fr auto auto;
+            grid-template-columns: 100px 150px 1fr;
             gap: 10px;
             align-items: end;
+        }
+
+        .classification-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .form-group {
@@ -452,6 +459,13 @@
             background-color: #fef2f2;
             color: #ef4444;
             border-color: #fecaca;
+        }
+
+        .def-sep {
+            color: var(--accent-color);
+            font-weight: 800;
+            margin: 0 4px;
+            font-family: 'Courier New', Courier, monospace;
         }
 
         .word-thai {
@@ -1110,57 +1124,59 @@
                         title="点击查看ID">id...</span>
                 </div>
 
-                <!-- 分类与标签编辑区域 -->
-                <div class="classification-editor">
-                    <h3 style="margin-bottom: 8px; color: #1e293b;">分类与标签</h3>
-                    <div class="classification-form">
-                        <div class="form-group">
-                            <label for="current-level">级别</label>
-                            <select id="current-level" class="filter-select">
-                                <option value="">级别</option>
-                                <option value="A1">A1</option>
-                                <option value="A2">A2</option>
-                                <option value="B1">B1</option>
-                                <option value="B2">B2</option>
-                                <option value="C1">C1</option>
-                                <option value="C2">C2</option>
-                            </select>
-                        </div>
+                <!-- 分类与标签 / 管理词汇 并排区域 -->
+                <div style="display: flex; gap: 16px; margin-bottom: 12px; align-items: stretch;">
+                    <!-- 分类与标签编辑区域 -->
+                    <div class="classification-editor" style="flex: 1.2; margin-bottom: 0; display: flex; flex-direction: column;">
+                        <h3 style="margin-bottom: 8px; color: #1e293b;">分类与标签</h3>
+                        <div class="classification-form" style="flex: 1;">
+                            <div class="form-group">
+                                <label for="current-level">级别</label>
+                                <select id="current-level" class="filter-select">
+                                    <option value="">级别</option>
+                                    <option value="A1">A1</option>
+                                    <option value="A2">A2</option>
+                                    <option value="B1">B1</option>
+                                    <option value="B2">B2</option>
+                                    <option value="C1">C1</option>
+                                    <option value="C2">C2</option>
+                                </select>
+                            </div>
 
-                        <div class="form-group">
-                            <label for="current-scenario">场景</label>
-                            <select id="current-scenario" class="filter-select">
-                                <option value="">请先选择级别</option>
-                            </select>
-                        </div>
+                            <div class="form-group">
+                                <label for="current-scenario">场景</label>
+                                <select id="current-scenario" class="filter-select">
+                                    <option value="">请先选择级别</option>
+                                </select>
+                            </div>
 
-                        <div class="form-group">
-                            <label for="current-tags-input">标签 (逗号分隔)</label>
-                            <input type="text" id="current-tags-input" placeholder="例如: 动词, 高频词" style="width: 100%;">
-                        </div>
+                            <div class="form-group">
+                                <label for="current-tags-input">标签 (逗号分隔)</label>
+                                <input type="text" id="current-tags-input" placeholder="例如: 动词, 高频词" style="width: 100%;">
+                            </div>
 
-                        <div class="form-group">
-                            <button id="update-classification-btn"
-                                style="padding: 10px 16px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: background-color 0.2s ease; white-space: nowrap;">更新分类</button>
+                            <div class="classification-actions">
+                                <button id="update-classification-btn"
+                                    style="padding: 10px 16px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: background-color 0.2s ease; white-space: nowrap;">更新分类</button>
+                                <button id="update-tags-btn"
+                                    style="padding: 10px 16px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--radius); cursor: pointer; white-space: nowrap;">更新标签</button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <button id="update-tags-btn"
-                                style="padding: 10px 16px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--radius); cursor: pointer; white-space: nowrap;">更新标签</button>
-                        </div>
+                        <div id="tags-preview-container" style="margin-top: 8px; min-height: 24px;"></div>
                     </div>
-                    <div id="tags-preview-container" style="margin-top: 8px; min-height: 24px;"></div>
-                </div>
 
-                <div class="word-management-section">
-                    <h3 style="margin-bottom: 8px; color: #1e293b;">管理词汇</h3>
-                    <div class="add-words-container">
-                        <textarea id="add-new-words-input" placeholder="在此输入要添加的新词汇 (支持批量，每行一个)"
-                            style="min-height: 80px;"></textarea>
-                        <div class="add-words-actions">
-                            <button id="submit-new-words-btn"
-                                style="padding: 8px 16px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
-                                <span id="add-btn-text">添加新词汇</span>
-                            </button>
+                    <!-- 管理词汇区域 -->
+                    <div class="word-management-section" style="flex: 1; margin-bottom: 0; display: flex; flex-direction: column;">
+                        <h3 style="margin-bottom: 8px; color: #1e293b;">管理词汇</h3>
+                        <div class="add-words-container" style="flex: 1; display: flex; flex-direction: column;">
+                            <textarea id="add-new-words-input" placeholder="在此输入要添加的新词汇 (支持批量，每行一个)"
+                                style="flex: 1; min-height: 60px; margin-bottom: 8px;"></textarea>
+                            <div class="add-words-actions" style="text-align: right;">
+                                <button id="submit-new-words-btn"
+                                    style="padding: 8px 16px; background-color: var(--accent-color); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500;">
+                                    <span id="add-btn-text">添加新词汇</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2322,15 +2338,17 @@
                     const ipa = defData.thai?.pronunciation || defData.ipa || '-';
                     // 提取词性
                     const pos = defData.pos || '-';
-                    // 提取定义 (如果是数组则合并，如果是字符串则直接使用)
-                    let definition = '-';
-                    if (defData.definition) {
-                        definition = defData.definition;
-                    } else if (defData.definitions && Array.isArray(defData.definitions)) {
-                        definition = defData.definitions.map(d => {
+                    // 提取定义 (支持字符串数组和对象数组的混合处理)
+                    let displayDefinition = '-';
+                    if (Array.isArray(defData.definitions)) {
+                        const sep = '<span class="def-sep">;</span>';
+                        displayDefinition = defData.definitions.map(d => {
                             if (typeof d === 'string') return d;
+                            // 如果还是旧格式的对象，则转换
                             return `${d.en ? d.en + ': ' : ''}${d.zh || ''}`;
-                        }).join('; ');
+                        }).join(sep);
+                    } else if (defData.definition) {
+                        displayDefinition = defData.definition.replace(/[;；]/g, '<span class="def-sep">;</span>');
                     }
 
                     row.innerHTML = `
@@ -2338,7 +2356,7 @@
                         <td class="word-thai-cell">${word}</td>
                         <td style="color: var(--text-light); font-family: monospace;">${ipa}</td>
                         <td><span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 12px;">${pos}</span></td>
-                        <td class="editable-cell" data-word="${word}" title="点击修改定义">${definition}</td>
+                        <td class="editable-cell" data-word="${word}" title="点击修改定义">${displayDefinition}</td>
                         <td class="word-card-actions">
                             <button class="action-btn-sm lookup-btn" title="查看详情" data-word="${word}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -2362,7 +2380,7 @@
 
                     // 绑定行内编辑
                     const defCell = row.querySelector('.editable-cell');
-                    defCell.onclick = () => startInlineEdit(defCell, word, definition);
+                    defCell.onclick = () => startInlineEdit(defCell, word, displayDefinition);
 
                     tbody.appendChild(row);
                 });
@@ -2385,12 +2403,18 @@
                 if (save && newValue !== displayValue) {
                     try {
                         cell.innerHTML = '<div class="loader" style="width:12px; height:12px; border-width:2px;"></div>';
-                        // 更新 Firebase 中的定义字段 (假设为 definition)
-                        await database.ref(`thaiDictionary/${word}/definition`).set(newValue);
+                        
+                        // 将输入的字符串解析为字符串数组
+                        const saveArray = newValue.split(/[;；\n]/).map(s => s.trim()).filter(Boolean);
+                        
+                        // 更新 Firebase 中的 definitions 字段 (作为数组存储)
+                        await database.ref(`thaiDictionary/${word}/definitions`).set(saveArray);
                         
                         // 更新缓存
                         if (dictionaryCache.has(word)) {
                             const data = dictionaryCache.get(word);
+                            data.definitions = saveArray;
+                            // 同时更新一个字符串版本供兼容使用
                             data.definition = newValue;
                             dictionaryCache.set(word, data);
                         }
