@@ -767,7 +767,16 @@
         let isTempDeck = false; // 是否处于错误卡片重扫模式
         let mainWordList = [];  // 存储原始的完整单词列表
         let currentUser = null; // Global user
-        const API_BASE_URL = localStorage.getItem('gemini_agent_api_base') || "http://localhost:3000";
+        
+        // --- API Configuration ---
+        const LOCAL_STORAGE_KEY = 'gemini_agent_api_base';
+        let API_BASE_URL = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (!API_BASE_URL) {
+            // 优先检测当前 host，如果是 file:// 则指向 6660
+            const isLocalFile = window.location.protocol === 'file:';
+            API_BASE_URL = isLocalFile ? "http://localhost:6660/api" : "/api";
+        }
+        console.log("Using GeminiAgent API Base:", API_BASE_URL);
 
         // Listen for Auth
         auth.onAuthStateChanged((user) => {
@@ -900,13 +909,19 @@
 
             try {
                 // 3. 调用 Agent API 生成深化内容
-                const resp = await fetch(`${API_BASE_URL}/vocabulary/generate`, {
+                const apiUrl = `${API_BASE_URL}/vocabulary/generate`.replace(/\/+/g, '/').replace(':/', '://');
+                console.log("Fetching deep learning from:", apiUrl);
+
+                const resp = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ words: wrongWordsText })
                 });
 
-                if (!resp.ok) throw new Error("Agent 接口请求失败");
+                if (!resp.ok) {
+                    const errorData = await resp.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP ${resp.status}`);
+                }
                 const result = await resp.json();
                 
                 if (result.success && result.data && result.data.words) {
