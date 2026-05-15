@@ -619,12 +619,10 @@
                 <!-- Status Notification Bar -->
                 <div id="status-notification" class="status-notification"></div>
                 
-                <!-- API Configuration Chip -->
-                <div style="display: flex; align-items: center; gap: 8px; background: #eee; padding: 5px 10px; border-radius: 8px; font-size: 10px;">
-                    <span style="font-weight: 800; color: #666; text-transform: uppercase;">Agent API</span>
-                    <input type="text" id="api-base-input" style="background: transparent; border: none; font-size: 10px; width: 150px; outline: none; font-family: monospace;" placeholder="http://localhost:6660/api">
-                    <button onclick="updateApiBase()" style="border: none; background: #ddd; padding: 2px 5px; border-radius: 4px; cursor: pointer;">Save</button>
-                </div>
+                <!-- Settings Button -->
+                <button onclick="openSettings()" style="background: none; border: none; cursor: pointer; color: #666; font-size: 20px; padding: 5px; margin-left: 10px;">
+                    <i class="fas fa-cog"></i>
+                </button>
 
                 <button id="idBTNPlayer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" class="svgBTN" viewBox="0 0 32 32">
@@ -776,36 +774,93 @@
         let mainWordList = [];  // 存储原始的完整单词列表
         let currentUser = null; // Global user
         
-        // --- API Configuration ---
-        const LOCAL_STORAGE_KEY = 'gemini_agent_api_base';
-        let API_BASE_URL = localStorage.getItem(LOCAL_STORAGE_KEY);
-        
-        if (!API_BASE_URL) {
-            // 如果是 GitHub Pages (https)，默认指向 localhost 6660
-            // 如果是本地 http，则尝试相对路径 /api
-            const isHttps = window.location.protocol === 'https:';
-            API_BASE_URL = isHttps ? "http://localhost:6660/api" : "/api";
+        let API_BASE_URL = "http://localhost:6660/api";
+        let MEAN_CHECK_BASE = "http://localhost:3001";
+
+        // --- IndexedDB Configuration ---
+        const DB_NAME = 'AnkiAnywhereSettings';
+        const STORE_NAME = 'settings';
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
         }
-        console.log("Using GeminiAgent API Base:", API_BASE_URL);
 
-        window.updateApiBase = () => {
-            const input = document.getElementById('api-base-input');
-            const newVal = input.value.trim();
-            if (newVal) {
-                localStorage.setItem(LOCAL_STORAGE_KEY, newVal);
-                alert("API 地址已更新，正在刷新页面...");
-                location.reload();
-            }
-        };
+        async function getSetting(key) {
+            const db = await initDB();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(STORE_NAME, 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get(key);
+                request.onsuccess = () => resolve(request.result);
+            });
+        }
 
-        // Initialize API Input UI
-        document.addEventListener('DOMContentLoaded', () => {
-            const input = document.getElementById('api-base-input');
-            if (input) {
-                input.value = API_BASE_URL;
-                input.onkeydown = (e) => { if (e.key === 'Enter') updateApiBase(); };
+        async function setSetting(key, value) {
+            const db = await initDB();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put(value, key);
+                request.onsuccess = () => resolve();
+            });
+        }
+
+        // --- Settings UI Functions ---
+        async function openSettings() {
+            const modal = document.getElementById('settings-modal');
+            document.getElementById('setting-gemini-api').value = API_BASE_URL;
+            document.getElementById('setting-mean-check').value = MEAN_CHECK_BASE;
+            modal.style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        async function saveSettings() {
+            const geminiApi = document.getElementById('setting-gemini-api').value.trim();
+            const meanCheck = document.getElementById('setting-mean-check').value.trim();
+            
+            if (geminiApi) await setSetting('gemini_agent_api_base', geminiApi);
+            if (meanCheck) await setSetting('mean_check_api_base', meanCheck);
+            
+            location.reload();
+        }
+
+        // --- Initialize App Config ---
+        async function loadConfig() {
+            const cachedGemini = await getSetting('gemini_agent_api_base');
+            const cachedMean = await getSetting('mean_check_api_base');
+            
+            if (cachedGemini) {
+                API_BASE_URL = cachedGemini;
+            } else {
+                // Fallback to auto-detect if nothing in IndexedDB
+                const isHttps = window.location.protocol === 'https:';
+                API_BASE_URL = isHttps ? "http://localhost:6660/api" : "/api";
             }
-        });
+            
+            if (cachedMean) {
+                MEAN_CHECK_BASE = cachedMean;
+            } else {
+                MEAN_CHECK_BASE = API_BASE_URL.replace(':6660', ':3001').replace('/api', '');
+            }
+            
+            console.log("Config Loaded - Gemini:", API_BASE_URL, "MeanCheck:", MEAN_CHECK_BASE);
+        }
+
+        // Run config load immediately
+        loadConfig();
 
         // Listen for Auth
         auth.onAuthStateChanged((user) => {
@@ -1434,13 +1489,8 @@
             input.placeholder = "正在评测...";
 
             try {
-                // MeanCheckService 默认不带 /api 前缀，修正 URL 逻辑
-                let meanCheckBase = localStorage.getItem('mean_check_api_base');
-                if (!meanCheckBase) {
-                    // 如果没手动配置，则基于 API_BASE_URL 推导，但要移除 /api 路径
-                    meanCheckBase = API_BASE_URL.replace(':6660', ':3001').replace('/api', '');
-                }
-                const evaluateUrl = `${meanCheckBase}/evaluate`.replace(/\/+/g, '/').replace(':/', '://');
+                // 使用加载好的 MEAN_CHECK_BASE
+                const evaluateUrl = `${MEAN_CHECK_BASE}/evaluate`.replace(/\/+/g, '/').replace(':/', '://');
                 console.log("Evaluating meaning at:", evaluateUrl);
 
                 const resp = await fetch(evaluateUrl, {
@@ -1840,6 +1890,29 @@
             }
         });
     </script>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                <h3 style="margin-bottom: 20px; color: #333;">系统设置</h3>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Gemini Agent API 地址</label>
+                    <input type="text" id="setting-gemini-api" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: monospace; font-size: 12px;" placeholder="http://localhost:6660/api">
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Mean Check Service 地址</label>
+                    <input type="text" id="setting-mean-check" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: monospace; font-size: 12px;" placeholder="http://localhost:3001">
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="closeSettings()" style="padding: 8px 15px; border: none; background: #eee; border-radius: 5px; cursor: pointer;">取消</button>
+                    <button onclick="saveSettings()" style="padding: 8px 15px; border: none; background: #2575fc; color: white; border-radius: 5px; cursor: pointer;">保存并刷新</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

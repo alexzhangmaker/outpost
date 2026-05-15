@@ -411,7 +411,19 @@ app.post('/api/vocabulary/generate', async (req, res) => {
     const { words } = req.body;
     if (!words)
         return res.status(400).json({ error: 'Words list is required' });
+    // Use a normalized words list as sessionId for caching
+    const normalizedWords = words.split(/[,，\s\n]+/).filter(Boolean).sort().join(',');
+    const cacheKey = `vocab_${normalizedWords}`;
     try {
+        // 1. Check Cache
+        console.log(`[Vocabulary] Checking cache for key: ${cacheKey}`);
+        const existing = getResults(cacheKey, 'vocabulary');
+        if (existing && existing.length > 0) {
+            console.log(`[Vocabulary] Cache hit! Returning saved result.`);
+            return res.json({ success: true, data: JSON.parse(existing[0].extractedData), cached: true });
+        }
+        // 2. Generate if not found
+        console.log(`[Vocabulary] Cache miss. Generating with Gemini...`);
         const result = await geminiAgent.generate([
             {
                 role: 'user',
@@ -425,7 +437,11 @@ app.post('/api/vocabulary/generate', async (req, res) => {
                 schema: vocabularyListSchema,
             },
         });
-        res.json({ success: true, data: result.object });
+        const generatedData = result.object;
+        // 3. Save to Cache (results table)
+        console.log(`[Vocabulary] Saving result to cache...`);
+        saveResult(cacheKey, [], generatedData, 'vocabulary');
+        res.json({ success: true, data: generatedData, cached: false });
     }
     catch (error) {
         console.error('Vocabulary Gen Error:', error);
