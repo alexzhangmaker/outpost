@@ -351,107 +351,34 @@
 
         /* 词汇卡片样式 */
         .word-cards {
-            display: block;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
             margin-top: 12px;
             overflow-y: auto;
             flex: 1;
             padding-right: 8px;
         }
 
-        .word-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            background: white;
+        .word-card {
+            background-color: white;
             border-radius: var(--radius);
+            padding: 10px;
+            box-shadow: var(--shadow);
             border: 1px solid var(--border-color);
-        }
-
-        .word-table th {
-            background-color: var(--hover-color);
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-bottom: 2px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .word-table td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 14px;
-            vertical-align: middle;
-        }
-
-        .word-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .word-table tr:hover {
-            background-color: #f8fafc;
-        }
-
-        .word-thai-cell {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        .editable-cell {
-            cursor: pointer;
-            padding: 8px !important;
-            border-radius: 4px;
             transition: all 0.2s ease;
-            min-height: 40px;
         }
 
-        .editable-cell:hover {
-            background-color: #f1f5f9;
-            box-shadow: inset 0 0 0 1px var(--accent-color);
+        .word-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
         }
 
-        .editing-input {
-            width: 100%;
-            padding: 6px 10px;
-            border: 2px solid var(--accent-color);
-            border-radius: 4px;
-            outline: none;
-            font-size: 14px;
-            font-family: inherit;
-            background: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .action-btn-sm {
-            background: none;
-            border: 1px solid var(--border-color);
-            color: var(--text-light);
-            padding: 6px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 4px;
-        }
-
-        .action-btn-sm:hover {
-            background-color: var(--hover-color);
-            color: var(--accent-color);
-            border-color: var(--accent-color);
-        }
-
-        .action-btn-sm.delete:hover {
-            background-color: #fef2f2;
-            color: #ef4444;
-            border-color: #fecaca;
+        .word-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
         }
 
         .word-thai {
@@ -2291,128 +2218,53 @@
 
 
         // 渲染词汇卡片
-        // 渲染词汇表格 (替代原有的卡片渲染)
+        // 渲染词汇卡片 (已更新：包含删除按钮)
         function renderWordCards(wordset) {
             wordCardsContainer.innerHTML = '';
 
             if (wordset.words && Array.isArray(wordset.words) && wordset.words.length > 0) {
-                const table = document.createElement('table');
-                table.className = 'word-table';
-                table.innerHTML = `
-                    <thead>
-                        <tr>
-                            <th style="width: 50px;">#</th>
-                            <th style="width: 180px;">单词 [泰语]</th>
-                            <th style="width: 150px;">发音</th>
-                            <th style="width: 100px;">词性</th>
-                            <th style="flex: 1;">定义 (点击可编辑)</th>
-                            <th style="width: 110px;">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="word-table-body"></tbody>
-                `;
-                wordCardsContainer.appendChild(table);
-                const tbody = document.getElementById('word-table-body');
-
                 wordset.words.forEach((word, index) => {
-                    const row = document.createElement('tr');
-                    const defData = dictionaryCache.get(word) || {};
-                    
-                    // 提取发音
-                    const ipa = defData.thai?.pronunciation || defData.ipa || '-';
-                    // 提取词性
-                    const pos = defData.pos || '-';
-                    // 提取定义 (如果是数组则合并，如果是字符串则直接使用)
-                    let definition = '-';
-                    if (defData.definition) {
-                        definition = defData.definition;
-                    } else if (defData.definitions && Array.isArray(defData.definitions)) {
-                        definition = defData.definitions.map(d => {
-                            if (typeof d === 'string') return d;
-                            return `${d.en ? d.en + ': ' : ''}${d.zh || ''}`;
-                        }).join('; ');
-                    }
+                    const wordCard = document.createElement('div');
+                    wordCard.className = 'word-card';
 
-                    row.innerHTML = `
-                        <td style="color: var(--text-light); font-size: 12px;">${index + 1}</td>
-                        <td class="word-thai-cell">${word}</td>
-                        <td style="color: var(--text-light); font-family: monospace;">${ipa}</td>
-                        <td><span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 12px;">${pos}</span></td>
-                        <td class="editable-cell" data-word="${word}" title="点击修改定义">${definition}</td>
-                        <td class="word-card-actions">
-                            <button class="action-btn-sm lookup-btn" title="查看详情" data-word="${word}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                            </button>
-                            <button class="action-btn-sm delete-word-btn delete" title="从列表中移除" data-index="${index}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            </button>
-                        </td>
-                    `;
+                    wordCard.innerHTML = `
+                <div class="word-index">${index + 1}</div>
+                <div class="word-card-header">
+                    <div class="word-thai">${word}</div>
+                    <div class="word-card-actions">
+                        <button class="lookup-btn" title="查看释义" data-word="${word}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                        <button class="delete-word-btn" title="从列表中移除" data-index="${index}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
 
-                    // 绑定事件
-                    row.querySelector('.lookup-btn').onclick = (e) => {
+                    // 绑定字典查询事件
+                    wordCard.querySelector('.lookup-btn').addEventListener('click', (e) => {
                         e.stopPropagation();
                         showDictionaryDefinition(word);
-                    };
+                    });
 
-                    row.querySelector('.delete-word-btn').onclick = (e) => {
+                    // 绑定删除单词事件
+                    wordCard.querySelector('.delete-word-btn').addEventListener('click', (e) => {
                         e.stopPropagation();
                         deleteWordFromSet(index, word);
-                    };
+                    });
 
-                    // 绑定行内编辑
-                    const defCell = row.querySelector('.editable-cell');
-                    defCell.onclick = () => startInlineEdit(defCell, word, definition);
-
-                    tbody.appendChild(row);
+                    wordCardsContainer.appendChild(wordCard);
                 });
             } else {
-                wordCardsContainer.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 40px; border: 1px dashed var(--border-color); border-radius: var(--radius);">暂无词汇，请在上方添加。</div>';
+                wordCardsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 40px;">暂无词汇，请在上方添加。</div>';
             }
-        }
-
-        // 行内编辑逻辑
-        function startInlineEdit(cell, word, originalValue) {
-            if (cell.querySelector('input')) return;
-
-            const displayValue = cell.textContent === '-' ? '' : cell.textContent;
-            cell.innerHTML = `<input type="text" class="editing-input" value="${displayValue}">`;
-            const input = cell.querySelector('input');
-            input.focus();
-
-            const finishEdit = async (save) => {
-                const newValue = input.value.trim();
-                if (save && newValue !== displayValue) {
-                    try {
-                        cell.innerHTML = '<div class="loader" style="width:12px; height:12px; border-width:2px;"></div>';
-                        // 更新 Firebase 中的定义字段 (假设为 definition)
-                        await database.ref(`thaiDictionary/${word}/definition`).set(newValue);
-                        
-                        // 更新缓存
-                        if (dictionaryCache.has(word)) {
-                            const data = dictionaryCache.get(word);
-                            data.definition = newValue;
-                            dictionaryCache.set(word, data);
-                        }
-                        
-                        cell.textContent = newValue || '-';
-                        showStatus(`已更新单词 "${word}" 的定义`, 'success');
-                    } catch (err) {
-                        console.error('Update failed:', err);
-                        showStatus('更新失败: ' + err.message, 'error');
-                        cell.textContent = originalValue || '-';
-                    }
-                } else {
-                    cell.textContent = originalValue || '-';
-                }
-            };
-
-            input.onkeydown = (e) => {
-                if (e.key === 'Enter') finishEdit(true);
-                if (e.key === 'Escape') finishEdit(false);
-            };
-
-            input.onblur = () => finishEdit(true);
         }
 
         // 从当前词汇集中删除单词
