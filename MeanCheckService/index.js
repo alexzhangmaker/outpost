@@ -1,7 +1,5 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { pipeline } from '@xenova/transformers';
-import didYouMean from 'didyoumean';
 
 const fastify = Fastify({ logger: true });
 
@@ -9,48 +7,14 @@ const fastify = Fastify({ logger: true });
 await fastify.register(cors);
 
 // Configuration
-const SIMILARITY_THRESHOLD = 0.85;
-const MODEL_NAME = 'Xenova/all-MiniLM-L6-v2';
+const OLLAMA_API = 'http://localhost:11434/api/chat';
+const MODEL_NAME = 'qwen2.5:1.5b'; 
+const resultCache = new Map();
 
-// State
-let extractor;
-const embeddingCache = new Map(); // Cache embeddings for standard meanings
-
-// Initialize model
-async function initModel() {
-    console.log(`[MeanCheck] Loading model: ${MODEL_NAME}...`);
-    extractor = await pipeline('feature-extraction', MODEL_NAME);
-    console.log('[MeanCheck] Model loaded.');
-}
-
-// Math Utility: Cosine Similarity
-function cosineSimilarity(vector1, vector2) {
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-    for (let i = 0; i < vector1.length; i++) {
-        dotProduct += vector1[i] * vector2[i];
-        normA += vector1[i] * vector1[i];
-        normB += vector2[i] * vector2[i];
-    }
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-}
-
-// Helper: Get or create embedding
-async function getEmbedding(text) {
-    if (embeddingCache.has(text)) {
-        return embeddingCache.get(text);
-    }
-    const output = await extractor(text, { pooling: 'mean', normalize: true });
-    const vector = Array.from(output.data);
-    embeddingCache.set(text, vector);
-    return vector;
-}
-
-// Helper: Normalize text for comparison (remove "to " prefix, lowercase, trim)
-function normalizeText(text) {
+// Helper: Normalize text for simple matching
+function normalize(text) {
     if (!text) return '';
-    return text.toLowerCase().trim().replace(/^to\s+/i, '');
+    return text.toLowerCase().trim().replace(/[.,!?;:()]/g, '');
 }
 
 // API: Evaluation Endpoint
@@ -58,71 +22,99 @@ fastify.post('/evaluate', async (request, reply) => {
     const { studentInput, standardMeanings } = request.body;
 
     if (!studentInput || !standardMeanings || !Array.isArray(standardMeanings)) {
-        return reply.status(400).send({ error: 'Invalid input. studentInput and standardMeanings (array) are required.' });
+        return reply.status(400).send({ error: 'Invalid input.' });
     }
 
-    console.log(`[Evaluate Request] studentInput: "${studentInput}", standardMeanings:`, standardMeanings);
+    const normInput = normalize(studentInput);
+    const standardText = standardMeanings.join('; ');
+    
+    // 1. 缓存检查 (Identical Request)
+    const cacheKey = `${normInput}|${normalize(standardText)}`;
+    if (resultCache.has(cacheKey)) {
+        console.log(`[MeanCheck] Cache Hit for "${studentInput}"`);
+        return resultCache.get(cacheKey);
+    }
+
+    // 2. 快速路径：精确匹配或简单包含 (0ms 延迟)
+    const isQuickMatch = standardMeanings.some(m => {
+        const normM = normalize(m);
+        return normM === normInput || normM.includes(normInput) && normInput.length > 2;
+    });
+
+    if (isQuickMatch) {
+        console.log(`[MeanCheck] Quick Match Hit for "${studentInput}"`);
+        const quickResult = {
+            isCorrect: true,
+            similarity: 1.0,
+            correctedInput: studentInput,
+            bestMatch: standardMeanings[0],
+            reason: '精确匹配或核心词包含 (快速路径)',
+            category: '快速匹配'
+        };
+        resultCache.set(cacheKey, quickResult);
+        return quickResult;
+    }
+
+    // 3. LLM 路径 (当快速路径无法判断时)
+    console.log(`[MeanCheck] Calling LLM for "${studentInput}"...`);
+
+    const systemPrompt = `你是一个智能且通情达理的语言学习助手。你的任务是判断学生的输入（输入 B）与标准答案（输入 A）在意思上是否匹配。
+
+判定准则：
+1. **核心匹配**：如果输入 B 是输入 A 中提到的核心单词或短语之一，判定为 true。
+2. **意思一致**：只要两句话传达相同的基本社交意图或核心含义，判定为 true。
+3. **宽容处理**：不要纠结于形式区别，重点看语义。
+
+请严格按照以下 JSON 格式输出，限制输出长度：
+{
+"is_semantically_close": true/false,
+"similarity_score": 0.0 to 1.0,
+"category": "分类",
+"explanation": "简述理由"
+}`;
+
+    const userPrompt = `A: "${standardText}"\nB: "${studentInput}"`;
 
     try {
-        // 0. Flatten and Normalize standard meanings
-        // A single standard meaning string might contain multiple synonyms separated by comma/semicolon/slash
-        const flattenedMeanings = [];
-        for (const originalMeaning of standardMeanings) {
-            if (typeof originalMeaning === 'string') {
-                const parts = originalMeaning.split(/[,;\/]/).map(p => p.trim()).filter(p => p);
-                for (const part of parts) {
-                    flattenedMeanings.push({ 
-                        original: originalMeaning, 
-                        normalized: normalizeText(part) 
-                    });
+        const response = await fetch(OLLAMA_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: MODEL_NAME,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                stream: false,
+                format: 'json',
+                options: {
+                    num_predict: 100, // 限制生成长度，加快速度
+                    temperature: 0.1  // 降低随机性，提高稳定性
                 }
-            }
-        }
+            })
+        });
 
-        const normStudentInput = normalizeText(studentInput);
-        const normStandardMeanings = flattenedMeanings.map(m => m.normalized);
+        if (!response.ok) throw new Error(`Ollama API error`);
 
-        // 1. Spell Correction (Pre-processing)
-        // Checks if studentInput is close to any of the standard meanings
-        let correctedInput = didYouMean(normStudentInput, normStandardMeanings) || normStudentInput;
+        const result = await response.json();
+        const llmResponse = JSON.parse(result.message.content);
 
-        // If spell correction didn't find anything, fallback to original just in case
-        if (!correctedInput && normStudentInput) {
-             correctedInput = normStudentInput;
-        }
-
-        // 2. Semantic Embedding for user input
-        const userVector = await getEmbedding(correctedInput);
-
-        // 3. Compare against all standard meanings
-        let maxSim = 0;
-        let bestMatch = '';
-
-        for (const item of flattenedMeanings) {
-            const stdVector = await getEmbedding(item.normalized);
-            const sim = cosineSimilarity(userVector, stdVector);
-
-            if (sim > maxSim) {
-                maxSim = sim;
-                bestMatch = item.original;
-            }
-        }
-
-        const isCorrect = maxSim >= SIMILARITY_THRESHOLD;
-
-        console.log(`[Evaluate Result] isCorrect: ${isCorrect}, maxSim: ${maxSim}, correctedInput: "${correctedInput}", bestMatch: "${bestMatch}"`);
-
-        return {
-            isCorrect,
-            similarity: parseFloat(maxSim.toFixed(4)),
-            correctedInput,
-            bestMatch,
-            thresholdUsed: SIMILARITY_THRESHOLD
+        const finalResult = {
+            isCorrect: llmResponse.is_semantically_close,
+            similarity: llmResponse.similarity_score,
+            correctedInput: studentInput,
+            bestMatch: standardMeanings[0],
+            reason: llmResponse.explanation,
+            category: llmResponse.category
         };
 
+        // 存入缓存
+        resultCache.set(cacheKey, finalResult);
+        return finalResult;
+
     } catch (err) {
-        fastify.log.error(err);
-        return reply.status(500).send({ error: 'Internal evaluation error' });
+        console.error('[MeanCheck] LLM Error:', err);
+        return reply.status(500).send({ error: 'Evaluation error' });
     }
 });
 
@@ -132,9 +124,8 @@ fastify.get('/health', async () => ({ status: 'ok', model: MODEL_NAME }));
 // Startup
 const start = async () => {
     try {
-        await initModel();
         await fastify.listen({ port: 3001, host: '0.0.0.0' });
-        console.log('[MeanCheck] Service listening on port 3001');
+        console.log(`[MeanCheck] Service running on port 3001`);
     } catch (err) {
         fastify.log.error(err);
         process.exit(1);

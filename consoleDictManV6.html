@@ -1572,6 +1572,29 @@
                     throw error;
                 }
             }
+
+            // 精炼提纯单词定义 (acron 服务)
+            async refineWord(word) {
+                const url = 'http://localhost:3334/api/words/refine';
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ word }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Error: ${response.status} ${response.statusText}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Failed to refine word:', error);
+                    throw error;
+                }
+            }
         }
 
         const apiClient = new APIClient();
@@ -2361,6 +2384,9 @@
                             <button class="action-btn-sm lookup-btn" title="查看详情" data-word="${word}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                             </button>
+                            <button class="action-btn-sm refine-word-btn" title="精炼提纯定义" data-word="${word}">
+                                <i class="fas fa-magic"></i>
+                            </button>
                             <button class="action-btn-sm delete-word-btn delete" title="从列表中移除" data-index="${index}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             </button>
@@ -2376,6 +2402,11 @@
                     row.querySelector('.delete-word-btn').onclick = (e) => {
                         e.stopPropagation();
                         deleteWordFromSet(index, word);
+                    };
+
+                    row.querySelector('.refine-word-btn').onclick = (e) => {
+                        e.stopPropagation();
+                        refineWordDefinition(word, row.querySelector('.refine-word-btn'), row);
                     };
 
                     // 绑定行内编辑
@@ -2437,6 +2468,47 @@
             };
 
             input.onblur = () => finishEdit(true);
+        }
+
+        // 提纯定义逻辑
+        async function refineWordDefinition(word, btn, row) {
+            if (btn.classList.contains('processing')) return;
+
+            const originalIcon = btn.innerHTML;
+            btn.classList.add('processing');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.title = '提纯中...';
+
+            try {
+                showStatus(`正在对单词 "${word}" 的定义进行精炼提纯...`, 'info');
+                const result = await apiClient.refineWord(word);
+                
+                if (result.success) {
+                    showStatus(`单词 "${word}" 定义提纯成功！`, 'success');
+                    // 注意：Firebase 监听会自动更新缓存，但我们手动触发一个微小的延迟后重绘该行以显示新内容
+                    // 或者如果 backend 返回了新定义，可以直接更新 UI
+                    if (result.refinedDefinition) {
+                        const defCell = row.querySelector('.editable-cell');
+                        const sep = '<span class="def-sep">;</span>';
+                        let newDisplay = '-';
+                        if (Array.isArray(result.refinedDefinition)) {
+                            newDisplay = result.refinedDefinition.join(sep);
+                        } else {
+                            newDisplay = result.refinedDefinition.replace(/[;；]/g, sep);
+                        }
+                        defCell.innerHTML = newDisplay;
+                    }
+                } else {
+                    showStatus(`提纯失败: ${result.message || '未知错误'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Refine error:', error);
+                showStatus(`提纯失败: ${error.message}`, 'error');
+            } finally {
+                btn.classList.remove('processing');
+                btn.innerHTML = originalIcon;
+                btn.title = '精炼提纯定义';
+            }
         }
 
         // 从当前词汇集中删除单词
