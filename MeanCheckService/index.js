@@ -47,6 +47,12 @@ async function getEmbedding(text) {
     return vector;
 }
 
+// Helper: Normalize text for comparison (remove "to " prefix, lowercase, trim)
+function normalizeText(text) {
+    if (!text) return '';
+    return text.toLowerCase().trim().replace(/^to\s+/i, '');
+}
+
 // API: Evaluation Endpoint
 fastify.post('/evaluate', async (request, reply) => {
     const { studentInput, standardMeanings } = request.body;
@@ -55,10 +61,35 @@ fastify.post('/evaluate', async (request, reply) => {
         return reply.status(400).send({ error: 'Invalid input. studentInput and standardMeanings (array) are required.' });
     }
 
+    console.log(`[Evaluate Request] studentInput: "${studentInput}", standardMeanings:`, standardMeanings);
+
     try {
+        // 0. Flatten and Normalize standard meanings
+        // A single standard meaning string might contain multiple synonyms separated by comma/semicolon/slash
+        const flattenedMeanings = [];
+        for (const originalMeaning of standardMeanings) {
+            if (typeof originalMeaning === 'string') {
+                const parts = originalMeaning.split(/[,;\/]/).map(p => p.trim()).filter(p => p);
+                for (const part of parts) {
+                    flattenedMeanings.push({ 
+                        original: originalMeaning, 
+                        normalized: normalizeText(part) 
+                    });
+                }
+            }
+        }
+
+        const normStudentInput = normalizeText(studentInput);
+        const normStandardMeanings = flattenedMeanings.map(m => m.normalized);
+
         // 1. Spell Correction (Pre-processing)
         // Checks if studentInput is close to any of the standard meanings
-        const correctedInput = didYouMean(studentInput, standardMeanings) || studentInput;
+        let correctedInput = didYouMean(normStudentInput, normStandardMeanings) || normStudentInput;
+
+        // If spell correction didn't find anything, fallback to original just in case
+        if (!correctedInput && normStudentInput) {
+             correctedInput = normStudentInput;
+        }
 
         // 2. Semantic Embedding for user input
         const userVector = await getEmbedding(correctedInput);
@@ -67,17 +98,19 @@ fastify.post('/evaluate', async (request, reply) => {
         let maxSim = 0;
         let bestMatch = '';
 
-        for (const meaning of standardMeanings) {
-            const stdVector = await getEmbedding(meaning);
+        for (const item of flattenedMeanings) {
+            const stdVector = await getEmbedding(item.normalized);
             const sim = cosineSimilarity(userVector, stdVector);
 
             if (sim > maxSim) {
                 maxSim = sim;
-                bestMatch = meaning;
+                bestMatch = item.original;
             }
         }
 
         const isCorrect = maxSim >= SIMILARITY_THRESHOLD;
+
+        console.log(`[Evaluate Result] isCorrect: ${isCorrect}, maxSim: ${maxSim}, correctedInput: "${correctedInput}", bestMatch: "${bestMatch}"`);
 
         return {
             isCorrect,

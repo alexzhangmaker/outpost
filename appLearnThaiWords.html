@@ -631,7 +631,7 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-1 gap-6">
-                        ${word.example_sentences.map(ex => `
+                        ${(word.example_sentences || []).map(ex => `
                             <div class="glass-panel p-8 rounded-3xl bg-white border-l-8 ${ex.context === 'literal' ? 'border-indigo-500' : 'border-amber-500'} card-hover transition-all">
                                 <div class="flex justify-between items-start gap-4 mb-4">
                                     <div class="space-y-3 flex-1">
@@ -662,9 +662,9 @@
                 div.className = "space-y-12";
 
                 const sections = [
-                    { title: '同义互换 Synonyms', data: word.synonyms, color: 'indigo' },
-                    { title: '反义对比 Antonyms', data: word.antonyms, color: 'rose' }
-                ];
+                    { title: '同义互换 Synonyms', data: word.synonyms || [], color: 'indigo' },
+                    { title: '反义对比 Antonyms', data: word.antonyms || [], color: 'rose' }
+                ].filter(s => s.data.length > 0);
 
                 div.innerHTML = `
                     <div class="grid grid-cols-1 gap-12">
@@ -705,7 +705,7 @@
                                 词族成员 Word Family
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-                                ${word.word_family.map(f => `
+                                ${(word.word_family || []).map(f => `
                                     <div class="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-3xl group">
                                         <div class="flex justify-between items-center mb-4">
                                             <div class="flex items-center gap-2">
@@ -749,7 +749,7 @@
                     </div>
 
                     <div class="space-y-10">
-                        ${word.exercises.map((ex, exIdx) => `
+                        ${(word.exercises || []).map((ex, exIdx) => `
                             <div class="glass-panel p-10 rounded-[40px] bg-white border-slate-200/50 relative">
                                 <div class="absolute -top-6 left-10 w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-xl shadow-indigo-200 ring-4 ring-white">
                                     ${exIdx + 1}
@@ -852,6 +852,7 @@
 
         // Global app instance
         window.appInstance = new ThaiLearningApp();
+        window.app = window.appInstance;
     </script>
 </body>
 

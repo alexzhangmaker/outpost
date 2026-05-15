@@ -20,6 +20,18 @@ async function runTest() {
         {
             name: "Wrong meaning",
             body: { studentInput: "keyboard", standardMeanings: ["bank", "river side"] }
+        },
+        {
+            name: "Infinitive 'to' prefix",
+            body: { studentInput: "travel", standardMeanings: ["to travel", "journey"] }
+        },
+        {
+            name: "Infinitive 'to' prefix (reversed)",
+            body: { studentInput: "to travel", standardMeanings: ["travel", "journey"] }
+        },
+        {
+            name: "Comma separated standard meanings",
+            body: { studentInput: "travel", standardMeanings: ["to travel, to tour", "journey"] }
         }
     ];
 
