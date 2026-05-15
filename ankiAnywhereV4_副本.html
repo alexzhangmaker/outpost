@@ -501,96 +501,6 @@
                 min-width: 55px;
             }
         }
-
-        /* Deep Learning View Styles */
-        #deep-learning-view {
-            display: none;
-            flex-direction: column;
-            height: 80%;
-            overflow-y: auto;
-            padding: 20px;
-            background: #fdfdfd;
-            border-radius: 15px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
-        }
-        .dl-word-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #eee;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        }
-        .dl-thai {
-            font-family: 'Noto Sans Thai Looped', sans-serif;
-            font-size: 2.2rem;
-            color: #2c3e50;
-            font-weight: 700;
-        }
-        .dl-ipa {
-            color: #3498db;
-            font-size: 1.1rem;
-            margin-bottom: 10px;
-        }
-        .dl-translation {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 15px;
-        }
-        .dl-example-box {
-            background: #f0f7ff;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 4px solid #3498db;
-        }
-        .dl-example-thai {
-            font-family: 'Noto Sans Thai Looped', sans-serif;
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-        }
-        .dl-example-zh {
-            color: #666;
-            font-size: 1rem;
-        }
-        #dl-loading {
-            display: none;
-            text-align: center;
-            padding: 40px;
-        }
-        .dl-finish-btn {
-            margin: 20px auto;
-            display: block;
-            padding: 12px 30px;
-            background: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .dl-finish-btn:hover {
-            background: #219150;
-            transform: scale(1.05);
-        }
-        .play-btn {
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .play-btn:hover {
-            background: #2980b9;
-            transform: scale(1.1);
-        }
     </style>
     <style>
         .svgBTN:hover {
@@ -658,7 +568,7 @@
                     <div class="antonyms">
                         <div class="section-title">反义词</div>
                         <div id="antonyms-container">
-                            <span class="antonym">ขัดخวาง</span>
+                            <span class="antonym">ขัดขวาง</span>
                             <span class="antonym">เป็นอุปสรรค</span>
                         </div>
                     </div>
@@ -678,18 +588,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Deep Learning View -->
-        <div id="deep-learning-view">
-            <div id="dl-loading">
-                <i class="fas fa-spinner fa-spin fa-3x mb-4" style="color: #6366f1;"></i>
-                <p style="color: #6b7280; font-weight: 700; margin-top: 15px;">Gemini 正在为您生成深化学习内容...</p>
-            </div>
-            <div id="dl-content">
-                <!-- Generated cards go here -->
-            </div>
-            <button id="dl-finish-btn" class="dl-finish-btn hidden">完成深化学习，进入强化记忆</button>
         </div>
 
         <div class="button-group">
@@ -766,18 +664,6 @@
         let learnedWords = [];
         let isTempDeck = false; // 是否处于错误卡片重扫模式
         let mainWordList = [];  // 存储原始的完整单词列表
-        let currentUser = null; // Global user
-        const API_BASE_URL = localStorage.getItem('gemini_agent_api_base') || "http://localhost:3000";
-
-        // Listen for Auth
-        auth.onAuthStateChanged((user) => {
-            currentUser = user;
-            if (user) {
-                console.log("Logged in as:", user.email);
-            } else {
-                console.log("User logged out");
-            }
-        });
 
         // 从localStorage加载已学习数据
         function loadProgress() {
@@ -863,146 +749,40 @@
             }
 
             if (errorItems.length > 0) {
-                // 如果是第一轮复习结束 (不是 TempDeck)，则进入深化学习
-                if (!isTempDeck) {
-                    startDeepLearningPhase(errorItems);
+                // 进入错误复习模式
+                console.log("进入错误复习模式, 错误数:", errorItems.length);
+
+                // 提取对应的原始单词对象
+                const errorWordsObjects = errorItems.map(item => {
+                    const found = mainWordList.find(w => w.thai === item.word);
+                    if (!found) {
+                        console.warn(`Could not find word "${item.word}" in mainWordList. Searching by index...`);
+                        return mainWordList[item.index]; // Fallback to index if string match fails
+                    }
+                    return found;
+                }).filter(w => w !== undefined);
+
+                if (errorWordsObjects.length > 0) {
+                    // 更新应用状态
+                    wordList = [...errorWordsObjects];
+                    learnedWords = [];
+                    currentIndex = 0;
+                    isTempDeck = true;
+
+                    // 提示用户并开始
+                    const statusNotice = document.getElementById('status-notification');
+                    statusNotice.textContent = `本轮有 ${errorItems.length} 个单词不熟悉，即将进入强化复习模式（临时复习不记录到服务器）。`;
+                    statusNotice.style.display = 'block';
+
+                    showCurrentWord();
+                    updateStats();
                 } else {
-                    // 如果已经是 TempDeck 结束，显示最终完成
+                    console.error("Failed to recover error words objects. Skipping retry loop.");
                     showFinalCompletion();
                 }
             } else {
                 showFinalCompletion();
             }
-        }
-
-        // --- Deep Learning Phase Logic ---
-
-        async function startDeepLearningPhase(errorItems) {
-            console.log("进入深化学习环节, 错误数:", errorItems.length);
-            
-            // 1. UI 切换
-            document.getElementById('flashcard-container').style.display = 'none';
-            document.getElementById('rating-container').style.display = 'none';
-            document.getElementById('progress-bar').style.display = 'none';
-            
-            const dlView = document.getElementById('deep-learning-view');
-            const dlLoading = document.getElementById('dl-loading');
-            const dlContent = document.getElementById('dl-content');
-            const dlFinishBtn = document.getElementById('dl-finish-btn');
-            
-            dlView.style.display = 'flex';
-            dlLoading.style.display = 'block';
-            dlContent.innerHTML = '';
-            dlFinishBtn.classList.add('hidden');
-
-            // 2. 准备错词列表
-            const wrongWordsText = errorItems.map(item => item.word).join(', ');
-
-            try {
-                // 3. 调用 Agent API 生成深化内容
-                const resp = await fetch(`${API_BASE_URL}/vocabulary/generate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ words: wrongWordsText })
-                });
-
-                if (!resp.ok) throw new Error("Agent 接口请求失败");
-                const result = await resp.json();
-                
-                if (result.success && result.data && result.data.words) {
-                    const generatedWords = result.data.words;
-                    
-                    // 4. 持久化到 Firebase
-                    if (currentUser) {
-                        saveDeepLearningToFirebase(generatedWords);
-                    }
-
-                    // 5. 渲染 UI
-                    renderDeepLearningContent(generatedWords);
-                    
-                    dlLoading.style.display = 'none';
-                    dlFinishBtn.classList.remove('hidden');
-                    dlFinishBtn.onclick = () => startReinforcementRound(errorItems);
-                } else {
-                    throw new Error("数据生成格式异常");
-                }
-            } catch (err) {
-                console.error("Deep Learning Error:", err);
-                alert("深化学习生成失败: " + err.message);
-                // 失败则直接跳过，进入强化记忆
-                startReinforcementRound(errorItems);
-            }
-        }
-
-        async function saveDeepLearningToFirebase(generatedWords) {
-            try {
-                const title = `错词深化: ${gSessionInfo.title} (${new Date().toLocaleDateString()})`;
-                const newSetRef = database.ref(`vocabulary_lists/${currentUser.uid}`).push();
-                await newSetRef.set({
-                    title: title,
-                    words: generatedWords,
-                    createdAt: new Date().toISOString(),
-                    source: "anki_error_auto_gen"
-                });
-                console.log("深化学习词汇表已保存到 Firebase");
-            } catch (e) {
-                console.error("Failed to save to Firebase:", e);
-            }
-        }
-
-        function renderDeepLearningContent(words) {
-            const container = document.getElementById('dl-content');
-            container.innerHTML = words.map(w => `
-                <div class="dl-word-card animate-fade-in">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
-                        <div>
-                            <div class="dl-thai">${w.thai}</div>
-                            <div class="dl-ipa">${w.ipa}</div>
-                        </div>
-                        <button onclick="playAudioDirect('${w.thai}')" class="play-btn">
-                            <i class="fas fa-volume-up"></i>
-                        </button>
-                    </div>
-                    <div class="dl-translation">${w.translation}</div>
-                    <div class="dl-example-box">
-                        <div style="font-size: 10px; font-weight: 800; color: #818cf8; text-transform: uppercase; margin-bottom: 8px;">Deep Example</div>
-                        <div class="dl-example-thai">${w.example}</div>
-                        <div class="dl-example-zh">${w.exampleTranslation}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        window.playAudioDirect = (text) => {
-            const url = `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(text)}`;
-            new Audio(url).play();
-        };
-
-        function startReinforcementRound(errorItems) {
-            // 1. UI 复原
-            document.getElementById('deep-learning-view').style.display = 'none';
-            document.getElementById('flashcard-container').style.display = 'block';
-            document.getElementById('rating-container').style.display = 'flex';
-            document.getElementById('progress-bar').style.display = 'block';
-
-            // 2. 提取对应的原始单词对象
-            const errorWordsObjects = errorItems.map(item => {
-                const found = mainWordList.find(w => w.thai === item.word);
-                return found || mainWordList[item.index];
-            }).filter(w => w !== undefined);
-
-            // 3. 开启强化复习模式
-            wordList = [...errorWordsObjects];
-            learnedWords = [];
-            currentIndex = 0;
-            isTempDeck = true;
-
-            const statusNotice = document.getElementById('status-notification');
-            statusNotice.textContent = `进入强化复习模式：请巩固刚才学习的 ${errorItems.length} 个单词。`;
-            statusNotice.style.display = 'block';
-
-            showCurrentWord();
-            updateStats();
         }
 
         // 提取最终完成逻辑为独立函数以便复用
