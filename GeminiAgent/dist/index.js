@@ -412,7 +412,8 @@ app.post('/api/vocabulary/generate', async (req, res) => {
     if (!words)
         return res.status(400).json({ error: 'Words list is required' });
     // Use a normalized words list as sessionId for caching
-    const normalizedWords = words.split(/[,，\s\n]+/).filter(Boolean).sort().join(',');
+    // Split only by commas or newlines, since Thai phrases might contain spaces.
+    const normalizedWords = words.split(/[,，\n]+/).map((w) => w.trim()).filter(Boolean).sort().join(',');
     const cacheKey = `vocab_${normalizedWords}`;
     try {
         // 1. Check Cache

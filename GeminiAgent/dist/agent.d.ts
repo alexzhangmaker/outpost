@@ -614,7 +614,7 @@ export declare const vocabularyListSchema: z.ZodObject<{
         exampleTranslation: string;
     }[];
 }>;
-export declare const VOCABULARY_LIST_PROMPT = "You are a Thai language teaching expert. \nGenerate a comprehensive vocabulary list based on the provided input words. \n\nFor each word, provide:\n1. The Thai word itself.\n2. Accurate IPA pronunciation.\n3. Common English translations (separate multiple meanings with ' / ').\n4. A simple, natural-sounding Thai example sentence (suitable for A2 learners).\n5. A clear English translation of that example sentence.\n\nEnsure the output is a structured JSON object according to the schema.";
+export declare const VOCABULARY_LIST_PROMPT = "You are a Thai language teaching expert. \nGenerate a comprehensive vocabulary list EXACTLY and ONLY for the provided input words. Do not add any extra words, and do not omit any words.\n\nFor each word in the input list, provide:\n1. The Thai word itself.\n2. Accurate IPA pronunciation.\n3. Common English translations (separate multiple meanings with ' / ').\n4. A simple, natural-sounding Thai example sentence (suitable for A2 learners).\n5. A clear English translation of that example sentence.\n\nEnsure the output is a structured JSON object according to the schema.";
 export declare const thaiConsonantSchema: z.ZodObject<{
     word: z.ZodString;
     ipa: z.ZodString;

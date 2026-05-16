@@ -132,9 +132,9 @@ export const vocabularyListSchema = z.object({
     })),
 });
 export const VOCABULARY_LIST_PROMPT = `You are a Thai language teaching expert. 
-Generate a comprehensive vocabulary list based on the provided input words. 
+Generate a comprehensive vocabulary list EXACTLY and ONLY for the provided input words. Do not add any extra words, and do not omit any words.
 
-For each word, provide:
+For each word in the input list, provide:
 1. The Thai word itself.
 2. Accurate IPA pronunciation.
 3. Common English translations (separate multiple meanings with ' / ').
