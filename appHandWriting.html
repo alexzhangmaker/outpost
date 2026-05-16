@@ -116,7 +116,7 @@
             <div class="hidden md:flex space-x-6 text-sm font-medium mr-4">
                 <button onclick="showSection('config')" class="hover:text-indigo-600 transition-colors">Configuration</button>
                 <button onclick="showSection('worksheet')" class="hover:text-indigo-600 transition-colors">Worksheet</button>
-                <button onclick="showSection('assessment')" class="hover:text-indigo-600 transition-colors">AI Grading</button>
+                <button onclick="createHandwritingTask()" class="hover:text-indigo-600 transition-colors">Create Grading Task</button>
             </div>
             <button onclick="toggleSettingsModal()" class="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-600" title="Settings">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -180,8 +180,8 @@
                             <button onclick="generateWorksheet()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-95">
                                 Generate Worksheet
                             </button>
-                            <button id="mobile-only-btn" onclick="showSection('assessment')" class="w-full md:hidden border-2 border-indigo-600 text-indigo-600 font-bold py-3 px-6 rounded-xl transition-all active:scale-95">
-                                Go to AI Grading
+                            <button id="mobile-only-btn" onclick="createHandwritingTask()" class="w-full border-2 border-indigo-600 text-indigo-600 font-bold py-3 px-6 rounded-xl transition-all active:scale-95">
+                                Create Task for Mobile PWA
                             </button>
                         </div>
                     </div>
@@ -539,6 +539,47 @@
         }
 
         // --- AI Grading ---
+        async function createHandwritingTask() {
+            if (!currentData || currentData.length === 0) {
+                alert("Please load or generate a worksheet first.");
+                return;
+            }
+
+            const title = prompt("Enter a title for this handwriting task:", "Thai Practice - " + new Date().toLocaleDateString());
+            if (!title) return; // User cancelled
+
+            const loading = document.getElementById('loading-overlay');
+            const loadingText = loading.querySelector('p');
+            loading.classList.remove('hidden');
+            loadingText.textContent = "Creating task in svcHandWriting...";
+
+            try {
+                const res = await fetch('https://localhost:6606/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        words: currentData
+                    })
+                });
+                
+                if (!res.ok) throw new Error("Failed to connect to svcHandWriting service.");
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert("Task created successfully!\nPlease open the iOS PWA (e.g., https://[YOUR_IP]:6606) to take a photo and grade the handwriting.");
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error creating task: " + err.message + "\n\nMake sure svcHandWriting is running on port 6606.");
+            } finally {
+                loading.classList.add('hidden');
+                loadingText.textContent = "AI is analyzing your handwriting";
+            }
+        }
+
         async function gradeHandwriting() {
             const provider = document.getElementById('llm-provider').value;
             const apiKey = document.getElementById('api-key').value;
@@ -810,7 +851,12 @@
                     if (dictSnap.exists()) {
                         const data = dictSnap.val();
                         if (data.definitions && data.definitions.length > 0) {
-                            def = data.definitions[0].zh || data.definitions[0].en || "N/A";
+                            const firstDef = data.definitions[0];
+                            if (typeof firstDef === 'string') {
+                                def = data.definitions.join(', ');
+                            } else {
+                                def = firstDef.zh || firstDef.en || "N/A";
+                            }
                         }
                         if (data.synonyms) {
                             syn = data.synonyms.join(', ');
