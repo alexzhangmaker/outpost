@@ -515,20 +515,27 @@
                     exampleContainer.className = 'p-6 space-y-4';
 
                     if (p.examples && p.examples.length > 0) {
-                        p.examples.forEach(ex => {
+                        p.examples.forEach((ex, exIdx) => {
                             const card = document.createElement('div');
                             card.className = "p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:border-blue-300 transition-colors group";
+                            
+                            const escapedThai = (ex.thai || '').replace(/'/g, "\\'");
+                            
                             card.innerHTML = `
                                 <div class="flex justify-between items-start gap-4">
                                     <div class="space-y-1">
                                         <p class="text-lg font-bold text-slate-900 leading-tight">${ex.thai || ''}</p>
                                         <p class="text-xs text-slate-500 font-medium">${ex.english || ''}</p>
                                     </div>
-                                    ${ex.audioThai ? `
-                                        <button onclick="playAudio('${ex.audioThai}')" class="w-8 h-8 bg-white text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm border border-slate-200">
+                                    ${ex.audioThai && ex.audioThai.trim() !== '' ? `
+                                        <button onclick="playAudio('${ex.audioThai}')" class="w-8 h-8 bg-white text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm border border-slate-200" title="Play Audio">
                                             <i data-lucide="play" class="w-3.5 h-3.5"></i>
                                         </button>
-                                    ` : ''}
+                                    ` : `
+                                        <button id="btn-audio-${pIdx}-${exIdx}" onclick="generateMissingAudio(${pIdx}, ${exIdx}, '${escapedThai}')" class="w-8 h-8 bg-white text-purple-600 rounded-full flex items-center justify-center hover:bg-purple-600 hover:text-white transition shadow-sm border border-slate-200" title="Auto-generate audio">
+                                            <i data-lucide="wand-2" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    `}
                                 </div>
                             `;
                             exampleContainer.appendChild(card);
@@ -610,6 +617,42 @@
                 selectPattern(state.selectedId);
             } catch (err) {
                 alert('Invalid JSON: ' + err.message);
+            }
+        };
+
+        window.generateMissingAudio = async (pIdx, exIdx, text) => {
+            if (!text || text.trim() === '') return;
+            const btn = document.getElementById(`btn-audio-${pIdx}-${exIdx}`);
+            if (btn) {
+                btn.innerHTML = '<div class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-purple-600"></div>';
+                btn.disabled = true;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/tts/generate?text=${encodeURIComponent(text)}&modulePath=audioSentences`);
+                if (!response.ok) throw new Error(await response.text());
+                const data = await response.json();
+                
+                if (data.success && data.audioURL) {
+                    const currentItem = state.patterns[state.selectedId];
+                    currentItem.patterns[pIdx].examples[exIdx].audioThai = data.audioURL;
+                    
+                    const { getDatabase, ref, set } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+                    const db = getDatabase();
+                    await set(ref(db, `sentencePatterns/${state.selectedId}`), currentItem);
+                    
+                    // Refresh view
+                    selectPattern(state.selectedId);
+                } else {
+                    throw new Error("Failed to generate audio URL");
+                }
+            } catch (err) {
+                alert('Audio Generation Failed: ' + err.message);
+                if (btn) {
+                    btn.innerHTML = '<i data-lucide="wand-2" class="w-3.5 h-3.5"></i>';
+                    btn.disabled = false;
+                    lucide.createIcons();
+                }
             }
         };
 
