@@ -629,7 +629,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:3000/api/tts/generate?text=${encodeURIComponent(text)}&modulePath=audioSentences`);
+                const response = await fetch(`http://localhost:6660/api/tts/generate?text=${encodeURIComponent(text)}&modulePath=audioSentences`);
                 if (!response.ok) throw new Error(await response.text());
                 const data = await response.json();
                 
