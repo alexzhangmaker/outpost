@@ -137,16 +137,22 @@
             <div id="content-view"
                 class="hidden max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom duration-500">
                 <!-- Header Info -->
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span id="label-tag"
-                            class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-bold text-[10px] uppercase tracking-wider">Grammar</span>
-                        <span id="session-tag"
-                            class="px-2 py-0.5 bg-slate-200 text-slate-600 rounded font-bold text-[10px] uppercase tracking-wider">Session</span>
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span id="label-tag"
+                                class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-bold text-[10px] uppercase tracking-wider">Grammar</span>
+                            <span id="session-tag"
+                                class="px-2 py-0.5 bg-slate-200 text-slate-600 rounded font-bold text-[10px] uppercase tracking-wider">Session</span>
+                        </div>
+                        <h1 id="pattern-title" class="text-4xl font-extrabold text-slate-900 tracking-tight">Pattern Topic
+                        </h1>
+                        <p id="pattern-definition" class="text-lg text-slate-600 leading-relaxed"></p>
                     </div>
-                    <h1 id="pattern-title" class="text-4xl font-extrabold text-slate-900 tracking-tight">Pattern Topic
-                    </h1>
-                    <p id="pattern-definition" class="text-lg text-slate-600 leading-relaxed"></p>
+                    <button onclick="assignReview()" class="shrink-0 flex items-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white px-4 py-2.5 rounded-xl font-bold transition shadow-sm border border-blue-200 group">
+                        <i data-lucide="send" class="w-4 h-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform"></i>
+                        Assign
+                    </button>
                 </div>
 
                 <!-- Tabs -->
@@ -356,7 +362,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         // --- Firebase Configuration ---
@@ -653,6 +659,41 @@
                     btn.disabled = false;
                     lucide.createIcons();
                 }
+            }
+        };
+
+        const MESSAGE_DB_URL = "https://outpost-8d74e-4ec53.asia-southeast1.firebasedatabase.app/";
+
+        window.assignReview = async () => {
+            if (!state.selectedId) return;
+            const item = state.patterns[state.selectedId];
+            if (!confirm(`确认将此 Pattern "${item.topic || 'Unknown'}" 分配给 Ray 进行复习吗？`)) return;
+
+            try {
+                const messageDb = getDatabase(app, MESSAGE_DB_URL);
+                
+                const now = new Date();
+                const expireDate = new Date();
+                expireDate.setDate(now.getDate() + 2); // 2 days
+
+                const getISODate = (d) => {
+                    return \`\${d.getFullYear()}-\${String(d.getMonth() + 1).padStart(2, '0')}-\${String(d.getDate()).padStart(2, '0')}\`;
+                };
+
+                const newMessage = {
+                    attachment: \`https://alexzhangmaker.github.io/outpost/appReviewSentenceP.html?patternKey=\${state.selectedId}\`,
+                    classification: "pattern_review",
+                    createdAt: getISODate(now),
+                    expireAt: getISODate(expireDate),
+                    message: \`Pattern 复习: \${item.topic || '未知话题'}\`,
+                    user: "rayzhang20030603@gmail.com"
+                };
+
+                await push(ref(messageDb, 'userMessages'), newMessage);
+                alert(\`任务 "Pattern 复习: \${item.topic || '未知话题'}" 分配成功！\`);
+            } catch (error) {
+                console.error("Assign failed:", error);
+                alert("分配失败: " + error.message);
             }
         };
 
