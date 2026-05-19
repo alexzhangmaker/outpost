@@ -667,33 +667,34 @@
         window.assignReview = async () => {
             if (!state.selectedId) return;
             const item = state.patterns[state.selectedId];
-            if (!confirm(`确认将此 Pattern "${item.topic || 'Unknown'}" 分配给 Ray 进行复习吗？`)) return;
+            const topicName = item.topic || '未知话题';
+            if (!confirm('确认将此 Pattern "' + topicName + '" 分配给 Ray 进行复习吗？')) return;
 
             try {
                 const messageDb = getDatabase(app, MESSAGE_DB_URL);
-                
+
                 const now = new Date();
                 const expireDate = new Date();
-                expireDate.setDate(now.getDate() + 2); // 2 days
+                expireDate.setDate(now.getDate() + 2);
 
                 const getISODate = (d) => {
-                    return \`\${d.getFullYear()}-\${String(d.getMonth() + 1).padStart(2, '0')}-\${String(d.getDate()).padStart(2, '0')}\`;
+                    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
                 };
 
                 const newMessage = {
-                    attachment: \`https://alexzhangmaker.github.io/outpost/appReviewSentenceP.html?patternKey=\${state.selectedId}\`,
-                    classification: "pattern_review",
+                    attachment: 'https://alexzhangmaker.github.io/outpost/appReviewSentenceP.html?patternKey=' + state.selectedId,
+                    classification: 'pattern_review',
                     createdAt: getISODate(now),
                     expireAt: getISODate(expireDate),
-                    message: \`Pattern 复习: \${item.topic || '未知话题'}\`,
-                    user: "rayzhang20030603@gmail.com"
+                    message: 'Pattern 复习: ' + topicName,
+                    user: 'rayzhang20030603@gmail.com'
                 };
 
                 await push(ref(messageDb, 'userMessages'), newMessage);
-                alert(\`任务 "Pattern 复习: \${item.topic || '未知话题'}" 分配成功！\`);
+                alert('任务 "Pattern 复习: ' + topicName + '" 分配成功！');
             } catch (error) {
-                console.error("Assign failed:", error);
-                alert("分配失败: " + error.message);
+                console.error('Assign failed:', error);
+                alert('分配失败: ' + error.message);
             }
         };
 
