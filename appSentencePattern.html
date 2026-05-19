@@ -185,13 +185,17 @@
                         </div>
                     </div>
 
-                    <!-- Examples Section -->
+                    <!-- Patterns Section -->
                     <div>
-                        <h3
-                            class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
-                            Example Sentences
+                        <div class="flex items-center gap-4 mb-6">
+                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">
+                                Pattern Section
+                            </h3>
                             <div class="flex-1 h-px bg-slate-200"></div>
-                        </h3>
+                            <button onclick="openAddPatternModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-1.5 rounded-lg transition" title="Add Pattern">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                         <div id="examples-list" class="grid grid-cols-1 gap-4">
                             <!-- Example items -->
                         </div>
@@ -326,6 +330,25 @@
                     <span id="audio-status-text">Processing Audio...</span>
                 </div>
                 <button id="btn-save-generated" onclick="processAndSavePattern()" class="hidden bg-emerald-600 text-white px-10 py-2.5 rounded-xl font-bold shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition active:scale-95">Synthesize Audio & Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pattern JSON Modal -->
+    <div id="pattern-modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in duration-200">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="pattern-modal-title" class="text-lg font-bold text-slate-800">Add/Edit Pattern JSON</h3>
+                <button onclick="closePatternModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 bg-slate-900">
+                <textarea id="pattern-json-textarea"
+                    class="w-full h-[400px] bg-transparent text-emerald-400 font-mono text-sm border-none focus:ring-0 resize-none"
+                    spellcheck="false"></textarea>
+            </div>
+            <div class="p-6 bg-slate-50 flex justify-end gap-3 border-t border-slate-100">
+                <button onclick="closePatternModal()" class="px-6 py-2.5 text-slate-500 font-bold text-sm hover:underline">Cancel</button>
+                <button onclick="savePatternJson()" class="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition">Save</button>
             </div>
         </div>
     </div>
@@ -481,6 +504,9 @@
                             </div>
                             ${p.usage ? `<p class="text-[11px] text-slate-500 font-medium ml-1">用途: ${p.usage}</p>` : ''}
                         </div>
+                        <button onclick="openEditPatternModal(${pIdx})" class="text-slate-400 hover:text-blue-600 p-2 rounded-lg transition" title="Edit Pattern JSON">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        </button>
                     `;
                     patternGroup.appendChild(formatBanner);
 
@@ -522,6 +548,70 @@
             // Scroll to top of content
             document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+        let currentEditingPatternIndex = -1;
+
+        window.openAddPatternModal = () => {
+            currentEditingPatternIndex = -1;
+            document.getElementById('pattern-modal-title').innerText = 'Add New Pattern';
+            const template = {
+                "pattern_id": `p_${Date.now()}`,
+                "format": "",
+                "pattern_romanization": "",
+                "usage": "",
+                "level": "Intermediate",
+                "examples": [
+                    {
+                        "example_id": `e_${Date.now()}_1`,
+                        "thai": "",
+                        "text_romanization": "",
+                        "chinese": "",
+                        "english": "",
+                        "audioThai": "",
+                        "duration_seconds": 0
+                    }
+                ]
+            };
+            document.getElementById('pattern-json-textarea').value = JSON.stringify(template, null, 2);
+            document.getElementById('pattern-modal').classList.remove('hidden');
+        };
+
+        window.openEditPatternModal = (index) => {
+            currentEditingPatternIndex = index;
+            document.getElementById('pattern-modal-title').innerText = 'Edit Pattern ' + (index + 1);
+            const patternData = state.patterns[state.selectedId].patterns[index];
+            document.getElementById('pattern-json-textarea').value = JSON.stringify(patternData, null, 2);
+            document.getElementById('pattern-modal').classList.remove('hidden');
+        };
+
+        window.closePatternModal = () => {
+            document.getElementById('pattern-modal').classList.add('hidden');
+        };
+
+        window.savePatternJson = async () => {
+            const text = document.getElementById('pattern-json-textarea').value;
+            try {
+                const parsed = JSON.parse(text);
+                const currentItem = state.patterns[state.selectedId];
+                if (!currentItem.patterns) currentItem.patterns = [];
+
+                if (currentEditingPatternIndex === -1) {
+                    currentItem.patterns.push(parsed);
+                } else {
+                    currentItem.patterns[currentEditingPatternIndex] = parsed;
+                }
+
+                // Call import explicitly to handle Firebase writes cleanly within module
+                const { getDatabase, ref, set } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+                const db = getDatabase();
+                await set(ref(db, `sentencePatterns/${state.selectedId}`), currentItem);
+                
+                closePatternModal();
+                selectPattern(state.selectedId);
+            } catch (err) {
+                alert('Invalid JSON: ' + err.message);
+            }
+        };
 
         window.switchContentTab = (tab) => {
             const visualBtn = document.getElementById('tab-visual-btn');

@@ -75,6 +75,9 @@ app.get('/api/admin/artifacts', (req, res) => {
 // Add/Update artifact
 app.post('/api/admin/artifacts', (req, res) => {
     const artifact = req.body;
+    if (!artifact.id) {
+        return res.status(400).json({ error: "Artifact ID is required" });
+    }
     db.run("INSERT OR REPLACE INTO artifacts (id, title, data) VALUES (?, ?, ?)",
         [artifact.id, artifact.title, JSON.stringify(artifact)],
         (err) => {
@@ -82,6 +85,16 @@ app.post('/api/admin/artifacts', (req, res) => {
             res.json({ success: true });
         }
     );
+});
+
+// Delete artifact
+app.delete('/api/admin/artifacts/:id', (req, res) => {
+    const { id } = req.params;
+    const query = id === 'null' ? "DELETE FROM artifacts WHERE id = ? OR id IS NULL" : "DELETE FROM artifacts WHERE id = ?";
+    db.run(query, [id], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
 });
 
 // Get all users

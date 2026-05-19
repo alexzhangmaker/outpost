@@ -137,7 +137,7 @@
             let tr = document.createElement('tr');
             if (tab === 'artifacts') {
                 const rowJsonStr = JSON.stringify(row).replace(/'/g, "&#39;");
-                tr.innerHTML = `<td>${row.id}</td><td>${row.title}</td><td>${row.data.parts.length}</td><td><button class="btn btn-outline" onclick='viewArtifact(${rowJsonStr})'>View</button></td>`;
+                tr.innerHTML = `<td>${row.id}</td><td>${row.title}</td><td>${row.data?.parts?.length || 0}</td><td style="display:flex;gap:8px;"><button class="btn btn-outline" onclick='viewArtifact(${rowJsonStr})'>View</button><button class="btn btn-outline" onclick='editArtifact(${rowJsonStr})'>Edit</button><button class="btn btn-outline" style="color:#ef4444;border-color:#f87171;" onclick='deleteArtifact("${row.id}")'>Delete</button></td>`;
             } else if (tab === 'users') {
                 tr.innerHTML = `<td>${row.userId}</td><td>${row.username}</td><td>${row.email}</td>`;
             } else if (tab === 'enrollments') {
@@ -188,6 +188,7 @@
                 <div class="form-group"><label>Paste scene.json content</label><textarea id="m_json" rows="15"></textarea></div>
                 <div style="display:flex; gap:10px;">
                     <button class="btn btn-primary" onclick="saveArtifact()">Save</button>
+                    <button class="btn btn-outline" onclick="validateArtifactJson()">Validate & Auto-fill</button>
                     <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
                 </div>
             `;
@@ -226,6 +227,73 @@
         } catch (e) { alert("Invalid JSON format"); }
     }
 
+    function validateArtifactJson() {
+        const textarea = document.getElementById('m_json');
+        try {
+            let data = JSON.parse(textarea.value);
+            let modified = false;
+
+            // Fix parts format: if it's an object (dict) instead of an array, convert it
+            if (data.parts && typeof data.parts === 'object' && !Array.isArray(data.parts)) {
+                const newParts = [];
+                for (const [key, value] of Object.entries(data.parts)) {
+                    newParts.push({
+                        partType: key,
+                        partId: `${key}_001`,
+                        title: key,
+                        items: value // The user's array goes into items or the part directly depending on the activity
+                    });
+                }
+                // Wait, some activities expect standardDialog to be directly the array, but standardizing to items is safer, or just put the array inside.
+                // Looking at standardDialog format, if value is array, maybe it expects it under 'dialog' or 'items'. 
+                // We'll just map it to 'items' as seen in database, or merge. Let's merge if possible, or just assign value to the part directly.
+                // To be safe and match user's JSON intent, we will use 'items: value' but also spread the array if needed.
+                // Actually, just pushing it as is with partType added.
+                
+                // Let's rewrite this part cleanly:
+                data.parts = Object.entries(data.parts).map(([key, value]) => ({
+                    partType: key,
+                    partId: `${key}_001`,
+                    title: key,
+                    // If it's standardDialog, demoLearningActivity.html might expect 'items' or something else, but let's just put it under 'items' or directly.
+                    // We will put it under 'items' to match the database structure you had.
+                    ...(Array.isArray(value) ? { items: value } : value)
+                }));
+                modified = true;
+            }
+
+            if (!data.id) {
+                data.id = 'artifact_' + Date.now();
+                modified = true;
+            }
+            if (!data.title) {
+                data.title = 'New Lesson ' + new Date().toLocaleDateString();
+                modified = true;
+            }
+            if (!data.difficulty) {
+                data.difficulty = 'Beginner';
+                modified = true;
+            }
+            if (!data.estimatedTime) {
+                data.estimatedTime = '10-15 mins';
+                modified = true;
+            }
+            if (!data.tags) {
+                data.tags = ['conversation'];
+                modified = true;
+            }
+
+            if (modified) {
+                textarea.value = JSON.stringify(data, null, 2);
+                alert("Missing metadata and structure issues were automatically fixed.");
+            } else {
+                alert("JSON is valid and contains necessary metadata.");
+            }
+        } catch (e) {
+            alert("Invalid JSON format. Please check your syntax.");
+        }
+    }
+
     function viewArtifact(art) {
         const modal = document.getElementById('modal');
         const body = document.getElementById('modalBody');
@@ -254,6 +322,38 @@
                 <button class="btn btn-outline" onclick="closeModal()">Close</button>
             </div>
         `;
+    }
+
+    function editArtifact(art) {
+        const modal = document.getElementById('modal');
+        const body = document.getElementById('modalBody');
+        modal.style.display = 'flex';
+        
+        const jsonContent = JSON.stringify(art.data || art, null, 2);
+
+        body.innerHTML = `
+            <h3>Edit Artifact: ${art.title || art.id}</h3>
+            <div class="form-group"><label>Modify JSON content</label><textarea id="m_json" rows="15">${jsonContent}</textarea></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-primary" onclick="saveArtifact()">Save Updates</button>
+                <button class="btn btn-outline" onclick="validateArtifactJson()">Validate & Auto-fill</button>
+                <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+            </div>
+        `;
+    }
+
+    async function deleteArtifact(id) {
+        if (!confirm('Are you sure you want to delete artifact ' + id + '?')) return;
+        try {
+            const response = await fetch(`${API}/artifacts/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            if (!response.ok) {
+                alert(`Delete failed (Status: ${response.status}). Did you restart the backend server?`);
+                return;
+            }
+            loadData('artifacts');
+        } catch (e) {
+            alert('Failed to delete artifact: ' + e.message);
+        }
     }
 
     function editSchedule(id, currentStatus, currentNextTime) {

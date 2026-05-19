@@ -573,7 +573,13 @@
                 }
             } catch (err) {
                 console.error(err);
-                alert("Error creating task: " + err.message + "\n\nMake sure svcHandWriting is running on port 6606.");
+                let msg = "Error creating task: " + err.message;
+                if (err.message === "Failed to fetch") {
+                    msg += "\n\nThis is usually because your browser is blocking the self-signed HTTPS certificate for localhost.\n\nTo fix this:\n1. Open a new tab and go to https://localhost:6606/api/tasks\n2. Click 'Advanced' -> 'Proceed to localhost (unsafe)'.\n3. Come back here and try again.";
+                } else {
+                    msg += "\n\nMake sure svcHandWriting is running on port 6606.";
+                }
+                alert(msg);
             } finally {
                 loading.classList.add('hidden');
                 loadingText.textContent = "AI is analyzing your handwriting";
