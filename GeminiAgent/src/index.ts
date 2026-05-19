@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load .env from the project root (one level up from src or dist)
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ override: true, path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 app.use(cors());

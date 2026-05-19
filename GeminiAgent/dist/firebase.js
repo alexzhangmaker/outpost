@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // Load .env from the project root (one level up from src or dist)
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ override: true, path: path.resolve(__dirname, '../.env') });
 const databaseURL = process.env.FIREBASE_DATABASE_URL || 'https://outpost-dictionary-116208.asia-southeast1.firebasedatabase.app/';
 let serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
 if (serviceAccountPath) {
