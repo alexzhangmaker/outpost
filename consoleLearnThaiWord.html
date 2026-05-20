@@ -194,15 +194,26 @@
                             <p id="detail-count" class="text-2xl font-black text-indigo-600 leading-none">0</p>
                             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 mb-4">Total
                                 Words</p>
-                            <button onclick="app.viewInApp()"
-                                class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
-                                    </path>
-                                </svg>
-                                在学习 App 中查看
-                            </button>
+                            <div class="flex gap-2 justify-end">
+                                <button onclick="app.viewInApp()"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
+                                        </path>
+                                    </svg>
+                                    在学习 App 中查看
+                                </button>
+                                <button onclick="app.assignWordSet()"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-100">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8">
+                                        </path>
+                                    </svg>
+                                    Assign
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -599,6 +610,43 @@
             viewInApp() {
                 if (this.currentSetId) {
                     window.open(`appLearnThaiWords.html?setId=${this.currentSetId}`, '_blank');
+                }
+            }
+
+            async assignWordSet() {
+                if (!this.currentSetId) return;
+                const setObj = this.sets[this.currentSetId];
+                if (!setObj) return;
+
+                if (!confirm(`确认将此单词集 "${setObj.name}" 分配给 Ray 进行学习吗？`)) return;
+
+                const MESSAGE_DB_URL = "https://outpost-8d74e-4ec53.asia-southeast1.firebasedatabase.app/";
+                
+                try {
+                    const messageDb = getDatabase(fbApp, MESSAGE_DB_URL);
+                    
+                    const now = new Date();
+                    const expireDate = new Date();
+                    expireDate.setDate(now.getDate() + 2); // 2 days
+
+                    const getISODate = (d) => {
+                        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                    };
+
+                    const newMessage = {
+                        attachment: `https://alexzhangmaker.github.io/outpost/appLearnThaiWords.html?setId=${this.currentSetId}`,
+                        classification: "thai_words",
+                        createdAt: getISODate(now),
+                        expireAt: getISODate(expireDate),
+                        message: `泰语词汇学习: ${setObj.name}`,
+                        user: "rayzhang20030603@gmail.com"
+                    };
+
+                    await push(ref(messageDb, 'userMessages'), newMessage);
+                    alert(`任务 "泰语词汇学习: ${setObj.name}" 分配成功！`);
+                } catch (error) {
+                    console.error("Assign failed:", error);
+                    alert("分配失败: " + error.message);
                 }
             }
 
