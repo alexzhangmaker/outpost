@@ -1204,6 +1204,7 @@
 
         async function uploadAnkiRecord() {
             if (bUploaded == true) return;
+            bUploaded = true;
 
             let cDate = new Date();
             let nextDate = new Date();
@@ -1393,8 +1394,7 @@
             }
 
             // 如果所有单词都已学习，显示完成消息
-            showCompletionMessage();
-            await uploadAnkiRecord();
+            await showCompletionMessage();
         }
 
         // 重置应用

@@ -269,6 +269,39 @@
         </div>
     </div>
 
+    <!-- Word JSON Edit Modal -->
+    <div id="word-json-modal"
+        class="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden shadow-indigo-200">
+            <div class="p-8 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-xl font-black text-slate-800">编辑单词 JSON - <span id="word-json-title" class="thai-text text-indigo-600"></span></h3>
+                <button onclick="app.hideWordJsonModal()" class="text-slate-400 hover:text-slate-600 transition-all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-8 space-y-6">
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">JSON 数据内容</label>
+                    <textarea id="word-json-content" rows="16"
+                        class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none font-mono text-xs text-slate-700 transition-all"
+                        placeholder="请输入有效的 JSON 数据..."></textarea>
+                </div>
+            </div>
+            <div class="p-8 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button onclick="app.hideWordJsonModal()"
+                    class="px-6 py-3 bg-white text-slate-500 rounded-xl font-bold hover:bg-slate-100 border border-slate-200 transition-all">
+                    取消
+                </button>
+                <button onclick="app.saveWordJson()"
+                    class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all">
+                    保存修改
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -446,6 +479,11 @@
                                 <span class="thai-text text-3xl font-black text-slate-800">${word}</span>
                                 ${exists ? `
                                     <div class="flex gap-2">
+                                        <button onclick="app.editWordJson('${word}')" class="text-slate-400 hover:text-indigo-600 p-1.5 bg-slate-100 rounded-xl transition-all" title="编辑 JSON">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </button>
                                         <button onclick="app.fixAudio('${word}')" class="text-slate-400 hover:text-indigo-600 p-1.5 bg-slate-100 rounded-xl transition-all" title="修复音频">
                                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
                                         </button>
@@ -535,6 +573,45 @@
                 } catch (err) {
                     status.innerHTML = `<svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg><span class="text-sm font-bold">修复失败: ${err.message}</span>`;
                     setTimeout(() => status.remove(), 4000);
+                }
+            }
+
+            editWordJson(word) {
+                const data = this.allWordData[word];
+                if (!data) return alert('该单词尚无数据，请先生成！');
+                
+                this.editingWord = word;
+                document.getElementById('word-json-title').innerText = word;
+                document.getElementById('word-json-content').value = JSON.stringify(data, null, 2);
+                document.getElementById('word-json-modal').classList.remove('hidden');
+            }
+
+            hideWordJsonModal() {
+                document.getElementById('word-json-modal').classList.add('hidden');
+                this.editingWord = null;
+            }
+
+            async saveWordJson() {
+                if (!this.editingWord) return;
+                const jsonStr = document.getElementById('word-json-content').value.trim();
+                
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(jsonStr);
+                } catch (e) {
+                    return alert('JSON 格式错误，请检查！\n' + e.message);
+                }
+
+                if (!parsedData.word) {
+                    parsedData.word = this.editingWord;
+                }
+
+                try {
+                    await set(ref(db, `ThaiWordsListen/${this.editingWord}`), parsedData);
+                    this.hideWordJsonModal();
+                    alert('单词 JSON 数据保存成功！');
+                } catch (err) {
+                    alert('保存失败: ' + err.message);
                 }
             }
 
