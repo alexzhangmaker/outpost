@@ -262,14 +262,25 @@
             </div>
 
             <div class="sidebar-section">
+                <h3>Thai Word Quiz</h3>
+                <div class="upload-form">
+                    <input type="text" id="quiz-word-input" placeholder="Enter Thai word(s) comma separated..."
+                        style="width: 100%; height: 36px; padding: 0 10px; font-size: 13px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box;">
+                    <button onclick="generateWordQuiz()" class="btn-primary" style="width: 100%">Generate Quiz</button>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
                 <h3>Cloud Content</h3>
-                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap;">
                     <button onclick="loadSidebar('sentencePatterns')" class="btn-secondary"
-                        style="flex: 1; font-size: 10px;">Sentences</button>
+                        style="flex: 1; font-size: 10px; min-width: 60px;">Sentences</button>
                     <button onclick="loadSidebar('ThaiWordsListen')" class="btn-secondary"
-                        style="flex: 1; font-size: 10px;">Thai Words</button>
+                        style="flex: 1; font-size: 10px; min-width: 60px;">Thai Words</button>
                     <button onclick="loadSidebar('ThaiCLoseReading')" class="btn-secondary"
-                        style="flex: 1; font-size: 10px;">Articles</button>
+                        style="flex: 1; font-size: 10px; min-width: 60px;">Articles</button>
+                    <button onclick="loadSidebar('thaiVocabularyQuizzes')" class="btn-secondary"
+                        style="flex: 1; font-size: 10px; min-width: 60px; background-color: #e67e22; color: white;">Quizzes</button>
                 </div>
                 <button onclick="loadSidebar('sentencePatterns')" class="btn-secondary"
                     style="width: 100%; font-size: 11px; padding: 6px; display: none;">Refresh Firebase List</button>
@@ -306,6 +317,7 @@
                     <button id="btn-save" onclick="saveChanges()" class="btn-primary">Save Local Changes</button>
                     <button id="btn-finalize" onclick="finalizeRecord()" class="btn-success">Finalize & Sync to
                         Cloud</button>
+                    <button id="btn-delete-cloud" onclick="deleteCloudRecord()" class="btn-secondary" style="background-color: #e74c3c; display: none;">Delete Cloud Record</button>
                 </div>
             </div>
 
@@ -330,6 +342,7 @@
         let lastResults = {};
         let localStore = {};
         let currentRecordType = 'pattern';
+        let currentSidebarPath = 'sentencePatterns';
 
         function getApiBase() {
             let base = document.getElementById('api-base').value.trim();
@@ -358,6 +371,7 @@
         }
 
         async function loadSidebar(dbPath = 'sentencePatterns') {
+            currentSidebarPath = dbPath;
             const list = document.getElementById('sidebar-list');
             list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Fetching Firebase...</div>';
             try {
@@ -373,7 +387,7 @@
                 lastResults = results;
                 list.innerHTML = Object.keys(results).map(key => {
                     const item = results[key];
-                    const title = item.word || item.topic || item.title || 'Untitled';
+                    const title = key || item.word || item.topic || item.title || 'Untitled';
                     return '<div class="nav-item" onclick="selectRecordRow(\'' + key + '\', true)">' +
                         '<strong>' + title + '</strong>' +
                         '<small>FB: ' + key + '</small>' +
@@ -389,7 +403,13 @@
             const data = lastResults[key];
             if (!data) return;
             const finalData = (data.content && typeof data.content === 'string') ? JSON.parse(data.content) : data;
-            selectRecord(key, fromFirebase, finalData, data.createdAt || '');
+            
+            let type = 'pattern';
+            if (currentSidebarPath === 'ThaiWordsListen') type = 'word';
+            else if (currentSidebarPath === 'ThaiCLoseReading') type = 'article';
+            else if (currentSidebarPath === 'thaiVocabularyQuizzes') type = 'quiz';
+
+            selectRecord(key, fromFirebase, finalData, data.createdAt || '', type);
         }
 
         async function checkAndGenerateThaiWord() {
@@ -495,13 +515,28 @@
             document.getElementById('json-editor').value = JSON.stringify(data, null, 2);
 
             document.getElementById('btn-finalize').style.display = fromFirebase ? 'none' : 'inline-flex';
-            document.getElementById('btn-save').disabled = fromFirebase;
+            
+            if (fromFirebase) {
+                document.getElementById('btn-save').innerText = 'Save Cloud Changes';
+                document.getElementById('btn-save').disabled = false;
+                document.getElementById('btn-save').classList.remove('btn-primary');
+                document.getElementById('btn-save').classList.add('btn-success');
+                document.getElementById('btn-delete-cloud').style.display = 'inline-flex';
+            } else {
+                document.getElementById('btn-save').innerText = 'Save Local Changes';
+                document.getElementById('btn-save').disabled = false;
+                document.getElementById('btn-save').classList.remove('btn-success');
+                document.getElementById('btn-save').classList.add('btn-primary');
+                document.getElementById('btn-delete-cloud').style.display = 'none';
+            }
 
             logStatus('Loaded ' + (fromFirebase ? 'Cloud' : 'Local') + ' record: ' + id);
         }
 
         async function saveChanges() {
-            if (isFirebase) return;
+            if (isFirebase) {
+                return saveCloudChanges();
+            }
             const saveBtn = document.getElementById('btn-save');
             saveBtn.disabled = true;
             logStatus('Saving...');
@@ -631,6 +666,107 @@
                 } else logStatus('Image processing failed: ' + result.error, 'error');
             } catch (err) {
                 logStatus('Upload error: ' + err.message, 'error');
+            }
+        }
+
+        async function saveCloudChanges() {
+            const saveBtn = document.getElementById('btn-save');
+            saveBtn.disabled = true;
+            logStatus('Saving to Cloud...');
+            try {
+                const data = JSON.parse(document.getElementById('json-editor').value);
+                
+                let dbPath = '';
+                if (currentRecordType === 'quiz') dbPath = 'thaiVocabularyQuizzes/' + currentRecordId;
+                else if (currentRecordType === 'word') dbPath = 'ThaiWordsListen/' + currentRecordId;
+                else if (currentRecordType === 'article') dbPath = 'ThaiCLoseReading/' + currentRecordId;
+                else dbPath = 'sentencePatterns/' + currentRecordId;
+
+                const res = await fetch(getApiBase() + '/api/firebase/set', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: dbPath, data: data })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    logStatus('Successfully saved to Firebase', 'success');
+                    lastResults[currentRecordId] = data;
+                } else {
+                    logStatus('Cloud save failed: ' + result.error, 'error');
+                }
+            } catch (err) {
+                logStatus('Cloud save error: ' + err.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+            }
+        }
+
+        async function deleteCloudRecord() {
+            if (!confirm('Are you sure you want to delete this cloud record from Firebase?')) return;
+            logStatus('Deleting...');
+            try {
+                let dbPath = '';
+                if (currentRecordType === 'quiz') dbPath = 'thaiVocabularyQuizzes/' + currentRecordId;
+                else if (currentRecordType === 'word') dbPath = 'ThaiWordsListen/' + currentRecordId;
+                else if (currentRecordType === 'article') dbPath = 'ThaiCLoseReading/' + currentRecordId;
+                else dbPath = 'sentencePatterns/' + currentRecordId;
+
+                const res = await fetch(getApiBase() + '/api/firebase/set', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: dbPath, data: null })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    logStatus('Deleted from Firebase successfully', 'success');
+                    document.getElementById('editor-view').style.display = 'none';
+                    document.getElementById('empty-view').style.display = 'flex';
+                    
+                    let sidebarPath = 'sentencePatterns';
+                    if (currentRecordType === 'quiz') sidebarPath = 'thaiVocabularyQuizzes';
+                    else if (currentRecordType === 'word') sidebarPath = 'ThaiWordsListen';
+                    else if (currentRecordType === 'article') sidebarPath = 'ThaiCLoseReading';
+                    loadSidebar(sidebarPath);
+                } else {
+                    logStatus('Deletion failed: ' + result.error, 'error');
+                }
+            } catch (err) {
+                logStatus('Deletion error: ' + err.message, 'error');
+            }
+        }
+
+        async function generateWordQuiz() {
+            const wordInput = document.getElementById('quiz-word-input');
+            const rawWords = wordInput.value.trim();
+            if (!rawWords) return logStatus('Please enter at least one Thai word', 'error');
+
+            const wordsArray = rawWords.split(',').map(w => w.trim()).filter(w => w.length > 0);
+            if (wordsArray.length === 0) return logStatus('Please enter valid words', 'error');
+
+            logStatus('Generating vocabulary quizzes for: ' + JSON.stringify(wordsArray) + '...');
+            try {
+                const genRes = await fetch(getApiBase() + '/api/thai-word-quiz/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ words: wordsArray })
+                });
+
+                const genData = await genRes.json();
+                if (genData.success) {
+                    logStatus('Successfully generated word quizzes!', 'success');
+                    wordInput.value = '';
+                    
+                    await loadSidebar('thaiVocabularyQuizzes');
+                    
+                    const firstWord = wordsArray[0];
+                    if (lastResults[firstWord]) {
+                        selectRecord(firstWord, true, lastResults[firstWord], '', 'quiz');
+                    }
+                } else {
+                    logStatus('Quiz generation failed: ' + genData.error, 'error');
+                }
+            } catch (err) {
+                logStatus('Network error: ' + err.message, 'error');
             }
         }
 

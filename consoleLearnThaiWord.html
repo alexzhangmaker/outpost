@@ -330,6 +330,7 @@
                 this.sets = {};
                 this.currentSetId = null;
                 this.allWordData = {}; // Cache of ThaiWordsListen
+                this.allQuizData = {}; // Cache of thaiVocabularyQuizzes
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const initialBase = urlParams.get('api') || localStorage.getItem(this.LOCAL_STORAGE_KEY);
@@ -422,6 +423,12 @@
                     this.allWordData = snapshot.val() || {};
                     if (this.currentSetId) this.selectSet(this.currentSetId);
                 });
+
+                // Listen to quiz data for existence check on cards
+                onValue(ref(db, 'thaiVocabularyQuizzes'), (snapshot) => {
+                    this.allQuizData = snapshot.val() || {};
+                    if (this.currentSetId) this.selectSet(this.currentSetId);
+                });
             }
 
             renderSidebar() {
@@ -486,6 +493,13 @@
                                         </button>
                                         <button onclick="app.fixAudio('${word}')" class="text-slate-400 hover:text-indigo-600 p-1.5 bg-slate-100 rounded-xl transition-all" title="修复音频">
                                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                                        </button>
+                                        <button onclick="app.generateCardQuiz('${word}')" class="${this.allQuizData[word] ? 'text-slate-300 cursor-not-allowed bg-slate-50' : 'text-slate-400 hover:text-orange-500 bg-slate-100'} p-1.5 rounded-xl transition-all" title="生成 Quiz" ${this.allQuizData[word] ? 'disabled' : ''}>
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                            </svg>
                                         </button>
                                         <div class="bg-green-100 text-green-600 p-1.5 rounded-xl">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
@@ -572,6 +586,36 @@
                     }
                 } catch (err) {
                     status.innerHTML = `<svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg><span class="text-sm font-bold">修复失败: ${err.message}</span>`;
+                    setTimeout(() => status.remove(), 4000);
+                }
+            }
+
+            async generateCardQuiz(word) {
+                if (this.allQuizData[word]) return;
+
+                const status = document.createElement('div');
+                status.className = "fixed bottom-8 right-8 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 z-[200]";
+                status.innerHTML = `
+                    <div class="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-sm font-bold">正在生成 "${word}" 的测验题...</span>
+                `;
+                document.body.appendChild(status);
+
+                try {
+                    const res = await fetch(`${this.getApiBase()}/api/thai-word-quiz/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ words: [word] })
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                        status.innerHTML = `<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg><span class="text-sm font-bold">"${word}" 测验题生成成功!</span>`;
+                        setTimeout(() => status.remove(), 2000);
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (err) {
+                    status.innerHTML = `<svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg><span class="text-sm font-bold">测验题生成失败: ${err.message}</span>`;
                     setTimeout(() => status.remove(), 4000);
                 }
             }

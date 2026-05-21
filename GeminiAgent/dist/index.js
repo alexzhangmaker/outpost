@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { generate } from 'short-uuid';
-import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT, thaiArticleSchema, THAI_ARTICLE_PROMPT, thaiWordLearningSchema, THAI_WORD_LEARNING_PROMPT, thaiConsonantSchema, THAI_CONSONANT_PROMPT, vocabularyListSchema, VOCABULARY_LIST_PROMPT } from './agent.js';
+import { geminiAgent, mastra, imageExtractionSchema, MARKDOWN_EXTRACTION_PROMPT, commonSentencesSchema, COMMON_SENTENCES_PROMPT, thaiArticleSchema, THAI_ARTICLE_PROMPT, thaiWordLearningSchema, THAI_WORD_LEARNING_PROMPT, thaiConsonantSchema, THAI_CONSONANT_PROMPT, vocabularyListSchema, VOCABULARY_LIST_PROMPT, wordQuizListSchema, WORD_QUIZ_PROMPT } from './agent.js';
 import { saveMessage, getMessages, createSession, saveResult, getResults, updateResult, getResultById, saveArticle, getArticles, getArticleById, updateArticle } from './database.js';
 import { generateThaiAudio } from './tts.js';
 import { saveToRealtimeDb, updateRealtimeDb, uploadAudioToStorage, getFromRealtimeDb, saveArticleToFirebase } from './firebase.js';
@@ -231,17 +231,6 @@ app.post('/api/thai-word-learning/generate', async (req, res) => {
                 console.log(`[Generate] Word family example audio (${idx}): ${family.example.audioURL}`);
             }
         }
-        // Process Exercises
-        for (const [eIdx, ex] of data.exercises.entries()) {
-            if (ex.questions) {
-                for (const [qIdx, q] of ex.questions.entries()) {
-                    if (q.sentence) {
-                        q.audioURL = await processAudio(q.sentence);
-                        console.log(`[Generate] Exercise ${eIdx} Question ${qIdx} audio: ${q.audioURL}`);
-                    }
-                }
-            }
-        }
         console.log('[Generate] Audio processing complete');
         // 4. Update local SQLite with final data (including audioURLs)
         updateResult(Number(localId), data);
@@ -312,14 +301,6 @@ app.post('/api/thai-word-learning/fix-audio', async (req, res) => {
                 family.audioURL = await processAudio(family.form);
             if (family.example && !family.example.audioURL) {
                 family.example.audioURL = await processAudio(family.example.sentence);
-            }
-        }
-        for (const ex of data.exercises) {
-            if (ex.questions) {
-                for (const q of ex.questions) {
-                    if (q.sentence && !q.audioURL)
-                        q.audioURL = await processAudio(q.sentence);
-                }
             }
         }
         await updateRealtimeDb(`ThaiWordsListen/${data.word}`, data);
@@ -816,6 +797,62 @@ app.get('/api/history/:sessionId', (req, res) => {
     const { sessionId } = req.params;
     const history = getMessages(sessionId);
     res.json({ history });
+});
+app.post('/api/thai-word-quiz/generate', async (req, res) => {
+    const { words } = req.body;
+    if (!words || !Array.isArray(words) || words.length === 0) {
+        return res.status(400).json({ error: 'words array is required and must be non-empty' });
+    }
+    try {
+        console.log(`[Quiz Gen] Starting generation for words: ${JSON.stringify(words)}`);
+        // 1. Construct prompt by replacing placeholders
+        const dynamicPrompt = WORD_QUIZ_PROMPT.replace('[[thWords]]', JSON.stringify(words));
+        // 2. Generate quizzes with Gemini via Mastra Agent
+        const result = await geminiAgent.generate([
+            {
+                role: 'user',
+                content: [
+                    { type: 'text', text: dynamicPrompt }
+                ],
+            },
+        ], {
+            structuredOutput: {
+                schema: wordQuizListSchema,
+            },
+        });
+        const generatedData = result.object;
+        const quizzes = generatedData.quizzes;
+        if (!quizzes || !Array.isArray(quizzes)) {
+            throw new Error('Failed to generate structured quizzes');
+        }
+        console.log(`[Quiz Gen] Successfully generated ${quizzes.length} questions`);
+        // 3. Group by 'about' field
+        const quizzesByWord = {};
+        for (const quiz of quizzes) {
+            const word = quiz.about;
+            if (!word)
+                continue;
+            if (!quizzesByWord[word]) {
+                quizzesByWord[word] = [];
+            }
+            quizzesByWord[word].push(quiz);
+        }
+        // 4. Save/update Firebase Realtime DB
+        const { getDatabase } = await import('./firebase.js');
+        const adminDb = getDatabase();
+        for (const [word, wordQuizzes] of Object.entries(quizzesByWord)) {
+            console.log(`[Quiz Gen] Syncing ${wordQuizzes.length} questions for word "${word}" to Firebase...`);
+            await adminDb.ref(`thaiVocabularyQuizzes/${word}`).set(wordQuizzes);
+        }
+        res.json({
+            success: true,
+            quizzes: quizzes
+        });
+    }
+    catch (error) {
+        console.error('[Quiz Gen] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 app.listen(port, () => {
     console.log(`Gemini Agent service running at http://localhost:${port}`);

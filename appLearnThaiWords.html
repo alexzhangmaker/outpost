@@ -289,6 +289,8 @@
         </div>
     </div>
 
+    <script src="thaiQuizActivity.js"></script>
+
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -318,6 +320,7 @@
                 this.wordData = null;
                 this.currentStep = 1;
                 this.allWords = {};
+                this.quizData = {}; // Cache of thaiVocabularyQuizzes
                 this.filteredList = [];
                 this.user = null;
                 this.LOCAL_STORAGE_KEY = 'gemini_agent_api_base';
@@ -426,14 +429,17 @@
                 } else {
                     // 3. Normal behavior: show all words
                     onValue(ref(db, 'ThaiWordsListen'), (snapshot) => {
-                        if (snapshot.exists()) {
-                            this.allWords = snapshot.val();
-                            this.filteredList = Object.keys(this.allWords);
-                            this.renderSidebar();
-                            countEl.textContent = `${this.filteredList.length} words`;
-                        }
+                        this.allWords = snapshot.val() || {};
+                        this.filteredList = Object.keys(this.allWords);
+                        this.renderSidebar();
+                        countEl.textContent = `${this.filteredList.length} words`;
                     });
                 }
+
+                // Listen to quiz data for STEP 4
+                onValue(ref(db, 'thaiVocabularyQuizzes'), (snapshot) => {
+                    this.quizData = snapshot.val() || {};
+                });
             }
 
             initSidebarSearch() {
@@ -737,86 +743,15 @@
 
             createExerciseView(word) {
                 const div = document.createElement('div');
-                div.className = "space-y-12 pb-20";
+                div.className = "space-y-8 pb-20";
 
-                div.innerHTML = `
-                    <div class="text-center mb-12">
-                        <div class="w-16 h-16 bg-white shadow-lg rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                        </div>
-                        <h3 class="text-3xl font-black text-slate-800 mb-2 tracking-tight">掌握度自测</h3>
-                        <p class="text-slate-400 font-medium">通过高频练习巩固所学深度知识</p>
-                    </div>
+                // Fetch quiz data for this word from Firebase cache
+                const quizzes = this.quizData[word.word] || [];
 
-                    <div class="space-y-10">
-                        ${(word.exercises || []).map((ex, exIdx) => `
-                            <div class="glass-panel p-10 rounded-[40px] bg-white border-slate-200/50 relative">
-                                <div class="absolute -top-6 left-10 w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-xl shadow-indigo-200 ring-4 ring-white">
-                                    ${exIdx + 1}
-                                </div>
-                                <div class="mb-10 mt-2">
-                                    <h4 class="text-2xl font-bold text-slate-800 mb-1">${ex.title}</h4>
-                                    <p class="text-slate-400 font-medium text-sm tracking-wide uppercase">${ex.description}</p>
-                                </div>
-                                
-                                <div class="space-y-8">
-                                    ${ex.questions ? ex.questions.map((q, qIdx) => `
-                                        <div class="p-8 rounded-3xl bg-slate-50 border border-slate-100 group">
-                                            <div class="space-y-4">
-                                                <div class="flex justify-between items-start gap-6">
-                                                    <div class="flex items-center gap-3">
-                                                        <p class="thai-text text-xl text-slate-800 font-bold leading-relaxed">${q.sentence || q.question}</p>
-                                                        ${q.audioURL ? `
-                                                            <button onclick="app.playAudio('${q.audioURL}')" class="p-2 text-indigo-500 bg-white rounded-xl shadow-sm hover:scale-110 transition-transform">
-                                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 5V19L7 14H3V10H7L12 5Z"></path></svg>
-                                                            </button>
-                                                        ` : ''}
-                                                    </div>
-                                                </div>
-                                                <p class="text-sm text-slate-400 font-medium">译：${q.translation || '见指令'}</p>
-                                                
-                                                <div class="flex flex-wrap gap-4 mt-6">
-                                                    ${ex.type === 'context_identification' ? `
-                                                        <button onclick="app.checkAnswer(this, '${q.answer}', 'literal')" class="flex-1 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 shadow-sm hover:border-indigo-400 hover:text-indigo-600 transition-all">物理属性 (Literal)</button>
-                                                        <button onclick="app.checkAnswer(this, '${q.answer}', 'figurative')" class="flex-1 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 shadow-sm hover:border-indigo-400 hover:text-indigo-600 transition-all">抽象概念 (Figurative)</button>
-                                                    ` : ex.type === 'sentence_completion' ? `
-                                                        <div class="w-full relative">
-                                                            <input type="text" onchange="app.checkInput(this, '${q.answer}')" placeholder="在此输入泰语回答..." 
-                                                                   class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-slate-800 font-bold outline-none focus:ring-4 focus:ring-indigo-100 transition-all shadow-sm">
-                                                            <div class="absolute right-4 top-4 text-xs font-black text-slate-200 uppercase tracking-widest pointer-events-none">ENTER</div>
-                                                        </div>
-                                                    ` : `
-                                                        <div class="w-full bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100/50">
-                                                            <div class="flex items-center gap-2 mb-2 text-indigo-600 font-black text-[10px] uppercase tracking-[0.2em]">Reflective Thinking</div>
-                                                            <p class="text-sm text-indigo-900/80 font-medium leading-relaxed">${q.explanation || '请结合词义与生活经验进行思考。'}</p>
-                                                        </div>
-                                                    `}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `).join('') : `
-                                        <div class="space-y-6">
-                                            <div class="p-8 bg-indigo-50 rounded-[32px] border-2 border-dashed border-indigo-200">
-                                                <div class="flex items-center gap-3 mb-4">
-                                                    <span class="p-2 bg-white rounded-xl text-indigo-600 shadow-sm"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></span>
-                                                    <p class="text-lg font-bold text-indigo-900">${ex.title}</p>
-                                                </div>
-                                                <p class="text-indigo-900/60 font-medium text-sm mb-6">${ex.prompt || '结合今日所学单词及其引申义，尝试写出一个段落。'}</p>
-                                                <textarea rows="5" class="w-full p-6 rounded-3xl border border-indigo-100 outline-none focus:ring-4 focus:ring-indigo-200/50 transition-all shadow-inner text-indigo-900 font-medium" placeholder="开始您的写作实践..."></textarea>
-                                                <div class="flex justify-between items-center mt-4">
-                                                    <div class="flex mb-1 items-center gap-2 px-3 py-1 bg-white rounded-lg text-[9px] text-indigo-400 font-black uppercase tracking-widest ring-1 ring-indigo-100">
-                                                        Limit: ${ex.word_limit || '50-100 words'}
-                                                    </div>
-                                                    <p class="text-[10px] font-black text-indigo-300 uppercase tracking-tighter italic">Self-Reflection Exercise</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
+                const session = new QuizSession(quizzes, new MultiChoiceQuizEngine());
+                window._quizSession = session;
+                session.renderAll(div);
+
                 return div;
             }
 
