@@ -3254,7 +3254,7 @@
                 return {
                     word: word,
                     meaning: meaning,
-                    audioURI: defData.audioURI || ''
+                    audioURI: defData.audioURI || `https://googleapi-w56agazoha-uc.a.run.app/?text=${encodeURIComponent(word)}`
                 };
             });
 
