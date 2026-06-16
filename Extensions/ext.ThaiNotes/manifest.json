@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Thai Notes Extractor",
+  "version": "1.0",
+  "description": "Extract content from Thai-notes.com to JSON.",
+  "permissions": [
+    "sidePanel",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://thai-notes.com/*"
+  ],
+  "action": {
+    "default_title": "Open Thai Notes Extractor"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

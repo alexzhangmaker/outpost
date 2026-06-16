@@ -343,7 +343,7 @@
     }
 
     async function deleteArtifact(id) {
-        if (!confirm('Are you sure you want to delete artifact ' + id + '?')) return;
+        if (!confirm(`⚠️ Are you sure you want to delete artifact "${id}"?\n\nThis will also permanently delete:\n• All enrollments associated with this artifact\n• All learning schedules associated with this artifact\n\nThis action cannot be undone.`)) return;
         try {
             const response = await fetch(`${API}/artifacts/${encodeURIComponent(id)}`, { method: 'DELETE' });
             if (!response.ok) {

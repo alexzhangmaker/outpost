@@ -1,0 +1,57 @@
+[MeanCheck] Loading model: Xenova/all-MiniLM-L6-v2...
+[MeanCheck] Model loaded.
+{"level":30,"time":1778806166897,"pid":18622,"hostname":"zhangqingdeMac-mini.local","msg":"Server listening at http://127.0.0.1:3001"}
+[MeanCheck] Service listening on port 3001
+{"level":30,"time":1778806166897,"pid":18622,"hostname":"zhangqingdeMac-mini.local","msg":"Server listening at http://192.168.1.112:3001"}
+{"level":30,"time":1778806168751,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-1","req":{"method":"POST","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":60912},"msg":"incoming request"}
+[Evaluate Request] studentInput: "receive", standardMeanings: [ 'receive', 'accept' ]
+[Evaluate Result] isCorrect: true, maxSim: 1, correctedInput: "receive", bestMatch: "receive"
+{"level":30,"time":1778806168761,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-1","res":{"statusCode":200},"responseTime":9.128165990114212,"msg":"request completed"}
+{"level":30,"time":1778806168765,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-2","req":{"method":"POST","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":60914},"msg":"incoming request"}
+[Evaluate Request] studentInput: "recieve", standardMeanings: [ 'receive', 'accept' ]
+[Evaluate Result] isCorrect: true, maxSim: 1, correctedInput: "receive", bestMatch: "receive"
+{"level":30,"time":1778806168766,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-2","res":{"statusCode":200},"responseTime":0.806083008646965,"msg":"request completed"}
+{"level":30,"time":1778806168767,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-3","req":{"method":"POST","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":60912},"msg":"incoming request"}
+[Evaluate Request] studentInput: "financial institution", standardMeanings: [ 'bank', 'river side' ]
+[Evaluate Result] isCorrect: false, maxSim: 0.6345968887064387, correctedInput: "financial institution", bestMatch: "bank"
+{"level":30,"time":1778806168770,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-3","res":{"statusCode":200},"responseTime":3.441791996359825,"msg":"request completed"}
+{"level":30,"time":1778806168771,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-4","req":{"method":"POST","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":60914},"msg":"incoming request"}
+[Evaluate Request] studentInput: "river bank", standardMeanings: [ 'bank', 'river side' ]
+[Evaluate Result] isCorrect: false, maxSim: 0.7732808439737742, correctedInput: "river bank", bestMatch: "bank"
+{"level":30,"time":1778806168775,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-4","res":{"statusCode":200},"responseTime":3.3641249984502792,"msg":"request completed"}
+{"level":30,"time":1778806168777,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-5","req":{"method":"POST","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":60912},"msg":"incoming request"}
+[Evaluate Request] studentInput: "keyboard", standardMeanings: [ 'bank', 'river side' ]
+[Evaluate Result] isCorrect: false, maxSim: 0.23396065112642958, correctedInput: "keyboard", bestMatch: "bank"
+{"level":30,"time":1778806168778,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-5","res":{"statusCode":200},"responseTime":1.5113749951124191,"msg":"request completed"}
+{"level":30,"time":1778806168781,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-6","req":{"method":"POST","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":60914},"msg":"incoming request"}
+[Evaluate Request] studentInput: "travel", standardMeanings: [ 'to travel', 'journey' ]
+[Evaluate Result] isCorrect: true, maxSim: 1, correctedInput: "travel", bestMatch: "to travel"
+{"level":30,"time":1778806168784,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-6","res":{"statusCode":200},"responseTime":3.127583995461464,"msg":"request completed"}
+{"level":30,"time":1778806168785,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-7","req":{"method":"POST","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":60912},"msg":"incoming request"}
+[Evaluate Request] studentInput: "to travel", standardMeanings: [ 'travel', 'journey' ]
+[Evaluate Result] isCorrect: true, maxSim: 1, correctedInput: "travel", bestMatch: "travel"
+{"level":30,"time":1778806168786,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-7","res":{"statusCode":200},"responseTime":0.7731250077486038,"msg":"request completed"}
+{"level":30,"time":1778806168787,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-8","req":{"method":"POST","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":60914},"msg":"incoming request"}
+[Evaluate Request] studentInput: "travel", standardMeanings: [ 'to travel, to tour', 'journey' ]
+[Evaluate Result] isCorrect: true, maxSim: 1, correctedInput: "travel", bestMatch: "to travel, to tour"
+{"level":30,"time":1778806168788,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-8","res":{"statusCode":200},"responseTime":1.3705829977989197,"msg":"request completed"}
+{"level":30,"time":1778806227818,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-9","req":{"method":"OPTIONS","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":61161},"msg":"incoming request"}
+[Evaluate Request] studentInput: "wide", standardMeanings: [
+  'wide; broad; extensive; vast; spacious; influential; well-connected'
+]
+[Evaluate Result] isCorrect: true, maxSim: 1, correctedInput: "wide", bestMatch: "wide; broad; extensive; vast; spacious; influential; well-connected"
+{"level":30,"time":1778806227822,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-9","res":{"statusCode":204},"responseTime":3.894584000110626,"msg":"request completed"}
+{"level":30,"time":1778806227823,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-a","req":{"method":"POST","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":61161},"msg":"incoming request"}
+{"level":30,"time":1778806227851,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-a","res":{"statusCode":200},"responseTime":28.29033400118351,"msg":"request completed"}
+{"level":30,"time":1778806233624,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-b","req":{"method":"OPTIONS","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":61161},"msg":"incoming request"}
+{"level":30,"time":1778806233625,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-b","res":{"statusCode":204},"responseTime":0.48737500607967377,"msg":"request completed"}
+{"level":30,"time":1778806233626,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-c","req":{"method":"POST","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":61161},"msg":"incoming request"}
+[Evaluate Request] studentInput: "travel", standardMeanings: [ 'to travel; to journey; to go on a trip', 'to depart; to set out' ]
+[Evaluate Result] isCorrect: true, maxSim: 1, correctedInput: "travel", bestMatch: "to travel; to journey; to go on a trip"
+{"level":30,"time":1778806233637,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-c","res":{"statusCode":200},"responseTime":10.426167011260986,"msg":"request completed"}
+{"level":30,"time":1778806241084,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-d","req":{"method":"OPTIONS","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":61161},"msg":"incoming request"}
+{"level":30,"time":1778806241085,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-d","res":{"statusCode":204},"responseTime":0.46858300268650055,"msg":"request completed"}
+{"level":30,"time":1778806241086,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-e","req":{"method":"POST","url":"/evaluate","host":"localhost:3001","remoteAddress":"127.0.0.1","remotePort":61161},"msg":"incoming request"}
+[Evaluate Request] studentInput: "travel", standardMeanings: [ 'to travel; to journey; to go on a trip', 'to depart; to set out' ]
+[Evaluate Result] isCorrect: true, maxSim: 1, correctedInput: "travel", bestMatch: "to travel; to journey; to go on a trip"
+{"level":30,"time":1778806241087,"pid":18622,"hostname":"zhangqingdeMac-mini.local","reqId":"req-e","res":{"statusCode":200},"responseTime":0.8798340111970901,"msg":"request completed"}

@@ -87,13 +87,37 @@ app.post('/api/admin/artifacts', (req, res) => {
     );
 });
 
-// Delete artifact
+// Delete artifact (cascade: also removes related enrollments and learning_schedules)
 app.delete('/api/admin/artifacts/:id', (req, res) => {
     const { id } = req.params;
-    const query = id === 'null' ? "DELETE FROM artifacts WHERE id = ? OR id IS NULL" : "DELETE FROM artifacts WHERE id = ?";
-    db.run(query, [id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ success: true });
+    const isNull = id === 'null';
+    const idCondition = isNull ? "(id = ? OR id IS NULL)" : "id = ?";
+    const artifactIdCondition = isNull ? "(artifactId = ? OR artifactId IS NULL)" : "artifactId = ?";
+
+    db.serialize(() => {
+        db.run("BEGIN TRANSACTION");
+        db.run(`DELETE FROM learning_schedules WHERE ${artifactIdCondition}`, [id], (err) => {
+            if (err) {
+                db.run("ROLLBACK");
+                return res.status(500).json({ error: "Failed to delete schedules: " + err.message });
+            }
+        });
+        db.run(`DELETE FROM enrollments WHERE ${artifactIdCondition}`, [id], (err) => {
+            if (err) {
+                db.run("ROLLBACK");
+                return res.status(500).json({ error: "Failed to delete enrollments: " + err.message });
+            }
+        });
+        db.run(`DELETE FROM artifacts WHERE ${idCondition}`, [id], (err) => {
+            if (err) {
+                db.run("ROLLBACK");
+                return res.status(500).json({ error: "Failed to delete artifact: " + err.message });
+            }
+            db.run("COMMIT", (commitErr) => {
+                if (commitErr) return res.status(500).json({ error: "Commit failed: " + commitErr.message });
+                res.json({ success: true });
+            });
+        });
     });
 });
 

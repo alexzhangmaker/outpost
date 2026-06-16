@@ -1253,6 +1253,15 @@
                         </svg>
                         手写练习
                     </button>
+                    <button class="action-btn" id="export-json-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        导出JSON
+                    </button>
                 </div>
 
                 <!-- 词汇卡片容器 -->
@@ -1461,6 +1470,7 @@
         const createQuizBtn = document.getElementById('create-quiz-btn');
         const exportExcelBtn = document.getElementById('export-excel-btn');
         const printOutputBtn = document.getElementById('print-output-btn');
+        const exportJsonBtn = document.getElementById('export-json-btn');
 
         // 模态对话框元素
         const dictionaryModal = document.getElementById('dictionary-modal');
@@ -1646,6 +1656,9 @@
             exportExcelBtn.addEventListener('click', exportToExcel);
             printOutputBtn.addEventListener('click', printOutput);
             document.getElementById('handwriting-practice-btn').addEventListener('click', gotoHandwriting);
+            if (exportJsonBtn) {
+                exportJsonBtn.addEventListener('click', exportToJson);
+            }
 
             // 绑定模态对话框事件
             dictionaryModalClose.addEventListener('click', closeDictionaryModal);
@@ -2506,21 +2519,14 @@
             try {
                 showStatus(`正在对单词 "${word}" 的定义进行精炼提纯...`, 'info');
                 const result = await apiClient.refineWord(word);
-                
+
                 if (result.success) {
                     showStatus(`单词 "${word}" 定义提纯成功！`, 'success');
-                    // 注意：Firebase 监听会自动更新缓存，但我们手动触发一个微小的延迟后重绘该行以显示新内容
-                    // 或者如果 backend 返回了新定义，可以直接更新 UI
-                    if (result.refinedDefinition) {
+                    // result.refined 是 {en, zh} 对象，直接更新 UI
+                    if (result.refined) {
                         const defCell = row.querySelector('.editable-cell');
-                        const sep = '<span class="def-sep">;</span>';
-                        let newDisplay = '-';
-                        if (Array.isArray(result.refinedDefinition)) {
-                            newDisplay = result.refinedDefinition.join(sep);
-                        } else {
-                            newDisplay = result.refinedDefinition.replace(/[;；]/g, sep);
-                        }
-                        defCell.innerHTML = newDisplay;
+                        const { en, zh } = result.refined;
+                        defCell.innerHTML = `${en} / ${zh}`;
                     }
                 } else {
                     showStatus(`提纯失败: ${result.message || '未知错误'}`, 'error');
@@ -3218,6 +3224,56 @@
                 return;
             }
             window.open(`appHandWriting.html?id=${currentWordsetId}`, '_blank');
+        }
+
+        // 导出为JSON
+        function exportToJson() {
+            if (!currentWordsetId || !currentWordsetData) {
+                showStatus('请先选择一个词汇集', 'error');
+                return;
+            }
+
+            if (!currentWordsetData.words || currentWordsetData.words.length === 0) {
+                showStatus('该词汇集没有词汇，无法导出JSON', 'error');
+                return;
+            }
+
+            const exportData = currentWordsetData.words.map(word => {
+                const defData = dictionaryCache.get(word) || {};
+                let meaning = '';
+                
+                if (Array.isArray(defData.definitions) && defData.definitions.length > 0) {
+                    meaning = defData.definitions.map(d => {
+                        if (typeof d === 'string') return d;
+                        return d.zh || d.en || '';
+                    }).filter(Boolean).join('; ');
+                } else if (defData.definition) {
+                    meaning = defData.definition;
+                }
+
+                return {
+                    word: word,
+                    meaning: meaning,
+                    audioURI: defData.audioURI || ''
+                };
+            });
+
+            try {
+                const jsonString = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${currentWordsetData.分类title || '泰语词汇'}_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showStatus('JSON文件导出成功！', 'success');
+            } catch (error) {
+                console.error('导出JSON失败:', error);
+                showStatus('导出JSON失败: ' + error.message, 'error');
+            }
         }
 
         // 导出为Excel

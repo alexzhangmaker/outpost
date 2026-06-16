@@ -505,7 +505,7 @@ export const geminiAgent = new Agent({
   name: 'GeminiAgent',
   instructions: '你是一个精通泰语、中文和英语的语言专家。',
   model: {
-    id: 'google/gemini-2.0-flash',
+    id: 'google/gemini-2.5-flash',
   },
 });
 
