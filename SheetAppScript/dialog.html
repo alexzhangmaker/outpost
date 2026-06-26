@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-mute: #94a3b8;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --success: #10b981;
+      --success-hover: #059669;
+      --accent: #a855f7;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      height: 95vh;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .header {
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .title-area h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: var(--text-mute);
+      margin-top: 3px;
+    }
+
+    .file-info {
+      text-align: right;
+    }
+
+    .file-info-label {
+      font-size: 10px;
+      color: var(--text-mute);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .file-info-value {
+      font-size: 12px;
+      font-weight: 500;
+      color: #38bdf8;
+    }
+
+    .preview-container {
+      flex: 1;
+      position: relative;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .preview-header {
+      padding: 10px 16px;
+      background-color: rgba(15, 23, 42, 0.6);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-mute);
+    }
+
+    .preview-body {
+      flex: 1;
+      margin: 0;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #38bdf8;
+      overflow: auto;
+      white-space: pre-wrap;
+      background-color: rgba(15, 23, 42, 0.3);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    button {
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-success {
+      background-color: var(--success);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-success:hover {
+      background-color: var(--success-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-mute);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text-mute);
+      color: var(--text);
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-mute);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(16, 185, 129, 0.95);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title-area">
+      <h2>word studio</h2>
+      <div class="subtitle">导出的 JSON 数据预览</div>
+    </div>
+    <div class="file-info">
+      <div class="file-info-label">文件名</div>
+      <div class="file-info-value" id="file-name-label">...</div>
+    </div>
+  </div>
+
+  <div class="preview-container">
+    <div class="preview-header">
+      <span>JSON格式 (共 <span id="item-count">0</span> 个单词)</span>
+      <span style="color: var(--accent); font-weight: 500;">✓ 格式已校验</span>
+    </div>
+    <pre class="preview-body" id="json-preview"></pre>
+  </div>
+
+  <div class="actions">
+    <button class="btn-secondary" onclick="google.script.host.close()">
+      关闭
+    </button>
+    <button class="btn-success" id="btn-copy" onclick="copyJson()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      复制 JSON
+    </button>
+    <button class="btn-primary" onclick="downloadJson()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      下载文件
+    </button>
+  </div>
+
+  <div class="toast" id="toast">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toast-text">已成功复制到剪贴板！</span>
+  </div>
+
+  <script>
+    // Embedded JSON and variables from Apps Script template using raw scriptlets
+    const rawJson = <?!= jsonString ?>;
+    const fileName = "<?!= fileName ?>";
+    
+    // Format JSON with indentation
+    const jsonStr = JSON.stringify(rawJson, null, 2);
+    document.getElementById('json-preview').textContent = jsonStr;
+    document.getElementById('file-name-label').textContent = fileName;
+    document.getElementById('item-count').textContent = Array.isArray(rawJson) ? rawJson.length : 0;
+
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    function copyJson() {
+      const el = document.createElement('textarea');
+      el.value = jsonStr;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      
+      const copyBtn = document.getElementById('btn-copy');
+      const originalText = copyBtn.innerHTML;
+      copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> 已复制';
+      showToast('JSON 已复制到剪贴板！');
+      
+      setTimeout(() => {
+        copyBtn.innerHTML = originalText;
+      }, 2000);
+    }
+
+    function downloadJson() {
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('开始下载 JSON 文件...');
+    }
+  </script>
+</body>
+</html>

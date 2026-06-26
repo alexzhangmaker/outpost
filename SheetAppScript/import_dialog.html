@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-mute: #94a3b8;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --success: #10b981;
+      --success-hover: #059669;
+      --accent: #a855f7;
+      --error: #ef4444;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      height: 95vh;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .header {
+      margin-bottom: 14px;
+    }
+
+    .title-area h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: var(--text-mute);
+      margin-top: 3px;
+    }
+
+    .input-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 16px;
+    }
+
+    textarea {
+      flex: 1;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
+    }
+
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    textarea::placeholder {
+      color: var(--text-mute);
+      opacity: 0.6;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    button {
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-mute);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      border-color: var(--text-mute);
+      color: var(--text);
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-top: 2px solid #ffffff;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Scrollbar Styling */
+    textarea::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    textarea::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    textarea::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    textarea::-webkit-scrollbar-thumb:hover {
+      background: var(--text-mute);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(16, 185, 129, 0.95);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .toast.error {
+      background: rgba(239, 68, 68, 0.95);
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title-area">
+      <h2>导入单词清单</h2>
+      <div class="subtitle">输入或粘贴单词列表（每行一个），将依次写入到 A2、A3 等单元格</div>
+    </div>
+  </div>
+
+  <div class="input-container">
+    <textarea id="word-input" placeholder="请在此处粘贴单词列表，每行一个。例如：&#10;ตอนนี้&#10;โมง&#10;อีก&#10;หนู" autofocus></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="btn-secondary" id="btn-cancel" onclick="google.script.host.close()">
+      取消
+    </button>
+    <button class="btn-primary" id="btn-submit" onclick="submitWords()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+      确认导入
+    </button>
+  </div>
+
+  <div class="toast" id="toast">
+    <span id="toast-icon">✓</span>
+    <span id="toast-text">成功导入！</span>
+  </div>
+
+  <script>
+    function showToast(text, isError = false) {
+      const toast = document.getElementById('toast');
+      const toastIcon = document.getElementById('toast-icon');
+      const toastText = document.getElementById('toast-text');
+      
+      toastText.textContent = text;
+      
+      if (isError) {
+        toast.classList.add('error');
+        toastIcon.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+      } else {
+        toast.classList.remove('error');
+        toastIcon.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+      }
+      
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    function submitWords() {
+      const textarea = document.getElementById('word-input');
+      const text = textarea.value.trim();
+      
+      if (!text) {
+        showToast('请输入至少一个单词', true);
+        return;
+      }
+      
+      // Split by newlines, trim whitespace, filter out empty rows
+      const words = text.split('\n')
+        .map(word => word.trim())
+        .filter(word => word.length > 0);
+        
+      if (words.length === 0) {
+        showToast('未检测到有效的非空单词', true);
+        return;
+      }
+
+      // UI Loading state
+      const btnSubmit = document.getElementById('btn-submit');
+      const btnCancel = document.getElementById('btn-cancel');
+      
+      textarea.disabled = true;
+      btnSubmit.disabled = true;
+      btnCancel.disabled = true;
+      
+      const originalHtml = btnSubmit.innerHTML;
+      btnSubmit.innerHTML = '<span class="spinner"></span> 正在导入...';
+
+      // Call Google Apps Script server function
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result && result.success) {
+            showToast('成功导入 ' + result.count + ' 个单词！');
+            setTimeout(() => {
+              google.script.host.close();
+            }, 1200);
+          } else {
+            // Re-enable controls
+            textarea.disabled = false;
+            btnSubmit.disabled = false;
+            btnCancel.disabled = false;
+            btnSubmit.innerHTML = originalHtml;
+            showToast(result.error || '导入失败，请稍后重试', true);
+          }
+        })
+        .withFailureHandler(function(error) {
+          // Re-enable controls
+          textarea.disabled = false;
+          btnSubmit.disabled = false;
+          btnCancel.disabled = false;
+          btnSubmit.innerHTML = originalHtml;
+          showToast('发生错误: ' + error.message, true);
+        })
+        .writeWordsToSheet(words);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-mute: #94a3b8;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --success: #10b981;
+      --success-hover: #059669;
+      --accent: #a855f7;
+      --error: #ef4444;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    .header {
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .title-area h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: var(--text-mute);
+      margin-top: 4px;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-desc {
+      font-size: 11px;
+      color: var(--text-mute);
+      line-height: 1.4;
+    }
+
+    button {
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-success {
+      background-color: var(--success);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background-color: var(--success-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);
+    }
+
+    .btn-accent:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(168, 85, 247, 0.35);
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-top: 2px solid #ffffff;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(16, 185, 129, 0.95);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 500;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+      width: 80%;
+      justify-content: center;
+    }
+
+    .toast.error {
+      background: rgba(239, 68, 68, 0.95);
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title-area">
+      <h2>sheetStudio</h2>
+      <div class="subtitle">工作表自动化与 AI 助手控制台</div>
+    </div>
+  </div>
+
+  <!-- Section 1: wordSheet tools -->
+  <div class="section">
+    <div class="section-title">单词管理 (wordSheet)</div>
+    <div class="card">
+      <div class="card-desc">仅在 <strong>wordSheet</strong> 起作用。确保包含 word, meaning, audioURL, encodeWord, Chinese 五列。</div>
+      
+      <button class="btn-primary" id="btn-export" onclick="runExportJson()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        导出 JSON
+      </button>
+      
+      <button class="btn-success" id="btn-import" onclick="runImportWordList()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        导入单词清单
+      </button>
+    </div>
+  </div>
+
+  <!-- Section 2: checkSheet tools -->
+  <div class="section">
+    <div class="section-title">语义拼写检查 (checkSheet)</div>
+    <div class="card">
+      <div class="card-desc">针对 <strong>checkSheet</strong> 中所有非空答复，通过 AI 语义模型比对释义，在 check 列中标记 right 或 wrong。</div>
+      
+      <button class="btn-accent" id="btn-check" onclick="runCheckAnswer()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 8 12 12 16"></polyline><line x1="16" y1="12" x2="8" y2="12"></line></svg>
+        检查拼写与回答
+      </button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <span id="toast-icon">✓</span>
+    <span id="toast-text">操作成功！</span>
+  </div>
+
+  <script>
+    function showToast(text, isError = false) {
+      const toast = document.getElementById('toast');
+      const toastIcon = document.getElementById('toast-icon');
+      const toastText = document.getElementById('toast-text');
+      
+      toastText.textContent = text;
+      
+      if (isError) {
+        toast.classList.add('error');
+        toastIcon.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+      } else {
+        toast.classList.remove('error');
+        toastIcon.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+      }
+      
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    function disableAllButtons(disable) {
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(btn => btn.disabled = disable);
+    }
+
+    function runExportJson() {
+      disableAllButtons(true);
+      google.script.run
+        .withSuccessHandler(function() {
+          disableAllButtons(false);
+        })
+        .withFailureHandler(function(err) {
+          disableAllButtons(false);
+          showToast(err.message, true);
+        })
+        .exportJson();
+    }
+
+    function runImportWordList() {
+      disableAllButtons(true);
+      google.script.run
+        .withSuccessHandler(function() {
+          disableAllButtons(false);
+        })
+        .withFailureHandler(function(err) {
+          disableAllButtons(false);
+          showToast(err.message, true);
+        })
+        .importWordList();
+    }
+
+    function runCheckAnswer() {
+      disableAllButtons(true);
+      const btn = document.getElementById('btn-check');
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner"></span> 正在核对中...';
+      
+      google.script.run
+        .withSuccessHandler(function() {
+          disableAllButtons(false);
+          btn.innerHTML = originalHtml;
+          showToast('回答检查已完成！');
+        })
+        .withFailureHandler(function(err) {
+          disableAllButtons(false);
+          btn.innerHTML = originalHtml;
+          showToast(err.message, true);
+        })
+        .checkAnswer();
+    }
+  </script>
+</body>
+</html>
