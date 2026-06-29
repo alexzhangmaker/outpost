@@ -1499,8 +1499,12 @@
                 if (!evaluateUrl.includes('workers.dev') && !evaluateUrl.includes('/evaluate')) {
                     evaluateUrl = `${evaluateUrl}/evaluate`.replace(/\/+/g, '/').replace(':/', '://');
                 }
-                console.log("Evaluating meaning at:", evaluateUrl);
+                console.log("=== AI Evaluation Request ===");
+                console.log("Target URL:", evaluateUrl);
+                console.log("Request Phrase (Student Input):", studentInput);
+                console.log("Request Definitions:", definitions);
 
+                const startTime = performance.now();
                 const resp = await fetch(evaluateUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1510,9 +1514,19 @@
                     })
                 });
 
-                if (!resp.ok) throw new Error("Service status: " + resp.status);
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                console.log(`Response Status: ${resp.status} (Took ${duration.toFixed(2)}ms)`);
+
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    console.error("Error Response text:", text);
+                    throw new Error("Service status: " + resp.status);
+                }
 
                 const result = await resp.json();
+                console.log("=== AI Evaluation Response ===");
+                console.log("Raw Response Result:", result);
 
                 const isCorrect = result.matched === true || result.matched === 'true' || result.isCorrect === true || result.isCorrect === 'true';
 
@@ -1554,7 +1568,8 @@
                 setTimeout(() => input.focus(), 50);
 
             } catch (err) {
-                console.error("Evaluation error:", err);
+                console.error("=== AI Evaluation Exception ===");
+                console.error("Error Details:", err);
                 card.classList.add('flipped');
                 input.readOnly = false;
                 input.focus();
