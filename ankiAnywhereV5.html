@@ -775,7 +775,7 @@
         let currentUser = null; // Global user
         
         let API_BASE_URL = "http://localhost:6660/api";
-        let MEAN_CHECK_BASE = "http://localhost:3001";
+        let MEAN_CHECK_BASE = "https://thai-semantic-match-worker.alexszhang.workers.dev";
 
         // --- IndexedDB Configuration ---
         const DB_NAME = 'AnkiAnywhereSettings';
@@ -856,13 +856,7 @@
             if (cachedMean) {
                 MEAN_CHECK_BASE = cachedMean;
             } else {
-                if (API_BASE_URL.startsWith('/')) {
-                    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-                    const hostname = window.location.hostname || 'localhost';
-                    MEAN_CHECK_BASE = `${protocol}//${hostname}:3001`;
-                } else {
-                    MEAN_CHECK_BASE = API_BASE_URL.replace(':6660', ':3001').replace('/api', '');
-                }
+                MEAN_CHECK_BASE = "https://thai-semantic-match-worker.alexszhang.workers.dev";
             }
             
             console.log("Config Loaded - Gemini:", API_BASE_URL, "MeanCheck:", MEAN_CHECK_BASE);
@@ -1492,25 +1486,50 @@
             if (!studentInput) return;
 
             const word = wordList[currentIndex];
-            const standardMeanings = word.definitions.map(d => d.en || d.english);
+            const definitions = word.definitions.map(d => ({
+                English: d.English || d.en || d.english || "",
+                Chinese: d.Chinese || d.zh || d.chinese || ""
+            }));
 
             input.readOnly = true;
             input.placeholder = "正在评测...";
 
             try {
-                // 使用加载好的 MEAN_CHECK_BASE
-                const evaluateUrl = `${MEAN_CHECK_BASE}/evaluate`.replace(/\/+/g, '/').replace(':/', '://');
+                let evaluateUrl = MEAN_CHECK_BASE;
+                if (!evaluateUrl.includes('workers.dev') && !evaluateUrl.includes('/evaluate')) {
+                    evaluateUrl = `${evaluateUrl}/evaluate`.replace(/\/+/g, '/').replace(':/', '://');
+                }
                 console.log("Evaluating meaning at:", evaluateUrl);
 
                 const resp = await fetch(evaluateUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ studentInput, standardMeanings })
+                    body: JSON.stringify({
+                        phrase: studentInput,
+                        definitions: definitions
+                    })
                 });
 
-                if (!resp.ok) throw new Error("Service not available");
+                if (!resp.ok) throw new Error("Service status: " + resp.status);
 
                 const result = await resp.json();
+
+                const isCorrect = result.matched === true || result.matched === 'true' || result.isCorrect === true || result.isCorrect === 'true';
+
+                let bestMatch = "";
+                if (result.matchIndex !== undefined && result.matchIndex !== null && result.matchIndex !== '无' && word.definitions[result.matchIndex]) {
+                    const matchedDef = word.definitions[result.matchIndex];
+                    const en = matchedDef.en || matchedDef.english || "";
+                    const zh = matchedDef.zh || matchedDef.chinese || "";
+                    bestMatch = zh ? `${zh} (${en})` : en;
+                } else if (result.bestMatch) {
+                    bestMatch = result.bestMatch;
+                } else {
+                    const firstDef = word.definitions[0] || {};
+                    const en = firstDef.en || firstDef.english || "";
+                    const zh = firstDef.zh || firstDef.chinese || "";
+                    bestMatch = zh ? `${zh} (${en})` : en;
+                }
 
                 // 1. Flip card
                 if (!card.classList.contains('flipped')) {
@@ -1518,17 +1537,17 @@
                 }
 
                 // 2. Score based on AI (4 correct, 1 wrong)
-                const rating = result.isCorrect ? 4 : 1;
+                const rating = isCorrect ? 4 : 1;
 
                 // 3. Visual feedback
-                input.style.borderColor = result.isCorrect ? '#2ecc71' : '#e74c3c';
+                input.style.borderColor = isCorrect ? '#2ecc71' : '#e74c3c';
 
                 // 4. Submit rating
                 submitRating(rating);
 
                 // Keep input enabled for the "Enter for next" step
                 input.readOnly = true; // Stay readOnly on the back
-                input.value = result.isCorrect ? "正确 ✅" : `错误 ❌ (最佳匹配: ${result.bestMatch})`;
+                input.value = isCorrect ? "正确 ✅" : `错误 ❌ (最佳匹配: ${bestMatch})`;
 
                 // Explicitly refocus after enabling and flipping
                 input.focus();
@@ -1539,7 +1558,7 @@
                 card.classList.add('flipped');
                 input.readOnly = false;
                 input.focus();
-                alert("MeanCheckService 无法访问，请确保后台服务已启动 (Port 3001)");
+                alert("评分服务 (Worker AI / MeanCheck) 无法访问，请确保网络正常或检查配置");
             }
         }
 
@@ -1912,7 +1931,7 @@
                 
                 <div style="margin-bottom: 25px;">
                     <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Mean Check Service 地址</label>
-                    <input type="text" id="setting-mean-check" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: monospace; font-size: 12px;" placeholder="http://localhost:3001">
+                    <input type="text" id="setting-mean-check" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: monospace; font-size: 12px;" placeholder="https://thai-semantic-match-worker.alexszhang.workers.dev">
                 </div>
                 
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
