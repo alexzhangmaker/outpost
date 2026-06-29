@@ -780,14 +780,18 @@
         // --- IndexedDB Configuration ---
         const DB_NAME = 'AnkiAnywhereSettings';
         const STORE_NAME = 'settings';
+        const LOGS_STORE_NAME = 'evaluation_logs';
 
         function initDB() {
             return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, 1);
+                const request = indexedDB.open(DB_NAME, 2);
                 request.onupgradeneeded = (e) => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains(STORE_NAME)) {
                         db.createObjectStore(STORE_NAME);
+                    }
+                    if (!db.objectStoreNames.contains(LOGS_STORE_NAME)) {
+                        db.createObjectStore(LOGS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
                     }
                 };
                 request.onsuccess = (e) => resolve(e.target.result);
@@ -815,12 +819,58 @@
             });
         }
 
+        // --- Logs IndexedDB Helpers ---
+        async function logEvaluation(data) {
+            const db = await initDB();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(LOGS_STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(LOGS_STORE_NAME);
+                const logEntry = {
+                    timestamp: new Date().toISOString(),
+                    thai: data.thai,
+                    studentInput: data.studentInput,
+                    definitions: data.definitions,
+                    isCorrect: data.isCorrect,
+                    bestMatch: data.bestMatch,
+                    matched: data.matched,
+                    matchIndex: data.matchIndex,
+                    duration: data.duration,
+                    rawResponse: data.rawResponse
+                };
+                const request = store.add(logEntry);
+                request.onsuccess = () => resolve();
+            });
+        }
+
+        async function getEvaluationLogs() {
+            const db = await initDB();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(LOGS_STORE_NAME, 'readonly');
+                const store = transaction.objectStore(LOGS_STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result || []);
+            });
+        }
+
+        async function clearEvaluationLogs() {
+            const db = await initDB();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(LOGS_STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(LOGS_STORE_NAME);
+                const request = store.clear();
+                request.onsuccess = () => resolve();
+            });
+        }
+
         // --- Settings UI Functions ---
+        let allLogs = []; // Cache logs when open settings
+
         async function openSettings() {
             const modal = document.getElementById('settings-modal');
             document.getElementById('setting-gemini-api').value = API_BASE_URL;
             document.getElementById('setting-mean-check').value = MEAN_CHECK_BASE;
             modal.style.display = 'flex';
+            await loadAndRenderLogs();
         }
 
         function closeSettings() {
@@ -835,6 +885,134 @@
             if (meanCheck) await setSetting('mean_check_api_base', meanCheck);
             
             location.reload();
+        }
+
+        // --- Logs UI Logics ---
+        async function loadAndRenderLogs() {
+            try {
+                allLogs = await getEvaluationLogs();
+                // Sort logs descending by timestamp
+                allLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                renderLogs(allLogs);
+            } catch (err) {
+                console.error("Failed to load evaluation logs:", err);
+            }
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logs-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="padding: 20px; text-align: center; color: #999;">无评测记录</td></tr>`;
+                return;
+            }
+            
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #eee';
+                tr.style.background = log.isCorrect ? 'rgba(46, 204, 113, 0.05)' : 'rgba(231, 76, 60, 0.05)';
+                tr.className = 'log-row';
+                tr.dataset.id = log.id;
+                
+                const date = new Date(log.timestamp);
+                const timeStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+                
+                const defsStr = log.definitions.map(d => `${d.Chinese || d.zh || ''} (${d.English || d.en || ''})`).join('; ');
+                
+                tr.innerHTML = `
+                    <td style="padding: 8px; text-align: center;"><input type="checkbox" class="log-item-checkbox" data-id="${log.id}"></td>
+                    <td style="padding: 8px; color: #666; white-space: nowrap;">${timeStr}</td>
+                    <td style="padding: 8px; font-weight: bold; color: #2c3e50;">${log.thai || ''}</td>
+                    <td style="padding: 8px; font-family: monospace;">${log.studentInput || ''}</td>
+                    <td style="padding: 8px;"><span style="color: ${log.isCorrect ? '#2ecc71' : '#e74c3c'}; font-weight: bold;">${log.isCorrect ? '正确' : '错误'}</span></td>
+                    <td style="padding: 8px; color: #555; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${defsStr}">${defsStr}</td>
+                    <td style="padding: 8px; color: #888;">${log.duration ? Math.round(log.duration) + 'ms' : '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            const selectAllCheckbox = document.getElementById('log-select-all');
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+        }
+
+        function filterLogs() {
+            const searchInput = document.getElementById('log-search-input');
+            const statusSelect = document.getElementById('log-filter-status');
+            if (!searchInput || !statusSelect) return;
+            
+            const query = searchInput.value.trim().toLowerCase();
+            const statusFilter = statusSelect.value;
+            
+            const filtered = allLogs.filter(log => {
+                if (statusFilter === 'correct' && !log.isCorrect) return false;
+                if (statusFilter === 'incorrect' && log.isCorrect) return false;
+                
+                if (query) {
+                    const thaiMatch = (log.thai || '').toLowerCase().includes(query);
+                    const inputMatch = (log.studentInput || '').toLowerCase().includes(query);
+                    const defsMatch = log.definitions.some(d => 
+                        (d.Chinese || d.zh || '').toLowerCase().includes(query) || 
+                        (d.English || d.en || '').toLowerCase().includes(query)
+                    );
+                    return thaiMatch || inputMatch || defsMatch;
+                }
+                return true;
+            });
+            
+            renderLogs(filtered);
+        }
+
+        function toggleSelectAllLogs(master) {
+            const checkboxes = document.querySelectorAll('.log-item-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = master.checked;
+            });
+        }
+
+        async function copySelectedLogs() {
+            const checkboxes = document.querySelectorAll('.log-item-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('请先选择要拷贝的记录！');
+                return;
+            }
+            
+            const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.getAttribute('data-id')));
+            const logsToCopy = allLogs.filter(log => selectedIds.includes(log.id));
+            
+            let text = `| 时间 | 泰语单词 | 学生输入 | 评测结果 | 正确释义 | 耗时 |\n`;
+            text += `| ---- | -------- | -------- | -------- | -------- | ---- |\n`;
+            
+            logsToCopy.forEach(log => {
+                const date = new Date(log.timestamp);
+                const timeStr = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                const resultStr = log.isCorrect ? '正确' : '错误';
+                const defsStr = log.definitions.map(d => `${d.Chinese || d.zh || ''} (${d.English || d.en || ''})`).join('; ');
+                const durationStr = log.duration ? Math.round(log.duration) + 'ms' : 'N/A';
+                
+                text += `| ${timeStr} | ${log.thai || ''} | ${log.studentInput || ''} | ${resultStr} | ${defsStr} | ${durationStr} |\n`;
+            });
+            
+            try {
+                await navigator.clipboard.writeText(text);
+                alert(`已将选中的 ${logsToCopy.length} 条记录以 Markdown 表格格式复制到剪贴板！`);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                alert('复制失败，请重试或检查浏览器剪贴板权限');
+            }
+        }
+
+        async function clearLogsUI() {
+            if (!confirm('确定要清空所有 AI 评测日志吗？此操作无法撤销。')) return;
+            try {
+                await clearEvaluationLogs();
+                await loadAndRenderLogs();
+                alert('日志已清空');
+            } catch (err) {
+                console.error("Failed to clear logs:", err);
+                alert('清除失败');
+            }
         }
 
         // --- Initialize App Config ---
@@ -1545,6 +1723,19 @@
                     bestMatch = zh ? `${zh} (${en})` : en;
                 }
 
+                // Log evaluation into IndexedDB
+                logEvaluation({
+                    thai: word.thai,
+                    studentInput: studentInput,
+                    definitions: definitions,
+                    isCorrect: isCorrect,
+                    bestMatch: bestMatch,
+                    matched: result.matched,
+                    matchIndex: result.matchIndex,
+                    duration: duration,
+                    rawResponse: result.rawResponse || JSON.stringify(result)
+                }).catch(err => console.error("Failed to save evaluation log to IndexedDB:", err));
+
                 // 1. Flip card
                 if (!card.classList.contains('flipped')) {
                     card.classList.add('flipped');
@@ -1936,22 +2127,63 @@
 
     <!-- Settings Modal -->
     <div id="settings-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-            <div style="background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-                <h3 style="margin-bottom: 20px; color: #333;">系统设置</h3>
-                
-                <div style="margin-bottom: 15px;">
+        <div style="background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 750px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <h3 style="margin: 0; color: #333;">系统设置 & AI 评测日志</h3>
+                <span onclick="closeSettings()" style="cursor: pointer; font-size: 20px; color: #999; font-weight: bold; line-height: 1;">&times;</span>
+            </div>
+            
+            <!-- Config Form -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
                     <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Gemini Agent API 地址</label>
                     <input type="text" id="setting-gemini-api" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: monospace; font-size: 12px;" placeholder="http://localhost:6660/api">
                 </div>
-                
-                <div style="margin-bottom: 25px;">
+                <div>
                     <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Mean Check Service 地址</label>
                     <input type="text" id="setting-mean-check" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: monospace; font-size: 12px;" placeholder="https://thai-semantic-match-worker.alexszhang.workers.dev">
                 </div>
-                
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button onclick="closeSettings()" style="padding: 8px 15px; border: none; background: #eee; border-radius: 5px; cursor: pointer;">取消</button>
-                    <button onclick="saveSettings()" style="padding: 8px 15px; border: none; background: #2575fc; color: white; border-radius: 5px; cursor: pointer;">保存并刷新</button>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                <button onclick="closeSettings()" style="padding: 8px 15px; border: none; background: #eee; border-radius: 5px; cursor: pointer; font-size: 13px;">取消</button>
+                <button onclick="saveSettings()" style="padding: 8px 15px; border: none; background: #2575fc; color: white; border-radius: 5px; cursor: pointer; font-size: 13px;">保存设置并刷新</button>
+            </div>
+
+            <!-- Logs Section -->
+            <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <h4 style="margin: 0; color: #444;">AI 评测日志</h4>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <input type="text" id="log-search-input" oninput="filterLogs()" placeholder="搜索泰语/回答/释义..." style="padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; width: 150px;">
+                        <select id="log-filter-status" onchange="filterLogs()" style="padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                            <option value="all">所有结果</option>
+                            <option value="correct">正确</option>
+                            <option value="incorrect">错误</option>
+                        </select>
+                        <button onclick="copySelectedLogs()" style="padding: 6px 12px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">复制选中</button>
+                        <button onclick="clearLogsUI()" style="padding: 6px 12px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">清空日志</button>
+                    </div>
+                </div>
+
+                <!-- Logs Table Container -->
+                <div style="overflow-x: auto; border: 1px solid #eee; border-radius: 5px; max-height: 350px; background: #fafafa;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; min-width: 600px;">
+                        <thead style="background: #f1f1f1; position: sticky; top: 0; z-index: 10;">
+                            <tr>
+                                <th style="padding: 8px; border-bottom: 1px solid #ddd; width: 30px; text-align: center;"><input type="checkbox" id="log-select-all" onchange="toggleSelectAllLogs(this)"></th>
+                                <th style="padding: 8px; border-bottom: 1px solid #ddd; width: 100px;">时间</th>
+                                <th style="padding: 8px; border-bottom: 1px solid #ddd; width: 80px;">泰语</th>
+                                <th style="padding: 8px; border-bottom: 1px solid #ddd; width: 100px;">学生回答</th>
+                                <th style="padding: 8px; border-bottom: 1px solid #ddd; width: 60px;">判定</th>
+                                <th style="padding: 8px; border-bottom: 1px solid #ddd; width: 200px;">正确释义</th>
+                                <th style="padding: 8px; border-bottom: 1px solid #ddd; width: 60px;">耗时</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body">
+                            <!-- Logs row will be rendered here dynamically -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
